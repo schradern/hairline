@@ -7,7 +7,7 @@ font_metrics <- function() {
 
 frame_defaults <- list(title_lines = 1, subtitle_lines = 0, legend_rows = 0, caption_lines = 0, panel_rows = 1,
                        panel_columns = 1, panel_header_lines = integer(), y_title = FALSE, x_title = FALSE,
-                       x_tick_labels = TRUE, y_label_width_pt = 0, column_label_widths = numeric(),
+                       x_tick_labels = TRUE, y_label_width_pt = 0, y_labels = TRUE, column_label_widths = numeric(),
                        x_tick_rows = logical())
 
 text_block <- function(size, count, metrics, line_gap) {

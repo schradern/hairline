@@ -12,10 +12,12 @@ baseline_grob <- function(box, bottom, settings) {
                                      lwd = hl_tokens()$lines$axis * settings$base_size / 0.75))
 }
 
-one_panel_grobs <- function(panel, box, height, settings) {
+one_panel_grobs <- function(panel, box, height, settings, bare = FALSE) {
   y_pad <- hl_tokens()$spacing$y_labels_plot * settings$base_size
   x_pad <- hl_tokens()$spacing$x_tick_pad * role_size(settings, "label")
   bottom <- height - box[2] - box[4]
+  plot <- grid::gTree(children = grid::gList(panel$grob), vp = viewport_pt(box[1], bottom, box[3], box[4], c(0, 0)))
+  if (bare) return(list(plot))
   list(grid::gTree(children = grid::gList(panel$grob), vp = viewport_pt(box[1], bottom, box[3], box[4], c(0, 0))),
        baseline_grob(box, bottom, settings),
        grid::gTree(children = grid::gList(panel$axis_l),
@@ -26,7 +28,8 @@ one_panel_grobs <- function(panel, box, height, settings) {
 
 panel_grobs <- function(parts, plan) {
   grobs <- lapply(seq_along(parts$panels), function(index) {
-    one_panel_grobs(parts$panels[[index]], plan$layout$panels[[index]], plan$size[2], parts$settings)
+    box <- fitted_box(plan$layout$panels[[index]], parts$aspect)
+    one_panel_grobs(parts$panels[[index]], box, plan$size[2], parts$settings, parts$bare)
   })
   unlist(grobs, recursive = FALSE)
 }

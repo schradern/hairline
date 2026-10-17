@@ -629,5 +629,52 @@
    "x_title_baseline": null,
    "caption_baselines": []
   }
+ },
+ {
+  "input": {
+   "base_size": 9.0,
+   "sizes": {
+    "title": 13.5,
+    "subtitle": 9.0,
+    "panel": 9.0,
+    "label": 8.1,
+    "caption": 7.65
+   },
+   "width_pt": 482,
+   "height_pt": 361,
+   "subtitle_lines": 1,
+   "caption_lines": 1,
+   "y_labels": false,
+   "x_tick_labels": false
+  },
+  "layout": {
+   "left": 15.75,
+   "right": 466.25,
+   "plot_left": 15.75,
+   "title_baselines": [
+    25.5105
+   ],
+   "subtitle_baselines": [
+    38.205
+   ],
+   "legend_row_centers": [],
+   "panel_header_baselines": [
+    []
+   ],
+   "panels": [
+    [
+     15.75,
+     53.73,
+     450.5,
+     270.76779999999997
+    ]
+   ],
+   "y_title_left": null,
+   "y_title_baseline": null,
+   "x_title_baseline": null,
+   "caption_baselines": [
+    343.52875
+   ]
+  }
  }
 ]

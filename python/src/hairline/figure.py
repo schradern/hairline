@@ -53,6 +53,8 @@ class HairlineFigure:
     extra_legend_items: list[LegendItem] = field(default_factory=list)
     frame_artist: FrameArtist = field(default_factory=FrameArtist)
     report: dict = field(default_factory=dict)
+    bare_panels: dict[int, float | None] = field(default_factory=dict)
+    plot_boxes: list = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)
@@ -64,13 +66,23 @@ class HairlineFigure:
     def panel_header(self, index: int, name: str, qualifier: str | None = None,
                      stats: Sequence[tuple[str, str]] = (), key: str | None = None) -> None:
         """Name, optional qualifier and key numbers ('Label', 'value') above panel `index`; `key` marks one."""
-        if not 0 <= index < len(self.axes):
-            raise IndexError(f"hairline: panel {index} does not exist; this figure has {len(self.axes)} panels")
+        self.check_index(index)
         pairs = tuple((str(label), str(value)) for label, value in stats)
         if key is not None and key not in [label for label, _ in pairs]:
             raise ValueError(f"hairline: key {key!r} is not one of the key numbers: "
                              f"{', '.join(label for label, _ in pairs)}")
         self.headers[index] = PanelHeader(name, qualifier, pairs, key)
+
+    def check_index(self, index: int) -> None:
+        if not 0 <= index < len(self.axes):
+            raise IndexError(f"hairline: panel {index} does not exist; this figure has {len(self.axes)} panels")
+
+    def bare(self, index: int, aspect: float | None = None) -> None:
+        """Draw panel `index` without axes, ticks or grid; `aspect` (height/width) centres a fixed-shape plot area."""
+        self.check_index(index)
+        if aspect is not None and aspect <= 0:
+            raise ValueError(f"hairline: bare panel {index}: aspect must be positive, got {aspect}")
+        self.bare_panels[index] = aspect
 
     def highlight(self, series: Sequence[str] | None = None, panels: Sequence[int | str] | None = None) -> None:
         """Keep these series (legend labels) or panels (index or name) in colour; draw the rest in context grey."""

@@ -4,12 +4,15 @@
 \alias{theme_hairline}
 \title{hairline theme and frame}
 \usage{
-theme_hairline(base_size = NULL, font = NULL)
+theme_hairline(base_size = NULL, font = NULL, axes = TRUE)
 }
 \arguments{
 \item{base_size}{Body text size in pt; \code{NULL} uses the active setting.}
 
 \item{font}{Font family; \code{NULL} uses the active setting.}
+
+\item{axes}{\code{FALSE} draws panels without axes, ticks, grid or baseline (donut, Sankey and the like);
+with \code{coord_fixed()} the plot area keeps its shape, centred in the panel.}
 }
 \value{
 An object to add to a ggplot with \code{+}.

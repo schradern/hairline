@@ -113,8 +113,8 @@ def adapt_mode(source: BrandFile) -> str:
 def warn_exact(name: str | None, names: list[str], colors: list[str]) -> None:
     report = check_palette(colors)
     problems = list(report.failures)
-    problems += [f"{names[slot - 1]} ({colors[slot - 1]}) is below 3:1 on white; it gets heavier lines and darker point fills"
-                 for slot in report.light_slots]
+    problems += [f"{names[slot - 1]} ({colors[slot - 1]}) is below 3:1 on white; it gets heavier lines and darker "
+                 "point fills" for slot in report.light_slots]
     if problems:
         warnings.warn(f"hairline: brand '{name}' (adapt: exact): {'; '.join(problems)}", UserWarning, stacklevel=3)
 

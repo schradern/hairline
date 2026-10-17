@@ -29,8 +29,10 @@ frame_spec <- function(parts, texts, size, legend_rows, header_lines) {
        title_lines = max(length(texts$title), 1), subtitle_lines = length(texts$subtitle),
        legend_rows = legend_rows, caption_lines = length(texts$caption), panel_rows = parts$rows,
        panel_columns = parts$columns, panel_header_lines = header_lines, y_title = !is.null(parts$y_title),
-       x_title = !is.null(parts$x_title), x_tick_labels = TRUE, y_label_width_pt = texts$column_widths[1],
-       column_label_widths = texts$column_widths, x_tick_rows = x_tick_rows(parts))
+       x_title = !is.null(parts$x_title), x_tick_labels = !parts$bare, y_labels = !parts$bare,
+       y_label_width_pt = if (parts$bare) 0 else texts$column_widths[1],
+       column_label_widths = if (parts$bare) numeric(parts$columns) else texts$column_widths,
+       x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts))
 }
 
 compose_all_headers <- function(parts, layout) {

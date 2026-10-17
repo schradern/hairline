@@ -50,7 +50,8 @@ compute_frame <- function(spec, metrics) {
   spacing <- tokens$spacing
   left <- spacing$margin * spec$base_size
   layout <- list(left = left, right = spec$width_pt - left,
-                 plot_left = left + spec$y_label_width_pt + spacing$y_labels_plot * spec$base_size,
+                 plot_left = left + if (isTRUE(spec$y_labels)) spec$y_label_width_pt + spacing$y_labels_plot *
+                   spec$base_size else 0,
                  title_baselines = numeric(), subtitle_baselines = numeric(), legend_row_centers = numeric(),
                  panel_header_baselines = list(), panels = list(), y_title_left = NULL, y_title_baseline = NULL,
                  x_title_baseline = NULL, caption_baselines = numeric())

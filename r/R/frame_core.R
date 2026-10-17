@@ -40,11 +40,25 @@ plot_label <- function(built, key) {
   if (is.null(value) || inherits(value, "waiver") || identical(value, "")) NULL else as.character(value)
 }
 
+panel_aspect <- function(built) {
+  ratio <- built@layout$coord$ratio
+  if (is.null(ratio)) return(NULL)
+  params <- built@layout$panel_params[[1]]
+  ratio * diff(params$y$continuous_range) / diff(params$x$continuous_range)
+}
+
+fitted_box <- function(box, aspect) {
+  if (is.null(aspect)) return(box)
+  width <- min(box[3], box[4] / aspect)
+  c(box[1] + (box[3] - width) / 2, box[2], width, width * aspect)
+}
+
 frame_parts <- function(table, built) {
   settings <- built@plot@meta$hairline_settings %||% hl_settings()
   panels <- extract_panels(table, built)
   flipped <- inherits(built@layout$coord, "CoordFlip")
-  list(settings = settings, panels = panels, rows = max(vapply(panels, `[[`, numeric(1), "row")),
+  list(settings = settings, panels = panels, bare = isTRUE(built@plot@meta$hairline_bare),
+       aspect = panel_aspect(built), rows = max(vapply(panels, `[[`, numeric(1), "row")),
        columns = max(vapply(panels, `[[`, numeric(1), "col")), title = plot_label(built, "title"),
        subtitle = plot_label(built, "subtitle"), caption = plot_label(built, "caption"),
        y_title = plot_label(built, if (flipped) "x" else "y"), x_title = plot_label(built, if (flipped) "y" else "x"),

@@ -9,7 +9,8 @@ hairline_plot <- S7::new_class("hairline_plot", parent = ggplot2::class_ggplot, 
                                })
 
 hairline_theme <- S7::new_class("hairline_theme", package = "hairline",
-                                properties = list(elements = S7::class_any, settings = S7::class_any))
+                                properties = list(elements = S7::class_any, settings = S7::class_any,
+                                                  axes = S7::class_logical))
 
 #' hairline theme and frame
 #'
@@ -19,13 +20,24 @@ hairline_theme <- S7::new_class("hairline_theme", package = "hairline",
 #'
 #' @param base_size Body text size in pt; `NULL` uses the active setting.
 #' @param font Font family; `NULL` uses the active setting.
+#' @param axes `FALSE` draws panels without axes, ticks, grid or baseline (donut, Sankey and the like);
+#'   with `coord_fixed()` the plot area keeps its shape, centred in the panel.
 #' @return An object to add to a ggplot with `+`.
 #' @export
-theme_hairline <- function(base_size = NULL, font = NULL) {
+theme_hairline <- function(base_size = NULL, font = NULL, axes = TRUE) {
   settings <- hl_settings()
   if (!is.null(base_size)) settings[c("base_size", "base_size_explicit")] <- list(as.numeric(base_size), TRUE)
   if (!is.null(font)) settings$font <- resolve_family(font)
-  hairline_theme(elements = theme_hairline_elements(settings), settings = settings)
+  theme_object(settings, axes)
+}
+
+theme_object <- function(settings, axes = TRUE) {
+  elements <- theme_hairline_elements(settings)
+  if (!isTRUE(axes)) {
+    blank <- ggplot2::element_blank()
+    elements <- elements + ggplot2::theme(axis.text = blank, axis.ticks = blank, axis.line = blank, panel.grid = blank)
+  }
+  hairline_theme(elements = elements, settings = settings, axes = isTRUE(axes))
 }
 
 update_hairline_plot <- function(object, plot, ...) {
@@ -34,6 +46,7 @@ update_hairline_plot <- function(object, plot, ...) {
   plot <- ggplot2::update_ggplot(ggplot2::theme(axis.line.x = ggplot2::element_blank()), plot, ...)
   if (!S7::S7_inherits(plot, hairline_plot)) plot <- hairline_plot(plot)
   plot@meta$hairline_settings <- object@settings
+  plot@meta$hairline_bare <- !object@axes
   plot
 }
 

@@ -113,7 +113,8 @@ def compute_frame(spec: FrameInput, metrics: FontMetrics) -> FrameLayout:
     spacing, line_gap = tokens["spacing"], tokens["type"]["line_gap"]
     left = spacing["margin"] * spec.base_size
     layout = FrameLayout(left=left, right=spec.width_pt - left,
-                         plot_left=left + spec.y_label_width_pt + spacing["y_labels_plot"] * spec.base_size)
+                         plot_left=left + (spec.y_label_width_pt + spacing["y_labels_plot"] * spec.base_size
+                                           if spec.y_labels else 0.0))
     stack = Stack(0.0, metrics, line_gap)
     place_header(stack, spec, layout, spacing)
     height = panel_height(spec, stack.y, spacing, metrics, line_gap)

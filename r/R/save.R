@@ -37,7 +37,7 @@ saved_settings <- function(plot, size) {
 plot_for_size <- function(plot, size) {
   if (!S7::S7_inherits(plot, hairline_plot)) return(plot)
   settings <- saved_settings(plot, size)
-  plot + hairline_theme(elements = theme_hairline_elements(settings), settings = settings)
+  plot + theme_object(settings, axes = !isTRUE(plot@meta$hairline_bare))
 }
 
 format_device <- function(format, path, size_mm, dpi, background) {

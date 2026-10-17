@@ -39,6 +39,7 @@ class FrameInput:
     x_title: bool = False
     x_tick_labels: bool = True
     y_label_width_pt: float = 0.0
+    y_labels: bool = True
     column_label_widths: tuple[float, ...] = ()
     x_tick_rows: tuple[bool, ...] = ()
 

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from hairline.errors import HairlineLayoutError
 from hairline.focus import apply_entity_colors, apply_highlight, focus_legend_items, place_reference_labels
 from hairline.layout.axes_style import configure_ticks, data_interval, label_width, set_tick_visibility
+from hairline.layout.bare import fitted_box
 from hairline.layout.draw import add_text
 from hairline.layout.frame import compute_frame
 from hairline.layout.geometry import FrameInput, FrameLayout, load_font_metrics
@@ -40,10 +41,14 @@ def grid_position(figure: HairlineFigure, index: int) -> tuple[int, int]:
 
 
 def shows_x_labels(figure: HairlineFigure, index: int) -> bool:
+    if index in figure.bare_panels:
+        return False
     return not figure.sharex or index + figure.columns >= len(figure.axes)
 
 
 def shows_y_labels(figure: HairlineFigure, index: int) -> bool:
+    if index in figure.bare_panels:
+        return False
     return not figure.sharey or grid_position(figure, index)[1] == 0
 
 
@@ -75,6 +80,9 @@ def tick_interval(figure: HairlineFigure, index: int, which: str) -> tuple[float
 def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
     labels = []
     for index, ax in enumerate(figure.axes):
+        if index in figure.bare_panels:
+            labels.append([])
+            continue
         for which in ("y", "x"):
             percent = which == "y" and index in figure.percent_axes
             result = configure_ticks(ax, which, tick_interval(figure, index, which), percent,
@@ -116,6 +124,10 @@ def x_tick_rows(figure: HairlineFigure) -> tuple[bool, ...]:
     return tuple(row in showing for row in range(rows))
 
 
+def first_column_has_axes(figure: HairlineFigure) -> bool:
+    return any(index not in figure.bare_panels for index in range(0, len(figure.axes), figure.columns))
+
+
 def frame_input(figure: HairlineFigure, measured: Measured, size: tuple[float, float], legend_rows: int,
                 header_lines: tuple[int, ...]) -> FrameInput:
     settings = figure.settings
@@ -126,7 +138,8 @@ def frame_input(figure: HairlineFigure, measured: Measured, size: tuple[float, f
                       legend_rows=legend_rows, caption_lines=len(measured.caption), panel_rows=rows,
                       panel_columns=figure.columns, panel_header_lines=header_lines,
                       y_title=figure.y_title_text is not None, x_title=figure.x_title_text is not None,
-                      x_tick_labels=True, y_label_width_pt=measured.y_label_width,
+                      x_tick_labels=measured.x_tick_rows[-1], y_labels=first_column_has_axes(figure),
+                      y_label_width_pt=measured.y_label_width,
                       column_label_widths=measured.column_label_widths, x_tick_rows=measured.x_tick_rows)
 
 
@@ -176,11 +189,16 @@ def position_axes(figure: HairlineFigure, layout: FrameLayout, size: tuple[float
     settings = figure.settings
     y_pad = load_tokens()["spacing"]["y_labels_plot"] * settings.base_size
     x_pad = load_tokens()["spacing"]["x_tick_pad"] * role_size(settings, "label")
+    figure.plot_boxes = []
     for index, ax in enumerate(figure.axes):
-        box = layout.panels[index]
+        box = fitted_box(layout.panels[index], figure.bare_panels.get(index))
+        figure.plot_boxes.append(box)
         ax.set_position((box.x / size[0], 1 - (box.y + box.height) / size[1], box.width / size[0],
                          box.height / size[1]))
-        set_tick_visibility(ax, shows_x_labels(figure, index), shows_y_labels(figure, index), y_pad, x_pad)
+        if index in figure.bare_panels:
+            ax.set_axis_off()
+        else:
+            set_tick_visibility(ax, shows_x_labels(figure, index), shows_y_labels(figure, index), y_pad, x_pad)
 
 
 def draw_lines(figure: HairlineFigure, x: float, baselines: list[float], lines: list[str], role: str) -> list:
@@ -228,6 +246,8 @@ def build_report(figure: HairlineFigure, layout: FrameLayout, measured: Measured
     data["legend_labels"] = [entry.item.label for entry in placed]
     data["panel_header_lines"] = [composed[index].lines if index in composed else 0
                                   for index in range(len(figure.axes))]
+    data["bare_panels"] = sorted(figure.bare_panels)
+    data["plot_boxes"] = [[box.x, box.y, box.width, box.height] for box in figure.plot_boxes]
     data["panel_letters"] = [chr(ord("A") + index) for index in sorted(composed)] if figure.panel_letters else []
     return round_report(data)
 

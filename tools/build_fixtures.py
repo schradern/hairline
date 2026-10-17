@@ -100,6 +100,8 @@ FRAME_CASES = [
      "y_label_width_pt": 14, "column_label_widths": [14, 22.5], "x_tick_rows": [True, True]},
     {"width_pt": 493, "height_pt": 420, "subtitle_lines": 1, "panel_rows": 2, "panel_columns": 3,
      "panel_header_lines": [1, 1], "y_label_width_pt": 12, "x_tick_rows": [True, True]},
+    {"width_pt": 482, "height_pt": 361, "subtitle_lines": 1, "caption_lines": 1, "y_labels": False,
+     "x_tick_labels": False},
 ]
 
 
