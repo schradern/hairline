@@ -139,5 +139,6 @@ hl_forest <- function(data, study = "study", estimate = "estimate", low = "low",
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title, subtitle = subtitle, caption = note, x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- TRUE
   plot
 }

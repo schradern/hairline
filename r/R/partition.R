@@ -104,5 +104,6 @@ hl_partition <- function(data, levels, value = NULL, title = NULL, subtitle = NU
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
     theme_hairline(axes = FALSE) + hl_legend(items)
   plot@meta$hairline_drawing <- function(box, measure, style) partition_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- TRUE
   plot
 }

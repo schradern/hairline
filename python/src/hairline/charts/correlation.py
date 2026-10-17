@@ -10,6 +10,7 @@ import pandas as pd
 
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.correlation_geometry import correlation_drawing
+from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_number
 from hairline.palettes import ramp
@@ -54,4 +55,4 @@ def correlation(data: pd.DataFrame, columns: Sequence[str] | None = None, *, met
     locale = current_settings().locale
     result.legend([("square", ramp_color(value), format_number(value, 0 if value == int(value) else 1, locale))
                    for value in load_tokens()["correlation"]["key"]])
-    return result
+    return fit_height(result)

@@ -149,6 +149,19 @@ def bias_rows() -> list[dict]:
             for index in range(12)]
 
 
+STAGES = ["Emergency", "Theatre", "ICU", "Step-down", "Ward", "Rehabilitation", "Home"]
+
+
+def pathway_rows(rng: np.random.Generator) -> list[dict]:
+    """Patient moves along a care pathway; most go one or two stages on."""
+    rows = []
+    for _ in range(420):
+        start = int(rng.integers(0, 5))
+        end = min(len(STAGES) - 1, start + int(rng.choice([1, 2, 3], p=[0.6, 0.3, 0.1])))
+        rows.append({"origin": STAGES[start], "destination": STAGES[end]})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -170,6 +183,7 @@ def main() -> None:
     write("patients.csv", patient_rows(rng))
     write("funnel.csv", funnel_rows(rng))
     write("bias.csv", bias_rows())
+    write("pathways.csv", pathway_rows(rng))
 
 
 if __name__ == "__main__":

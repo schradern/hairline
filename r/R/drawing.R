@@ -20,16 +20,17 @@ shape_grob <- function(shape, height, settings) {
   if (shape$kind == "polygon") {
     points <- shape_points(shape)
     return(grid::polygonGrob(grid::unit(points[, 1], "pt"), grid::unit(height - points[, 2], "pt"),
-                             gp = grid::gpar(fill = shape$fill, col = NA, alpha = shape$alpha %||% 1)))
+                             gp = grid::gpar(fill = shape$fill, col = shape$edge %||% NA, alpha = shape$alpha %||% 1,
+                                             lwd = (shape$edge_width %||% 0) / 0.75, linejoin = "mitre")))
   }
   if (shape$kind == "line") {
     points <- shape_points(shape)
     return(grid::linesGrob(grid::unit(points[, 1], "pt"), grid::unit(height - points[, 2], "pt"),
                            gp = grid::gpar(col = shape$color, lwd = shape$width / 0.75, lineend = "butt",
-                                           linejoin = "mitre", lty = shape_dash(shape))))
+                                           linejoin = "round", lty = shape_dash(shape), alpha = shape$alpha %||% 1)))
   }
   style <- role_style(settings, shape$role, shape$weight, shape$color)
-  text_grob_pt(shape$text, shape$x, shape$y, style, height, shape$align)
+  text_grob_pt(shape$text, shape$x, shape$y, style, height, shape$align, shape$rotation %||% 0)
 }
 
 shape_dash <- function(shape) {
@@ -50,4 +51,31 @@ drawing_grobs <- function(shapes, height, settings) lapply(shapes, shape_grob, h
 
 drawing_texts <- function(shapes) {
   lapply(Filter(function(shape) shape$kind == "text", shapes), function(shape) c(shape$x, shape$y))
+}
+
+content_bottom <- function(shapes, style) {
+  max(vapply(shapes, function(shape) {
+    if (shape$kind == "text") {
+      return(shape$y + if (is.null(shape$rotation)) style$descender * style$sizes[[shape$role]] else 0)
+    }
+    max(shape_points(shape)[, 2])
+  }, numeric(1)))
+}
+
+# Charts drawn from shapes that set plot@meta$hairline_fit_height get a figure height that ends where their content
+# ends (shorter, or taller when it overflows), as the Python package's fit_height() does.
+fitted_size_mm <- function(plot, size_mm) {
+  if (!isTRUE(plot@meta$hairline_fit_height)) return(size_mm)
+  path <- tempfile(fileext = ".png")
+  ragg::agg_png(path, width = size_mm[1], height = size_mm[2], units = "mm", res = 72)
+  on.exit({
+    grDevices::dev.off()
+    unlink(path)
+  })
+  frame <- ggplot2::ggplotGrob(plot)
+  if (!inherits(frame, "hairline_frame")) return(size_mm)
+  plan <- plan_frame(frame$parts, size_mm / 25.4 * 72)
+  box <- fitted_box(plan$layout$panels[[1]], frame$parts$aspect)
+  slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(frame$parts$settings))
+  c(size_mm[1], size_mm[2] - slack / 72 * 25.4)
 }

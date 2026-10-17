@@ -159,7 +159,8 @@ def forest_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     heading = box.y + style["cap_height"] * size
     top = heading + line - style["cap_height"] * size + rules["rule_gap"] * base
     count = len(spec["rows"]) + (1 + rules["pooled_gap"] if spec["pooled"] else 0)
-    reserve = rules["axis_gap"] * base * 2 + 2 * line + rules["favours_gap"] * base
+    favours = line + rules["favours_gap"] * base if spec["favours"] and spec["null"] is not None else 0.0
+    reserve = 2 * rules["axis_gap"] * base + (style["cap_height"] + style["descender"]) * size + favours
     pitch = min(rules["row_pitch"] * line, (box.y + box.height - top - reserve) / count)
     centres, pooled_centre = row_centres(spec, top, pitch, rules)
     bottom = top + pitch * count

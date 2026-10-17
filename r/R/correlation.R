@@ -77,5 +77,6 @@ hl_correlation <- function(data, columns = NULL, method = "pearson", title = NUL
     ggplot2::labs(title = title %||% paste(tools::toTitleCase(method), "correlations"), subtitle = subtitle,
                   caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE) + hl_legend(key)
   plot@meta$hairline_drawing <- function(box, measure, style) correlation_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- TRUE
   plot
 }

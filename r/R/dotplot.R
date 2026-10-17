@@ -35,5 +35,6 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
     ggplot2::labs(title = title %||% paste(humanise(estimate), "by", gsub("_", " ", label)), subtitle = subtitle,
                   caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- TRUE
   plot
 }

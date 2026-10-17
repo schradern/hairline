@@ -10,6 +10,7 @@ from hairline.charts.common import humanise, joined, with_counts
 from hairline.charts.donut import donut_rings
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
 from hairline.color.vision import contrast
+from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -86,4 +87,4 @@ def partition(data: pd.DataFrame, levels: Sequence[str], value: str | None = Non
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: partition_drawing(spec, box, measure, style))
     result.legend([("square", segment["color"], segment["name"]) for segment in spec["rings"][0]])
-    return result
+    return fit_height(result)

@@ -39,9 +39,9 @@ role_style <- function(settings, role, weight = NULL, colour = NULL) {
        colour = colour %||% settings$neutral[[definition$color]])
 }
 
-text_grob_pt <- function(text, x, baseline, style, height, align = "left") {
+text_grob_pt <- function(text, x, baseline, style, height, align = "left", rotation = 0) {
   grid::textGrob(text, x = grid::unit(x, "pt"), y = grid::unit(height - baseline, "pt"),
-                 hjust = switch(align, right = 1, center = 0.5, 0), vjust = 0,
+                 hjust = switch(align, right = 1, center = 0.5, 0), vjust = 0, rot = rotation,
                  gp = grid::gpar(fontfamily = style_family(style), fontsize = style$size, col = style$colour,
                                  fontface = if (style$weight >= 600) "bold" else "plain"))
 }

@@ -7,6 +7,7 @@ import pandas as pd
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.forest import forest_spec
 from hairline.charts.forest_geometry import forest_drawing
+from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.settings import current_settings
 
@@ -30,4 +31,4 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     result = figure(title or f"{humanise(estimate)} by {str(label).replace('_', ' ')}", subtitle=subtitle,
                     caption=caption, size=size)
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))
-    return result
+    return fit_height(result)

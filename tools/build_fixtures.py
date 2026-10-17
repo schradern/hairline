@@ -16,6 +16,8 @@ import numpy as np
 import pandas as pd
 
 from hairline.brand import load_brand
+from hairline.charts.arcs import arcs_spec
+from hairline.charts.arcs_geometry import arcs_drawing
 from hairline.charts.common import fold_other
 from hairline.charts.correlation import correlation_spec
 from hairline.charts.correlation_geometry import correlation_drawing
@@ -27,6 +29,8 @@ from hairline.charts.funnel import funnel_spec
 from hairline.charts.funnel_geometry import funnel_drawing
 from hairline.charts.labels import spread_labels
 from hairline.charts.partition import partition_drawing
+from hairline.charts.prisma import prisma_spec
+from hairline.charts.prisma_geometry import prisma_drawing
 from hairline.charts.raincloud import bracket_levels
 from hairline.charts.risk_of_bias import risk_of_bias_spec
 from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
@@ -363,6 +367,28 @@ def meta_review_cases() -> dict:
                              "shapes": risk_of_bias_drawing(spec, box, fake_measure, DRAWING_STYLE)}}
 
 
+PRISMA_COUNTS = {"identified": 1240, "registers": 85, "duplicates": 260, "automation": 45, "screened": 1020,
+                 "excluded": 900, "sought": 120, "not_retrieved": 10, "assessed": 110,
+                 "excluded_reasons": {"Wrong population": 40, "Wrong intervention": 31, "No control group": 21},
+                 "included": 18, "reports": 22}
+
+
+def flow_cases() -> dict:
+    use(brand=False)
+    box = Box(20, 60, 440, 400)
+    transfers = pd.DataFrame({"origin": ["ED", "ED", "ED", "Ward", "ICU", "ICU", "Ward", "Theatre"],
+                              "destination": ["ICU", "Ward", "ICU", "ICU", "Ward", "Home", "Home", "ICU"]})
+    crowded = pd.DataFrame({"origin": [f"Department of medicine {index}" for index in range(8)],
+                            "destination": [f"Department of medicine {(index + 3) % 8}" for index in range(8)]})
+    arc_specs = [arcs_spec(transfers, "origin", "destination", None), arcs_spec(crowded, "origin", "destination", None)]
+    prisma = prisma_spec(PRISMA_COUNTS)
+    return {"box": [box.x, box.y, box.width, box.height], "prisma": {"counts": PRISMA_COUNTS, "spec": prisma,
+            "shapes": prisma_drawing(prisma, box, fake_measure, DRAWING_STYLE)},
+            "arcs": [{"data": data.to_dict(orient="list"), "spec": spec,
+                      "shapes": arcs_drawing(spec, box, fake_measure, DRAWING_STYLE)}
+                     for data, spec in zip((transfers, crowded), arc_specs, strict=True)]}
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -383,6 +409,7 @@ def main() -> int:
     write("survival.json", survival_cases())
     write("density.json", density_cases())
     write("statistics.json", statistics_cases())
+    write("flows.json", {"style": DRAWING_STYLE, **flow_cases()})
     write("meta_review.json", {"style": DRAWING_STYLE, **meta_review_cases()})
     write("correlation.json", {"style": DRAWING_STYLE, "cases": correlation_cases()})
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})

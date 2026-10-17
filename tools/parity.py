@@ -20,7 +20,8 @@ FIGURES = ["theme_scatter", "occupancy_rows", "grid_panels", "brand_example", "d
            "sankey_budget",
            "bars_admissions", "dotplot_rates", "scatter_fit",
            "correlation_patients", "funnel_trials",
-           "risk_of_bias_trials"]
+           "risk_of_bias_trials", "prisma_review",
+           "arcs_pathways"]
 TOLERANCE_PT = 1.0
 
 

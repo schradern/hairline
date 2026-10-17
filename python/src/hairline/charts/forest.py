@@ -9,6 +9,7 @@ import pandas as pd
 
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
+from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_interval, format_number, format_percent
 from hairline.settings import current_settings
@@ -109,4 +110,4 @@ def forest(data, study: str = "study", estimate: str = "estimate", low: str = "l
     note = ". ".join(part.rstrip(".") for part in (heterogeneity, caption) if part)
     result = figure(title, subtitle=subtitle, caption=note + "." if note else None, size=size)
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))
-    return result
+    return fit_height(result)

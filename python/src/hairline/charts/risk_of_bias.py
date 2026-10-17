@@ -8,6 +8,7 @@ import pandas as pd
 
 from hairline.charts.common import check_columns
 from hairline.charts.risk_of_bias_geometry import JUDGEMENTS, risk_of_bias_drawing
+from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.tokens import load_tokens
 
@@ -58,4 +59,4 @@ def risk_of_bias(data: pd.DataFrame, study: str, domain: str | None = None, judg
     result.draw(0, lambda box, measure, style: risk_of_bias_drawing(spec, box, measure, style))
     labels = load_tokens()["risk_of_bias"]["labels"]
     result.legend([("square", spec["colors"][level], labels[level]) for level in JUDGEMENTS])
-    return result
+    return fit_height(result)

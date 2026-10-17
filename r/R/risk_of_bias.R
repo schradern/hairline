@@ -117,5 +117,6 @@ hl_risk_of_bias <- function(data, study, domain = NULL, judgement = NULL, domain
     ggplot2::labs(title = title %||% "Risk of bias", subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
     theme_hairline(axes = FALSE) + hl_legend(key)
   plot@meta$hairline_drawing <- function(box, measure, style) risk_of_bias_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- TRUE
   plot
 }

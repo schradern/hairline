@@ -49,7 +49,8 @@ forest_drawing <- function(spec, box, measure, style) {
   heading <- box[2] + style$cap_height * size
   top <- heading + line - style$cap_height * size + rules$rule_gap * base
   count <- length(spec$rows) + if (is.null(spec$pooled)) 0 else 1 + rules$pooled_gap
-  reserve <- rules$axis_gap * base * 2 + 2 * line + rules$favours_gap * base
+  favours <- if (!is.null(spec$favours) && !is.null(spec$null)) line + rules$favours_gap * base else 0
+  reserve <- 2 * rules$axis_gap * base + (style$cap_height + style$descender) * size + favours
   pitch <- min(rules$row_pitch * line, (box[2] + box[4] - top - reserve) / count)
   bottom <- top + pitch * count
   sides <- forest_sides(spec, rules, base)

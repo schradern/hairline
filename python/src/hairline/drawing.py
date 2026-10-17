@@ -45,15 +45,20 @@ def render_shape(figure: HairlineFigure, shape: dict):
     fig = figure.figure
     if shape["kind"] == "polygon":
         artist = Polygon(shape["points"], closed=True, transform=pt_transform(fig), facecolor=shape["fill"],
-                         edgecolor="none", linewidth=0, alpha=shape.get("alpha", 1.0))
+                         edgecolor=shape.get("edge", "none"), linewidth=shape.get("edge_width", 0),
+                         alpha=shape.get("alpha", 1.0), joinstyle="miter")
     elif shape["kind"] == "line":
         xs, ys = zip(*shape["points"], strict=True)
         artist = Line2D(xs, ys, transform=pt_transform(fig), color=shape["color"], linewidth=shape["width"],
                         linestyle=(0, tuple(shape["dash"])) if shape.get("dash") else "-", solid_capstyle="butt",
-                        solid_joinstyle="miter")
+                        solid_joinstyle="round", alpha=shape.get("alpha", 1.0))
     else:
         style = role_style(figure.settings, shape["role"], shape.get("weight"), shape["color"])
-        return add_text(fig, shape["x"], shape["y"], shape["text"], style, shape["align"])
+        artist = add_text(fig, shape["x"], shape["y"], shape["text"], style, shape["align"])
+        if shape.get("rotation"):
+            artist.set_rotation(shape["rotation"])
+            artist.set_rotation_mode("anchor")
+        return artist
     artist.set_figure(fig)
     artist.set_in_layout(False)
     return artist
@@ -70,3 +75,25 @@ def run_drawings(figure: HairlineFigure) -> list:
 
 def text_positions(figure: HairlineFigure) -> list[list[float]]:
     return [[shape["x"], shape["y"]] for shape in figure.shapes if shape["kind"] == "text"]
+
+
+def content_bottom(shapes: list[dict], style: dict) -> float:
+    """Lowest point the shapes reach: outlines, and texts down to their descenders (rotated texts at their anchor)."""
+    bottoms = []
+    for shape in shapes:
+        if shape["kind"] == "text":
+            descent = 0.0 if shape.get("rotation") else style["descender"] * style["sizes"][shape["role"]]
+            bottoms.append(shape["y"] + descent)
+        else:
+            bottoms.append(max(point[1] for point in shape["points"]))
+    return max(bottoms)
+
+
+def fit_height(figure: HairlineFigure) -> HairlineFigure:
+    """Resize the figure so its drawn panel ends where the content ends (shorter, or taller when it overflows)."""
+    figure.figure.canvas.draw()
+    box = figure.plot_boxes[0]
+    slack = box.y + box.height - content_bottom(figure.shapes, drawing_style(figure.settings))
+    width, height = figure.figure.get_size_inches()
+    figure.figure.set_size_inches(width, height - slack / 72)
+    return figure

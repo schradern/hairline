@@ -10,10 +10,10 @@
 #' @return A named list.
 #' @export
 hl_layout_report <- function(plot, width_mm = NULL, height_mm = NULL, size = "onehalf") {
-  size_mm <- figure_size_mm(size, width_mm, height_mm)
+  plot <- plot_for_size(plot, size)
+  size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm))
   width_mm <- size_mm[1]
   height_mm <- size_mm[2]
-  plot <- plot_for_size(plot, size)
   path <- tempfile(fileext = ".png")
   ragg::agg_png(path, width = width_mm, height = height_mm, units = "mm", res = 72)
   on.exit({
