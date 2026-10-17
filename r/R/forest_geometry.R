@@ -76,15 +76,24 @@ forest_table_texts <- function(spec, columns, baseline, row, style) {
   shapes
 }
 
-forest_marks <- function(row, centre, scale, plot, side, colour, style) {
+forest_marker <- function(x, centre, side, shape, colour) {
+  half <- side / 2
+  if (identical(shape, "dot")) {
+    angles <- 2 * pi * (0:23) / 24
+    return(list(kind = "polygon", fill = colour, role = "dot",
+                points = cbind(x + half * cos(angles), centre + half * sin(angles))))
+  }
+  list(kind = "polygon", fill = colour, role = "square",
+       points = rbind(c(x - half, centre - half), c(x + half, centre - half), c(x + half, centre + half),
+                      c(x - half, centre + half)))
+}
+
+forest_marks <- function(row, centre, scale, plot, side, spec, style) {
   left <- max(plot[1], scale(row$low))
   right <- min(plot[2], scale(row$high))
-  x <- scale(row$estimate)
-  half <- side / 2
-  list(list(kind = "line", points = rbind(c(left, centre), c(right, centre)), color = colour, width = style$data_width),
-       list(kind = "polygon", fill = colour, role = "square",
-            points = rbind(c(x - half, centre - half), c(x + half, centre - half), c(x + half, centre + half),
-                           c(x - half, centre + half))))
+  list(list(kind = "line", points = rbind(c(left, centre), c(right, centre)), color = spec$color,
+            width = style$data_width),
+       forest_marker(scale(row$estimate), centre, side, spec$marker %||% "square", spec$color))
 }
 
 forest_sides <- function(spec, rules, base) {

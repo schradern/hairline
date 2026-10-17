@@ -263,7 +263,9 @@ def forest_cases() -> dict:
     pooled = {"estimate": 0.72, "low": 0.58, "high": 0.89, "label": "Pooled"}
     specs = [forest_spec(data, "study", "est", "low", "high", weight="weight", columns={"n": "n"}, pooled=pooled,
                          favours=["Favours A", "Favours B"], color="#2474cf"),
-             forest_spec(differences, "study", "est", "low", "high", ratio=False, color="#2474cf")]
+             forest_spec(differences, "study", "est", "low", "high", ratio=False, color="#2474cf"),
+             forest_spec(data.assign(low=data["est"], high=data["est"]), "study", "est", "low", "high", ratio=False,
+                         color="#2474cf", marker="dot", interval=False, null=None)]
     box = Box(20, 60, 460, 230)
     return {"breaks": [{"low": low, "high": high, "breaks": log_breaks(low, high)} for low, high in LOG_RANGES],
             "cases": [{"spec": spec, "box": [box.x, box.y, box.width, box.height],

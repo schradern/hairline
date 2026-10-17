@@ -20,11 +20,11 @@ def decimals(values: Sequence[float]) -> int:
     return next((digits for digits in range(4) if all(abs(round(value, digits) - value) < 1e-9 for value in values)), 3)
 
 
-def forest_axis(lows: list[float], highs: list[float], ratio: bool, locale: str) -> dict:
+def forest_axis(lows: list[float], highs: list[float], ratio: bool, locale: str, null: float | None) -> dict:
     """Breaks covering every interval and the null line: 1-2-5 on a log scale for ratios (each label with its own
     decimals: 0.2, 0.5, 1, 2), nice breaks with shared decimals otherwise."""
-    null = 1.0 if ratio else 0.0
-    low, high = min(lows + [null]), max(highs + [null])
+    anchors = [] if null is None else [null]
+    low, high = min(lows + anchors), max(highs + anchors)
     breaks = log_breaks(low, high, load_tokens()["forest"]["max_ticks"]) if ratio else nice_breaks(low, high)
     limits = (breaks[0], breaks[-1]) if ratio else axis_limits(low, high, breaks)
     shared = decimals(breaks)
@@ -42,14 +42,18 @@ def check_rows(data: pd.DataFrame, study: str, low: str, high: str, ratio: bool)
                              "pass ratio=False for differences")
 
 
+def effect_text(estimate: float, low: float, high: float, interval: bool, digits: int, locale: str) -> str:
+    return format_interval(estimate, low, high, digits, locale) if interval else format_number(estimate, digits, locale)
+
+
 def forest_rows(data: pd.DataFrame, names: tuple[str, str, str, str], weight: str | None,
-                columns: Mapping[str, str], digits: int, locale: str) -> list[dict]:
+                columns: Mapping[str, str], digits: int, locale: str, interval: bool = True) -> list[dict]:
     study, estimate, low, high = names
     total = float(data[weight].sum()) if weight else None
     return [{"study": str(row[study]), "estimate": float(row[estimate]), "low": float(row[low]),
              "high": float(row[high]), "weight": float(row[weight]) if weight else None,
              "cells": [str(row[column]) for column in columns.values()],
-             "effect_text": format_interval(row[estimate], row[low], row[high], digits, locale),
+             "effect_text": effect_text(row[estimate], row[low], row[high], interval, digits, locale),
              "weight_text": format_percent(row[weight] / total, 1, locale) if weight else None}
             for _, row in data.iterrows()]
 
@@ -57,22 +61,24 @@ def forest_rows(data: pd.DataFrame, names: tuple[str, str, str, str], weight: st
 def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: str, *, weight: str | None = None,
                 columns: Mapping[str, str] | None = None, pooled: Mapping | None = None, ratio: bool = True,
                 favours: Sequence[str] | None = None, color: str, study_heading: str = "Study",
-                effect_heading: str = "Effect [95 % CI]", weight_heading: str = "Weight", digits: int = 2) -> dict:
+                effect_heading: str = "Effect [95 % CI]", weight_heading: str = "Weight", digits: int = 2,
+                marker: str = "square", interval: bool = True, null: float | None | str = "auto") -> dict:
     """Everything the geometry needs, with numbers already formatted for the active locale."""
     columns = dict(columns or {})
     check_columns(data, [study, estimate, low, high, weight, *columns.values()])
     check_rows(data, study, low, high, ratio)
     locale = current_settings().locale
-    rows = forest_rows(data, (study, estimate, low, high), weight, columns, digits, locale)
+    rows = forest_rows(data, (study, estimate, low, high), weight, columns, digits, locale, interval)
     pooled_spec = None if pooled is None else {
         "label": pooled.get("label", "Pooled"), "estimate": pooled["estimate"], "low": pooled["low"],
         "high": pooled["high"], "effect_text": format_interval(pooled["estimate"], pooled["low"], pooled["high"],
                                                                 digits, locale)}
     extra = [pooled_spec] if pooled_spec else []
-    axis = forest_axis([row["low"] for row in rows + extra], [row["high"] for row in rows + extra], ratio, locale)
-    return {"rows": rows, "columns": list(columns), "pooled": pooled_spec, "ratio": ratio, "null": 1 if ratio else 0,
+    null = (1 if ratio else 0) if null == "auto" else null
+    axis = forest_axis([row["low"] for row in rows + extra], [row["high"] for row in rows + extra], ratio, locale, null)
+    return {"rows": rows, "columns": list(columns), "pooled": pooled_spec, "ratio": ratio, "null": null,
             "favours": list(favours) if favours else None, "axis": axis, "color": color, "study_heading": study_heading,
-            "effect_heading": effect_heading, "weight_heading": weight_heading if weight else None}
+            "effect_heading": effect_heading, "weight_heading": weight_heading if weight else None, "marker": marker}
 
 
 def model_table(model, exponentiate: bool) -> pd.DataFrame:

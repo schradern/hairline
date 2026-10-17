@@ -1,7 +1,7 @@
 forest_fixture <- function() read_fixture("forest.json")
 
 numeric_spec <- function(spec) {
-  for (field in c("null")) spec[[field]] <- as.numeric(spec[[field]])
+  if (!is.null(spec$null)) spec$null <- as.numeric(spec$null)
   spec$axis$breaks <- as.numeric(unlist(spec$axis$breaks))
   spec$axis$labels <- as.character(unlist(spec$axis$labels))
   spec

@@ -84,15 +84,25 @@ def table_texts(spec: dict, columns: dict, baseline: float, row: dict | None, st
     return shapes
 
 
-def interval_marks(row: dict, centre: float, scale, plot: tuple[float, float], side: float, color: str,
-                   style: dict) -> list[dict]:
-    """Interval line clipped to the plot, and the square centred on the estimate."""
-    left, right = max(plot[0], scale(row["low"])), min(plot[1], scale(row["high"]))
-    x, half = scale(row["estimate"]), side / 2
+def marker(x: float, centre: float, side: float, shape: str, color: str) -> dict:
+    """A square of side `side`, or a dot of that diameter (24-point polygon)."""
+    half = side / 2
+    if shape == "dot":
+        points = [[x + half * math.cos(2 * math.pi * step / 24), centre + half * math.sin(2 * math.pi * step / 24)]
+                  for step in range(24)]
+        return {"kind": "polygon", "points": points, "fill": color, "role": "dot"}
     square = [[x - half, centre - half], [x + half, centre - half], [x + half, centre + half],
               [x - half, centre + half]]
-    return [{"kind": "line", "points": [[left, centre], [right, centre]], "color": color, "width": style["data_width"]},
-            {"kind": "polygon", "points": square, "fill": color, "role": "square"}]
+    return {"kind": "polygon", "points": square, "fill": color, "role": "square"}
+
+
+def interval_marks(row: dict, centre: float, scale, plot: tuple[float, float], side: float, spec: dict,
+                   style: dict) -> list[dict]:
+    """Interval line clipped to the plot, and the marker centred on the estimate."""
+    left, right = max(plot[0], scale(row["low"])), min(plot[1], scale(row["high"]))
+    line = {"kind": "line", "points": [[left, centre], [right, centre]], "color": spec["color"],
+            "width": style["data_width"]}
+    return [line, marker(scale(row["estimate"]), centre, side, spec.get("marker", "square"), spec["color"])]
 
 
 def square_sides(spec: dict, rules: dict, base: float) -> list[float]:
@@ -118,7 +128,7 @@ def axis_shapes(spec: dict, scale, plot: tuple[float, float], y: float, style: d
     tick_baseline = y + rules["axis_gap"] * base + style["cap_height"] * size
     for value, label in zip(spec["axis"]["breaks"], spec["axis"]["labels"], strict=True):
         shapes.append({**text(scale(value), tick_baseline, label, "label", neutral["muted"], "center"), "part": "tick"})
-    if spec["favours"]:
+    if spec["favours"] and spec["null"] is not None:
         gap, null = rules["favours_gap"] * base, scale(spec["null"])
         baseline = tick_baseline + line_height(style, "label") + gap
         shapes += [{**text(null - gap, baseline, spec["favours"][0], "label", neutral["muted"], "right"),
@@ -156,9 +166,10 @@ def forest_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     shapes = table_texts(spec, columns, heading, None, style) + [rule(columns["study"], columns["weight"], top, style)]
     for row, centre, side in zip(spec["rows"], centres, square_sides(spec, rules, base), strict=True):
         shapes += table_texts(spec, columns, baseline_for(centre, style, "label"), row, style)
-        shapes += interval_marks(row, centre, scale, columns["plot"], side, spec["color"], style)
-    shapes.append({"kind": "line", "points": [[scale(spec["null"]), top], [scale(spec["null"]), bottom]],
-                   "color": style["neutral"]["muted"], "width": style["leader_width"], "part": "null"})
+        shapes += interval_marks(row, centre, scale, columns["plot"], side, spec, style)
+    if spec["null"] is not None:
+        shapes.append({"kind": "line", "points": [[scale(spec["null"]), top], [scale(spec["null"]), bottom]],
+                       "color": style["neutral"]["muted"], "width": style["leader_width"], "part": "null"})
     if spec["pooled"]:
         shapes += pooled_shapes(spec, columns, top, bottom, pitch, pooled_centre, scale, style, rules)
     return shapes + axis_shapes(spec, scale, columns["plot"], bottom + rules["axis_gap"] * base, style, rules)

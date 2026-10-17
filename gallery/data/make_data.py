@@ -94,6 +94,29 @@ def budget_rows() -> list[dict]:
             for income, account, spending, euros in BUDGET]
 
 
+DIAGNOSES = ["Sepsis", "Pneumonia", "Trauma", "Stroke", "Cardiac arrest", "Pancreatitis"]
+
+
+def admission_rows(rng: np.random.Generator) -> list[dict]:
+    diagnoses = rng.choice(DIAGNOSES, 420, p=[0.28, 0.24, 0.18, 0.14, 0.1, 0.06])
+    sexes = rng.choice(["Female", "Male"], 420)
+    return [{"diagnosis": str(name), "sex": str(sex)} for name, sex in zip(diagnoses, sexes, strict=True)]
+
+
+UNIT_RATES = [("Medical", 132, 1010), ("Surgical", 74, 880), ("Neurological", 61, 410), ("Cardiac", 38, 520),
+              ("Burns", 9, 64), ("Paediatric", 6, 230)]
+
+
+def rate_rows() -> list[dict]:
+    rows = []
+    for unit, deaths, patients in UNIT_RATES:
+        share = deaths / patients
+        spread = 1.96 * math.sqrt(share * (1 - share) / patients)
+        rows.append({"unit": unit, "mortality": round(share, 4), "low": round(max(share - spread, 0), 4),
+                     "high": round(share + spread, 4)})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -110,6 +133,8 @@ def main() -> None:
     write("meta.csv", meta_rows())
     write("stays.csv", stay_rows(rng))
     write("budget.csv", budget_rows())
+    write("admissions.csv", admission_rows(rng))
+    write("rates.csv", rate_rows())
 
 
 if __name__ == "__main__":

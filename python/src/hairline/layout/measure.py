@@ -1,4 +1,4 @@
-"""Measure and wrap text in pt with a dedicated 72-dpi renderer (1 px = 1 pt)."""
+"""Measure and wrap text in pt with a dedicated renderer at 100 times 72 dpi, so glyph advances are not rounded."""
 
 from __future__ import annotations
 
@@ -8,11 +8,12 @@ from matplotlib.backends.backend_agg import RendererAgg
 from matplotlib.font_manager import FontProperties
 
 POINTS_PER_INCH = 72
+MEASURE_SCALE = 100
 
 
 @lru_cache(maxsize=1)
 def measuring_renderer() -> RendererAgg:
-    return RendererAgg(16, 16, POINTS_PER_INCH)
+    return RendererAgg(16, 16, POINTS_PER_INCH * MEASURE_SCALE)
 
 
 def font(family: str, size: float, weight: int = 400) -> FontProperties:
@@ -25,7 +26,7 @@ def text_width(text: str, family: str, size: float, weight: int = 400) -> float:
     if not text:
         return 0.0
     width, _, _ = measuring_renderer().get_text_width_height_descent(text, font(family, size, weight), ismath=False)
-    return float(width)
+    return float(width) / MEASURE_SCALE
 
 
 def wrap(text: str, family: str, size: float, weight: int, max_width: float) -> list[str]:

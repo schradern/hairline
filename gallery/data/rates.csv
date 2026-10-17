@@ -1,0 +1,7 @@
+unit,mortality,low,high
+Medical,0.1307,0.1099,0.1515
+Surgical,0.0841,0.0658,0.1024
+Neurological,0.1488,0.1143,0.1832
+Cardiac,0.0731,0.0507,0.0954
+Burns,0.1406,0.0555,0.2258
+Paediatric,0.0261,0.0055,0.0467

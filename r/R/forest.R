@@ -6,8 +6,7 @@ forest_decimals <- function(values) {
   3
 }
 
-forest_axis <- function(lows, highs, ratio) {
-  null <- if (ratio) 1 else 0
+forest_axis <- function(lows, highs, ratio, null) {
   low <- min(c(lows, null))
   high <- max(c(highs, null))
   breaks <- if (ratio) log_breaks(low, high, hl_tokens()$forest$max_ticks) else nice_breaks(low, high)
@@ -31,32 +30,36 @@ forest_check_rows <- function(data, study, low, high, ratio) {
   }
 }
 
-forest_rows <- function(data, study, estimate, low, high, weight, columns, digits) {
+forest_rows <- function(data, study, estimate, low, high, weight, columns, digits, interval = TRUE) {
   total <- if (is.null(weight)) NULL else sum(data[[weight]])
   lapply(seq_len(nrow(data)), function(index) {
     row <- data[index, , drop = FALSE]
     list(study = as.character(row[[study]]), estimate = row[[estimate]], low = row[[low]], high = row[[high]],
          weight = if (is.null(weight)) NULL else row[[weight]],
          cells = lapply(unname(columns), function(column) as.character(row[[column]])),
-         effect_text = hl_format_interval(row[[estimate]], row[[low]], row[[high]], digits),
+         effect_text = if (interval) hl_format_interval(row[[estimate]], row[[low]], row[[high]], digits) else
+           hl_format_number(row[[estimate]], digits),
          weight_text = if (is.null(weight)) NULL else hl_format_percent(row[[weight]] / total, 1))
   })
 }
 
 forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns = character(), pooled = NULL,
                         ratio = TRUE, favours = NULL, colour, study_heading = "Study",
-                        effect_heading = "Effect [95 % CI]", weight_heading = "Weight", digits = 2) {
+                        effect_heading = "Effect [95 % CI]", weight_heading = "Weight", digits = 2,
+                        marker = "square", interval = TRUE, null = "auto") {
   check_columns(data, c(study, estimate, low, high, weight, unname(columns)))
   forest_check_rows(data, study, low, high, ratio)
-  rows <- forest_rows(data, study, estimate, low, high, weight, columns, digits)
+  rows <- forest_rows(data, study, estimate, low, high, weight, columns, digits, interval)
+  if (identical(null, "auto")) null <- if (ratio) 1 else 0
   if (!is.null(pooled)) {
     pooled <- list(label = pooled$label %||% "Pooled", estimate = pooled$estimate, low = pooled$low,
                    high = pooled$high,
                    effect_text = hl_format_interval(pooled$estimate, pooled$low, pooled$high, digits))
   }
   intervals <- c(rows, if (is.null(pooled)) list() else list(pooled))
-  axis <- forest_axis(vapply(intervals, `[[`, numeric(1), "low"), vapply(intervals, `[[`, numeric(1), "high"), ratio)
-  list(rows = rows, columns = as.list(names(columns)), pooled = pooled, ratio = ratio, null = if (ratio) 1 else 0,
+  axis <- forest_axis(vapply(intervals, `[[`, numeric(1), "low"), vapply(intervals, `[[`, numeric(1), "high"), ratio,
+                      null)
+  list(rows = rows, columns = as.list(names(columns)), pooled = pooled, ratio = ratio, null = null, marker = marker,
        favours = if (is.null(favours)) NULL else as.list(favours), axis = axis, color = colour,
        study_heading = study_heading, effect_heading = effect_heading,
        weight_heading = if (is.null(weight)) NULL else weight_heading)

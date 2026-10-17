@@ -11,7 +11,7 @@ forest_axis_shapes <- function(spec, scale, plot, y, style, rules) {
                        "center")
     shapes[[length(shapes) + 1]] <- c(tick, part = "tick")
   }
-  if (!is.null(spec$favours)) {
+  if (!is.null(spec$favours) && !is.null(spec$null)) {
     gap <- rules$favours_gap * base
     null <- scale(spec$null)
     baseline <- tick_baseline + line_height(style, "label") + gap
@@ -59,11 +59,13 @@ forest_drawing <- function(spec, box, measure, style) {
     centre <- top + pitch * (index - 0.5)
     shapes <- c(shapes, forest_table_texts(spec, columns, baseline_for(centre, style, "label"), spec$rows[[index]],
                                            style),
-                forest_marks(spec$rows[[index]], centre, scale, columns$plot, sides[index], spec$color, style))
+                forest_marks(spec$rows[[index]], centre, scale, columns$plot, sides[index], spec, style))
   }
-  null <- scale(spec$null)
-  shapes[[length(shapes) + 1]] <- list(kind = "line", points = rbind(c(null, top), c(null, bottom)),
-                                       color = style$neutral$muted, width = style$leader_width, part = "null")
+  if (!is.null(spec$null)) {
+    null <- scale(spec$null)
+    shapes[[length(shapes) + 1]] <- list(kind = "line", points = rbind(c(null, top), c(null, bottom)),
+                                         color = style$neutral$muted, width = style$leader_width, part = "null")
+  }
   if (!is.null(spec$pooled)) {
     centre <- top + pitch * (length(spec$rows) + 0.5) + rules$pooled_gap * pitch
     shapes <- c(shapes, forest_pooled_shapes(spec, columns, top, bottom, pitch, centre, scale, style, rules))

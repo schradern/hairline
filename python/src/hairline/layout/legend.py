@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from matplotlib.collections import PathCollection
 from matplotlib.colors import to_hex
+from matplotlib.container import BarContainer
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
@@ -42,6 +43,8 @@ def item_from_handle(handle: object, label: str) -> LegendItem | None:
         return LegendItem("dot", to_hex(handle.get_facecolor()[0]), label)
     if isinstance(handle, Patch):
         return LegendItem("square", to_hex(handle.get_facecolor()), label)
+    if isinstance(handle, BarContainer) and len(handle.patches):
+        return LegendItem("square", to_hex(handle.patches[0].get_facecolor()), label)
     return None
 
 
