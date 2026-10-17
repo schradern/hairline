@@ -25,12 +25,15 @@ def label_offset(figure: HairlineFigure) -> float:
 
 
 def table_label_width(figure: HairlineFigure) -> float:
-    """Room the row labels need left of the plot, measured like the y tick labels."""
+    """Room left of the plot for the row labels plus half of a value centred on the plot's left edge."""
     if figure.table_spec is None:
         return 0.0
     style = role_style(figure.settings, "label")
-    widest = max(text_width(label, style["family"], style["size"]) for label, _, _ in figure.table_spec["rows"])
-    return label_offset(figure) + widest
+    rows = figure.table_spec["rows"]
+    widest = max(text_width(label, style["family"], style["size"]) for label, _, _ in rows)
+    values = max((text_width(text, style["family"], style["size"]) for _, _, items in rows for _, text in items),
+                 default=0.0)
+    return label_offset(figure) + widest + values / 2
 
 
 def value_x(figure: HairlineFigure, value: float) -> float:

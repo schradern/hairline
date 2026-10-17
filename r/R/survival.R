@@ -26,20 +26,21 @@ km_estimate <- function(time, event) {
   time <- as.numeric(time)
   event <- as.numeric(event)
   km_check_inputs(time, event)
-  moments <- sort(unique(time))
   survival <- 1
   variance <- 0
-  rows <- lapply(moments, function(moment) {
+  rows <- list()
+  for (moment in sort(unique(time))) {
     at_risk <- sum(time >= moment)
     events <- sum(time == moment & event == 1)
     if (events > 0) {
-      survival <<- survival * (1 - events / at_risk)
-      variance <<- variance + if (at_risk > events) events / (at_risk * (at_risk - events)) else Inf
+      survival <- survival * (1 - events / at_risk)
+      variance <- variance + if (at_risk > events) events / (at_risk * (at_risk - events)) else Inf
     }
     limits <- km_band(survival, variance)
-    data.frame(time = moment, at_risk = at_risk, events = events, censored = sum(time == moment & event == 0),
-               survival = survival, low = limits[1], high = limits[2])
-  })
+    rows[[length(rows) + 1]] <- data.frame(time = moment, at_risk = at_risk, events = events,
+                                           censored = sum(time == moment & event == 0), survival = survival,
+                                           low = limits[1], high = limits[2])
+  }
   do.call(rbind, rows)
 }
 

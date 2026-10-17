@@ -12,8 +12,10 @@ table_label_offset <- function(settings) {
 table_label_width <- function(parts) {
   if (is.null(parts$table)) return(0)
   style <- role_style(parts$settings, "label")
-  table_label_offset(parts$settings) + max(vapply(parts$table$rows, function(row) text_width_pt(row$label, style),
-                                                  numeric(1)))
+  rows <- parts$table$rows
+  widest <- max(vapply(rows, function(row) text_width_pt(row$label, style), numeric(1)))
+  values <- max(c(0, unlist(lapply(rows, function(row) vapply(row$text, text_width_pt, numeric(1), style = style)))))
+  table_label_offset(parts$settings) + widest + values / 2
 }
 
 table_value_xs <- function(parts, plan) {

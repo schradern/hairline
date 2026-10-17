@@ -489,5 +489,13 @@
     "max_bar": 3.2,
     "label_pad": 0.4,
     "gap_pt": 2
+  },
+  "survival": {
+    "band_opacity": 0.15,
+    "censor_tick": 0.6,
+    "median_dash": [
+      1,
+      2
+    ]
   }
 }

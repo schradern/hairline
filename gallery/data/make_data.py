@@ -53,6 +53,17 @@ def discharge_rows() -> list[dict]:
     return [{"route": route, "detail": detail, "patients": patients} for route, detail, patients in DISCHARGE]
 
 
+def trial_rows(rng: np.random.Generator) -> list[dict]:
+    """Two arms, exponential survival with censoring; follow-up capped at 60 months."""
+    rows = []
+    for arm, scale in (("Standard care", 11.0), ("Early mobilisation", 18.0)):
+        for _ in range(90):
+            death, censor = rng.exponential(scale), rng.uniform(6, 80)
+            months = min(death, censor, 60.0)
+            rows.append({"arm": arm, "months": round(max(months, 0.1), 1), "died": int(death <= min(censor, 60.0))})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -65,6 +76,7 @@ def main() -> None:
     write("occupancy.csv", occupancy_rows(rng))
     write("scatter.csv", scatter_rows(rng))
     write("discharge.csv", discharge_rows())
+    write("trial.csv", trial_rows(rng))
 
 
 if __name__ == "__main__":
