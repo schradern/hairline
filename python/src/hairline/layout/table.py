@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from hairline.layout.axes_style import edge_alignment
 from hairline.layout.draw import add_rect, add_text
 from hairline.layout.geometry import FrameLayout, load_font_metrics
 from hairline.layout.measure import text_width
@@ -58,5 +59,7 @@ def draw_table(figure: HairlineFigure, layout: FrameLayout) -> list:
         artists.append(add_text(figure.figure, layout.left + label_offset(figure), baseline, name, label))
         for value, content in values:
             figure.table_value_xs.append(value_x(figure, value))
-            artists.append(add_text(figure.figure, figure.table_value_xs[-1], baseline, content, ink, "center"))
+            low, high = figure.axes[0].get_xlim()
+            artists.append(add_text(figure.figure, figure.table_value_xs[-1], baseline, content, ink,
+                                    edge_alignment((value - low) / (high - low))))
     return artists

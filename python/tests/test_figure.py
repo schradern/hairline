@@ -193,3 +193,14 @@ def test_x_tick_target_depends_on_columns(columns, expected):
     from hairline.layout.ticking import tick_target
     figure = hl.figure("T", size="double", panels=columns * 2, layout="grid", columns=columns)
     assert tick_target(figure, "x") == expected
+
+
+def test_edge_tick_labels_align_inward():
+    figure = hl.figure("T")
+    figure.ax.plot([0, 10], [0, 1])
+    figure.figure.canvas.draw()
+    locs = figure.ax.xaxis.get_majorticklocs()
+    ticks = figure.ax.xaxis.get_major_ticks(len(locs))
+    alignments = [tick.label1.get_horizontalalignment() for tick in ticks]
+    assert alignments[0] == "left" and alignments[-1] == "right"
+    assert set(alignments[1:-1]) == {"center"}

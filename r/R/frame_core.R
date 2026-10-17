@@ -8,6 +8,25 @@ neighbour_grob <- function(table, prefix, panel_t, panel_l, side) {
   if (length(cell) == 0) ggplot2::zeroGrob() else table$grobs[[cell[1]]]
 }
 
+edge_hjust <- function(offsets) {
+  tolerance <- hl_tokens()$ticks$edge_tolerance
+  ifelse(offsets <= tolerance, 0, ifelse(offsets >= 1 - tolerance, 1, 0.5))
+}
+
+# Labels at the plot's left or right edge align inward, as in the Python package.
+align_edge_labels <- function(grob) {
+  if (inherits(grob, "text") && length(grob$label) > 0) {
+    grob$hjust <- edge_hjust(as.numeric(grob$x))
+    return(grob)
+  }
+  if (inherits(grob, "gtable")) {
+    grob$grobs <- lapply(grob$grobs, align_edge_labels)
+  } else if (length(grob$children)) {
+    grob <- grid::setChildren(grob, do.call(grid::gList, lapply(grob$children, align_edge_labels)))
+  }
+  grob
+}
+
 facet_labels <- function(built) {
   facet <- built@layout$layout
   facet <- facet[order(facet$ROW, facet$COL), , drop = FALSE]
@@ -31,7 +50,7 @@ extract_panels <- function(table, built) {
     cell <- cells[layout$t[cells] == t & layout$l[cells] == l][1]
     list(grob = table$grobs[[cell]], row = facets$rows[index], col = facets$cols[index],
          label = facets$labels[[index]], axis_l = neighbour_grob(table, "axis-l", t, l, "left"),
-         axis_b = neighbour_grob(table, "axis-b", t, l, "below"))
+         axis_b = align_edge_labels(neighbour_grob(table, "axis-b", t, l, "below")))
   })
 }
 

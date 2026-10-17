@@ -12,6 +12,7 @@ from matplotlib.ticker import FixedLocator, FuncFormatter, ScalarFormatter
 from hairline.layout.measure import text_width
 from hairline.numbers import format_number, format_percent
 from hairline.ticks import axis_limits, month_breaks, month_label, nice_breaks
+from hairline.tokens import load_tokens
 
 
 def decimals_for(step: float) -> int:
@@ -90,6 +91,19 @@ def configure_ticks(ax: Axes, which: str, interval: tuple[float, float] | None, 
 
 def label_width(labels: list[str], family: str, size: float) -> float:
     return max((text_width(label, family, size) for label in labels), default=0.0)
+
+
+def edge_alignment(offset: float) -> str:
+    """Labels at the plot's left or right edge align inward, so they stay clear of the y labels and the margin."""
+    tolerance = load_tokens()["ticks"]["edge_tolerance"]
+    return "left" if offset <= tolerance else "right" if offset >= 1 - tolerance else "center"
+
+
+def align_edge_labels(ax: Axes) -> None:
+    low, high = ax.get_xlim()
+    locations = ax.xaxis.get_majorticklocs()
+    for tick, location in zip(ax.xaxis.get_major_ticks(len(locations)), locations, strict=True):
+        tick.label1.set_horizontalalignment(edge_alignment((location - low) / (high - low)))
 
 
 def set_tick_visibility(ax: Axes, show_x: bool, show_y: bool, y_pad: float, x_pad: float) -> None:

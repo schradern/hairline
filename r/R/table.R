@@ -34,6 +34,7 @@ table_grobs <- function(parts, plan) {
   baselines <- plan$layout$table_baselines
   label <- role_style(settings, "label")
   ink <- role_style(settings, "label", colour = settings$neutral$ink)
+  range <- parts$x_ranges[[1]]
   grobs <- list()
   if (!is.null(table$heading)) {
     grobs[[1]] <- text_grob_pt(table$heading, left, baselines[1], label, height)
@@ -55,7 +56,9 @@ table_grobs <- function(parts, plan) {
     grobs <- c(grobs, list(text_grob_pt(row$label, left + table_label_offset(settings), baselines[index], label,
                                         height)),
                lapply(seq_along(row$text), function(item) {
-                 text_grob_pt(row$text[item], xs[[index]][item], baselines[index], ink, height, "center")
+                 align <- c("left", "right", "center")[match(edge_hjust((row$x[item] - range[1]) / diff(range)),
+                                                             c(0, 1, 0.5))]
+                 text_grob_pt(row$text[item], xs[[index]][item], baselines[index], ink, height, align)
                }))
   }
   grobs

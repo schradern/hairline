@@ -417,7 +417,8 @@
       12
     ],
     "overshoot_low": 0.1,
-    "overshoot_high": 0.2
+    "overshoot_high": 0.2,
+    "edge_tolerance": 0.005
   },
   "focus": {
     "context": "#b3b8be",

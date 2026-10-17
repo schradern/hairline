@@ -85,3 +85,23 @@ test_that("x tick target follows the panel columns", {
   breaks <- stats::na.omit(ggplot2::ggplot_build(plot)@layout$panel_scales_x[[1]]$get_breaks())
   expect_length(breaks, 3)
 })
+
+test_that("edge tick labels align inward", {
+  hl_use(brand = FALSE)
+  plot <- ggplot2::ggplot(data.frame(x = c(0, 10), y = c(0, 1)), ggplot2::aes(x, y)) + ggplot2::geom_line() +
+    theme_hairline()
+  find_text <- function(grob) {
+    if (inherits(grob, "text")) return(grob)
+    kids <- if (inherits(grob, "gtable")) grob$grobs else grob$children
+    for (kid in kids) {
+      found <- find_text(kid)
+      if (!is.null(found)) return(found)
+    }
+    NULL
+  }
+  labels <- find_text(ggplot2::ggplotGrob(plot)$parts$panels[[1]]$axis_b)
+  hjust <- rep_len(labels$hjust, length(labels$label))
+  expect_equal(hjust[1], 0)
+  expect_equal(hjust[length(hjust)], 1)
+  expect_true(all(hjust[-c(1, length(hjust))] == 0.5))
+})

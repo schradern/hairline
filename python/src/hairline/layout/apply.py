@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from hairline.drawing import run_drawings, text_positions
 from hairline.errors import HairlineLayoutError
 from hairline.focus import apply_entity_colors, apply_highlight, focus_legend_items, place_reference_labels
-from hairline.layout.axes_style import label_width, set_tick_visibility
+from hairline.layout.axes_style import align_edge_labels, label_width, set_tick_visibility
 from hairline.layout.bare import fitted_box
 from hairline.layout.draw import add_text
 from hairline.layout.frame import compute_frame
@@ -162,6 +162,7 @@ def position_axes(figure: HairlineFigure, layout: FrameLayout, size: tuple[float
             ax.set_axis_off()
         else:
             set_tick_visibility(ax, shows_x_labels(figure, index), shows_y_labels(figure, index), y_pad, x_pad)
+            align_edge_labels(ax)
 
 
 def draw_lines(figure: HairlineFigure, x: float, baselines: list[float], lines: list[str], role: str) -> list:
