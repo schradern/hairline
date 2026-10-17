@@ -54,11 +54,11 @@ child_ring <- function(data, levels, value, parents, total) {
   ring
 }
 
-donut_rings <- function(data, label, value, levels = NULL) {
+donut_rings <- function(data, label, value, levels = NULL, chart = "donut") {
   levels <- levels %||% label
   check_columns(data, c(levels, value))
   if (length(levels) > hl_tokens()$donut$max_levels) {
-    stop(sprintf("hairline: donut: %d levels given (%s); at most 3 levels fit", length(levels),
+    stop(sprintf("hairline: %s: %d levels given (%s); at most 3 levels fit", chart, length(levels),
                  paste(levels, collapse = ", ")), call. = FALSE)
   }
   rings <- list(top_ring(data, levels[1], value, fold = length(levels) == 1))

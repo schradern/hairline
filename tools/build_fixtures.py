@@ -18,6 +18,7 @@ from hairline.charts.common import fold_other
 from hairline.charts.donut import donut_rings
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.charts.labels import spread_labels
+from hairline.charts.partition import partition_drawing
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklch
@@ -176,7 +177,7 @@ def chart_helper_cases() -> dict[str, list[dict]]:
                      for labels, values, keep in FOLD_CASES]}
 
 
-DRAWING_STYLE = {"base": 9.0, "sizes": {"title": 13.5, "label": 7.2, "caption": 7.2}, "line_gap": 0.25,
+DRAWING_STYLE = {"base": 9.0, "sizes": {"title": 13.5, "panel": 9.0, "label": 7.2, "caption": 7.2}, "line_gap": 0.25,
                  "cap_height": 0.7, "swatch": 0.85, "swatch_text": 0.5, "leader_width": 0.54,
                  "neutral": {"ink": "#1b1e22", "muted": "#5b6168", "faint": "#6f757d", "axis": "#c4c8cd",
                              "surface": "#ffffff"}}
@@ -207,6 +208,19 @@ def donut_cases() -> list[dict]:
     return cases
 
 
+def partition_cases() -> list[dict]:
+    use(brand=False)
+    data = pd.DataFrame({"route": ["Home", "Home", "Rehabilitation", "Rehabilitation", "Other ward", "Care home"],
+                         "detail": ["Alone", "With support", "Inpatient", "Outpatient", "Other ward", "Care home"],
+                         "n": [250, 162, 120, 48, 97, 54]})
+    cases = []
+    for levels, box in ((["route", "detail"], Box(20, 60, 440, 200)), (["route"], Box(0, 0, 160, 60))):
+        spec = {"rings": donut_rings(data, None, "n", levels), "levels": [level.title() for level in levels]}
+        cases.append({"spec": spec, "box": [box.x, box.y, box.width, box.height],
+                      "shapes": partition_drawing(spec, box, fake_measure, DRAWING_STYLE)})
+    return cases
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -224,6 +238,7 @@ def main() -> int:
     write("points.json", point_cases())
     write("chart_helpers.json", chart_helper_cases())
     write("donut.json", {"style": DRAWING_STYLE, "cases": donut_cases()})
+    write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     return 0
 
 

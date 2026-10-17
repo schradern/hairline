@@ -59,12 +59,13 @@ def child_ring(data: pd.DataFrame, levels: list[str], value: str, parents: list[
     return ring
 
 
-def donut_rings(data: pd.DataFrame, label: str | None, value: str, levels: Sequence[str] | None) -> list[list[dict]]:
+def donut_rings(data: pd.DataFrame, label: str | None, value: str, levels: Sequence[str] | None,
+                chart: str = "donut") -> list[list[dict]]:
     """Segments per ring, inner to outer; children follow their parent's order and use its tints."""
     levels = list(levels) if levels else [label]
     check_columns(data, levels + [value])
     if len(levels) > load_tokens()["donut"]["max_levels"]:
-        raise ValueError(f"hairline: donut: {len(levels)} levels given ({', '.join(levels)}); at most 3 levels fit")
+        raise ValueError(f"hairline: {chart}: {len(levels)} levels given ({', '.join(levels)}); at most 3 levels fit")
     rings = [top_ring(data, levels[0], value, fold=len(levels) == 1)]
     total = sum(item["value"] for item in rings[0])
     for depth in range(1, len(levels)):

@@ -481,5 +481,12 @@
     "ring_label_pad": 0.3,
     "max_slices": 7,
     "max_levels": 3
+  },
+  "partition": {
+    "heading_gap": 0.6,
+    "row_gap": 1.25,
+    "max_bar": 3.2,
+    "label_pad": 0.4,
+    "gap_pt": 2
   }
 }
