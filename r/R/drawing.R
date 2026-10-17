@@ -8,7 +8,8 @@ drawing_style <- function(settings) {
   list(base = base, sizes = lapply(stats::setNames(nm = names(tokens$type$roles)), role_size, settings = settings),
        line_gap = tokens$type$line_gap, cap_height = font_metrics()$cap_height, neutral = settings$neutral,
        swatch = tokens$spacing$legend_swatch_square, swatch_text = tokens$spacing$legend_swatch_text,
-       leader_width = tokens$reference$width * base)
+       leader_width = tokens$reference$width * base, data_width = tokens$lines$data * base,
+       axis_width = tokens$lines$axis * base, descender = font_metrics()$descender)
 }
 
 measure_for <- function(settings) {
@@ -25,10 +26,14 @@ shape_grob <- function(shape, height, settings) {
     points <- shape_points(shape)
     return(grid::linesGrob(grid::unit(points[, 1], "pt"), grid::unit(height - points[, 2], "pt"),
                            gp = grid::gpar(col = shape$color, lwd = shape$width / 0.75, lineend = "butt",
-                                           linejoin = "mitre")))
+                                           linejoin = "mitre", lty = shape_dash(shape))))
   }
   style <- role_style(settings, shape$role, shape$weight, shape$color)
   text_grob_pt(shape$text, shape$x, shape$y, style, height, shape$align)
+}
+
+shape_dash <- function(shape) {
+  if (is.null(shape$dash)) "solid" else paste(sprintf("%X", as.integer(unlist(shape$dash))), collapse = "")
 }
 
 shape_points <- function(shape) {

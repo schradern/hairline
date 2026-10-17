@@ -19,6 +19,8 @@ from hairline.brand import load_brand
 from hairline.charts.common import fold_other
 from hairline.charts.donut import donut_rings
 from hairline.charts.donut_geometry import donut_drawing
+from hairline.charts.forest import forest_spec
+from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.charts.labels import spread_labels
 from hairline.charts.partition import partition_drawing
 from hairline.color.adapt import adapt_readable
@@ -183,7 +185,8 @@ def chart_helper_cases() -> dict[str, list[dict]]:
 
 
 DRAWING_STYLE = {"base": 9.0, "sizes": {"title": 13.5, "panel": 9.0, "label": 7.2, "caption": 7.2}, "line_gap": 0.25,
-                 "cap_height": 0.7, "swatch": 0.85, "swatch_text": 0.5, "leader_width": 0.54,
+                 "cap_height": 0.7, "descender": 0.21, "swatch": 0.85, "swatch_text": 0.5, "leader_width": 0.54,
+                 "data_width": 1.26, "axis_width": 0.585,
                  "neutral": {"ink": "#1b1e22", "muted": "#5b6168", "faint": "#6f757d", "axis": "#c4c8cd",
                              "surface": "#ffffff"}}
 
@@ -242,6 +245,26 @@ def survival_cases() -> list[dict]:
     return cases
 
 
+LOG_RANGES = [(0.25, 1.58), (0.03, 40), (0.5, 2), (0.9, 1.1), (0.001, 0.4), (1, 1), (0.12, 9.5)]
+
+
+def forest_cases() -> dict:
+    use(brand=False)
+    data = pd.DataFrame({"study": ["Adams 2019", "Baker 2020", "Chen 2021", "Diaz 2022"],
+                         "est": [0.62, 0.81, 0.47, 1.05], "low": [0.41, 0.55, 0.25, 0.70],
+                         "high": [0.94, 1.19, 0.88, 1.58], "weight": [31.0, 27.0, 12.0, 30.0],
+                         "n": [120, 98, 45, 110]})
+    differences = data.assign(est=[-2.1, -0.8, -3.5, 0.6], low=[-3.9, -2.4, -6.8, -1.1], high=[-0.3, 0.8, -0.2, 2.3])
+    pooled = {"estimate": 0.72, "low": 0.58, "high": 0.89, "label": "Pooled"}
+    specs = [forest_spec(data, "study", "est", "low", "high", weight="weight", columns={"n": "n"}, pooled=pooled,
+                         favours=["Favours A", "Favours B"], color="#2474cf"),
+             forest_spec(differences, "study", "est", "low", "high", ratio=False, color="#2474cf")]
+    box = Box(20, 60, 460, 230)
+    return {"breaks": [{"low": low, "high": high, "breaks": log_breaks(low, high)} for low, high in LOG_RANGES],
+            "cases": [{"spec": spec, "box": [box.x, box.y, box.width, box.height],
+                       "shapes": forest_drawing(spec, box, fake_measure, DRAWING_STYLE)} for spec in specs]}
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -260,6 +283,7 @@ def main() -> int:
     write("chart_helpers.json", chart_helper_cases())
     write("donut.json", {"style": DRAWING_STYLE, "cases": donut_cases()})
     write("survival.json", survival_cases())
+    write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     return 0
 

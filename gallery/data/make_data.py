@@ -64,6 +64,16 @@ def trial_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+META = [("Adams 2019", 0.62, 0.41, 0.94, 31.0, "34 / 120"), ("Baker 2020", 0.81, 0.55, 1.19, 27.0, "29 / 98"),
+        ("Chen 2021", 0.47, 0.25, 0.88, 12.0, "11 / 45"), ("Diaz 2022", 1.05, 0.70, 1.58, 22.0, "37 / 110"),
+        ("Evans 2023", 0.69, 0.38, 1.25, 8.0, "9 / 52")]
+
+
+def meta_rows() -> list[dict]:
+    return [{"study": study, "or": estimate, "low": low, "high": high, "weight": weight, "events": events}
+            for study, estimate, low, high, weight, events in META]
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -77,6 +87,7 @@ def main() -> None:
     write("scatter.csv", scatter_rows(rng))
     write("discharge.csv", discharge_rows())
     write("trial.csv", trial_rows(rng))
+    write("meta.csv", meta_rows())
 
 
 if __name__ == "__main__":

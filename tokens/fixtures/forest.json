@@ -1,0 +1,1172 @@
+{
+ "style": {
+  "base": 9.0,
+  "sizes": {
+   "title": 13.5,
+   "panel": 9.0,
+   "label": 7.2,
+   "caption": 7.2
+  },
+  "line_gap": 0.25,
+  "cap_height": 0.7,
+  "descender": 0.21,
+  "swatch": 0.85,
+  "swatch_text": 0.5,
+  "leader_width": 0.54,
+  "data_width": 1.26,
+  "axis_width": 0.585,
+  "neutral": {
+   "ink": "#1b1e22",
+   "muted": "#5b6168",
+   "faint": "#6f757d",
+   "axis": "#c4c8cd",
+   "surface": "#ffffff"
+  }
+ },
+ "breaks": [
+  {
+   "low": 0.25,
+   "high": 1.58,
+   "breaks": [
+    0.2,
+    0.5,
+    1,
+    2
+   ]
+  },
+  {
+   "low": 0.03,
+   "high": 40,
+   "breaks": [
+    0.01,
+    0.1,
+    1,
+    10,
+    100
+   ]
+  },
+  {
+   "low": 0.5,
+   "high": 2,
+   "breaks": [
+    0.5,
+    1,
+    2
+   ]
+  },
+  {
+   "low": 0.9,
+   "high": 1.1,
+   "breaks": [
+    0.5,
+    1,
+    2
+   ]
+  },
+  {
+   "low": 0.001,
+   "high": 0.4,
+   "breaks": [
+    0.001,
+    0.01,
+    0.1,
+    1
+   ]
+  },
+  {
+   "low": 1,
+   "high": 1,
+   "breaks": [
+    1
+   ]
+  },
+  {
+   "low": 0.12,
+   "high": 9.5,
+   "breaks": [
+    0.1,
+    0.2,
+    0.5,
+    1,
+    2,
+    5,
+    10
+   ]
+  }
+ ],
+ "cases": [
+  {
+   "spec": {
+    "rows": [
+     {
+      "study": "Adams 2019",
+      "estimate": 0.62,
+      "low": 0.41,
+      "high": 0.94,
+      "weight": 31.0,
+      "cells": [
+       "120"
+      ],
+      "effect_text": "0.62 [0.41; 0.94]",
+      "weight_text": "31.0%"
+     },
+     {
+      "study": "Baker 2020",
+      "estimate": 0.81,
+      "low": 0.55,
+      "high": 1.19,
+      "weight": 27.0,
+      "cells": [
+       "98"
+      ],
+      "effect_text": "0.81 [0.55; 1.19]",
+      "weight_text": "27.0%"
+     },
+     {
+      "study": "Chen 2021",
+      "estimate": 0.47,
+      "low": 0.25,
+      "high": 0.88,
+      "weight": 12.0,
+      "cells": [
+       "45"
+      ],
+      "effect_text": "0.47 [0.25; 0.88]",
+      "weight_text": "12.0%"
+     },
+     {
+      "study": "Diaz 2022",
+      "estimate": 1.05,
+      "low": 0.7,
+      "high": 1.58,
+      "weight": 30.0,
+      "cells": [
+       "110"
+      ],
+      "effect_text": "1.05 [0.70; 1.58]",
+      "weight_text": "30.0%"
+     }
+    ],
+    "columns": [
+     "n"
+    ],
+    "pooled": {
+     "label": "Pooled",
+     "estimate": 0.72,
+     "low": 0.58,
+     "high": 0.89,
+     "effect_text": "0.72 [0.58; 0.89]"
+    },
+    "ratio": true,
+    "null": 1,
+    "favours": [
+     "Favours A",
+     "Favours B"
+    ],
+    "axis": {
+     "breaks": [
+      0.2,
+      0.5,
+      1,
+      2
+     ],
+     "labels": [
+      "0.2",
+      "0.5",
+      "1",
+      "2"
+     ],
+     "low": 0.2,
+     "high": 2
+    },
+    "color": "#2474cf",
+    "study_heading": "Study",
+    "effect_heading": "Effect [95 % CI]",
+    "weight_heading": "Weight"
+   },
+   "box": [
+    20,
+    60,
+    460,
+    230
+   ],
+   "shapes": [
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 65.04,
+     "text": "Study",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": 600
+    },
+    {
+     "kind": "text",
+     "x": 80.3,
+     "y": 65.04,
+     "text": "n",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": 600
+    },
+    {
+     "kind": "text",
+     "x": 444.9,
+     "y": 65.04,
+     "text": "Effect [95 % CI]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": 600
+    },
+    {
+     "kind": "text",
+     "x": 480,
+     "y": 65.04,
+     "text": "Weight",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": 600
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       20,
+       72.6
+      ],
+      [
+       480,
+       72.6
+      ]
+     ],
+     "color": "#c4c8cd",
+     "width": 0.54
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 83.66999999999999,
+     "text": "Adams 2019",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 80.3,
+     "y": 83.66999999999999,
+     "text": "120",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 444.9,
+     "y": 83.66999999999999,
+     "text": "0.62 [0.41; 0.94]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 480,
+     "y": 83.66999999999999,
+     "text": "31.0%",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       179.96876719581047,
+       81.14999999999999
+      ],
+      [
+       279.5678479334323,
+       81.14999999999999
+      ]
+     ],
+     "color": "#2474cf",
+     "width": 1.26
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       224.66237217579294,
+       76.19999999999999
+      ],
+      [
+       234.56237217579292,
+       76.19999999999999
+      ],
+      [
+       234.56237217579292,
+       86.1
+      ],
+      [
+       224.66237217579294,
+       86.1
+      ]
+     ],
+     "fill": "#2474cf",
+     "role": "square"
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 100.77,
+     "text": "Baker 2020",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 80.3,
+     "y": 100.77,
+     "text": "98",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 444.9,
+     "y": 100.77,
+     "text": "0.81 [0.55; 1.19]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 480,
+     "y": 100.77,
+     "text": "27.0%",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       215.2315565746846,
+       98.25
+      ],
+      [
+       307.8764893273711,
+       98.25
+      ]
+     ],
+     "color": "#2474cf",
+     "width": 1.26
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       257.08094861651034,
+       93.63038019997596
+      ],
+      [
+       266.32018821655845,
+       93.63038019997596
+      ],
+      [
+       266.32018821655845,
+       102.86961980002404
+      ],
+      [
+       257.08094861651034,
+       102.86961980002404
+      ]
+     ],
+     "fill": "#2474cf",
+     "role": "square"
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 117.86999999999999,
+     "text": "Chen 2021",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 80.3,
+     "y": 117.86999999999999,
+     "text": "45",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 444.9,
+     "y": 117.86999999999999,
+     "text": "0.47 [0.25; 0.88]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 480,
+     "y": 117.86999999999999,
+     "text": "12.0%",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       120.58592759542678,
+       115.35
+      ],
+      [
+       271.6503197807822,
+       115.35
+      ]
+     ],
+     "color": "#2474cf",
+     "width": 1.26
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       193.28341059855853,
+       112.27025346665063
+      ],
+      [
+       199.44290366525723,
+       112.27025346665063
+      ],
+      [
+       199.44290366525723,
+       118.42974653334936
+      ],
+      [
+       193.28341059855853,
+       118.42974653334936
+      ]
+     ],
+     "fill": "#2474cf",
+     "role": "square"
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 134.97,
+     "text": "Diaz 2022",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 80.3,
+     "y": 134.97,
+     "text": "110",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 444.9,
+     "y": 134.97,
+     "text": "1.05 [0.70; 1.58]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 480,
+     "y": 134.97,
+     "text": "30.0%",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       244.1804074584162,
+       132.45
+      ],
+      [
+       341.904128032678,
+       132.45
+      ]
+     ],
+     "color": "#2474cf",
+     "width": 1.26
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       287.9825246307106,
+       127.58049316930413
+      ],
+      [
+       297.7215382921023,
+       127.58049316930413
+      ],
+      [
+       297.7215382921023,
+       137.31950683069584
+      ],
+      [
+       287.9825246307106,
+       137.31950683069584
+      ]
+     ],
+     "fill": "#2474cf",
+     "role": "square"
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       286.9953091984756,
+       72.6
+      ],
+      [
+       286.9953091984756,
+       168.35999999999996
+      ]
+     ],
+     "color": "#5b6168",
+     "width": 0.54,
+     "part": "null"
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       20,
+       146.13
+      ],
+      [
+       480,
+       146.13
+      ]
+     ],
+     "color": "#c4c8cd",
+     "width": 0.54
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       247.56201121207818,
+       72.6
+      ],
+      [
+       247.56201121207818,
+       168.35999999999996
+      ]
+     ],
+     "color": "#6f757d",
+     "width": 0.54,
+     "dash": [
+      2,
+      2
+     ]
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       221.60680661927145,
+       159.80999999999997
+      ],
+      [
+       247.56201121207818,
+       154.85999999999999
+      ],
+      [
+       273.00670703512947,
+       159.80999999999997
+      ],
+      [
+       247.56201121207818,
+       164.75999999999996
+      ]
+     ],
+     "fill": "#1b1e22",
+     "role": "diamond"
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 162.32999999999998,
+     "text": "Pooled",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": 600
+    },
+    {
+     "kind": "text",
+     "x": 444.9,
+     "y": 162.32999999999998,
+     "text": "0.72 [0.58; 0.89]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       93.8,
+       171.05999999999995
+      ],
+      [
+       370.2,
+       171.05999999999995
+      ]
+     ],
+     "color": "#c4c8cd",
+     "width": 0.585
+    },
+    {
+     "kind": "text",
+     "x": 93.8,
+     "y": 178.79999999999993,
+     "text": "0.2",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    },
+    {
+     "kind": "text",
+     "x": 203.79061839695117,
+     "y": 178.79999999999993,
+     "text": "0.5",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    },
+    {
+     "kind": "text",
+     "x": 286.9953091984756,
+     "y": 178.79999999999993,
+     "text": "1",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    },
+    {
+     "kind": "text",
+     "x": 370.2,
+     "y": 178.79999999999993,
+     "text": "2",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    },
+    {
+     "kind": "text",
+     "x": 283.39530919847556,
+     "y": 191.39999999999992,
+     "text": "Favours A",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "right",
+     "weight": null,
+     "part": "favours"
+    },
+    {
+     "kind": "text",
+     "x": 290.5953091984756,
+     "y": 191.39999999999992,
+     "text": "Favours B",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "left",
+     "weight": null,
+     "part": "favours"
+    }
+   ]
+  },
+  {
+   "spec": {
+    "rows": [
+     {
+      "study": "Adams 2019",
+      "estimate": -2.1,
+      "low": -3.9,
+      "high": -0.3,
+      "weight": null,
+      "cells": [],
+      "effect_text": "−2.10 [−3.90; −0.30]",
+      "weight_text": null
+     },
+     {
+      "study": "Baker 2020",
+      "estimate": -0.8,
+      "low": -2.4,
+      "high": 0.8,
+      "weight": null,
+      "cells": [],
+      "effect_text": "−0.80 [−2.40; 0.80]",
+      "weight_text": null
+     },
+     {
+      "study": "Chen 2021",
+      "estimate": -3.5,
+      "low": -6.8,
+      "high": -0.2,
+      "weight": null,
+      "cells": [],
+      "effect_text": "−3.50 [−6.80; −0.20]",
+      "weight_text": null
+     },
+     {
+      "study": "Diaz 2022",
+      "estimate": 0.6,
+      "low": -1.1,
+      "high": 2.3,
+      "weight": null,
+      "cells": [],
+      "effect_text": "0.60 [−1.10; 2.30]",
+      "weight_text": null
+     }
+    ],
+    "columns": [],
+    "pooled": null,
+    "ratio": false,
+    "null": 0,
+    "favours": null,
+    "axis": {
+     "breaks": [
+      -7.5,
+      -5.0,
+      -2.5,
+      0.0,
+      2.5
+     ],
+     "labels": [
+      "−7.5",
+      "−5.0",
+      "−2.5",
+      "0.0",
+      "2.5"
+     ],
+     "low": -7.5,
+     "high": 2.5
+    },
+    "color": "#2474cf",
+    "study_heading": "Study",
+    "effect_heading": "Effect [95 % CI]",
+    "weight_heading": null
+   },
+   "box": [
+    20,
+    60,
+    460,
+    230
+   ],
+   "shapes": [
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 65.04,
+     "text": "Study",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": 600
+    },
+    {
+     "kind": "text",
+     "x": 480.0,
+     "y": 65.04,
+     "text": "Effect [95 % CI]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": 600
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       20,
+       72.6
+      ],
+      [
+       480,
+       72.6
+      ]
+     ],
+     "color": "#c4c8cd",
+     "width": 0.54
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 83.66999999999999,
+     "text": "Adams 2019",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 480.0,
+     "y": 83.66999999999999,
+     "text": "−2.10 [−3.90; −0.30]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       186.5,
+       81.14999999999999
+      ],
+      [
+       303.5,
+       81.14999999999999
+      ]
+     ],
+     "color": "#2474cf",
+     "width": 1.26
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       242.525,
+       78.675
+      ],
+      [
+       247.475,
+       78.675
+      ],
+      [
+       247.475,
+       83.62499999999999
+      ],
+      [
+       242.525,
+       83.62499999999999
+      ]
+     ],
+     "fill": "#2474cf",
+     "role": "square"
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 100.77,
+     "text": "Baker 2020",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 480.0,
+     "y": 100.77,
+     "text": "−0.80 [−2.40; 0.80]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       235.25,
+       98.25
+      ],
+      [
+       339.25,
+       98.25
+      ]
+     ],
+     "color": "#2474cf",
+     "width": 1.26
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       284.775,
+       95.775
+      ],
+      [
+       289.725,
+       95.775
+      ],
+      [
+       289.725,
+       100.725
+      ],
+      [
+       284.775,
+       100.725
+      ]
+     ],
+     "fill": "#2474cf",
+     "role": "square"
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 117.86999999999999,
+     "text": "Chen 2021",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 480.0,
+     "y": 117.86999999999999,
+     "text": "−3.50 [−6.80; −0.20]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       92.25,
+       115.35
+      ],
+      [
+       306.75,
+       115.35
+      ]
+     ],
+     "color": "#2474cf",
+     "width": 1.26
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       197.025,
+       112.875
+      ],
+      [
+       201.975,
+       112.875
+      ],
+      [
+       201.975,
+       117.82499999999999
+      ],
+      [
+       197.025,
+       117.82499999999999
+      ]
+     ],
+     "fill": "#2474cf",
+     "role": "square"
+    },
+    {
+     "kind": "text",
+     "x": 20,
+     "y": 134.97,
+     "text": "Diaz 2022",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "left",
+     "weight": null
+    },
+    {
+     "kind": "text",
+     "x": 480.0,
+     "y": 134.97,
+     "text": "0.60 [−1.10; 2.30]",
+     "role": "label",
+     "color": "#1b1e22",
+     "align": "right",
+     "weight": null
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       277.5,
+       132.45
+      ],
+      [
+       388.00000000000006,
+       132.45
+      ]
+     ],
+     "color": "#2474cf",
+     "width": 1.26
+    },
+    {
+     "kind": "polygon",
+     "points": [
+      [
+       330.275,
+       129.975
+      ],
+      [
+       335.225,
+       129.975
+      ],
+      [
+       335.225,
+       134.92499999999998
+      ],
+      [
+       330.275,
+       134.92499999999998
+      ]
+     ],
+     "fill": "#2474cf",
+     "role": "square"
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       313.25,
+       72.6
+      ],
+      [
+       313.25,
+       141.0
+      ]
+     ],
+     "color": "#5b6168",
+     "width": 0.54,
+     "part": "null"
+    },
+    {
+     "kind": "line",
+     "points": [
+      [
+       69.5,
+       143.7
+      ],
+      [
+       394.5,
+       143.7
+      ]
+     ],
+     "color": "#c4c8cd",
+     "width": 0.585
+    },
+    {
+     "kind": "text",
+     "x": 69.5,
+     "y": 151.43999999999997,
+     "text": "−7.5",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    },
+    {
+     "kind": "text",
+     "x": 150.75,
+     "y": 151.43999999999997,
+     "text": "−5.0",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    },
+    {
+     "kind": "text",
+     "x": 232.0,
+     "y": 151.43999999999997,
+     "text": "−2.5",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    },
+    {
+     "kind": "text",
+     "x": 313.25,
+     "y": 151.43999999999997,
+     "text": "0.0",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    },
+    {
+     "kind": "text",
+     "x": 394.5,
+     "y": 151.43999999999997,
+     "text": "2.5",
+     "role": "label",
+     "color": "#5b6168",
+     "align": "center",
+     "weight": null,
+     "part": "tick"
+    }
+   ]
+  }
+ ]
+}

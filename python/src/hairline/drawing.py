@@ -28,7 +28,9 @@ def drawing_style(settings: Settings) -> dict:
     return {"base": base, "sizes": {role: role_size(settings, role) for role in tokens["type"]["roles"]},
             "line_gap": tokens["type"]["line_gap"], "cap_height": load_font_metrics().cap_height,
             "neutral": dict(settings.neutral), "swatch": spacing["legend_swatch_square"],
-            "swatch_text": spacing["legend_swatch_text"], "leader_width": tokens["reference"]["width"] * base}
+            "swatch_text": spacing["legend_swatch_text"], "leader_width": tokens["reference"]["width"] * base,
+            "data_width": tokens["lines"]["data"] * base, "axis_width": tokens["lines"]["axis"] * base,
+            "descender": load_font_metrics().descender}
 
 
 def measure_for(settings: Settings):
@@ -46,7 +48,8 @@ def render_shape(figure: HairlineFigure, shape: dict):
     elif shape["kind"] == "line":
         xs, ys = zip(*shape["points"], strict=True)
         artist = Line2D(xs, ys, transform=pt_transform(fig), color=shape["color"], linewidth=shape["width"],
-                        solid_capstyle="butt", solid_joinstyle="miter")
+                        linestyle=(0, tuple(shape["dash"])) if shape.get("dash") else "-", solid_capstyle="butt",
+                        solid_joinstyle="miter")
     else:
         style = role_style(figure.settings, shape["role"], shape.get("weight"), shape["color"])
         return add_text(fig, shape["x"], shape["y"], shape["text"], style, shape["align"])

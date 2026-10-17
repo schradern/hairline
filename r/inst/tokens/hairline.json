@@ -497,5 +497,21 @@
       1,
       2
     ]
+  },
+  "forest": {
+    "column_gap": 1.5,
+    "row_pitch": 1.9,
+    "pooled_gap": 0.6,
+    "max_square": 1.1,
+    "min_square": 0.3,
+    "plain_square": 0.55,
+    "rule_gap": 0.4,
+    "axis_gap": 0.3,
+    "favours_gap": 0.4,
+    "max_ticks": 7,
+    "pooled_dash": [
+      2,
+      2
+    ]
   }
 }
