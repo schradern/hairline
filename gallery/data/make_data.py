@@ -82,6 +82,18 @@ def stay_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+BUDGET = [("Salary", "Joint account", "Rent", 1200), ("Salary", "Joint account", "Groceries", 420),
+          ("Salary", "Joint account", "Leisure", 260), ("Salary", "Savings", "Reserve", 400),
+          ("Salary", "Joint account", "Transport", 180), ("Child benefit", "Joint account", "Groceries", 160),
+          ("Child benefit", "Savings", "Reserve", 90), ("Side job", "Joint account", "Leisure", 140),
+          ("Side job", "Joint account", "Transport", 60), ("Side job", "Savings", "Reserve", 50)]
+
+
+def budget_rows() -> list[dict]:
+    return [{"income": income, "account": account, "spending": spending, "euros": euros}
+            for income, account, spending, euros in BUDGET]
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -97,6 +109,7 @@ def main() -> None:
     write("trial.csv", trial_rows(rng))
     write("meta.csv", meta_rows())
     write("stays.csv", stay_rows(rng))
+    write("budget.csv", budget_rows())
 
 
 if __name__ == "__main__":

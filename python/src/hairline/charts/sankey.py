@@ -1,0 +1,80 @@
+"""Sankey: flows through two or more columns, links coloured by the group of one column."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+
+import pandas as pd
+
+from hairline import entities
+from hairline.charts.common import check_columns
+from hairline.charts.sankey_geometry import sankey_drawing
+from hairline.figure import HairlineFigure, figure
+from hairline.numbers import format_number
+from hairline.settings import current_settings
+
+
+def check_paths(data: pd.DataFrame, columns: list[str], value: str) -> None:
+    if len(columns) < 2:
+        raise ValueError(f"hairline: sankey needs at least two columns; got {', '.join(columns) or 'none'}")
+    for _, row in data.iterrows():
+        if row[value] < 0:
+            raise ValueError(f"hairline: sankey: {' → '.join(str(row[column]) for column in columns)} has a negative "
+                             f"value ({row[value]}); flows need values of zero or more")
+
+
+def aggregate_links(data: pd.DataFrame, columns: list[str], value: str, group: str | None) -> list[dict]:
+    """One link per column pair, source, target and colour group, in order of first appearance."""
+    totals: dict[tuple, float] = {}
+    for _, row in data.iterrows():
+        for index in range(len(columns) - 1):
+            key = (index, str(row[columns[index]]), str(row[columns[index + 1]]), str(row[group]) if group else "")
+            totals[key] = totals.get(key, 0.0) + float(row[value])
+    return [{"column": index, "source": source, "target": target, "group": key_group, "value": amount}
+            for (index, source, target, key_group), amount in totals.items() if amount > 0]
+
+
+def column_nodes(data: pd.DataFrame, columns: list[str], links: list[dict], color_column: int | None) -> list:
+    settings, nodes = current_settings(), []
+    for index, column in enumerate(columns):
+        names = list(dict.fromkeys(str(name) for name in data[column]))
+        column_nodes = []
+        for name in names:
+            incoming = sum(link["value"] for link in links if link["column"] == index - 1 and link["target"] == name)
+            outgoing = sum(link["value"] for link in links if link["column"] == index and link["source"] == name)
+            amount = max(incoming, outgoing)
+            if amount > 0:
+                color = entities.color(name) if index == color_column else settings.neutral["muted"]
+                column_nodes.append({"name": name, "value": amount, "value_text": format_number(amount, 0),
+                                     "color": color})
+        nodes.append(column_nodes)
+    return nodes
+
+
+def sankey_spec(data: pd.DataFrame, columns: Sequence[str], value: str, *, color_by: str | None = None,
+                headings: Sequence[str] | None = None) -> dict:
+    """Nodes per column and links with colours and formatted values, ready for the geometry."""
+    columns = list(columns)
+    check_columns(data, columns + [value])
+    check_paths(data, columns, value)
+    group = None if color_by == "none" else (color_by or columns[-1])
+    if group is not None:
+        check_columns(data, [group])
+    links = aggregate_links(data, columns, value, group)
+    color_column = columns.index(group) if group in columns else None
+    nodes = column_nodes(data, columns, links, color_column)
+    faint = current_settings().neutral["faint"]
+    for link in links:
+        link["color"] = entities.color(link["group"]) if group else faint
+    groups = list(dict.fromkeys(link["group"] for link in links))
+    return {"headings": list(headings) if headings else columns, "nodes": nodes, "links": links, "groups": groups}
+
+
+def sankey(data: pd.DataFrame, columns: Sequence[str], value: str, *, title: str, subtitle: str | None = None,
+           caption: str | None = None, color_by: str | None = None, headings: Sequence[str] | None = None,
+           size: str = "onehalf") -> HairlineFigure:
+    """Flows from left to right through `columns`; links take the colour of their group in `color_by`."""
+    spec = sankey_spec(data, columns, value, color_by=color_by, headings=headings)
+    result = figure(title, subtitle=subtitle, caption=caption, size=size)
+    result.draw(0, lambda box, measure, style: sankey_drawing(spec, box, measure, style))
+    return result

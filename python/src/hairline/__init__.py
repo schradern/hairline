@@ -5,6 +5,7 @@ from hairline.charts.forest import forest
 from hairline.charts.kaplan_meier import kaplan_meier
 from hairline.charts.partition import partition
 from hairline.charts.raincloud import raincloud
+from hairline.charts.sankey import sankey
 from hairline.charts.timeseries import timeseries
 from hairline.color.check import PaletteReport, check_palette
 from hairline.entities import color, colors
@@ -19,6 +20,6 @@ from hairline.tokens import load_tokens
 __all__ = [
     "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Settings", "check_palette", "color", "colors",
     "current_settings", "donut", "figure", "forest", "format_interval", "format_number", "format_percent", "frame",
-    "kaplan_meier", "load_tokens", "palette", "partition", "raincloud", "ramp", "save", "timeseries", "use",
+    "kaplan_meier", "load_tokens", "palette", "partition", "raincloud", "ramp", "sankey", "save", "timeseries", "use",
 ]
 __version__ = "0.1.0"

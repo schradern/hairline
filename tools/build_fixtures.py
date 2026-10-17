@@ -24,6 +24,8 @@ from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.charts.labels import spread_labels
 from hairline.charts.partition import partition_drawing
 from hairline.charts.raincloud import bracket_levels
+from hairline.charts.sankey import sankey_spec
+from hairline.charts.sankey_geometry import sankey_drawing
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklch
@@ -282,6 +284,20 @@ def density_cases() -> dict:
             "brackets": [{"spans": span, "levels": bracket_levels(span)} for span in spans]}
 
 
+def sankey_cases() -> list[dict]:
+    use(brand=False)
+    data = pd.DataFrame({"source": ["Salary", "Salary", "Salary", "Salary", "Benefits", "Benefits", "Side job"],
+                         "account": ["Joint", "Joint", "Savings", "Joint", "Joint", "Savings", "Joint"],
+                         "category": ["Rent", "Food", "Reserve", "Leisure", "Food", "Reserve", "Leisure"],
+                         "amount": [1200, 450, 400, 250, 150, 100, 200]})
+    specs = [sankey_spec(data, ["source", "account", "category"], "amount"),
+             sankey_spec(data, ["source", "category"], "amount", color_by="none"),
+             sankey_spec(data, ["account", "source", "category"], "amount", color_by="source")]
+    box = Box(20, 60, 460, 240)
+    return [{"spec": spec, "box": [box.x, box.y, box.width, box.height],
+             "shapes": sankey_drawing(spec, box, fake_measure, DRAWING_STYLE)} for spec in specs]
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -301,6 +317,7 @@ def main() -> int:
     write("donut.json", {"style": DRAWING_STYLE, "cases": donut_cases()})
     write("survival.json", survival_cases())
     write("density.json", density_cases())
+    write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     return 0

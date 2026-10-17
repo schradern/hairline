@@ -16,7 +16,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 GALLERY = REPO / "gallery"
 FIGURES = ["theme_scatter", "occupancy_rows", "grid_panels", "brand_example", "donut_discharge", "donut_nested",
-           "partition_discharge", "km_trial", "forest_meta", "raincloud_stay"]
+           "partition_discharge", "km_trial", "forest_meta", "raincloud_stay",
+           "sankey_budget"]
 TOLERANCE_PT = 1.0
 
 

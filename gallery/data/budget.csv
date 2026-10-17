@@ -1,0 +1,11 @@
+income,account,spending,euros
+Salary,Joint account,Rent,1200
+Salary,Joint account,Groceries,420
+Salary,Joint account,Leisure,260
+Salary,Savings,Reserve,400
+Salary,Joint account,Transport,180
+Child benefit,Joint account,Groceries,160
+Child benefit,Savings,Reserve,90
+Side job,Joint account,Leisure,140
+Side job,Joint account,Transport,60
+Side job,Savings,Reserve,50
