@@ -19,6 +19,7 @@ Imports:
     ragg,
     rlang,
     systemfonts,
+    textshaping,
     tools,
     utils,
     yaml

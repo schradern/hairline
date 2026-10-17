@@ -7,8 +7,10 @@ style_family <- function(style) {
 
 text_width_pt <- function(text, style) {
   if (!nzchar(text)) return(0)
-  systemfonts::string_width(text, family = style_family(style), size = style$size, res = 72,
-                            weight = if (style$weight >= 600) "bold" else "normal")
+  # shaped with kerning, as matplotlib measures, at a resolution high enough that glyph advances are not rounded
+  shaped <- textshaping::shape_text(text, family = style_family(style), size = style$size, res = 7200,
+                                    weight = if (style$weight >= 600) "bold" else "normal")
+  shaped$metrics$width[1]
 }
 
 wrap_text <- function(text, style, max_width) {
