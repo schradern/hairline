@@ -3,7 +3,9 @@
 
 degrees <- function(radians) radians * 180 / pi
 
-donut_point <- function(cx, cy, radius, angle) c(cx + radius * cos(angle * pi / 180), cy - radius * sin(angle * pi / 180))
+donut_point <- function(cx, cy, radius, angle) {
+  c(cx + radius * cos(angle * pi / 180), cy - radius * sin(angle * pi / 180))
+}
 
 donut_arc <- function(cx, cy, radius, start, end, step) {
   count <- max(2, ceiling(abs(start - end) / step) + 1)
