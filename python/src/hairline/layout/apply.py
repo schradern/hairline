@@ -210,6 +210,7 @@ def build_report(figure: HairlineFigure, layout: FrameLayout, measured: Measured
     data["legend_labels"] = [entry.item.label for entry in placed]
     data["panel_header_lines"] = [composed[index].lines if index in composed else 0
                                   for index in range(len(figure.axes))]
+    data["header_run_xs"] = [run.x for index in sorted(composed) for run in composed[index].runs]
     data["bare_panels"] = sorted(figure.bare_panels)
     data["drawing_texts"] = text_positions(figure)
     data["table_value_xs"] = list(figure.table_value_xs)

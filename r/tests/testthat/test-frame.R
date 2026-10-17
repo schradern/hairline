@@ -105,3 +105,9 @@ test_that("edge tick labels align inward", {
   expect_equal(hjust[length(hjust)], 1)
   expect_true(all(hjust[-c(1, length(hjust))] == 0.5))
 })
+
+test_that("trailing spaces count in measured widths", {
+  hl_use(brand = FALSE)
+  style <- role_style(hl_settings(), "label")
+  expect_gt(text_width_pt("Estimate ", style), text_width_pt("Estimate", style) + 1)
+})

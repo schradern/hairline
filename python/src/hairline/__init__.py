@@ -5,9 +5,11 @@ from hairline.charts.correlation import correlation
 from hairline.charts.donut import donut
 from hairline.charts.dotplot import dotplot
 from hairline.charts.forest import forest
+from hairline.charts.funnel import funnel
 from hairline.charts.kaplan_meier import kaplan_meier
 from hairline.charts.partition import partition
 from hairline.charts.raincloud import raincloud
+from hairline.charts.risk_of_bias import risk_of_bias
 from hairline.charts.sankey import sankey
 from hairline.charts.scatter import scatter
 from hairline.charts.timeseries import timeseries
@@ -24,7 +26,7 @@ from hairline.tokens import load_tokens
 __all__ = [
     "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Settings", "bars", "check_palette", "color", "colors",
     "correlation", "current_settings", "donut", "dotplot", "figure", "forest", "format_interval", "format_number",
-    "format_percent", "frame", "kaplan_meier", "load_tokens", "palette", "partition", "raincloud", "ramp", "sankey",
-    "save", "scatter", "timeseries", "use",
+    "format_percent", "frame", "funnel", "kaplan_meier", "load_tokens", "palette", "partition", "raincloud", "ramp",
+    "risk_of_bias", "sankey", "save", "scatter", "timeseries", "use",
 ]
 __version__ = "0.1.0"

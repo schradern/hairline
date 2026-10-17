@@ -30,6 +30,7 @@ def drawing_style(settings: Settings) -> dict:
             "neutral": dict(settings.neutral), "swatch": spacing["legend_swatch_square"],
             "swatch_text": spacing["legend_swatch_text"], "leader_width": tokens["reference"]["width"] * base,
             "data_width": tokens["lines"]["data"] * base, "axis_width": tokens["lines"]["axis"] * base,
+            "grid": tokens["lines"]["grid"] * base,
             "descender": load_font_metrics().descender}
 
 

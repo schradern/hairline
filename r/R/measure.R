@@ -10,7 +10,8 @@ text_width_pt <- function(text, style) {
   # shaped with kerning, as matplotlib measures, at a resolution high enough that glyph advances are not rounded
   shaped <- textshaping::shape_text(text, family = style_family(style), size = style$size, res = 7200,
                                     weight = if (style$weight >= 600) "bold" else "normal")
-  shaped$metrics$width[1]
+  # the pen position after the last glyph: the advance width, trailing spaces included (as matplotlib measures)
+  shaped$metrics$pen_x[1]
 }
 
 wrap_text <- function(text, style, max_width) {

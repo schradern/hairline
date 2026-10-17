@@ -15,12 +15,15 @@
   "leader_width": 0.54,
   "data_width": 1.26,
   "axis_width": 0.585,
+  "grid": 0.45,
   "neutral": {
    "ink": "#1b1e22",
    "muted": "#5b6168",
    "faint": "#6f757d",
    "axis": "#c4c8cd",
-   "surface": "#ffffff"
+   "surface": "#ffffff",
+   "band": "#f2f3f5",
+   "grid": "#eef0f2"
   }
  },
  "cases": [

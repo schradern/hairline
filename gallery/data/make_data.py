@@ -129,6 +129,26 @@ def patient_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+def funnel_rows(rng: np.random.Generator) -> list[dict]:
+    """Fourteen trials around an odds ratio of 0.75; small trials lean towards benefit (a small-study effect)."""
+    rows = []
+    for index in range(14):
+        se = float(rng.uniform(0.08, 0.5))
+        effect = math.log(0.75) - 0.6 * (se - 0.25) + float(rng.normal(0, se * 0.8))
+        rows.append({"study": f"Trial {index + 1}", "odds_ratio": round(math.exp(effect), 3), "se": round(se, 3)})
+    return rows
+
+
+BIAS = {"Randomisation": "LLLSLHLLSLLL", "Deviations": "LSSLLHLSLLLL", "Missing data": "LLHLLLSLLLSL",
+        "Measurement": "LLLLSLLLHLLL", "Reporting": "SLLLLLLSLLLL"}
+
+
+def bias_rows() -> list[dict]:
+    words = {"L": "Low", "S": "Some concerns", "H": "High"}
+    return [{"study": f"Trial {index + 1}", **{domain: words[marks[index]] for domain, marks in BIAS.items()}}
+            for index in range(12)]
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -148,6 +168,8 @@ def main() -> None:
     write("admissions.csv", admission_rows(rng))
     write("rates.csv", rate_rows())
     write("patients.csv", patient_rows(rng))
+    write("funnel.csv", funnel_rows(rng))
+    write("bias.csv", bias_rows())
 
 
 if __name__ == "__main__":

@@ -10,7 +10,8 @@ from hairline.layout.geometry import Box
 STYLE = {"base": 9.0, "sizes": {"title": 13.5, "panel": 9.0, "label": 7.2, "caption": 7.2}, "line_gap": 0.25,
          "cap_height": 0.7, "descender": 0.21,
          "neutral": {"ink": "#1b1e22", "muted": "#5b6168", "faint": "#6f757d", "axis": "#c4c8cd",
-                     "surface": "#ffffff"}, "swatch": 0.85, "swatch_text": 0.5, "leader_width": 0.54}
+                     "surface": "#ffffff", "band": "#f2f3f5", "grid": "#eef0f2"},
+         "swatch": 0.85, "swatch_text": 0.5, "leader_width": 0.54}
 
 
 def fake_measure(text, role, weight=None):

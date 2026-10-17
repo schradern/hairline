@@ -45,7 +45,10 @@ report_from_plan <- function(parts, plan) {
                                                           style = title_style, USE.NAMES = FALSE),
                  legend_item_rights = vapply(plan$placed, `[[`, numeric(1), "right"),
                  legend_labels = vapply(plan$placed, `[[`, character(1), "label"), panel_letters = character(),
-                 drawing_texts = drawing_texts(plan$shapes), table_baselines = layout$table_baselines,
+                 drawing_texts = drawing_texts(plan$shapes),
+                 header_run_xs = unlist(lapply(plan$composed[order(as.integer(names(plan$composed)))],
+                                               function(header) vapply(header$runs, `[[`, numeric(1), "x"))),
+                 table_baselines = layout$table_baselines,
                  table_value_xs = table_value_xs(parts, plan),
                  bare_panels = if (parts$bare) seq_along(parts$panels) - 1L else integer(),
                  plot_boxes = lapply(layout$panels[seq_along(parts$panels)], fitted_box, aspect = parts$aspect))

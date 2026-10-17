@@ -23,9 +23,13 @@ from hairline.charts.donut import donut_rings
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.charts.forest import forest_spec
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
+from hairline.charts.funnel import funnel_spec
+from hairline.charts.funnel_geometry import funnel_drawing
 from hairline.charts.labels import spread_labels
 from hairline.charts.partition import partition_drawing
 from hairline.charts.raincloud import bracket_levels
+from hairline.charts.risk_of_bias import risk_of_bias_spec
+from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
 from hairline.charts.sankey import sankey_spec
 from hairline.charts.sankey_geometry import sankey_drawing
 from hairline.color.adapt import adapt_readable
@@ -194,8 +198,9 @@ def chart_helper_cases() -> dict[str, list[dict]]:
 DRAWING_STYLE = {"base": 9.0, "sizes": {"title": 13.5, "panel": 9.0, "label": 7.2, "caption": 7.2}, "line_gap": 0.25,
                  "cap_height": 0.7, "descender": 0.21, "swatch": 0.85, "swatch_text": 0.5, "leader_width": 0.54,
                  "data_width": 1.26, "axis_width": 0.585,
-                 "neutral": {"ink": "#1b1e22", "muted": "#5b6168", "faint": "#6f757d", "axis": "#c4c8cd",
-                             "surface": "#ffffff"}}
+                 "grid": 0.45, "neutral": {"ink": "#1b1e22", "muted": "#5b6168", "faint": "#6f757d",
+                                           "axis": "#c4c8cd", "surface": "#ffffff", "band": "#f2f3f5",
+                                           "grid": "#eef0f2"}}
 
 
 def fake_measure(text: str, role: str, weight: int | None = None) -> float:
@@ -338,6 +343,26 @@ def correlation_cases() -> list[dict]:
     return cases
 
 
+def meta_review_cases() -> dict:
+    use(brand=False)
+    trials = pd.DataFrame({"or": [0.62, 0.81, 0.47, 1.05, 0.69, 0.4, 0.55, 0.9],
+                           "se": [0.21, 0.19, 0.32, 0.2, 0.3, 0.45, 0.38, 0.15]})
+    differences = pd.DataFrame({"md": [-2.1, -0.8, -3.5, 0.6, -1.2], "se": [0.9, 0.7, 1.4, 0.8, 1.1]})
+    box = Box(20, 60, 440, 240)
+    funnels = []
+    for data, estimate, ratio in ((trials, "or", True), (differences, "md", False)):
+        spec = funnel_spec(data, estimate, "se", ratio=ratio)
+        funnels.append({"data": data.to_dict(orient="list"), "estimate": estimate, "ratio": ratio, "spec": spec,
+                        "shapes": funnel_drawing(spec, box, fake_measure, DRAWING_STYLE)})
+    wide = pd.DataFrame({"study": list("ABCDEF"), "Randomisation": ["Low", "Low", "Some", "High", "Low", "Low"],
+                         "Missing data": ["Low", "High", "Low", "Low", "Some concerns", "Low"],
+                         "Measurement": ["low risk", "Low", "Low", "Unclear", "Low", "Serious"]})
+    spec = risk_of_bias_spec(wide, "study", domains=["Randomisation", "Missing data", "Measurement"])
+    return {"box": [box.x, box.y, box.width, box.height], "funnels": funnels,
+            "risk_of_bias": {"data": wide.to_dict(orient="list"), "spec": spec,
+                             "shapes": risk_of_bias_drawing(spec, box, fake_measure, DRAWING_STYLE)}}
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -358,6 +383,7 @@ def main() -> int:
     write("survival.json", survival_cases())
     write("density.json", density_cases())
     write("statistics.json", statistics_cases())
+    write("meta_review.json", {"style": DRAWING_STYLE, **meta_review_cases()})
     write("correlation.json", {"style": DRAWING_STYLE, "cases": correlation_cases()})
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
