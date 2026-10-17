@@ -7,6 +7,7 @@ from collections.abc import Mapping, Sequence
 import pandas as pd
 
 from hairline import entities
+from hairline.charts.common import check_columns
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
 from hairline.marks import SECONDARY_ID
@@ -15,13 +16,6 @@ from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
 
 STAT_LABELS = {"mean": "Mean", "median": "Median", "range": "Range"}
-
-
-def check_columns(data: pd.DataFrame, columns: Sequence[str | None]) -> None:
-    for column in columns:
-        if column is not None and column not in data.columns:
-            known = ", ".join(map(str, data.columns))
-            raise ValueError(f"hairline: column {column!r} is not in the data; columns: {known}")
 
 
 def groups_of(data: pd.DataFrame, by: str | None, order: Sequence[str] | None) -> list[tuple[str, pd.DataFrame]]:

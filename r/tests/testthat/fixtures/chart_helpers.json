@@ -1,0 +1,567 @@
+{
+ "labels": [
+  {
+   "positions": [
+    0,
+    10,
+    20
+   ],
+   "height": 5,
+   "low": -100,
+   "high": 100,
+   "result": [
+    0.0,
+    10.0,
+    20.0
+   ]
+  },
+  {
+   "positions": [
+    10,
+    10,
+    10
+   ],
+   "height": 4,
+   "low": -100,
+   "high": 100,
+   "result": [
+    6.0,
+    10.0,
+    14.0
+   ]
+  },
+  {
+   "positions": [
+    12,
+    0,
+    10
+   ],
+   "height": 4,
+   "low": -100,
+   "high": 100,
+   "result": [
+    13.0,
+    0.0,
+    9.0
+   ]
+  },
+  {
+   "positions": [
+    0,
+    1,
+    2
+   ],
+   "height": 4,
+   "low": 0,
+   "high": 100,
+   "result": [
+    0,
+    4,
+    8
+   ]
+  },
+  {
+   "positions": [
+    0,
+    0,
+    0
+   ],
+   "height": 10,
+   "low": 0,
+   "high": 10,
+   "result": [
+    -5.0,
+    5.0,
+    15.0
+   ]
+  },
+  {
+   "positions": [
+    98,
+    99,
+    100
+   ],
+   "height": 4,
+   "low": 0,
+   "high": 100,
+   "result": [
+    92,
+    96,
+    100
+   ]
+  },
+  {
+   "positions": [
+    5,
+    6,
+    30,
+    31,
+    32
+   ],
+   "height": 6,
+   "low": 0,
+   "high": 60,
+   "result": [
+    2.5,
+    8.5,
+    25.0,
+    31.0,
+    37.0
+   ]
+  },
+  {
+   "positions": [
+    50
+   ],
+   "height": 8,
+   "low": 0,
+   "high": 100,
+   "result": [
+    50.0
+   ]
+  },
+  {
+   "positions": [],
+   "height": 8,
+   "low": 0,
+   "high": 100,
+   "result": []
+  },
+  {
+   "positions": [
+    3.5,
+    3.6,
+    3.7,
+    90
+   ],
+   "height": 7.2,
+   "low": 0,
+   "high": 95,
+   "result": [
+    0.0,
+    7.2,
+    14.4,
+    90.0
+   ]
+  },
+  {
+   "positions": [
+    -20,
+    -19,
+    40,
+    41
+   ],
+   "height": 9,
+   "low": -30,
+   "high": 50,
+   "result": [
+    -24.0,
+    -15.0,
+    36.0,
+    45.0
+   ]
+  },
+  {
+   "positions": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "height": 2.5,
+   "low": 0,
+   "high": 12,
+   "result": [
+    -0.25,
+    2.25,
+    4.75,
+    7.25,
+    9.75,
+    12.25
+   ]
+  }
+ ],
+ "tints": [
+  {
+   "color": "#2474cf",
+   "count": 1,
+   "result": [
+    "#3f8dea"
+   ]
+  },
+  {
+   "color": "#2474cf",
+   "count": 3,
+   "result": [
+    "#3f8dea",
+    "#60a7ff",
+    "#90c1ff"
+   ]
+  },
+  {
+   "color": "#2474cf",
+   "count": 5,
+   "result": [
+    "#3d8ae7",
+    "#55a1ff",
+    "#82b9ff",
+    "#acd0ff",
+    "#d4e7ff"
+   ]
+  },
+  {
+   "color": "#e8a628",
+   "count": 1,
+   "result": [
+    "#ffc15a"
+   ]
+  },
+  {
+   "color": "#e8a628",
+   "count": 3,
+   "result": [
+    "#f9b63f",
+    "#ffca77",
+    "#ffe0b0"
+   ]
+  },
+  {
+   "color": "#e8a628",
+   "count": 5,
+   "result": [
+    "#f2b036",
+    "#fcb943",
+    "#ffc66a",
+    "#ffd38f",
+    "#ffe0b0"
+   ]
+  },
+  {
+   "color": "#53b0de",
+   "count": 1,
+   "result": [
+    "#6ecaf9"
+   ]
+  },
+  {
+   "color": "#53b0de",
+   "count": 3,
+   "result": [
+    "#69c6f4",
+    "#93d9ff",
+    "#c7ebff"
+   ]
+  },
+  {
+   "color": "#53b0de",
+   "count": 5,
+   "result": [
+    "#60bdeb",
+    "#6ecaf9",
+    "#88d6ff",
+    "#a9e0ff",
+    "#c7ebff"
+   ]
+  },
+  {
+   "color": "#b93780",
+   "count": 1,
+   "result": [
+    "#d55198"
+   ]
+  },
+  {
+   "color": "#b93780",
+   "count": 3,
+   "result": [
+    "#d55198",
+    "#f16bb1",
+    "#ff92c7"
+   ]
+  },
+  {
+   "color": "#b93780",
+   "count": 5,
+   "result": [
+    "#d35096",
+    "#ed67ad",
+    "#ff87c3",
+    "#ffb2d6",
+    "#ffd8e9"
+   ]
+  },
+  {
+   "color": "#44aa5a",
+   "count": 1,
+   "result": [
+    "#5fc472"
+   ]
+  },
+  {
+   "color": "#44aa5a",
+   "count": 3,
+   "result": [
+    "#5fc472",
+    "#7ade8b",
+    "#94f9a4"
+   ]
+  },
+  {
+   "color": "#44aa5a",
+   "count": 5,
+   "result": [
+    "#56bb6a",
+    "#67cc7a",
+    "#78dd8a",
+    "#8aee9a",
+    "#9fffae"
+   ]
+  },
+  {
+   "color": "#8362cd",
+   "count": 1,
+   "result": [
+    "#9b7be8"
+   ]
+  },
+  {
+   "color": "#8362cd",
+   "count": 3,
+   "result": [
+    "#9b7be8",
+    "#b395ff",
+    "#c9b7ff"
+   ]
+  },
+  {
+   "color": "#8362cd",
+   "count": 5,
+   "result": [
+    "#9777e4",
+    "#ac8cfb",
+    "#bea8ff",
+    "#d2c4ff",
+    "#e6dfff"
+   ]
+  },
+  {
+   "color": "#ef675a",
+   "count": 1,
+   "result": [
+    "#ff8b7d"
+   ]
+  },
+  {
+   "color": "#ef675a",
+   "count": 3,
+   "result": [
+    "#ff8b7d",
+    "#ffb5ab",
+    "#ffdbd6"
+   ]
+  },
+  {
+   "color": "#ef675a",
+   "count": 5,
+   "result": [
+    "#ff7769",
+    "#ff9487",
+    "#ffada2",
+    "#ffc5bc",
+    "#ffdbd6"
+   ]
+  },
+  {
+   "color": "#00afa9",
+   "count": 1,
+   "result": [
+    "#3bc9c2"
+   ]
+  },
+  {
+   "color": "#00afa9",
+   "count": 3,
+   "result": [
+    "#3bc9c2",
+    "#5ce3dc",
+    "#7afef6"
+   ]
+  },
+  {
+   "color": "#00afa9",
+   "count": 5,
+   "result": [
+    "#2bbeb8",
+    "#42cec7",
+    "#56ded7",
+    "#68eee7",
+    "#7afef6"
+   ]
+  },
+  {
+   "color": "#14325c",
+   "count": 1,
+   "result": [
+    "#294874"
+   ]
+  },
+  {
+   "color": "#14325c",
+   "count": 3,
+   "result": [
+    "#294874",
+    "#3e5e8c",
+    "#5575a5"
+   ]
+  },
+  {
+   "color": "#14325c",
+   "count": 5,
+   "result": [
+    "#294874",
+    "#3e5e8c",
+    "#5575a5",
+    "#6c8ebe",
+    "#83a6d8"
+   ]
+  },
+  {
+   "color": "#b3b8be",
+   "count": 1,
+   "result": [
+    "#ccd2d8"
+   ]
+  },
+  {
+   "color": "#b3b8be",
+   "count": 3,
+   "result": [
+    "#c2c7cd",
+    "#d1d6dc",
+    "#e0e5eb"
+   ]
+  },
+  {
+   "color": "#b3b8be",
+   "count": 5,
+   "result": [
+    "#bcc1c7",
+    "#c5cad0",
+    "#ced3d9",
+    "#d7dce2",
+    "#e0e5eb"
+   ]
+  }
+ ],
+ "fold": [
+  {
+   "labels": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i"
+   ],
+   "values": [
+    5,
+    1,
+    9,
+    2,
+    8,
+    3,
+    7,
+    4,
+    6
+   ],
+   "keep": 4,
+   "result": [
+    [
+     "c",
+     "e",
+     "g",
+     "Other"
+    ],
+    [
+     9,
+     8,
+     7,
+     21
+    ]
+   ]
+  },
+  {
+   "labels": [
+    "a",
+    "b",
+    "c"
+   ],
+   "values": [
+    1,
+    2,
+    3
+   ],
+   "keep": 7,
+   "result": [
+    [
+     "a",
+     "b",
+     "c"
+    ],
+    [
+     1,
+     2,
+     3
+    ]
+   ]
+  },
+  {
+   "labels": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h"
+   ],
+   "values": [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "keep": 7,
+   "result": [
+    [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e",
+     "f",
+     "Other"
+    ],
+    [
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     6
+    ]
+   ]
+  }
+ ]
+}

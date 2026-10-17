@@ -12,9 +12,12 @@ import sys
 from pathlib import Path
 
 from hairline.brand import load_brand
+from hairline.charts.common import fold_other
+from hairline.charts.labels import spread_labels
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklch
+from hairline.color.tints import tints
 from hairline.color.vision import contrast, delta_e, simulate
 from hairline.entities import assign_colors
 from hairline.layout.frame import compute_frame
@@ -148,6 +151,26 @@ def point_cases() -> dict[str, list[dict]]:
                       for count in POINT_COUNTS]}
 
 
+LABEL_CASES = [([0, 10, 20], 5, -100, 100), ([10, 10, 10], 4, -100, 100), ([12, 0, 10], 4, -100, 100),
+               ([0, 1, 2], 4, 0, 100), ([0, 0, 0], 10, 0, 10), ([98, 99, 100], 4, 0, 100),
+               ([5, 6, 30, 31, 32], 6, 0, 60), ([50], 8, 0, 100), ([], 8, 0, 100), ([3.5, 3.6, 3.7, 90], 7.2, 0, 95),
+               ([-20, -19, 40, 41], 9, -30, 50), ([1, 2, 3, 4, 5, 6], 2.5, 0, 12)]
+FOLD_CASES = [(list("abcdefghi"), [5, 1, 9, 2, 8, 3, 7, 4, 6], 4), (list("abc"), [1, 2, 3], 7),
+              (list("abcdefgh"), [3, 3, 3, 3, 3, 3, 3, 3], 7)]
+
+
+def chart_helper_cases() -> dict[str, list[dict]]:
+    daylight = load_tokens()["palettes"]["daylight"]
+    return {"labels": [{"positions": positions, "height": height, "low": low, "high": high,
+                        "result": spread_labels(positions, height, low, high)}
+                       for positions, height, low, high in LABEL_CASES],
+            "tints": [{"color": color, "count": count, "result": tints(color, count)}
+                      for color in daylight + ["#14325c", "#b3b8be"] for count in (1, 3, 5)],
+            "fold": [{"labels": labels, "values": values, "keep": keep,
+                      "result": list(fold_other(labels, values, keep))}
+                     for labels, values, keep in FOLD_CASES]}
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -163,6 +186,7 @@ def main() -> int:
     write("brand.json", brand_cases())
     write("entities.json", entity_cases())
     write("points.json", point_cases())
+    write("chart_helpers.json", chart_helper_cases())
     return 0
 
 

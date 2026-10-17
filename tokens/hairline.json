@@ -456,5 +456,9 @@
       }
     ],
     "fill_lightness_step": 0.02
+  },
+  "tints": {
+    "step": 0.08,
+    "cap": 0.92
   }
 }

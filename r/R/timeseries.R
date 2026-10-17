@@ -4,15 +4,6 @@ rolling_mean <- function(values, window) {
   vapply(seq_along(values), function(index) mean(values[max(1, index - window + 1):index]), numeric(1))
 }
 
-check_columns <- function(data, columns) {
-  for (column in columns) {
-    if (!is.null(column) && !column %in% names(data)) {
-      known <- paste(names(data), collapse = ", ")
-      stop(sprintf("hairline: column '%s' is not in the data; columns: %s", column, known), call. = FALSE)
-    }
-  }
-}
-
 value_formatter <- function(percent) {
   if (percent) function(value, digits = 1) hl_format_percent(value, digits) else
     function(value, digits = 1) hl_format_number(value, digits)
