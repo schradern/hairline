@@ -44,3 +44,10 @@ def format_interval(estimate: float, low: float, high: float, digits: int = 2, l
     """Format an estimate with its interval: '0.58 [0.41; 0.82]'."""
     parts = [format_number(value, digits, locale) for value in (estimate, low, high)]
     return f"{parts[0]} [{parts[1]}; {parts[2]}]"
+
+
+def format_p(value: float, locale: str | None = None) -> str:
+    """A p-value for reading: 'p < 0.001', three decimals below 0.1, two above."""
+    if value < 0.001:
+        return f"p < {format_number(0.001, 3, locale)}"
+    return f"p = {format_number(value, 3 if value < 0.1 else 2, locale)}"

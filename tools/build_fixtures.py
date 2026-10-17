@@ -35,10 +35,11 @@ from hairline.entities import assign_colors
 from hairline.layout.frame import compute_frame
 from hairline.layout.geometry import Box, frame_input_from_dict, load_font_metrics
 from hairline.marks import point_fill, point_step
-from hairline.numbers import format_number, format_percent
+from hairline.numbers import format_number, format_p, format_percent
 from hairline.settings import use
 from hairline.stats.density import bandwidth, density, jitter_offsets, quantiles
 from hairline.stats.survival import km_estimate, km_median
+from hairline.stats.tests import egger, fit_band, linear_fit, logrank, pearson, rank_sum, spearman
 from hairline.ticks import nice_breaks
 from hairline.tokens import load_tokens
 
@@ -298,6 +299,26 @@ def sankey_cases() -> list[dict]:
              "shapes": sankey_drawing(spec, box, fake_measure, DRAWING_STYLE)} for spec in specs]
 
 
+def statistics_cases() -> dict:
+    generator = np.random.default_rng(23)
+    groups = [np.round(generator.gamma(2.2, 2.0, 30), 1).tolist(), np.round(generator.gamma(3.0, 2.2, 25), 1).tolist()]
+    times = np.round(generator.exponential(12, 40), 1).tolist()
+    events = (generator.uniform(size=40) < 0.7).astype(int).tolist()
+    arms = ["a"] * 14 + ["b"] * 13 + ["c"] * 13
+    x = np.round(generator.uniform(0, 10, 30), 2).tolist()
+    y = np.round(0.4 * np.array(x) + generator.normal(0, 1, 30), 2).tolist()
+    fit = linear_fit(x, y)
+    estimate, se = [0.2, 0.35, 0.5, 0.9, 1.3, 0.1], [0.05, 0.1, 0.2, 0.35, 0.5, 0.08]
+    return {"rank_sum": {"x": groups[0], "y": groups[1], "p": rank_sum(*groups)},
+            "logrank": {"time": times, "event": events, "group": arms, **logrank(times, events, arms)},
+            "fit": {"x": x, "y": y, **{key: fit[key] for key in ("slope", "intercept", "slope_se", "t")},
+                    "band": [list(values) for values in fit_band(fit, [0.0, 5.0, 10.0])]},
+            "pearson": list(pearson(x, y)), "spearman": list(spearman(x, y)),
+            "egger": {"estimate": estimate, "se": se, "p": egger(estimate, se)},
+            "format_p": [{"value": value, "locale": locale, "text": format_p(value, locale)}
+                         for value in (0.0004, 0.001, 0.0123, 0.0999, 0.1, 0.5, 0.999) for locale in ("en", "de")]}
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -317,6 +338,7 @@ def main() -> int:
     write("donut.json", {"style": DRAWING_STYLE, "cases": donut_cases()})
     write("survival.json", survival_cases())
     write("density.json", density_cases())
+    write("statistics.json", statistics_cases())
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
