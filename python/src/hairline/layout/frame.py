@@ -57,6 +57,10 @@ def fixed_bottom_height(spec: FrameInput, spacing: dict, metrics: FontMetrics, l
     height = spacing["x_tick_labels"] * label if spec.x_tick_labels else 0.0
     if spec.x_title:
         height += spacing["x_title"] * base + label * (metrics.cap_height + metrics.descender)
+    if spec.table_lines:
+        lines = spec.table_lines
+        height += spacing["table_gap"] * base
+        height += label * (lines * (metrics.cap_height + metrics.descender) + (lines - 1) * line_gap)
     if spec.caption_lines:
         lines = spec.caption_lines
         height += spacing["content_caption"] * base
@@ -102,6 +106,9 @@ def place_bottom(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: d
     if spec.x_title:
         stack.skip(spacing["x_title"] * base)
         layout.x_title_baseline = stack.lines(spec.sizes["label"], 1)[0]
+    if spec.table_lines:
+        stack.skip(spacing["table_gap"] * base)
+        layout.table_baselines = stack.lines(spec.sizes["label"], spec.table_lines)
     if spec.caption_lines:
         stack.skip(spacing["content_caption"] * base)
         layout.caption_baselines = stack.lines(spec.sizes["caption"], spec.caption_lines)

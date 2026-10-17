@@ -7,7 +7,7 @@ font_metrics <- function() {
 
 frame_defaults <- list(title_lines = 1, subtitle_lines = 0, legend_rows = 0, caption_lines = 0, panel_rows = 1,
                        panel_columns = 1, panel_header_lines = integer(), y_title = FALSE, x_title = FALSE,
-                       x_tick_labels = TRUE, y_label_width_pt = 0, y_labels = TRUE, column_label_widths = numeric(),
+                       x_tick_labels = TRUE, y_label_width_pt = 0, y_labels = TRUE, table_lines = 0, column_label_widths = numeric(),
                        x_tick_rows = logical())
 
 text_block <- function(size, count, metrics, line_gap) {
@@ -94,6 +94,9 @@ fixed_bottom_height <- function(spec, spacing, metrics, line_gap) {
   base <- spec$base_size
   height <- if (isTRUE(spec$x_tick_labels)) spacing$x_tick_labels * spec$sizes$label else 0
   if (isTRUE(spec$x_title)) height <- height + spacing$x_title * base + text_block(spec$sizes$label, 1, metrics, 0)
+  if (spec$table_lines > 0) {
+    height <- height + spacing$table_gap * base + text_block(spec$sizes$label, spec$table_lines, metrics, line_gap)
+  }
   if (spec$caption_lines > 0) {
     height <- height + spacing$content_caption * base + text_block(spec$sizes$caption, spec$caption_lines, metrics,
                                                                    line_gap)

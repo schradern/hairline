@@ -55,7 +55,8 @@
     "legend_swatch_square": 0.85,
     "qualifier_gap": 0.65,
     "x_tick_pad": 0.45,
-    "panel_letter_gap": 0.65
+    "panel_letter_gap": 0.65,
+    "table_gap": 1.25
   },
   "lines": {
     "data": 0.14,

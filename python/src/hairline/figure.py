@@ -57,6 +57,8 @@ class HairlineFigure:
     plot_boxes: list = field(default_factory=list)
     drawings: dict = field(default_factory=dict)
     shapes: list = field(default_factory=list)
+    table_spec: dict | None = None
+    table_value_xs: list = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)
@@ -91,6 +93,11 @@ class HairlineFigure:
         self.check_index(index)
         self.bare_panels.setdefault(index, None)
         self.drawings[index] = shapes
+
+    def table(self, rows: Sequence[tuple[str, str, Sequence[tuple[float, str]]]], heading: str | None = None) -> None:
+        """Rows (label, colour, [(x, text), ...]) under the x-axis, each text centred at its x (number at risk)."""
+        self.table_spec = {"heading": heading, "rows": [(str(label), color, [(float(x), str(text)) for x, text in
+                                                                             values]) for label, color, values in rows]}
 
     def highlight(self, series: Sequence[str] | None = None, panels: Sequence[int | str] | None = None) -> None:
         """Keep these series (legend labels) or panels (index or name) in colour; draw the rest in context grey."""

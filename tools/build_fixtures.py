@@ -114,6 +114,8 @@ FRAME_CASES = [
      "panel_header_lines": [1, 1], "y_label_width_pt": 12, "x_tick_rows": [True, True]},
     {"width_pt": 482, "height_pt": 361, "subtitle_lines": 1, "caption_lines": 1, "y_labels": False,
      "x_tick_labels": False},
+    {"width_pt": 482, "height_pt": 361, "subtitle_lines": 1, "caption_lines": 1, "x_title": True, "table_lines": 3,
+     "y_label_width_pt": 30},
 ]
 
 

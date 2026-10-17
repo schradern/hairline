@@ -40,6 +40,7 @@ class FrameInput:
     x_tick_labels: bool = True
     y_label_width_pt: float = 0.0
     y_labels: bool = True
+    table_lines: int = 0
     column_label_widths: tuple[float, ...] = ()
     x_tick_rows: tuple[bool, ...] = ()
 
@@ -58,6 +59,7 @@ class FrameLayout:
     y_title_baseline: float | None = None
     x_title_baseline: float | None = None
     caption_baselines: list[float] = field(default_factory=list)
+    table_baselines: list[float] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         data = asdict(self)

@@ -44,3 +44,27 @@ def test_unknown_bare_panel_is_named():
     figure = hl.figure("T")
     with pytest.raises(IndexError, match="panel 3 does not exist"):
         figure.bare(3)
+
+
+def test_table_band_sits_between_axis_and_caption():
+    plain = hl.figure("T", caption="Note.")
+    plain.ax.plot([0, 10], [0, 1])
+    with_table = hl.figure("T", caption="Note.")
+    with_table.ax.plot([0, 10], [0, 1])
+    with_table.table([("Group A", "#2474cf", [(0, "40"), (5, "31"), (10, "12")]),
+                      ("Group B", "#e8a628", [(0, "38"), (5, "20"), (10, "6")])], heading="Number at risk")
+    first, second = drawn_report(plain), drawn_report(with_table)
+    panel = second["panels"][0]
+    assert len(second["table_baselines"]) == 3
+    assert panel[1] + panel[3] < second["table_baselines"][0] < second["table_baselines"][-1] < \
+        second["caption_baselines"][0]
+    assert second["panels"][0][3] < first["panels"][0][3]
+
+
+def test_table_values_align_with_their_x_position():
+    figure = hl.figure("T")
+    figure.ax.plot([0, 10], [0, 1])
+    figure.table([("Group A", "#2474cf", [(0, "40"), (10, "12")])])
+    report = drawn_report(figure)
+    x, _, width, _ = report["plot_boxes"][0]
+    assert [round(value, 1) for value in report["table_value_xs"]] == [round(x, 1), round(x + width, 1)]

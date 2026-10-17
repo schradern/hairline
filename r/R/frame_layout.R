@@ -36,6 +36,12 @@ place_bottom_block <- function(state, spec, layout, spacing) {
     state <- placed$state
     layout$x_title_baseline <- placed$baselines
   }
+  if (spec$table_lines > 0) {
+    state$y <- state$y + spacing$table_gap * base
+    placed <- stack_lines(state, spec$sizes$label, spec$table_lines)
+    state <- placed$state
+    layout$table_baselines <- placed$baselines
+  }
   if (spec$caption_lines > 0) {
     state$y <- state$y + spacing$content_caption * base
     placed <- stack_lines(state, spec$sizes$caption, spec$caption_lines)
@@ -54,7 +60,8 @@ compute_frame <- function(spec, metrics) {
                    spec$base_size else 0,
                  title_baselines = numeric(), subtitle_baselines = numeric(), legend_row_centers = numeric(),
                  panel_header_baselines = list(), panels = list(), y_title_left = NULL, y_title_baseline = NULL,
-                 x_title_baseline = NULL, caption_baselines = numeric())
+                 x_title_baseline = NULL, caption_baselines = numeric(),
+                 table_baselines = numeric())
   state <- list(y = 0, metrics = metrics, line_gap = tokens$type$line_gap)
   placed <- place_header_block(state, spec, layout, spacing)
   height <- frame_panel_height(spec, placed$state$y, spacing, metrics, tokens$type$line_gap)

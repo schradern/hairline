@@ -79,7 +79,8 @@ frame_children <- function(parts, plan) {
                         height),
              legend_grobs(plan$placed, layout$legend_row_centers, role_style(settings, "label"), settings$base_size,
                           height, font_metrics()$cap_height),
-             header_grobs(parts, plan), axis_title_grobs(parts, plan), reference_grobs(parts, plan),
+             header_grobs(parts, plan), axis_title_grobs(parts, plan), table_grobs(parts, plan),
+             reference_grobs(parts, plan),
              note_grobs(parts, plan))
   do.call(grid::gList, grobs)
 }

@@ -18,6 +18,7 @@ from hairline.layout.legend import draw_legend, items_from_axes, pack_rows
 from hairline.layout.measure import text_width, wrap
 from hairline.layout.panels import ComposedHeader, compose_header
 from hairline.layout.styles import header_gaps, header_styles, role_style
+from hairline.layout.table import draw_table, table_label_width, table_lines
 from hairline.marks import apply_light_slots
 from hairline.settings import role_size
 from hairline.tokens import load_tokens
@@ -116,6 +117,7 @@ def column_widths(figure: HairlineFigure, y_labels: list[list[str]]) -> list[flo
         if shows_y_labels(figure, index):
             column = grid_position(figure, index)[1]
             widths[column] = max(widths[column], label_width(labels, figure.settings.font, size))
+    widths[0] = max(widths[0], table_label_width(figure))
     return widths
 
 
@@ -140,7 +142,7 @@ def frame_input(figure: HairlineFigure, measured: Measured, size: tuple[float, f
                       panel_columns=figure.columns, panel_header_lines=header_lines,
                       y_title=figure.y_title_text is not None, x_title=figure.x_title_text is not None,
                       x_tick_labels=measured.x_tick_rows[-1], y_labels=first_column_has_axes(figure),
-                      y_label_width_pt=measured.y_label_width,
+                      y_label_width_pt=measured.y_label_width, table_lines=table_lines(figure),
                       column_label_widths=measured.column_label_widths, x_tick_rows=measured.x_tick_rows)
 
 
@@ -233,7 +235,7 @@ def draw_frame(figure: HairlineFigure, layout: FrameLayout, measured: Measured, 
     artists += draw_lines(figure, layout.left, layout.subtitle_baselines, measured.subtitle, "subtitle")
     artists += draw_lines(figure, layout.left, layout.caption_baselines, measured.caption, "caption")
     artists += draw_legend(figure.figure, placed, layout.legend_row_centers, legend_style(figure), spacing, lines)
-    artists += draw_headers(figure, layout, composed) + draw_axis_titles(figure, layout)
+    artists += draw_headers(figure, layout, composed) + draw_axis_titles(figure, layout) + draw_table(figure, layout)
     figure.frame_artist.replace_children(run_drawings(figure) + artists)
 
 
@@ -249,6 +251,7 @@ def build_report(figure: HairlineFigure, layout: FrameLayout, measured: Measured
                                   for index in range(len(figure.axes))]
     data["bare_panels"] = sorted(figure.bare_panels)
     data["drawing_texts"] = text_positions(figure)
+    data["table_value_xs"] = list(figure.table_value_xs)
     data["plot_boxes"] = [[box.x, box.y, box.width, box.height] for box in figure.plot_boxes]
     data["panel_letters"] = [chr(ord("A") + index) for index in sorted(composed)] if figure.panel_letters else []
     return round_report(data)

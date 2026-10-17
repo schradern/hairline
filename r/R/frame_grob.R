@@ -30,6 +30,7 @@ frame_spec <- function(parts, texts, size, legend_rows, header_lines) {
        legend_rows = legend_rows, caption_lines = length(texts$caption), panel_rows = parts$rows,
        panel_columns = parts$columns, panel_header_lines = header_lines, y_title = !is.null(parts$y_title),
        x_title = !is.null(parts$x_title), x_tick_labels = !parts$bare, y_labels = !parts$bare,
+       table_lines = table_line_count(parts$table),
        y_label_width_pt = if (parts$bare) 0 else texts$column_widths[1],
        column_label_widths = if (parts$bare) numeric(parts$columns) else texts$column_widths,
        x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts))
@@ -69,6 +70,7 @@ plan_frame <- function(parts, size) {
                 subtitle = wrap_text(parts$subtitle, role_style(settings, "subtitle"), usable),
                 caption = wrap_text(parts$caption, role_style(settings, "caption"), usable),
                 column_widths = column_label_widths(parts))
+  texts$column_widths[1] <- max(texts$column_widths[1], table_label_width(parts))
   placed <- pack_legend(parts$legend, margin, size[1] - margin, role_style(settings, "label"),
                         settings$base_size, spacing)
   legend_rows <- if (length(placed)) max(vapply(placed, `[[`, numeric(1), "row")) + 1 else 0

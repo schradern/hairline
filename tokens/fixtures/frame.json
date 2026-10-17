@@ -35,7 +35,8 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
-   "caption_baselines": []
+   "caption_baselines": [],
+   "table_baselines": []
   }
  },
  {
@@ -84,7 +85,8 @@
    "x_title_baseline": null,
    "caption_baselines": [
     343.52875000000006
-   ]
+   ],
+   "table_baselines": []
   }
  },
  {
@@ -133,7 +135,8 @@
    "caption_baselines": [
     154.36405,
     163.52874999999997
-   ]
+   ],
+   "table_baselines": []
   }
  },
  {
@@ -218,7 +221,8 @@
    "x_title_baseline": null,
    "caption_baselines": [
     582.52875
-   ]
+   ],
+   "table_baselines": []
   }
  },
  {
@@ -305,7 +309,8 @@
    "y_title_left": 15.75,
    "y_title_baseline": 94.29390000000002,
    "x_title_baseline": 402.42750000000007,
-   "caption_baselines": []
+   "caption_baselines": [],
+   "table_baselines": []
   }
  },
  {
@@ -360,7 +365,8 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
-   "caption_baselines": []
+   "caption_baselines": [],
+   "table_baselines": []
   }
  },
  {
@@ -406,7 +412,8 @@
    "x_title_baseline": null,
    "caption_baselines": [
     387.52875
-   ]
+   ],
+   "table_baselines": []
   }
  },
  {
@@ -462,7 +469,8 @@
     325.19935,
     334.36405,
     343.52875000000006
-   ]
+   ],
+   "table_baselines": []
   }
  },
  {
@@ -539,7 +547,8 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
-   "caption_baselines": []
+   "caption_baselines": [],
+   "table_baselines": []
   }
  },
  {
@@ -627,7 +636,8 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
-   "caption_baselines": []
+   "caption_baselines": [],
+   "table_baselines": []
   }
  },
  {
@@ -674,6 +684,60 @@
    "x_title_baseline": null,
    "caption_baselines": [
     343.52875
+   ],
+   "table_baselines": []
+  }
+ },
+ {
+  "input": {
+   "base_size": 9.0,
+   "sizes": {
+    "title": 13.5,
+    "subtitle": 9.0,
+    "panel": 9.0,
+    "label": 8.1,
+    "caption": 7.65
+   },
+   "width_pt": 482,
+   "height_pt": 361,
+   "subtitle_lines": 1,
+   "caption_lines": 1,
+   "x_title": true,
+   "table_lines": 3,
+   "y_label_width_pt": 30
+  },
+  "layout": {
+   "left": 15.75,
+   "right": 466.25,
+   "plot_left": 50.25,
+   "title_baselines": [
+    25.5105
+   ],
+   "subtitle_baselines": [
+    38.205
+   ],
+   "legend_row_centers": [],
+   "panel_header_baselines": [
+    []
+   ],
+   "panels": [
+    [
+     50.25,
+     53.73,
+     416.0,
+     208.19259999999997
+    ]
+   ],
+   "y_title_left": null,
+   "y_title_baseline": null,
+   "x_title_baseline": 284.33889999999997,
+   "caption_baselines": [
+    343.52874999999983
+   ],
+   "table_baselines": [
+    303.26769999999993,
+    312.9714999999999,
+    322.6752999999998
    ]
   }
  }
