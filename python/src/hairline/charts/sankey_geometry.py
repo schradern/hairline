@@ -128,8 +128,8 @@ def label_shapes(ordered: list[list[dict]], positions: list[dict], xs: list[floa
 
 
 def heading_shapes(headings: list[str], xs: list[float], width: float, baseline: float, style: dict) -> list[dict]:
-    last, ink = len(xs) - 1, style["neutral"]["ink"]
-    return [text(x + width if index == 0 else x if index == last else x + width / 2, baseline, heading, "panel", ink,
+    last, muted = len(xs) - 1, style["neutral"]["muted"]
+    return [text(x + width if index == 0 else x if index == last else x + width / 2, baseline, heading, "label", muted,
                  "right" if index == 0 else "left" if index == last else "center")
             for index, (heading, x) in enumerate(zip(headings, xs, strict=True))]
 
@@ -147,9 +147,8 @@ def sankey_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     first = box.x + outer_width(spec["nodes"][0], measure, style, rules)
     last = box.x + box.width - outer_width(spec["nodes"][-1], measure, style, rules) - width
     xs = [first + (last - first) * index / (count - 1) for index in range(count)]
-    top = box.y + line_height(style, "panel") + rules["heading_gap"] * base + (line if count > 2 else 0.0)
+    top = box.y + line + rules["heading_gap"] * base + (line if count > 2 else 0.0)
     ordered, positions, scale = place_nodes(spec, top, box.y + box.height - top, line + rules["node_gap"] * base)
     return (link_shapes(spec, positions, xs, width, scale, rules) + node_shapes(ordered, positions, xs, width)
             + label_shapes(ordered, positions, xs, width, measure, style, rules)
-            + heading_shapes(spec["headings"], xs, width, baseline_for(box.y + line_height(style, "panel") / 2,
-                                                                         style, "panel"), style))
+            + heading_shapes(spec["headings"], xs, width, baseline_for(box.y + line / 2, style, "label"), style))

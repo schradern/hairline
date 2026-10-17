@@ -10,4 +10,4 @@ plot <- ggplot(points, aes(sofa, lactate, colour = group)) + geom_point() +
   labs(title = "Lactate by risk group", subtitle = "Example University Hospital design", caption = "Synthetic data.",
        y = "Lactate", x = NULL) +
   theme_hairline()
-finish(plot, "brand_example", "onehalf")
+finish(plot, "brand_example", "double")

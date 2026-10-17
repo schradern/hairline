@@ -7,4 +7,4 @@ discharge <- gallery_data("discharge")
 plot <- hl_donut(discharge, NULL, "patients", levels = c("route", "detail"), title = "Discharge route and support",
                  subtitle = "Inner ring: destination; outer ring: support after discharge", caption = "Synthetic data.",
                  total_label = "patients")
-finish(plot, "donut_nested", "onehalf")
+finish(plot, "donut_nested", "double")

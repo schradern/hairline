@@ -29,7 +29,7 @@ forest_columns <- function(spec, box, measure, rules, base) {
   gap <- rules$column_gap * base
   rows <- spec$rows
   study <- forest_widest(c(spec$study_heading, vapply(rows, `[[`, character(1), "study"), spec$pooled$label),
-                         measure, 600)
+                         measure)
   extras <- numeric()
   x <- box[1] + study + gap
   for (index in seq_along(spec$columns)) {
@@ -38,8 +38,8 @@ forest_columns <- function(spec, box, measure, rules, base) {
     extras <- c(extras, x)
     x <- x + gap
   }
-  effect <- forest_widest(c(spec$effect_heading, vapply(rows, `[[`, character(1), "effect_text"),
-                            spec$pooled$effect_text), measure)
+  effect <- max(forest_widest(c(spec$effect_heading, vapply(rows, `[[`, character(1), "effect_text")), measure),
+                if (is.null(spec$pooled)) 0 else forest_widest(spec$pooled$effect_text, measure, 600))
   has_weight <- !is.null(spec$weight_heading)
   weight <- if (has_weight) forest_widest(c(spec$weight_heading, vapply(rows, `[[`, character(1), "weight_text")),
                                           measure) else 0
@@ -58,12 +58,12 @@ forest_table_texts <- function(spec, columns, baseline, row, style) {
   muted <- style$neutral$muted
   if (is.null(row)) {
     values <- c(spec$study_heading, unlist(spec$columns), spec$effect_heading, spec$weight_heading %||% "")
-    colours <- rep(ink, length(values))
-    weights <- rep(list(600), length(values))
+    colours <- rep(muted, length(values))
+    weights <- rep(list(NULL), length(values))
   } else {
     values <- c(row$study, unlist(row$cells), row$effect_text, row$weight_text %||% "")
     colours <- c(ink, rep(muted, length(row$cells)), ink, muted)
-    weights <- c(list(if (isTRUE(row$bold)) 600 else NULL), rep(list(NULL), length(values) - 1))
+    weights <- c(rep(list(NULL), length(values) - 2), list(if (isTRUE(row$bold)) 600 else NULL, NULL))
   }
   rights <- c(columns$extras, columns$effect, columns$weight)
   shapes <- list(shape_text(columns$study, baseline, values[1], "label", colours[1], "left", weights[[1]]))

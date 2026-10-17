@@ -8,5 +8,5 @@ hl.use(brand=False)
 discharge = data("discharge")
 figure = hl.donut(discharge, None, "patients", levels=["route", "detail"], title="Discharge route and support",
                   subtitle="Inner ring: destination; outer ring: support after discharge", caption="Synthetic data.",
-                  total_label="patients")
+                  total_label="patients", size="double")
 finish(figure, "donut_nested")

@@ -530,7 +530,7 @@
     "node_width": 0.45,
     "node_gap": 0.5,
     "label_gap": 0.4,
-    "link_opacity": 0.42,
+    "link_opacity": 0.35,
     "curve_points": 24,
     "halo_pad": 0.2,
     "heading_gap": 0.6,

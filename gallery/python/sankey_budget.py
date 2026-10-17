@@ -7,5 +7,5 @@ from common import data, finish
 hl.use(brand=False)
 figure = hl.sankey(data("budget"), ["income", "account", "spending"], "euros", title="Where the household income goes",
                    subtitle="Monthly flows in euros", headings=["Income", "Account", "Spending"],
-                   caption="Synthetic data.")
+                   caption="Synthetic data.", size="double")
 finish(figure, "sankey_budget")

@@ -40,14 +40,14 @@ def column_layout(spec: dict, box: Box, measure: Measure, rules: dict, base: flo
         return max(measure(item, "label", weight) for item in texts)
     rows = spec["rows"]
     study = widest([spec["study_heading"]] + [row["study"] for row in rows] +
-                   ([spec["pooled"]["label"]] if spec["pooled"] else []), 600)
+                   ([spec["pooled"]["label"]] if spec["pooled"] else []))
     extras, x = [], box.x + study + gap
     for index, heading in enumerate(spec["columns"]):
         x += widest([heading] + [row["cells"][index] for row in rows])
         extras.append(x)
         x += gap
-    effect = widest([spec["effect_heading"]] + [row["effect_text"] for row in rows] +
-                    ([spec["pooled"]["effect_text"]] if spec["pooled"] else []))
+    effect = max(widest([spec["effect_heading"]] + [row["effect_text"] for row in rows]),
+                 widest([spec["pooled"]["effect_text"]], 600) if spec["pooled"] else 0.0)
     weight = widest([spec["weight_heading"]] + [row["weight_text"] for row in rows]) if spec["weight_heading"] else 0
     weight_right = box.x + box.width
     effect_right = weight_right - (weight + gap if spec["weight_heading"] else 0.0)
@@ -71,11 +71,11 @@ def table_texts(spec: dict, columns: dict, baseline: float, row: dict | None, st
     ink, muted = style["neutral"]["ink"], style["neutral"]["muted"]
     if row is None:
         values = [spec["study_heading"]] + spec["columns"] + [spec["effect_heading"], spec["weight_heading"]]
-        colors, weights = [ink] * len(values), [600] * len(values)
+        colors, weights = [muted] * len(values), [None] * len(values)
     else:
         values = [row["study"]] + row["cells"] + [row["effect_text"], row.get("weight_text")]
         colors = [ink] + [muted] * len(row["cells"]) + [ink, muted]
-        weights = [600 if row.get("bold") else None] + [None] * (len(values) - 1)
+        weights = [None] * (len(values) - 2) + [600 if row.get("bold") else None, None]
     rights = columns["extras"] + [columns["effect"], columns["weight"]]
     shapes = [text(columns["study"], baseline, values[0], "label", colors[0], "left", weights[0])]
     for value, right, color, weight in zip(values[1:], rights, colors[1:], weights[1:], strict=True):

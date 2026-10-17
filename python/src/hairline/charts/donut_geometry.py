@@ -130,8 +130,8 @@ def centre_total(total: str | None, label: str | None, cx: float, cy: float, sty
     if total is None:
         return []
     neutral, caption_line = style["neutral"], line_height(style, "caption")
-    value_baseline = baseline_for(cy, style, "title") - (caption_line / 2 if label else 0.0)
-    primitives = [text(cx, value_baseline, total, "title", neutral["ink"], "center")]
+    value_baseline = baseline_for(cy, style, "panel") - (caption_line / 2 if label else 0.0)
+    primitives = [text(cx, value_baseline, total, "panel", neutral["ink"], "center")]
     if label:
         primitives.append(text(cx, value_baseline + caption_line, label, "caption", neutral["muted"], "center"))
     return primitives

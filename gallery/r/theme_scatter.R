@@ -10,4 +10,4 @@ plot <- ggplot(points, aes(sofa, lactate, colour = group)) + geom_point() +
   labs(title = "Lactate and SOFA score at admission", subtitle = "One dot per patient, three risk groups",
        caption = "Synthetic data. Lactate in mmol/l.", y = "Lactate", x = "SOFA score") +
   theme_hairline()
-finish(plot, "theme_scatter", "onehalf")
+finish(plot, "theme_scatter", "double")

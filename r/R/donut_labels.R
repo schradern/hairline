@@ -58,8 +58,8 @@ outside_labels <- function(ring, cx, cy, radius, box, measure, style, rules) {
 centre_total <- function(total, label, cx, cy, style) {
   if (is.null(total)) return(list())
   caption_line <- line_height(style, "caption")
-  value_baseline <- baseline_for(cy, style, "title") - if (is.null(label)) 0 else caption_line / 2
-  shapes <- list(shape_text(cx, value_baseline, total, "title", style$neutral$ink, "center"))
+  value_baseline <- baseline_for(cy, style, "panel") - if (is.null(label)) 0 else caption_line / 2
+  shapes <- list(shape_text(cx, value_baseline, total, "panel", style$neutral$ink, "center"))
   if (!is.null(label)) {
     shapes[[2]] <- shape_text(cx, value_baseline + caption_line, label, "caption", style$neutral$muted, "center")
   }

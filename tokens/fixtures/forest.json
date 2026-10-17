@@ -197,9 +197,9 @@
      "y": 65.04,
      "text": "Study",
      "role": "label",
-     "color": "#1b1e22",
+     "color": "#5b6168",
      "align": "left",
-     "weight": 600
+     "weight": null
     },
     {
      "kind": "text",
@@ -207,9 +207,9 @@
      "y": 65.04,
      "text": "n",
      "role": "label",
-     "color": "#1b1e22",
+     "color": "#5b6168",
      "align": "right",
-     "weight": 600
+     "weight": null
     },
     {
      "kind": "text",
@@ -217,9 +217,9 @@
      "y": 65.04,
      "text": "Effect [95 % CI]",
      "role": "label",
-     "color": "#1b1e22",
+     "color": "#5b6168",
      "align": "right",
-     "weight": 600
+     "weight": null
     },
     {
      "kind": "text",
@@ -227,9 +227,9 @@
      "y": 65.04,
      "text": "Weight",
      "role": "label",
-     "color": "#1b1e22",
+     "color": "#5b6168",
      "align": "right",
-     "weight": 600
+     "weight": null
     },
     {
      "kind": "line",
@@ -639,7 +639,7 @@
      "role": "label",
      "color": "#1b1e22",
      "align": "left",
-     "weight": 600
+     "weight": null
     },
     {
      "kind": "text",
@@ -649,7 +649,7 @@
      "role": "label",
      "color": "#1b1e22",
      "align": "right",
-     "weight": null
+     "weight": 600
     },
     {
      "kind": "line",
@@ -819,9 +819,9 @@
      "y": 65.04,
      "text": "Study",
      "role": "label",
-     "color": "#1b1e22",
+     "color": "#5b6168",
      "align": "left",
-     "weight": 600
+     "weight": null
     },
     {
      "kind": "text",
@@ -829,9 +829,9 @@
      "y": 65.04,
      "text": "Effect [95 % CI]",
      "role": "label",
-     "color": "#1b1e22",
+     "color": "#5b6168",
      "align": "right",
-     "weight": 600
+     "weight": null
     },
     {
      "kind": "line",

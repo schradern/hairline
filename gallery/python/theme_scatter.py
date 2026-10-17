@@ -7,7 +7,7 @@ from common import data, finish
 hl.use(brand=False)
 points = data("scatter")
 figure = hl.figure("Lactate and SOFA score at admission", subtitle="One dot per patient, three risk groups",
-                   caption="Synthetic data. Lactate in mmol/l.", size="onehalf")
+                   caption="Synthetic data. Lactate in mmol/l.", size="double")
 for group in ["Low risk", "Medium risk", "High risk"]:
     subset = points[points["group"] == group]
     figure.ax.scatter(subset["sofa"], subset["lactate"], label=group)

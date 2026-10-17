@@ -1936,9 +1936,9 @@
     {
      "kind": "text",
      "x": 240.0,
-     "y": 180.225,
+     "y": 178.65,
      "text": "731",
-     "role": "title",
+     "role": "panel",
      "color": "#1b1e22",
      "align": "center",
      "weight": null
@@ -1946,7 +1946,7 @@
     {
      "kind": "text",
      "x": 240.0,
-     "y": 189.225,
+     "y": 187.65,
      "text": "patients",
      "role": "caption",
      "color": "#5b6168",
@@ -5414,9 +5414,9 @@
     {
      "kind": "text",
      "x": 112.39999999999999,
-     "y": 180.225,
+     "y": 178.65,
      "text": "731",
-     "role": "title",
+     "role": "panel",
      "color": "#1b1e22",
      "align": "center",
      "weight": null
@@ -5424,7 +5424,7 @@
     {
      "kind": "text",
      "x": 112.39999999999999,
-     "y": 189.225,
+     "y": 187.65,
      "text": "patients",
      "role": "caption",
      "color": "#5b6168",
@@ -8692,9 +8692,9 @@
     {
      "kind": "text",
      "x": 170.0,
-     "y": 210.225,
+     "y": 208.65,
      "text": "731",
-     "role": "title",
+     "role": "panel",
      "color": "#1b1e22",
      "align": "center",
      "weight": null
@@ -8702,7 +8702,7 @@
     {
      "kind": "text",
      "x": 170.0,
-     "y": 219.225,
+     "y": 217.65,
      "text": "patients",
      "role": "caption",
      "color": "#5b6168",

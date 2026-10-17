@@ -10,4 +10,4 @@ plot <- hl_forest(gallery_data("meta"), "study", "or", "low", "high", weight = "
                   title = "Early mobilisation and 90-day mortality",
                   subtitle = "Odds ratios from five randomised trials",
                   heterogeneity = "I\u00b2 = 18 %, tau\u00b2 = 0.01, p = 0.30", caption = "Synthetic data.")
-finish(plot, "forest_meta", "onehalf")
+finish(plot, "forest_meta", "double")

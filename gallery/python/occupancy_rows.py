@@ -21,5 +21,5 @@ figure = hl.timeseries(
     bands=[{"start": "2025-05-01", "end": "2026-05-01", "label": "Interim, reduced beds",
             "panels": ["Unit B", "Unit D"]}],
     events=[{"x": "2025-05-01", "label": "Move out", "panels": ["Unit D"]},
-            {"x": "2026-05-01", "label": "Move back", "panels": ["Unit D"]}])
+            {"x": "2026-05-01", "label": "Move back", "panels": ["Unit D"]}], size="double")
 finish(figure, "occupancy_rows")

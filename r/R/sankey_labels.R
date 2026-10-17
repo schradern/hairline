@@ -58,7 +58,7 @@ sankey_heading_shapes <- function(headings, xs, width, baseline, style) {
   lapply(seq_along(xs), function(index) {
     x <- if (index == 1) xs[index] + width else if (index == last) xs[index] else xs[index] + width / 2
     align <- if (index == 1) "right" else if (index == last) "left" else "center"
-    shape_text(x, baseline, headings[[index]], "panel", style$neutral$ink, align)
+    shape_text(x, baseline, headings[[index]], "label", style$neutral$muted, align)
   })
 }
 
@@ -77,9 +77,9 @@ sankey_drawing <- function(spec, box, measure, style) {
   first <- box[1] + sankey_outer_width(spec$nodes[[1]], measure, style, rules)
   last <- box[1] + box[3] - sankey_outer_width(spec$nodes[[count]], measure, style, rules) - width
   xs <- first + (last - first) * (seq_len(count) - 1) / (count - 1)
-  top <- box[2] + line_height(style, "panel") + rules$heading_gap * base + if (count > 2) line else 0
+  top <- box[2] + line + rules$heading_gap * base + if (count > 2) line else 0
   placed <- sankey_place(spec, top, box[2] + box[4] - top, line + rules$node_gap * base)
-  heading <- baseline_for(box[2] + line_height(style, "panel") / 2, style, "panel")
+  heading <- baseline_for(box[2] + line / 2, style, "label")
   c(sankey_link_shapes(spec, placed$positions, xs, width, placed$scale, rules),
     sankey_node_shapes(placed$ordered, placed$positions, xs, width),
     sankey_label_shapes(placed$ordered, placed$positions, xs, width, measure, style, rules),
