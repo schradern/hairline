@@ -92,8 +92,9 @@ hl_partition <- function(data, levels, value, title, subtitle = NULL, caption = 
                  length(names)), call. = FALSE)
   }
   spec <- list(rings = donut_rings(data, NULL, value, levels, chart = "partition"), levels = as.list(names))
-  items <- lapply(spec$rings[[1]], function(segment) list(kind = "square", colour = segment$color,
-                                                         label = segment$name))
+  items <- lapply(spec$rings[[1]], function(segment) {
+    list(kind = "square", colour = segment$color, label = segment$name)
+  })
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
     theme_hairline(axes = FALSE) + hl_legend(items)
