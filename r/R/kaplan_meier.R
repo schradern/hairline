@@ -83,6 +83,7 @@ km_layers <- function(layers, colours, median_line) {
 #'
 #' @param data A data frame, or a `survival::survfit` object.
 #' @param time,event Columns with follow-up time and event (1 = event, 0 = censored); unused for `survfit`.
+#'   `time` may also be a formula `Surv(time, event) ~ group`.
 #' @param by Grouping column; one curve per group.
 #' @param title,subtitle,caption Frame texts.
 #' @param x_title Axis title under the x-axis.
@@ -92,11 +93,22 @@ km_layers <- function(layers, colours, median_line) {
 #' @param at_risk Show the number at risk.
 #' @param times Times for the number at risk; default the x-axis breaks.
 #' @param order Group order.
+#' @param test Add the log-rank p to the key numbers when there are groups.
 #' @return A ggplot with the hairline frame.
 #' @export
-hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title, subtitle = NULL, caption = NULL,
+hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = NULL, subtitle = NULL, caption = NULL,
                             x_title = "Time", endpoint = "Survival", median_line = TRUE, stats = character(),
-                            at_risk = TRUE, times = NULL, order = NULL) {
+                            at_risk = TRUE, times = NULL, order = NULL, test = TRUE) {
+  if (inherits(time, "formula")) {
+    sides <- formula_sides(time)
+    time <- as.character(sides$left[[2]])
+    event <- as.character(sides$left[[3]])
+    by <- if (length(sides$right)) sides$right[1] else NULL
+  }
+  title <- title %||% if (is.null(by)) endpoint else paste(endpoint, "by", gsub("_", " ", by))
+  if (!inherits(data, "survfit") && !is.null(by) && test && !any(startsWith(tolower(names(stats)), "log-rank"))) {
+    stats <- c(stats, `Log-rank` = format_p(logrank_test(data[[time]], data[[event]], data[[by]])$p))
+  }
   estimates <- if (inherits(data, "survfit")) km_from_fit(data) else km_from_data(data, time, event, by, order)
   grouped <- !is.null(by) || length(estimates) > 1
   names <- vapply(estimates, function(estimate) if (nzchar(estimate$name)) estimate$name else endpoint, character(1))

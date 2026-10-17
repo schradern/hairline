@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 import pandas as pd
 
+from hairline.charts.common import humanise, joined, with_counts
 from hairline.charts.donut import donut_rings
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
 from hairline.color.vision import contrast
@@ -69,12 +70,15 @@ def partition_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> li
     return bars + texts
 
 
-def partition(data: pd.DataFrame, levels: Sequence[str], value: str, *, title: str, subtitle: str | None = None,
+def partition(data: pd.DataFrame, levels: Sequence[str], value: str | None = None, *, title: str | None = None,
+              subtitle: str | None = None,
               caption: str | None = None, level_names: Sequence[str] | None = None,
               size: str = "onehalf") -> HairlineFigure:
     """Partition bars: the documented alternative to a nested donut, read top to bottom."""
     levels = list(levels)
-    names = list(level_names) if level_names is not None else levels
+    data, value = with_counts(data, value)
+    title = title or f"{humanise(value)} by {joined(levels)}"
+    names = list(level_names) if level_names is not None else [humanise(level) for level in levels]
     if len(names) != len(levels):
         raise ValueError(f"hairline: partition: {len(levels)} levels but {len(names)} level name(s); give one name "
                          "per level")

@@ -80,13 +80,18 @@ partition_drawing <- function(spec, box, measure, style) {
 #'
 #' @param data A data frame.
 #' @param levels Hierarchy columns, top level first (at most three).
-#' @param value Column with the amounts.
+#' @param value Column with the amounts; `NULL` counts rows.
 #' @param title,subtitle,caption Frame texts.
 #' @param level_names Row headings; default the column names.
 #' @return A ggplot with the hairline frame.
 #' @export
-hl_partition <- function(data, levels, value, title, subtitle = NULL, caption = NULL, level_names = NULL) {
-  names <- level_names %||% levels
+hl_partition <- function(data, levels, value = NULL, title = NULL, subtitle = NULL, caption = NULL,
+                         level_names = NULL) {
+  counted <- with_counts(data, value)
+  data <- counted$data
+  value <- counted$value
+  title <- title %||% paste(humanise(value), "by", joined(levels))
+  names <- level_names %||% humanise(levels)
   if (length(names) != length(levels)) {
     stop(sprintf("hairline: partition: %d levels but %d level name(s); give one name per level", length(levels),
                  length(names)), call. = FALSE)

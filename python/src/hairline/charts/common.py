@@ -24,3 +24,24 @@ def fold_other(labels: Sequence[str], values: Sequence[float], keep: int = 7,
     kept = sorted(ranked)
     rest = sum(value for index, value in enumerate(values) if index not in kept)
     return [labels[index] for index in kept] + [other], [values[index] for index in kept] + [rest]
+
+
+COUNT = "Count"
+
+
+def humanise(name: str) -> str:
+    """A column name as words: 'length_of_stay' -> 'Length of stay'."""
+    words = str(name).replace("_", " ").replace(".", " ").strip()
+    return words[:1].upper() + words[1:]
+
+
+def joined(names: Sequence[str]) -> str:
+    names = [str(name).replace("_", " ") for name in names]
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def with_counts(data: pd.DataFrame, value: str | None) -> tuple[pd.DataFrame, str]:
+    """Raw rows count one each when no value column is given."""
+    if value is not None:
+        return data, value
+    return data.assign(**{COUNT: 1}), COUNT

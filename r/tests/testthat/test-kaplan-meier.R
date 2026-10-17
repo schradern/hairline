@@ -11,7 +11,7 @@ test_that("curves start at one and the median is in the header", {
   steps <- built@data[[2]]
   expect_true(all(tapply(steps$y, steps$group, function(values) values[1]) == 1))
   header <- plot@meta$hairline_headers[[1]]
-  expect_equal(names(header$stats), c("Median", "HR"))
+  expect_equal(names(header$stats), c("Median", "HR", "Log-rank"))
   expect_match(header$stats[["Median"]], " vs ")
 })
 

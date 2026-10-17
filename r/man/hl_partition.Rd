@@ -7,8 +7,8 @@
 hl_partition(
   data,
   levels,
-  value,
-  title,
+  value = NULL,
+  title = NULL,
   subtitle = NULL,
   caption = NULL,
   level_names = NULL
@@ -19,7 +19,7 @@ hl_partition(
 
 \item{levels}{Hierarchy columns, top level first (at most three).}
 
-\item{value}{Column with the amounts.}
+\item{value}{Column with the amounts; \code{NULL} counts rows.}
 
 \item{title, subtitle, caption}{Frame texts.}
 

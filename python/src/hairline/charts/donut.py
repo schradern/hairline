@@ -7,7 +7,7 @@ from collections.abc import Sequence
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns, fold_other
+from hairline.charts.common import check_columns, fold_other, humanise, joined, with_counts
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.color.tints import tints
 from hairline.figure import HairlineFigure, figure
@@ -73,10 +73,15 @@ def donut_rings(data: pd.DataFrame, label: str | None, value: str, levels: Seque
     return rings
 
 
-def donut(data: pd.DataFrame, label: str | None, value: str, *, levels: Sequence[str] | None = None, title: str,
+def donut(data: pd.DataFrame, label: str | None = None, value: str | None = None, *,
+          levels: Sequence[str] | None = None, title: str | None = None,
           subtitle: str | None = None, caption: str | None = None, labels: str | None = None, total: bool = True,
           total_label: str | None = None, size: str = "onehalf") -> HairlineFigure:
-    """Donut with labels outside (one ring) or a hierarchical key (nested rings); `labels="ring"` labels the arcs."""
+    """Donut with labels outside (one ring) or a hierarchical key (nested rings); `labels="ring"` labels the arcs.
+
+    Without `value`, every row counts once."""
+    data, value = with_counts(data, value)
+    title = title or f"{humanise(value)} by {joined(levels or [label])}"
     rings = donut_rings(data, label, value, levels)
     mode = labels or ("outside" if len(rings) == 1 else "key")
     if mode not in LABEL_MODES or (mode == "outside" and len(rings) > 1):

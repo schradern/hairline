@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
+import numpy as np
 import pandas as pd
 
-from hairline.charts.common import check_columns
+from hairline.charts.common import check_columns, humanise
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_interval, format_number, format_percent
@@ -74,10 +75,30 @@ def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: s
             "effect_heading": effect_heading, "weight_heading": weight_heading if weight else None}
 
 
-def forest(data: pd.DataFrame, study: str, estimate: str, low: str, high: str, *, title: str,
-           subtitle: str | None = None, caption: str | None = None, heterogeneity: str | None = None,
-           size: str = "onehalf", **options) -> HairlineFigure:
-    """Forest plot from a results table; `options` as for forest_spec (weight, columns, pooled, ratio, favours…)."""
+def model_table(model, exponentiate: bool) -> pd.DataFrame:
+    """Terms, estimates and 95 % intervals of a fitted model (statsmodels-like: params and conf_int())."""
+    limits = model.conf_int()
+    table = pd.DataFrame({"term": [str(name) for name in model.params.index], "estimate": list(model.params),
+                          "low": list(limits.iloc[:, 0]), "high": list(limits.iloc[:, 1])})
+    table = table[~table["term"].str.lower().isin(["intercept", "const", "(intercept)"])]
+    if exponentiate:
+        table[["estimate", "low", "high"]] = np.exp(table[["estimate", "low", "high"]])
+    return table
+
+
+def forest(data, study: str = "study", estimate: str = "estimate", low: str = "low", high: str = "high", *,
+           title: str | None = None, subtitle: str | None = None, caption: str | None = None,
+           heterogeneity: str | None = None, exponentiate: bool = False, size: str = "onehalf",
+           **options) -> HairlineFigure:
+    """Forest plot from a results table or a fitted model (its terms, without the intercept); `exponentiate`
+    turns log odds or log hazards into ratios. `options` as for forest_spec (weight, columns, pooled, favours…)."""
+    if hasattr(data, "params") and hasattr(data, "conf_int"):
+        data, study, estimate, low, high = model_table(data, exponentiate), "term", "estimate", "low", "high"
+        options.setdefault("ratio", exponentiate)
+    elif not {study, estimate, low, high} <= set(getattr(data, "columns", [])):
+        raise ValueError(f"hairline: forest needs the study, estimate, low and high columns ({study}, {estimate}, "
+                         f"{low}, {high}); columns: {', '.join(map(str, getattr(data, 'columns', [])))}")
+    title = title or f"Effects by {humanise(study).lower()}"
     spec = forest_spec(data, study, estimate, low, high, color=current_settings().palette[0], **options)
     note = ". ".join(part.rstrip(".") for part in (heterogeneity, caption) if part)
     result = figure(title, subtitle=subtitle, caption=note + "." if note else None, size=size)

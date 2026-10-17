@@ -14,3 +14,26 @@ fold_other <- function(labels, values, keep = 7, other = "Other") {
   kept <- sort(order(-values, seq_along(values))[seq_len(keep - 1)])
   list(labels = c(labels[kept], other), values = c(values[kept], sum(values[-kept])))
 }
+
+count_column <- "Count"
+
+humanise <- function(name) {
+  words <- trimws(gsub("[_.]", " ", name))
+  paste0(toupper(substr(words, 1, 1)), substring(words, 2))
+}
+
+joined <- function(names) {
+  names <- gsub("_", " ", names)
+  if (length(names) == 1) return(names)
+  paste(paste(names[-length(names)], collapse = ", "), "and", names[length(names)])
+}
+
+with_counts <- function(data, value) {
+  if (!is.null(value)) return(list(data = data, value = value))
+  data[[count_column]] <- 1
+  list(data = data, value = count_column)
+}
+
+formula_sides <- function(formula) {
+  list(left = formula[[2]], right = if (length(formula) > 2) all.vars(formula[[3]]) else character())
+}

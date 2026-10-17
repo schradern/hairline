@@ -9,11 +9,13 @@ import pandas as pd
 from matplotlib.patches import Polygon, Rectangle
 
 from hairline import entities
-from hairline.charts.common import check_columns
+from hairline.charts.common import check_columns, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
+from hairline.numbers import format_p
 from hairline.settings import current_settings, role_size
 from hairline.stats.density import density, jitter_offsets, quantiles
+from hairline.stats.tests import rank_sum
 from hairline.tokens import load_tokens
 
 DENSITY_ID = "hairline-density"
@@ -72,6 +74,22 @@ def draw_brackets(ax, comparisons: Sequence[tuple[str, str, str]], names: list[s
         ax.update_datalim([(low, y + spread * rules["bracket_step"] * 0.6)])
 
 
+def resolve_comparisons(comparisons: str | Sequence[tuple], groups: list, value: str) -> list[tuple[str, str, str]]:
+    names = [name for name, _ in groups]
+    if isinstance(comparisons, str):
+        if comparisons not in ("all", "adjacent"):
+            raise ValueError(f"hairline: raincloud: comparisons {comparisons!r} must be 'all', 'adjacent' or a list")
+        pairs = [(names[i], names[j]) for i in range(len(names)) for j in range(i + 1, len(names))
+                 if comparisons == "all" or j == i + 1]
+    else:
+        pairs = list(comparisons)
+    check_comparisons([(*pair[:2], "") for pair in pairs], names)
+    values = dict(groups)
+    return [tuple(pair) if len(pair) == 3 else (pair[0], pair[1], format_p(rank_sum(values[pair[0]][value],
+                                                                                    values[pair[1]][value])))
+            for pair in pairs]
+
+
 def check_comparisons(comparisons: Sequence[tuple[str, str, str]], names: list[str]) -> None:
     for first, second, _ in comparisons:
         for name in (first, second):
@@ -79,13 +97,16 @@ def check_comparisons(comparisons: Sequence[tuple[str, str, str]], names: list[s
                 raise ValueError(f"hairline: raincloud: comparison group {name!r} is not one of: {', '.join(names)}")
 
 
-def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str, subtitle: str | None = None,
+def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
               caption: str | None = None, y_title: str | None = None, order: Sequence[str] | None = None,
-              comparisons: Sequence[tuple[str, str, str]] = (), size: str = "onehalf") -> HairlineFigure:
-    """Distributions per group; `comparisons` are (group, group, p text) brackets with your test results."""
+              comparisons: str | Sequence[tuple] = (), size: str = "onehalf") -> HairlineFigure:
+    """Distributions per group. `comparisons`: "all" or "adjacent" pairs, (group, group) pairs, or
+    (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p."""
     check_columns(data, [group, value])
     groups = groups_of(data, group, order)
     names = [name for name, _ in groups]
+    title = title or f"{humanise(value)} by {str(group).replace('_', ' ')}"
+    comparisons = resolve_comparisons(comparisons, groups, value)
     check_comparisons(comparisons, names)
     rules, result = load_tokens()["raincloud"], figure(title, subtitle=subtitle, caption=caption, size=size)
     for position, (name, rows) in enumerate(groups):

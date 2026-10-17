@@ -7,7 +7,7 @@ from collections.abc import Sequence
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns
+from hairline.charts.common import check_columns, humanise, joined, with_counts
 from hairline.charts.sankey_geometry import sankey_drawing
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_number
@@ -70,11 +70,15 @@ def sankey_spec(data: pd.DataFrame, columns: Sequence[str], value: str, *, color
     return {"headings": list(headings) if headings else columns, "nodes": nodes, "links": links, "groups": groups}
 
 
-def sankey(data: pd.DataFrame, columns: Sequence[str], value: str, *, title: str, subtitle: str | None = None,
+def sankey(data: pd.DataFrame, columns: Sequence[str], value: str | None = None, *, title: str | None = None,
+           subtitle: str | None = None,
            caption: str | None = None, color_by: str | None = None, headings: Sequence[str] | None = None,
            size: str = "onehalf") -> HairlineFigure:
     """Flows from left to right through `columns`; links take the colour of their group in `color_by`."""
-    spec = sankey_spec(data, columns, value, color_by=color_by, headings=headings)
+    data, value = with_counts(data, value)
+    title = title or f"{humanise(value)} from {joined(columns[:1])} to {joined(columns[-1:])}"
+    spec = sankey_spec(data, columns, value, color_by=color_by,
+                       headings=headings or [humanise(column) for column in columns])
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: sankey_drawing(spec, box, measure, style))
     return result

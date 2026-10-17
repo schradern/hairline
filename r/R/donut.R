@@ -78,7 +78,7 @@ donut_rings <- function(data, label, value, levels = NULL, chart = "donut") {
 #'
 #' @param data A data frame.
 #' @param label Column naming the slices of a single ring.
-#' @param value Column with the amounts.
+#' @param value Column with the amounts; `NULL` counts rows.
 #' @param levels Up to three hierarchy columns, inner ring first; replaces `label`.
 #' @param title,subtitle,caption Frame texts.
 #' @param labels `"outside"` (one ring), `"key"` or `"ring"`; `NULL` picks outside for one ring, key otherwise.
@@ -86,8 +86,12 @@ donut_rings <- function(data, label, value, levels = NULL, chart = "donut") {
 #' @param total_label Text under the total, e.g. `"patients"`.
 #' @return A ggplot with the hairline frame.
 #' @export
-hl_donut <- function(data, label = NULL, value, levels = NULL, title, subtitle = NULL, caption = NULL,
+hl_donut <- function(data, label = NULL, value = NULL, levels = NULL, title = NULL, subtitle = NULL, caption = NULL,
                      labels = NULL, total = TRUE, total_label = NULL) {
+  counted <- with_counts(data, value)
+  data <- counted$data
+  value <- counted$value
+  title <- title %||% paste(humanise(value), "by", joined(levels %||% label))
   rings <- donut_rings(data, label, value, levels)
   mode <- labels %||% if (length(rings) == 1) "outside" else "key"
   if (!mode %in% c("outside", "key", "ring") || (mode == "outside" && length(rings) > 1)) {

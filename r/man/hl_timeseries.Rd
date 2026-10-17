@@ -9,7 +9,7 @@ hl_timeseries(
   x,
   y,
   by = NULL,
-  title,
+  title = NULL,
   subtitle = NULL,
   caption = NULL,
   window = 7,

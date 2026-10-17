@@ -9,7 +9,7 @@ hl_kaplan_meier(
   time = NULL,
   event = NULL,
   by = NULL,
-  title,
+  title = NULL,
   subtitle = NULL,
   caption = NULL,
   x_title = "Time",
@@ -18,13 +18,15 @@ hl_kaplan_meier(
   stats = character(),
   at_risk = TRUE,
   times = NULL,
-  order = NULL
+  order = NULL,
+  test = TRUE
 )
 }
 \arguments{
 \item{data}{A data frame, or a \code{survival::survfit} object.}
 
-\item{time, event}{Columns with follow-up time and event (1 = event, 0 = censored); unused for \code{survfit}.}
+\item{time, event}{Columns with follow-up time and event (1 = event, 0 = censored); unused for \code{survfit}.
+\code{time} may also be a formula \code{Surv(time, event) ~ group}.}
 
 \item{by}{Grouping column; one curve per group.}
 
@@ -43,6 +45,8 @@ hl_kaplan_meier(
 \item{times}{Times for the number at risk; default the x-axis breaks.}
 
 \item{order}{Group order.}
+
+\item{test}{Add the log-rank p to the key numbers when there are groups.}
 }
 \value{
 A ggplot with the hairline frame.

@@ -62,6 +62,18 @@ forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns
        weight_heading = if (is.null(weight)) NULL else weight_heading)
 }
 
+forest_from_model <- function(model, exponentiate) {
+  link <- if (inherits(model, "glm")) model$family$link else ""
+  exponentiate <- exponentiate %||% (inherits(model, "coxph") || link %in% c("logit", "log"))
+  estimates <- stats::coef(model)
+  limits <- stats::confint.default(model)
+  keep <- names(estimates) != "(Intercept)"
+  back <- if (exponentiate) exp else identity
+  list(ratio = exponentiate,
+       table = data.frame(term = names(estimates)[keep], estimate = back(unname(estimates[keep])),
+                          low = back(unname(limits[keep, 1])), high = back(unname(limits[keep, 2]))))
+}
+
 forest_from_rma <- function(fit) {
   ratio <- fit$measure %in% c("OR", "RR", "HR", "IRR", "PETO", "ROM")
   back <- if (ratio) exp else identity
@@ -81,7 +93,8 @@ forest_from_rma <- function(fit) {
 #' null line, a dashed pooled line, a log axis for ratios and "favours"
 #' labels under it. Heterogeneity goes into the caption.
 #'
-#' @param data A data frame of results, or a `metafor::rma` object.
+#' @param data A data frame of results, a fitted `lm`, `glm` or `survival::coxph` model, or a `metafor::rma`
+#'   object.
 #' @param study,estimate,low,high Columns: study label, effect and its interval limits.
 #' @param weight Column of weights (any scale); squares get areas proportional to it.
 #' @param columns Named character vector of extra text columns, `c("Events / n" = "events")`.
@@ -90,12 +103,24 @@ forest_from_rma <- function(fit) {
 #' @param favours Two labels for the left and right of the null line.
 #' @param heterogeneity Text put at the start of the caption.
 #' @param title,subtitle,caption Frame texts.
+#' @param exponentiate For fitted models: report exp(coefficient) (odds, rate or hazard ratios); `NULL` decides
+#'   from the model (logit and log links, Cox models).
 #' @param ... `study_heading`, `effect_heading`, `weight_heading`, `digits`.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_forest <- function(data, study = "study", estimate = "estimate", low = "low", high = "high", weight = NULL,
                       columns = character(), pooled = NULL, ratio = TRUE, favours = NULL, heterogeneity = NULL,
-                      title, subtitle = NULL, caption = NULL, ...) {
+                      title = NULL, subtitle = NULL, caption = NULL, exponentiate = NULL, ...) {
+  if (inherits(data, c("lm", "coxph"))) {
+    converted <- forest_from_model(data, exponentiate)
+    data <- converted$table
+    study <- "term"
+    estimate <- "estimate"
+    low <- "low"
+    high <- "high"
+    ratio <- converted$ratio
+  }
+  title <- title %||% paste("Effects by", tolower(humanise(study)))
   if (inherits(data, "rma")) {
     converted <- forest_from_rma(data)
     data <- converted$table

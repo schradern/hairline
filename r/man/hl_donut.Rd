@@ -7,9 +7,9 @@
 hl_donut(
   data,
   label = NULL,
-  value,
+  value = NULL,
   levels = NULL,
-  title,
+  title = NULL,
   subtitle = NULL,
   caption = NULL,
   labels = NULL,
@@ -22,7 +22,7 @@ hl_donut(
 
 \item{label}{Column naming the slices of a single ring.}
 
-\item{value}{Column with the amounts.}
+\item{value}{Column with the amounts; \code{NULL} counts rows.}
 
 \item{levels}{Up to three hierarchy columns, inner ring first; replaces \code{label}.}
 

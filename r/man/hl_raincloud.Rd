@@ -7,8 +7,8 @@
 hl_raincloud(
   data,
   group,
-  value,
-  title,
+  value = NULL,
+  title = NULL,
   subtitle = NULL,
   caption = NULL,
   y_title = NULL,
@@ -19,7 +19,7 @@ hl_raincloud(
 \arguments{
 \item{data}{A data frame.}
 
-\item{group, value}{Columns: the grouping and the measurement.}
+\item{group, value}{Columns: the grouping and the measurement; or a formula \code{value ~ group} as \code{group}.}
 
 \item{title, subtitle, caption}{Frame texts.}
 
@@ -27,7 +27,8 @@ hl_raincloud(
 
 \item{order}{Group order.}
 
-\item{comparisons}{List of \code{c(group, group, p_text)} brackets.}
+\item{comparisons}{\code{"all"} or \code{"adjacent"} pairs, or a list of \code{c(group, group)} pairs (Wilcoxon rank-sum p
+computed) or \code{c(group, group, text)} with your own result.}
 }
 \value{
 A ggplot with the hairline frame.

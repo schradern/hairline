@@ -12,9 +12,10 @@ from hairline import entities
 from hairline.charts.common import check_columns
 from hairline.charts.timeseries import groups_of, reference_style
 from hairline.figure import HairlineFigure, figure
-from hairline.numbers import format_number
+from hairline.numbers import format_number, format_p
 from hairline.settings import current_settings
 from hairline.stats.survival import km_estimate, km_median
+from hairline.stats.tests import logrank
 from hairline.ticks import nice_breaks
 from hairline.tokens import load_tokens
 
@@ -54,13 +55,18 @@ def header_stats(estimates: list[tuple[str, pd.DataFrame]], stats: Sequence[tupl
     return [("Median", medians)] + [(str(label), str(value)) for label, value in stats]
 
 
-def kaplan_meier(data: pd.DataFrame, time: str, event: str, by: str | None = None, *, title: str,
+def kaplan_meier(data: pd.DataFrame, time: str, event: str, by: str | None = None, *, title: str | None = None,
                  subtitle: str | None = None, caption: str | None = None, x_title: str = "Time",
                  endpoint: str = "Survival", median_line: bool = True, stats: Sequence[tuple[str, str]] = (),
                  at_risk: bool = True, times: Sequence[float] | None = None, order: Sequence[str] | None = None,
-                 size: str = "onehalf") -> HairlineFigure:
-    """Survival curves per group from time and event (1 = event, 0 = censored) columns."""
+                 test: bool = True, size: str = "onehalf") -> HairlineFigure:
+    """Survival curves per group from time and event (1 = event, 0 = censored) columns; with groups and `test`,
+    the log-rank p joins the key numbers."""
     check_columns(data, [time, event, by])
+    title = title or (f"{endpoint} by {str(by).replace('_', ' ')}" if by else endpoint)
+    if by and test and not any(str(label).lower().startswith("log-rank") for label, _ in stats):
+        test_result = logrank(data[time], data[event], [str(name) for name in data[by]])
+        stats = [*stats, ("Log-rank", format_p(test_result["p"]))]
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     ax, estimates, rows = result.ax, [], []
     moments = list(times) if times is not None else nice_breaks(0, float(data[time].max()))

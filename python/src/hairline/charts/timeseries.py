@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns
+from hairline.charts.common import check_columns, humanise
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
 from hairline.marks import SECONDARY_ID
@@ -101,7 +101,7 @@ def legend_items(raw: bool, period_mean: bool, bands: Sequence[Mapping], labels:
     return items
 
 
-def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title: str,
+def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title: str | None = None,
                subtitle: str | None = None, caption: str | None = None, window: int = 7, raw: bool = True,
                period_mean: bool = False, percent: bool = False, threshold: float | None = None,
                threshold_label: str | None = None, threshold_legend: str | None = None,
@@ -112,6 +112,7 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
                mean_label: str | None = None, size: str = "double") -> HairlineFigure:
     """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers."""
     check_columns(data, [x, y, by])
+    title = title or (f"{humanise(y)} by {str(by).replace('_', ' ')}" if by else f"{humanise(y)} over time")
     groups = groups_of(data, by, order)
     result = figure(title, subtitle=subtitle, caption=caption, size=size, panels=len(groups), layout="rows")
     is_date = pd.api.types.is_datetime64_any_dtype(data[x])

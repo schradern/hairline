@@ -79,14 +79,19 @@ sankey_spec <- function(data, columns, value, color_by = NULL, headings = NULL) 
 #'
 #' @param data A data frame, one row per path with its value.
 #' @param columns The columns, left to right.
-#' @param value Column with the amounts.
+#' @param value Column with the amounts; `NULL` counts rows.
 #' @param title,subtitle,caption Frame texts.
 #' @param color_by Column whose groups colour the links, or `"none"`.
 #' @param headings Column headings; default the column names.
 #' @return A ggplot with the hairline frame.
 #' @export
-hl_sankey <- function(data, columns, value, title, subtitle = NULL, caption = NULL, color_by = NULL, headings = NULL) {
-  spec <- sankey_spec(data, columns, value, color_by, headings)
+hl_sankey <- function(data, columns, value = NULL, title = NULL, subtitle = NULL, caption = NULL, color_by = NULL,
+                      headings = NULL) {
+  counted <- with_counts(data, value)
+  data <- counted$data
+  value <- counted$value
+  title <- title %||% paste(humanise(value), "from", joined(columns[1]), "to", joined(columns[length(columns)]))
+  spec <- sankey_spec(data, columns, value, color_by, headings %||% humanise(columns))
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
     theme_hairline(axes = FALSE)

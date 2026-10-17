@@ -57,6 +57,28 @@ raincloud_bracket_layers <- function(comparisons, names, values, rules) {
   layers
 }
 
+resolve_comparisons <- function(comparisons, data, group, value, names) {
+  if (is.character(comparisons) && length(comparisons) == 1 && comparisons %in% c("all", "adjacent")) {
+    pairs <- utils::combn(names, 2, simplify = FALSE)
+    if (comparisons == "adjacent") pairs <- Filter(function(pair) abs(diff(match(pair, names))) == 1, pairs)
+    comparisons <- pairs
+  } else if (is.character(comparisons) && length(comparisons) == 1) {
+    stop(sprintf("hairline: raincloud: comparisons '%s' must be 'all', 'adjacent' or a list", comparisons),
+         call. = FALSE)
+  }
+  lapply(comparisons, function(pair) {
+    if (length(pair) == 3) return(pair)
+    for (name in pair) {
+      if (!name %in% names) {
+        stop(sprintf("hairline: raincloud: comparison group '%s' is not one of: %s", name,
+                     paste(names, collapse = ", ")), call. = FALSE)
+      }
+    }
+    values <- lapply(pair, function(name) data[[value]][as.character(data[[group]]) == name])
+    c(pair, format_p(rank_sum_p(values[[1]], values[[2]])))
+  })
+}
+
 #' Raincloud plot
 #'
 #' Per group a half density, the box (interquartile range and median) and
@@ -64,17 +86,25 @@ raincloud_bracket_layers <- function(comparisons, names, values, rules) {
 #' your test results and are stacked so they never overlap.
 #'
 #' @param data A data frame.
-#' @param group,value Columns: the grouping and the measurement.
+#' @param group,value Columns: the grouping and the measurement; or a formula `value ~ group` as `group`.
 #' @param title,subtitle,caption Frame texts.
 #' @param y_title Axis title above the y-axis.
 #' @param order Group order.
-#' @param comparisons List of `c(group, group, p_text)` brackets.
+#' @param comparisons `"all"` or `"adjacent"` pairs, or a list of `c(group, group)` pairs (Wilcoxon rank-sum p
+#'   computed) or `c(group, group, text)` with your own result.
 #' @return A ggplot with the hairline frame.
 #' @export
-hl_raincloud <- function(data, group, value, title, subtitle = NULL, caption = NULL, y_title = NULL, order = NULL,
-                         comparisons = list()) {
+hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, y_title = NULL,
+                         order = NULL, comparisons = list()) {
+  if (inherits(group, "formula")) {
+    sides <- formula_sides(group)
+    value <- deparse(sides$left)
+    group <- sides$right[1]
+  }
   check_columns(data, c(group, value))
   names <- order %||% unique(as.character(data[[group]]))
+  title <- title %||% paste(humanise(value), "by", gsub("_", " ", group))
+  comparisons <- resolve_comparisons(comparisons, data, group, value, names)
   for (name in unlist(lapply(comparisons, `[`, 1:2))) {
     if (!name %in% names) {
       stop(sprintf("hairline: raincloud: comparison group '%s' is not one of: %s", name,

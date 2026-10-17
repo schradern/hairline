@@ -16,14 +16,16 @@ hl_forest(
   ratio = TRUE,
   favours = NULL,
   heterogeneity = NULL,
-  title,
+  title = NULL,
   subtitle = NULL,
   caption = NULL,
+  exponentiate = NULL,
   ...
 )
 }
 \arguments{
-\item{data}{A data frame of results, or a \code{metafor::rma} object.}
+\item{data}{A data frame of results, a fitted \code{lm}, \code{glm} or \code{survival::coxph} model, or a \code{metafor::rma}
+object.}
 
 \item{study, estimate, low, high}{Columns: study label, effect and its interval limits.}
 
@@ -40,6 +42,9 @@ hl_forest(
 \item{heterogeneity}{Text put at the start of the caption.}
 
 \item{title, subtitle, caption}{Frame texts.}
+
+\item{exponentiate}{For fitted models: report exp(coefficient) (odds, rate or hazard ratios); \code{NULL} decides
+from the model (logit and log links, Cox models).}
 
 \item{...}{\code{study_heading}, \code{effect_heading}, \code{weight_heading}, \code{digits}.}
 }

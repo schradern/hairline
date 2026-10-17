@@ -7,8 +7,8 @@
 hl_sankey(
   data,
   columns,
-  value,
-  title,
+  value = NULL,
+  title = NULL,
   subtitle = NULL,
   caption = NULL,
   color_by = NULL,
@@ -20,7 +20,7 @@ hl_sankey(
 
 \item{columns}{The columns, left to right.}
 
-\item{value}{Column with the amounts.}
+\item{value}{Column with the amounts; \code{NULL} counts rows.}
 
 \item{title, subtitle, caption}{Frame texts.}
 
