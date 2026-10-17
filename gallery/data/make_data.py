@@ -11,8 +11,8 @@ import numpy as np
 SEED = 20260717
 FOLDER = Path(__file__).resolve().parent
 MAX_OCCUPANCY = 1.15  # overflow beds: real ICU occupancy rarely passes about 110 %
-WARDS = [("Unit A", 0.60, 24), ("Unit B", 0.86, 12), ("Unit C", 0.69, 12), ("Unit D", 0.79, 12),
-         ("Unit E", 0.79, 11), ("Unit F", 0.68, 10)]
+WARDS = [("Unit A", 0.60, 20), ("Unit B", 0.86, 14), ("Unit C", 0.69, 10), ("Unit D", 0.79, 16),
+         ("Unit E", 0.79, 8), ("Unit F", 0.68, 12)]
 DAYS = 546
 INTERIM = (120, 485)
 
