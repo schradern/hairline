@@ -23,6 +23,7 @@ from hairline.charts.forest import forest_spec
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.charts.labels import spread_labels
 from hairline.charts.partition import partition_drawing
+from hairline.charts.raincloud import bracket_levels
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklch
@@ -34,6 +35,7 @@ from hairline.layout.geometry import Box, frame_input_from_dict, load_font_metri
 from hairline.marks import point_fill, point_step
 from hairline.numbers import format_number, format_percent
 from hairline.settings import use
+from hairline.stats.density import bandwidth, density, jitter_offsets, quantiles
 from hairline.stats.survival import km_estimate, km_median
 from hairline.ticks import nice_breaks
 from hairline.tokens import load_tokens
@@ -265,6 +267,21 @@ def forest_cases() -> dict:
                        "shapes": forest_drawing(spec, box, fake_measure, DRAWING_STYLE)} for spec in specs]}
 
 
+def density_cases() -> dict:
+    generator = np.random.default_rng(11)
+    samples = [[1.0, 2.0, 3.0, 4.0, 10.0], np.round(generator.gamma(2.2, 2.0, 60), 1).tolist(),
+               np.round(generator.normal(50, 12, 33), 2).tolist(), [3.0, 3.0, 3.0, 4.0], [5.0, 5.0]]
+    cases = []
+    for values in samples:
+        curve = density(values)
+        cases.append({"values": values, "bandwidth": bandwidth(values) if len(set(values)) > 1 else None,
+                      "quantiles": quantiles(values, [0.25, 0.5, 0.75]),
+                      "grid": curve[0] if curve else None, "height": curve[1] if curve else None})
+    spans = [[(0, 1), (1, 2), (0, 2)], [(0, 1), (0, 1)], [(0, 3), (1, 2), (2, 3), (0, 1)], [(2, 0)]]
+    return {"cases": cases, "jitter": jitter_offsets(12),
+            "brackets": [{"spans": span, "levels": bracket_levels(span)} for span in spans]}
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -283,6 +300,7 @@ def main() -> int:
     write("chart_helpers.json", chart_helper_cases())
     write("donut.json", {"style": DRAWING_STYLE, "cases": donut_cases()})
     write("survival.json", survival_cases())
+    write("density.json", density_cases())
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     return 0

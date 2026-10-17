@@ -74,6 +74,14 @@ def meta_rows() -> list[dict]:
             for study, estimate, low, high, weight, events in META]
 
 
+def stay_rows(rng: np.random.Generator) -> list[dict]:
+    """Length of ICU stay in days: right-skewed, longer on the neurological unit."""
+    rows = []
+    for unit, shape, scale, count in (("Surgical", 2.2, 2.0, 64), ("Medical", 3.0, 2.2, 58), ("Neuro", 4.0, 2.5, 41)):
+        rows += [{"unit": unit, "days": round(float(value), 1)} for value in rng.gamma(shape, scale, count)]
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -88,6 +96,7 @@ def main() -> None:
     write("discharge.csv", discharge_rows())
     write("trial.csv", trial_rows(rng))
     write("meta.csv", meta_rows())
+    write("stays.csv", stay_rows(rng))
 
 
 if __name__ == "__main__":

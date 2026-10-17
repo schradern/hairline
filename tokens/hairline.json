@@ -513,5 +513,16 @@
       2,
       2
     ]
+  },
+  "raincloud": {
+    "density_offset": 0.08,
+    "density_width": 0.38,
+    "density_opacity": 0.35,
+    "box_half": 0.035,
+    "points_centre": -0.22,
+    "points_spread": 0.2,
+    "bracket_step": 0.18,
+    "bracket_tick": 0.03,
+    "label_pad": 0.2
   }
 }

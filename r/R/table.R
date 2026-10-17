@@ -47,10 +47,12 @@ table_grobs <- function(parts, plan) {
   for (index in seq_along(table$rows)) {
     row <- table$rows[[index]]
     top <- baselines[index] - cap / 2 - side / 2
-    grobs <- c(grobs, list(grid::rectGrob(grid::unit(left, "pt"), grid::unit(height - top - side, "pt"),
-                                          grid::unit(side, "pt"), grid::unit(side, "pt"), just = c(0, 0),
-                                          gp = grid::gpar(fill = row$colour, col = NA)),
-                           text_grob_pt(row$label, left + table_label_offset(settings), baselines[index], label,
+    if (!is.null(row$colour)) {
+      grobs[[length(grobs) + 1]] <- grid::rectGrob(grid::unit(left, "pt"), grid::unit(height - top - side, "pt"),
+                                                   grid::unit(side, "pt"), grid::unit(side, "pt"), just = c(0, 0),
+                                                   gp = grid::gpar(fill = row$colour, col = NA))
+    }
+    grobs <- c(grobs, list(text_grob_pt(row$label, left + table_label_offset(settings), baselines[index], label,
                                         height)),
                lapply(seq_along(row$text), function(item) {
                  text_grob_pt(row$text[item], xs[[index]][item], baselines[index], ink, height, "center")

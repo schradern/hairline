@@ -53,8 +53,9 @@ def draw_table(figure: HairlineFigure, layout: FrameLayout) -> list:
     cap = load_font_metrics().cap_height * label["size"]
     figure.table_value_xs = []
     for (name, color, values), baseline in zip(spec["rows"], baselines, strict=True):
-        artists += [add_rect(figure.figure, layout.left, baseline - cap / 2 - side / 2, side, side, color),
-                    add_text(figure.figure, layout.left + label_offset(figure), baseline, name, label)]
+        if color is not None:
+            artists.append(add_rect(figure.figure, layout.left, baseline - cap / 2 - side / 2, side, side, color))
+        artists.append(add_text(figure.figure, layout.left + label_offset(figure), baseline, name, label))
         for value, content in values:
             figure.table_value_xs.append(value_x(figure, value))
             artists.append(add_text(figure.figure, figure.table_value_xs[-1], baseline, content, ink, "center"))

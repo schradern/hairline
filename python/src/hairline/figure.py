@@ -58,6 +58,7 @@ class HairlineFigure:
     drawings: dict = field(default_factory=dict)
     shapes: list = field(default_factory=list)
     table_spec: dict | None = None
+    category_axes: dict = field(default_factory=dict)
     table_value_xs: list = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -93,6 +94,11 @@ class HairlineFigure:
         self.check_index(index)
         self.bare_panels.setdefault(index, None)
         self.drawings[index] = shapes
+
+    def categories(self, index: int, labels: Sequence[str], which: str = "x") -> None:
+        """Label positions 0, 1, … of panel `index`'s axis with `labels`; hairline then leaves those ticks alone."""
+        self.check_index(index)
+        self.category_axes[(index, which)] = [str(label) for label in labels]
 
     def table(self, rows: Sequence[tuple[str, str, Sequence[tuple[float, str]]]], heading: str | None = None) -> None:
         """Rows (label, colour, [(x, text), ...]) under the x-axis, each text centred at its x (number at risk)."""

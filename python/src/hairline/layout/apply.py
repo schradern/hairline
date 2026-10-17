@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from hairline.drawing import run_drawings, text_positions
 from hairline.errors import HairlineLayoutError
 from hairline.focus import apply_entity_colors, apply_highlight, focus_legend_items, place_reference_labels
-from hairline.layout.axes_style import configure_ticks, data_interval, label_width, set_tick_visibility
+from hairline.layout.axes_style import label_width, set_tick_visibility
 from hairline.layout.bare import fitted_box
 from hairline.layout.draw import add_text
 from hairline.layout.frame import compute_frame
@@ -19,6 +19,7 @@ from hairline.layout.measure import text_width, wrap
 from hairline.layout.panels import ComposedHeader, compose_header
 from hairline.layout.styles import header_gaps, header_styles, role_style
 from hairline.layout.table import draw_table, table_label_width, table_lines
+from hairline.layout.ticking import configure_all_ticks
 from hairline.marks import apply_light_slots
 from hairline.settings import role_size
 from hairline.tokens import load_tokens
@@ -52,47 +53,6 @@ def shows_y_labels(figure: HairlineFigure, index: int) -> bool:
     if index in figure.bare_panels:
         return False
     return not figure.sharey or grid_position(figure, index)[1] == 0
-
-
-def tick_target(figure: HairlineFigure, which: str) -> int:
-    """Target tick count from the panel grid: 5 for one row (column), 4 for two, 3 for more (same rule in R)."""
-    count = figure.columns if which == "x" else math.ceil(len(figure.axes) / figure.columns)
-    return {1: 5, 2: 4}.get(count, 3)
-
-
-def current_limits(ax, which: str) -> tuple[float, float]:
-    return tuple(ax.get_ylim() if which == "y" else ax.get_xlim())
-
-
-def tick_interval(figure: HairlineFigure, index: int, which: str) -> tuple[float, float] | None:
-    """Data range for automatic limits, or None once the user (or a zoom) has set the limits."""
-    ax, key = figure.axes[index], (index, which)
-    if key not in figure.auto_limits:
-        figure.auto_limits[key] = ax.get_autoscaley_on() if which == "y" else ax.get_autoscalex_on()
-    applied = figure.applied_limits.get(key)
-    if applied is not None and not all(math.isclose(a, b) for a, b in zip(applied, current_limits(ax, which),
-                                                                          strict=True)):
-        figure.auto_limits[key] = False
-    if not figure.auto_limits[key]:
-        return None
-    shared = figure.sharey if which == "y" else figure.sharex
-    return data_interval(figure.axes if shared else [ax], which)
-
-
-def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
-    labels = []
-    for index, ax in enumerate(figure.axes):
-        if index in figure.bare_panels:
-            labels.append([])
-            continue
-        for which in ("y", "x"):
-            percent = which == "y" and index in figure.percent_axes
-            result = configure_ticks(ax, which, tick_interval(figure, index, which), percent,
-                                     figure.settings.locale, tick_target(figure, which))
-            figure.applied_limits[(index, which)] = current_limits(ax, which)
-            if which == "y":
-                labels.append(result)
-    return labels
 
 
 def measure_texts(figure: HairlineFigure, width_pt: float, y_labels: list[list[str]]) -> Measured:

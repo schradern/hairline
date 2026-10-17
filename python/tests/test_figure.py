@@ -183,13 +183,13 @@ def test_short_panels_get_fewer_ticks():
 
 @pytest.mark.parametrize("panels, expected", [(1, 5), (2, 4), (3, 3), (6, 3)])
 def test_tick_target_depends_on_panel_rows_only(panels, expected):
-    from hairline.layout.apply import tick_target
+    from hairline.layout.ticking import tick_target
     for size in ("single", "slide"):
         assert tick_target(hl.figure("T", size=size, panels=panels), "y") == expected
 
 
 @pytest.mark.parametrize("columns, expected", [(1, 5), (2, 4), (3, 3)])
 def test_x_tick_target_depends_on_columns(columns, expected):
-    from hairline.layout.apply import tick_target
+    from hairline.layout.ticking import tick_target
     figure = hl.figure("T", size="double", panels=columns * 2, layout="grid", columns=columns)
     assert tick_target(figure, "x") == expected
