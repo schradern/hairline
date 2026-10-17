@@ -76,5 +76,6 @@ plan_frame <- function(parts, size) {
   layout <- compute_frame(frame_spec(parts, texts, size, legend_rows, header_rows(parts, NULL, TRUE)), metrics)
   composed <- compose_all_headers(parts, layout)
   layout <- compute_frame(frame_spec(parts, texts, size, legend_rows, header_rows(parts, composed)), metrics)
-  list(layout = layout, texts = texts, placed = placed, composed = compose_all_headers(parts, layout), size = size)
+  list(layout = layout, texts = texts, placed = placed, composed = compose_all_headers(parts, layout), size = size,
+       shapes = drawing_shapes(parts, layout))
 }

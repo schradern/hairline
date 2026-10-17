@@ -44,6 +44,15 @@ def scatter_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+DISCHARGE = [("Home", "Alone", 250), ("Home", "With support", 162), ("Rehabilitation", "Inpatient", 120),
+             ("Rehabilitation", "Outpatient", 48), ("Other ward", "Other ward", 97), ("Care home", "Care home", 54),
+             ("Died", "Died", 23)]
+
+
+def discharge_rows() -> list[dict]:
+    return [{"route": route, "detail": detail, "patients": patients} for route, detail, patients in DISCHARGE]
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -55,6 +64,7 @@ def main() -> None:
     rng = np.random.default_rng(SEED)
     write("occupancy.csv", occupancy_rows(rng))
     write("scatter.csv", scatter_rows(rng))
+    write("discharge.csv", discharge_rows())
 
 
 if __name__ == "__main__":

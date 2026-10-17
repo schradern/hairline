@@ -71,6 +71,7 @@ frame_children <- function(parts, plan) {
   layout <- plan$layout
   surface <- if (identical(settings$background, "transparent")) NA else settings$background
   grobs <- c(list(grid::rectGrob(gp = grid::gpar(fill = surface, col = NA))), panel_grobs(parts, plan),
+             drawing_grobs(plan$shapes, height, settings),
              line_grobs(plan$texts$title, layout$title_baselines, layout$left, role_style(settings, "title"), height),
              line_grobs(plan$texts$subtitle, layout$subtitle_baselines, layout$left, role_style(settings, "subtitle"),
                         height),

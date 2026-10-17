@@ -55,6 +55,8 @@ class HairlineFigure:
     report: dict = field(default_factory=dict)
     bare_panels: dict[int, float | None] = field(default_factory=dict)
     plot_boxes: list = field(default_factory=list)
+    drawings: dict = field(default_factory=dict)
+    shapes: list = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)
@@ -83,6 +85,12 @@ class HairlineFigure:
         if aspect is not None and aspect <= 0:
             raise ValueError(f"hairline: bare panel {index}: aspect must be positive, got {aspect}")
         self.bare_panels[index] = aspect
+
+    def draw(self, index: int, shapes) -> None:
+        """Draw panel `index` from `shapes(box, measure, style)`, a function returning shapes in pt (see drawing.py)."""
+        self.check_index(index)
+        self.bare_panels.setdefault(index, None)
+        self.drawings[index] = shapes
 
     def highlight(self, series: Sequence[str] | None = None, panels: Sequence[int | str] | None = None) -> None:
         """Keep these series (legend labels) or panels (index or name) in colour; draw the rest in context grey."""

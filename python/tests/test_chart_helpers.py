@@ -43,3 +43,8 @@ def test_fold_other_keeps_order_and_sums():
 
 def test_fold_other_leaves_short_lists_alone():
     assert fold_other(["a", "b"], [1, 2]) == (["a", "b"], [1, 2])
+
+
+def test_tints_of_a_light_parent_step_darker():
+    lightness = [hex_to_oklch(colour)[0] for colour in tints("#e8a628", 2)]
+    assert lightness[0] < hex_to_oklch("#e8a628")[0] and lightness[1] < lightness[0]

@@ -13,7 +13,7 @@ GALLERY = Path(__file__).resolve().parents[1]
 OUT = GALLERY / "out" / "python"
 FRAME_KEYS = ["left", "right", "title_baselines", "subtitle_baselines", "legend_row_centers", "panels",
               "panel_header_baselines", "panel_header_lines", "y_title_left", "y_title_baseline", "x_title_baseline",
-              "caption_baselines"]
+              "caption_baselines", "plot_boxes", "drawing_texts"]
 
 
 def data(name: str) -> pd.DataFrame:

@@ -459,6 +459,27 @@
   },
   "tints": {
     "step": 0.08,
-    "cap": 0.92
+    "cap": 0.88,
+    "floor": 0.3
+  },
+  "donut": {
+    "hole": 0.6,
+    "hole_nested": 0.38,
+    "gap_pt": 2,
+    "leader_offset": 0.15,
+    "leader_elbow": 0.7,
+    "leader_run": 0.6,
+    "label_gap": 0.3,
+    "label_space": 0.35,
+    "min_radius": 2.5,
+    "arc_step": 2,
+    "key_share": 0.42,
+    "key_gap": 2.0,
+    "key_row_gap": 0.3,
+    "key_indent": 1.0,
+    "ring_min_share": 0.03,
+    "ring_label_pad": 0.3,
+    "max_slices": 7,
+    "max_levels": 3
   }
 }

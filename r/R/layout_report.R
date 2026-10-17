@@ -45,6 +45,7 @@ report_from_plan <- function(parts, plan) {
                                                           style = title_style, USE.NAMES = FALSE),
                  legend_item_rights = vapply(plan$placed, `[[`, numeric(1), "right"),
                  legend_labels = vapply(plan$placed, `[[`, character(1), "label"), panel_letters = character(),
+                 drawing_texts = drawing_texts(plan$shapes),
                  bare_panels = if (parts$bare) seq_along(parts$panels) - 1L else integer(),
                  plot_boxes = lapply(layout$panels[seq_along(parts$panels)], fitted_box, aspect = parts$aspect))
   rapply(report, function(value) round(value, 2), classes = "numeric", how = "replace")

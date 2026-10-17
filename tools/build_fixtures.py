@@ -11,8 +11,12 @@ import json
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 from hairline.brand import load_brand
 from hairline.charts.common import fold_other
+from hairline.charts.donut import donut_rings
+from hairline.charts.donut_geometry import donut_drawing
 from hairline.charts.labels import spread_labels
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
@@ -21,9 +25,10 @@ from hairline.color.tints import tints
 from hairline.color.vision import contrast, delta_e, simulate
 from hairline.entities import assign_colors
 from hairline.layout.frame import compute_frame
-from hairline.layout.geometry import frame_input_from_dict, load_font_metrics
+from hairline.layout.geometry import Box, frame_input_from_dict, load_font_metrics
 from hairline.marks import point_fill, point_step
 from hairline.numbers import format_number, format_percent
+from hairline.settings import use
 from hairline.ticks import nice_breaks
 from hairline.tokens import load_tokens
 
@@ -171,6 +176,37 @@ def chart_helper_cases() -> dict[str, list[dict]]:
                      for labels, values, keep in FOLD_CASES]}
 
 
+DRAWING_STYLE = {"base": 9.0, "sizes": {"title": 13.5, "label": 7.2, "caption": 7.2}, "line_gap": 0.25,
+                 "cap_height": 0.7, "swatch": 0.85, "swatch_text": 0.5, "leader_width": 0.54,
+                 "neutral": {"ink": "#1b1e22", "muted": "#5b6168", "faint": "#6f757d", "axis": "#c4c8cd",
+                             "surface": "#ffffff"}}
+
+
+def fake_measure(text: str, role: str, weight: int | None = None) -> float:
+    """Stand-in text width for geometry fixtures, so they do not depend on a font engine."""
+    return 0.5 * DRAWING_STYLE["sizes"][role] * len(text)
+
+
+def donut_cases() -> list[dict]:
+    use(brand=False)
+    single = pd.DataFrame({"name": ["Home", "Rehabilitation", "Other ward", "Care home", "Died", "Hospice", "Transfer",
+                                    "Unknown", "Left"], "n": [412, 168, 97, 54, 23, 9, 7, 3, 2]})
+    nested = pd.DataFrame({"route": ["Home", "Home", "Rehabilitation", "Rehabilitation", "Other ward", "Care home"],
+                           "detail": ["Alone", "With support", "Inpatient", "Outpatient", "Other ward", "Care home"],
+                           "n": [250, 162, 120, 48, 97, 54]})
+    inputs = [(single, "name", None, "outside", Box(20, 60, 440, 240)),
+              (nested, None, ["route", "detail"], "key", Box(20, 60, 440, 240)),
+              (nested, None, ["route", "detail"], "ring", Box(20, 60, 300, 300))]
+    cases = []
+    for data, label, levels, mode, box in inputs:
+        rings = donut_rings(data, label, "n", levels)
+        spec = {"rings": rings, "labels": mode, "total": "731", "total_label": "patients"}
+        cases.append({"data": data.to_dict(orient="list"), "label": label, "levels": levels, "spec": spec,
+                      "box": [box.x, box.y, box.width, box.height],
+                      "shapes": donut_drawing(spec, box, fake_measure, DRAWING_STYLE)})
+    return cases
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -187,6 +223,7 @@ def main() -> int:
     write("entities.json", entity_cases())
     write("points.json", point_cases())
     write("chart_helpers.json", chart_helper_cases())
+    write("donut.json", {"style": DRAWING_STYLE, "cases": donut_cases()})
     return 0
 
 

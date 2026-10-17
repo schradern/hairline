@@ -6,6 +6,7 @@ import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from hairline.drawing import run_drawings, text_positions
 from hairline.errors import HairlineLayoutError
 from hairline.focus import apply_entity_colors, apply_highlight, focus_legend_items, place_reference_labels
 from hairline.layout.axes_style import configure_ticks, data_interval, label_width, set_tick_visibility
@@ -233,7 +234,7 @@ def draw_frame(figure: HairlineFigure, layout: FrameLayout, measured: Measured, 
     artists += draw_lines(figure, layout.left, layout.caption_baselines, measured.caption, "caption")
     artists += draw_legend(figure.figure, placed, layout.legend_row_centers, legend_style(figure), spacing, lines)
     artists += draw_headers(figure, layout, composed) + draw_axis_titles(figure, layout)
-    figure.frame_artist.replace_children(artists)
+    figure.frame_artist.replace_children(run_drawings(figure) + artists)
 
 
 def build_report(figure: HairlineFigure, layout: FrameLayout, measured: Measured, placed, composed) -> dict:
@@ -247,6 +248,7 @@ def build_report(figure: HairlineFigure, layout: FrameLayout, measured: Measured
     data["panel_header_lines"] = [composed[index].lines if index in composed else 0
                                   for index in range(len(figure.axes))]
     data["bare_panels"] = sorted(figure.bare_panels)
+    data["drawing_texts"] = text_positions(figure)
     data["plot_boxes"] = [[box.x, box.y, box.width, box.height] for box in figure.plot_boxes]
     data["panel_letters"] = [chr(ord("A") + index) for index in sorted(composed)] if figure.panel_letters else []
     return round_report(data)
