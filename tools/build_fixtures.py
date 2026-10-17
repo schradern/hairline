@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import itertools
 import json
+import math
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from hairline.brand import load_brand
@@ -30,6 +32,7 @@ from hairline.layout.geometry import Box, frame_input_from_dict, load_font_metri
 from hairline.marks import point_fill, point_step
 from hairline.numbers import format_number, format_percent
 from hairline.settings import use
+from hairline.stats.survival import km_estimate, km_median
 from hairline.ticks import nice_breaks
 from hairline.tokens import load_tokens
 
@@ -221,6 +224,22 @@ def partition_cases() -> list[dict]:
     return cases
 
 
+def survival_cases() -> list[dict]:
+    generator = np.random.default_rng(7)
+    times = np.round(generator.exponential(14, 60), 1)
+    events = (generator.uniform(size=60) < 0.7).astype(int)
+    inputs = [([1, 2, 2, 3, 4, 5], [1, 1, 0, 1, 0, 1]), ([0, 1, 2], [0, 1, 1]), ([3, 5, 8], [0, 0, 0]), ([4], [1]),
+              ([1, 2, 3, 4], [1, 0, 0, 0]), ([2, 2, 2, 5, 5, 9], [1, 1, 0, 1, 1, 0]),
+              (times.tolist(), events.tolist())]
+    cases = []
+    for time, event in inputs:
+        table = km_estimate(time, event)
+        cases.append({"time": time, "event": event, "median": km_median(table),
+                      "table": {column: [None if isinstance(value, float) and math.isnan(value) else value
+                                         for value in table[column].tolist()] for column in table.columns}})
+    return cases
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -238,6 +257,7 @@ def main() -> int:
     write("points.json", point_cases())
     write("chart_helpers.json", chart_helper_cases())
     write("donut.json", {"style": DRAWING_STYLE, "cases": donut_cases()})
+    write("survival.json", survival_cases())
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     return 0
 
