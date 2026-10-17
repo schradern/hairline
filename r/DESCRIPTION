@@ -1,0 +1,34 @@
+Package: hairline
+Title: Clean, Predictable Figures for Medical and Data Science
+Version: 0.1.0
+Authors@R: person("Nikolas", "Schrader", email = "hi@nikolasschrader.com", role = c("aut", "cre"))
+Description: A design system for 'ggplot2' figures: one frame for titles, legends,
+    panels and captions, a fixed spacing and type scale, colour-vision checked
+    palettes, brand files in the 'brand.yml' format, and print-ready export.
+    Produces output matching the 'hairline' Python package.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Depends: R (>= 4.3)
+Imports:
+    S7,
+    ggplot2 (>= 4.0.0),
+    grid,
+    grDevices,
+    jsonlite,
+    ragg,
+    rlang,
+    systemfonts,
+    tools,
+    utils,
+    yaml
+Suggests:
+    cowplot,
+    patchwork,
+    png,
+    rsvg,
+    svglite,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.1

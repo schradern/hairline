@@ -1,0 +1,28 @@
+meta:
+  name: Example University Hospital
+color:
+  palette:
+    harbor: "#0b3d6e"
+    poppy: "#f2545b"
+    glacier: "#8cc8ff"
+    fern: "#7fd8a0"
+  foreground: harbor
+  background: "#ffffff"
+  primary: harbor
+typography:
+  fonts:
+    - family: Hairline Sans
+      source: system
+  base:
+    family: Hairline Sans
+  headings:
+    family: Hairline Sans
+    weight: 600
+defaults:
+  hairline:
+    categorical: [harbor, poppy, glacier, fern]
+    adapt: readable
+    base_size: 9
+    sizes:
+      title: 14
+    locale: de

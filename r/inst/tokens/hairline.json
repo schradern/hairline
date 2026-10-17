@@ -1,0 +1,460 @@
+{
+  "version": 1,
+  "type": {
+    "base_size": 9,
+    "roles": {
+      "title": {
+        "factor": 1.5,
+        "weight": 600,
+        "color": "ink"
+      },
+      "subtitle": {
+        "factor": 1.0,
+        "weight": 400,
+        "color": "muted"
+      },
+      "panel": {
+        "factor": 1.0,
+        "weight": 600,
+        "color": "ink"
+      },
+      "label": {
+        "factor": 0.8,
+        "weight": 400,
+        "color": "muted"
+      },
+      "caption": {
+        "factor": 0.8,
+        "weight": 400,
+        "color": "faint"
+      }
+    },
+    "line_gap": 0.25,
+    "value_weight": 400,
+    "key_weight": 600
+  },
+  "spacing": {
+    "margin": 1.75,
+    "title_subtitle": 0.35,
+    "header_legend": 1.25,
+    "legend_rows": 0.65,
+    "legend_content": 1.5,
+    "panel_header": 0.6,
+    "panel_rows": 2.25,
+    "panel_columns": 2.0,
+    "content_caption": 1.5,
+    "y_title": 0.85,
+    "stats_pair": 2.0,
+    "legend_item": 1.5,
+    "legend_swatch_text": 0.5,
+    "y_labels_plot": 0.5,
+    "x_tick_labels": 1.6,
+    "x_title": 0.4,
+    "min_panel_height": 2.0,
+    "legend_swatch_line": 1.35,
+    "legend_swatch_square": 0.85,
+    "qualifier_gap": 0.65,
+    "x_tick_pad": 0.45,
+    "panel_letter_gap": 0.65
+  },
+  "lines": {
+    "data": 0.14,
+    "secondary": 0.055,
+    "secondary_opacity": 0.3,
+    "grid": 0.05,
+    "axis": 0.065,
+    "reference": 0.075,
+    "reference_dash": [
+      3.0,
+      2.5
+    ],
+    "point_radius": 0.2,
+    "light_slot_line": 1.3,
+    "fill_gap_pt": 2.0,
+    "band_opacity": 0.15
+  },
+  "neutral": {
+    "ink": "#1b1e22",
+    "muted": "#5b6168",
+    "faint": "#6f757d",
+    "axis": "#c4c8cd",
+    "grid": "#eef0f2",
+    "band": "#f2f3f5",
+    "surface": "#ffffff"
+  },
+  "palettes": {
+    "daylight": [
+      "#2474cf",
+      "#e8a628",
+      "#53b0de",
+      "#b93780",
+      "#44aa5a",
+      "#8362cd",
+      "#ef675a",
+      "#00afa9"
+    ],
+    "bloom": [
+      "#c63c8a",
+      "#ef852e",
+      "#01aac6",
+      "#5152c1",
+      "#90c045",
+      "#e17a93",
+      "#854494",
+      "#009775"
+    ],
+    "citrus": [
+      "#ef7926",
+      "#00b4bc",
+      "#794db6",
+      "#d2b223",
+      "#c83065",
+      "#70b445",
+      "#2d6fcd",
+      "#eb9a75"
+    ],
+    "lagoon": [
+      "#006eb3",
+      "#ef6661",
+      "#32a5d4",
+      "#ddac37",
+      "#ad65be",
+      "#349d62",
+      "#2e4d99",
+      "#20bcb2"
+    ],
+    "calm": [
+      "#2e65a0",
+      "#c56e4f",
+      "#55a9d6",
+      "#a74662",
+      "#7d9039",
+      "#6e519d",
+      "#d59741",
+      "#008e82"
+    ],
+    "deep": [
+      "#2b5591",
+      "#da6d5d",
+      "#3c88b8",
+      "#923240",
+      "#7baf6f",
+      "#7f3e7a",
+      "#d5a13c",
+      "#007c60"
+    ]
+  },
+  "default_palette": "daylight",
+  "sets": {
+    "pair": [
+      [
+        "#2474cf",
+        "#ef675a"
+      ],
+      [
+        "#00afa9",
+        "#b93780"
+      ],
+      [
+        "#5152c1",
+        "#ef852e"
+      ]
+    ],
+    "focus": {
+      "accent": "#2474cf",
+      "context": [
+        "#9aa0a6",
+        "#bcc1c6",
+        "#dadde1"
+      ]
+    },
+    "ink": [
+      "#1b1e22",
+      "#4a5057",
+      "#767c84",
+      "#a3a8ae",
+      "#cdd0d4"
+    ],
+    "judgement": {
+      "low": "#009775",
+      "some": "#e8a628",
+      "high": "#b93780"
+    }
+  },
+  "ramp_definitions": {
+    "sequential": {
+      "blues": 255,
+      "teals": 195,
+      "oranges": 55,
+      "berries": 350,
+      "greys": null
+    },
+    "diverging": {
+      "blue-coral": [
+        255,
+        28
+      ],
+      "teal-berry": [
+        195,
+        350
+      ]
+    },
+    "steps": 7,
+    "lightness": [
+      0.95,
+      0.35
+    ],
+    "chroma_peak": 0.16,
+    "midpoint": "#efefed"
+  },
+  "ramps": {
+    "blues": [
+      "#e4f0ff",
+      "#add1ff",
+      "#73b1ff",
+      "#4390ee",
+      "#2771c8",
+      "#14549d",
+      "#0b3a6f"
+    ],
+    "teals": [
+      "#b2fffe",
+      "#3de8e9",
+      "#00c7c7",
+      "#00a4a4",
+      "#008282",
+      "#006262",
+      "#004444"
+    ],
+    "oranges": [
+      "#ffeadc",
+      "#ffbe91",
+      "#f69142",
+      "#d76f04",
+      "#ac5700",
+      "#834100",
+      "#5c2c00"
+    ],
+    "berries": [
+      "#ffe7f1",
+      "#ffb4d7",
+      "#f482bb",
+      "#d4609d",
+      "#b0447e",
+      "#882f60",
+      "#601e42"
+    ],
+    "greys": [
+      "#eeeeee",
+      "#cecece",
+      "#aeaeae",
+      "#8f8f8f",
+      "#717171",
+      "#555555",
+      "#3a3a3a"
+    ],
+    "blue-coral": [
+      "#0b3a6f",
+      "#14549d",
+      "#2771c8",
+      "#4390ee",
+      "#73b1ff",
+      "#add1ff",
+      "#efefed",
+      "#ffbab0",
+      "#ff8577",
+      "#e06255",
+      "#ba453b",
+      "#912f28",
+      "#661f19"
+    ],
+    "teal-berry": [
+      "#004444",
+      "#006262",
+      "#008282",
+      "#00a4a4",
+      "#00c7c7",
+      "#3de8e9",
+      "#efefed",
+      "#ffb4d7",
+      "#f482bb",
+      "#d4609d",
+      "#b0447e",
+      "#882f60",
+      "#601e42"
+    ]
+  },
+  "sizes": {
+    "single": {
+      "width_mm": 85,
+      "aspect": 0.75,
+      "base_size": 8
+    },
+    "onehalf": {
+      "width_mm": 120,
+      "aspect": 0.7,
+      "base_size": 9
+    },
+    "double": {
+      "width_mm": 174,
+      "aspect": 0.6,
+      "base_size": 9
+    },
+    "a4": {
+      "width_mm": 160,
+      "aspect": 0.6,
+      "base_size": 9
+    },
+    "slide": {
+      "width_mm": 254,
+      "height_mm": 142.9,
+      "base_size": 16
+    }
+  },
+  "locales": {
+    "en": {
+      "decimal": ".",
+      "thousands": ",",
+      "percent_space": "",
+      "minus": "−",
+      "months": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ]
+    },
+    "de": {
+      "decimal": ",",
+      "thousands": " ",
+      "percent_space": " ",
+      "minus": "−",
+      "months": [
+        "Jan",
+        "Feb",
+        "Mär",
+        "Apr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Okt",
+        "Nov",
+        "Dez"
+      ]
+    }
+  },
+  "default_locale": "en",
+  "checks": {
+    "lightness": [
+      0.43,
+      0.77
+    ],
+    "chroma_floor": 0.1,
+    "cvd_target": 8,
+    "cvd_floor": 6,
+    "normal_floor": 15,
+    "contrast_light_slot": 3,
+    "head_slots": 3,
+    "adapt_lightness": [
+      0.45,
+      0.75
+    ],
+    "adapt_chroma": 0.105,
+    "adapt_step": 0.03,
+    "adapt_iterations": 10
+  },
+  "export": {
+    "formats": [
+      "pdf",
+      "png"
+    ],
+    "valid_formats": [
+      "pdf",
+      "png",
+      "svg",
+      "tiff"
+    ],
+    "dpi": 600
+  },
+  "font": {
+    "family": "Hairline Sans",
+    "source": "Public Sans v2.001 (SIL OFL 1.1)",
+    "files": {
+      "400": "HairlineSans-Regular.ttf",
+      "500": "HairlineSans-Medium.ttf",
+      "600": "HairlineSans-SemiBold.ttf",
+      "400i": "HairlineSans-Italic.ttf",
+      "500i": "HairlineSans-MediumItalic.ttf",
+      "600i": "HairlineSans-SemiBoldItalic.ttf"
+    }
+  },
+  "ticks": {
+    "multipliers": [
+      1,
+      2,
+      2.5,
+      5
+    ],
+    "min": 3,
+    "max": 6,
+    "month_steps": [
+      1,
+      2,
+      3,
+      4,
+      6,
+      12
+    ],
+    "overshoot_low": 0.1,
+    "overshoot_high": 0.2
+  },
+  "focus": {
+    "context": "#b3b8be",
+    "highlight_width": 1.15,
+    "context_width": 0.85
+  },
+  "reference": {
+    "color": "#a3a8ae",
+    "width": 0.06,
+    "dash": [
+      2.0,
+      2.0
+    ],
+    "label_gap": 0.3
+  },
+  "points": {
+    "steps": [
+      {
+        "max": 200,
+        "radius": 0.2,
+        "opacity": 0.9
+      },
+      {
+        "max": 1000,
+        "radius": 0.14,
+        "opacity": 0.7
+      },
+      {
+        "max": 5000,
+        "radius": 0.1,
+        "opacity": 0.5
+      },
+      {
+        "max": null,
+        "radius": 0.07,
+        "opacity": 0.35
+      }
+    ],
+    "fill_lightness_step": 0.02
+  }
+}

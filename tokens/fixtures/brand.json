@@ -1,0 +1,30 @@
+{
+ "name": "Example University Hospital",
+ "names": [
+  "harbor",
+  "poppy",
+  "glacier",
+  "fern"
+ ],
+ "colors_given": [
+  "#0b3d6e",
+  "#f2545b",
+  "#8cc8ff",
+  "#7fd8a0"
+ ],
+ "readable": [
+  "#24578d",
+  "#f2545b",
+  "#75b4ed",
+  "#6bc48d"
+ ],
+ "neutral": {
+  "ink": "#0b3d6e",
+  "surface": "#ffffff"
+ },
+ "sizes": {
+  "title": 14
+ },
+ "locale": "de",
+ "base_size": 9
+}

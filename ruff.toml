@@ -1,0 +1,9 @@
+line-length = 120
+target-version = "py310"
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "T20"]
+
+[lint.isort]
+known-first-party = ["hairline"]
+known-local-folder = ["common"]

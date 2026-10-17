@@ -1,0 +1,118 @@
+[
+ {
+  "palette": [
+   "#2474cf",
+   "#e8a628",
+   "#53b0de",
+   "#b93780",
+   "#44aa5a",
+   "#8362cd",
+   "#ef675a",
+   "#00afa9"
+  ],
+  "label": "palette 'daylight'",
+  "fixed": {},
+  "requests": [
+   "Unit A",
+   "Unit B",
+   "Unit D"
+  ],
+  "expected": {
+   "Unit A": "#2474cf",
+   "Unit B": "#e8a628",
+   "Unit D": "#53b0de"
+  }
+ },
+ {
+  "palette": [
+   "#2474cf",
+   "#e8a628",
+   "#53b0de",
+   "#b93780",
+   "#44aa5a",
+   "#8362cd",
+   "#ef675a",
+   "#00afa9"
+  ],
+  "label": "palette 'daylight'",
+  "fixed": {
+   "Unit B": "#2474cf"
+  },
+  "requests": [
+   "Unit A",
+   "Unit B",
+   "Unit F"
+  ],
+  "expected": {
+   "Unit A": "#e8a628",
+   "Unit B": "#2474cf",
+   "Unit F": "#53b0de"
+  }
+ },
+ {
+  "palette": [
+   "#2474cf",
+   "#e8a628",
+   "#53b0de",
+   "#b93780",
+   "#44aa5a",
+   "#8362cd",
+   "#ef675a",
+   "#00afa9"
+  ],
+  "label": "palette 'daylight'",
+  "fixed": {
+   "Control": "#5b6168"
+  },
+  "requests": [
+   "Intervention",
+   "Control"
+  ],
+  "expected": {
+   "Intervention": "#2474cf",
+   "Control": "#5b6168"
+  }
+ },
+ {
+  "palette": [
+   "#2474cf",
+   "#e8a628",
+   "#53b0de",
+   "#b93780",
+   "#44aa5a",
+   "#8362cd",
+   "#ef675a",
+   "#00afa9"
+  ],
+  "label": "palette 'daylight'",
+  "fixed": {
+   "a": "#53b0de",
+   "b": "#2474cf"
+  },
+  "requests": [
+   "c",
+   "d",
+   "a"
+  ],
+  "expected": {
+   "c": "#e8a628",
+   "d": "#b93780",
+   "a": "#53b0de"
+  }
+ },
+ {
+  "palette": [
+   "#112233",
+   "#445566"
+  ],
+  "label": "custom palette",
+  "fixed": {
+   "a": "#112233"
+  },
+  "requests": [
+   "b",
+   "c"
+  ],
+  "error": "custom palette has 2 slots but 3 categories need colours: a, b, c"
+ }
+]

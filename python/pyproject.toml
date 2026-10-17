@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hairline"
+version = "0.1.0"
+description = "Clean, predictable figures for medical and data science, matching the hairline R package."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = ["matplotlib>=3.8", "numpy>=1.24", "pandas>=2.0", "pyyaml>=6.0"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Framework :: Matplotlib",
+    "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "fonttools>=4.50", "opentype-feature-freezer>=1.32", "pillow>=10"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hairline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error::DeprecationWarning:hairline"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "T20"]

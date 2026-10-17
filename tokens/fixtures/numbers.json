@@ -1,0 +1,842 @@
+[
+ {
+  "kind": "number",
+  "value": 0,
+  "digits": 0,
+  "locale": "en",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.0,
+  "digits": 0,
+  "locale": "en",
+  "result": "0%"
+ },
+ {
+  "kind": "number",
+  "value": 0,
+  "digits": 0,
+  "locale": "de",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.0,
+  "digits": 0,
+  "locale": "de",
+  "result": "0 %"
+ },
+ {
+  "kind": "number",
+  "value": 0,
+  "digits": 1,
+  "locale": "en",
+  "result": "0.0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.0,
+  "digits": 1,
+  "locale": "en",
+  "result": "0.0%"
+ },
+ {
+  "kind": "number",
+  "value": 0,
+  "digits": 1,
+  "locale": "de",
+  "result": "0,0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.0,
+  "digits": 1,
+  "locale": "de",
+  "result": "0,0 %"
+ },
+ {
+  "kind": "number",
+  "value": 0,
+  "digits": 2,
+  "locale": "en",
+  "result": "0.00"
+ },
+ {
+  "kind": "percent",
+  "value": 0.0,
+  "digits": 2,
+  "locale": "en",
+  "result": "0.00%"
+ },
+ {
+  "kind": "number",
+  "value": 0,
+  "digits": 2,
+  "locale": "de",
+  "result": "0,00"
+ },
+ {
+  "kind": "percent",
+  "value": 0.0,
+  "digits": 2,
+  "locale": "de",
+  "result": "0,00 %"
+ },
+ {
+  "kind": "number",
+  "value": 0.5,
+  "digits": 0,
+  "locale": "en",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.005,
+  "digits": 0,
+  "locale": "en",
+  "result": "0%"
+ },
+ {
+  "kind": "number",
+  "value": 0.5,
+  "digits": 0,
+  "locale": "de",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.005,
+  "digits": 0,
+  "locale": "de",
+  "result": "0 %"
+ },
+ {
+  "kind": "number",
+  "value": 0.5,
+  "digits": 1,
+  "locale": "en",
+  "result": "0.5"
+ },
+ {
+  "kind": "percent",
+  "value": 0.005,
+  "digits": 1,
+  "locale": "en",
+  "result": "0.5%"
+ },
+ {
+  "kind": "number",
+  "value": 0.5,
+  "digits": 1,
+  "locale": "de",
+  "result": "0,5"
+ },
+ {
+  "kind": "percent",
+  "value": 0.005,
+  "digits": 1,
+  "locale": "de",
+  "result": "0,5 %"
+ },
+ {
+  "kind": "number",
+  "value": 0.5,
+  "digits": 2,
+  "locale": "en",
+  "result": "0.50"
+ },
+ {
+  "kind": "percent",
+  "value": 0.005,
+  "digits": 2,
+  "locale": "en",
+  "result": "0.50%"
+ },
+ {
+  "kind": "number",
+  "value": 0.5,
+  "digits": 2,
+  "locale": "de",
+  "result": "0,50"
+ },
+ {
+  "kind": "percent",
+  "value": 0.005,
+  "digits": 2,
+  "locale": "de",
+  "result": "0,50 %"
+ },
+ {
+  "kind": "number",
+  "value": -0.5,
+  "digits": 0,
+  "locale": "en",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": -0.005,
+  "digits": 0,
+  "locale": "en",
+  "result": "0%"
+ },
+ {
+  "kind": "number",
+  "value": -0.5,
+  "digits": 0,
+  "locale": "de",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": -0.005,
+  "digits": 0,
+  "locale": "de",
+  "result": "0 %"
+ },
+ {
+  "kind": "number",
+  "value": -0.5,
+  "digits": 1,
+  "locale": "en",
+  "result": "−0.5"
+ },
+ {
+  "kind": "percent",
+  "value": -0.005,
+  "digits": 1,
+  "locale": "en",
+  "result": "−0.5%"
+ },
+ {
+  "kind": "number",
+  "value": -0.5,
+  "digits": 1,
+  "locale": "de",
+  "result": "−0,5"
+ },
+ {
+  "kind": "percent",
+  "value": -0.005,
+  "digits": 1,
+  "locale": "de",
+  "result": "−0,5 %"
+ },
+ {
+  "kind": "number",
+  "value": -0.5,
+  "digits": 2,
+  "locale": "en",
+  "result": "−0.50"
+ },
+ {
+  "kind": "percent",
+  "value": -0.005,
+  "digits": 2,
+  "locale": "en",
+  "result": "−0.50%"
+ },
+ {
+  "kind": "number",
+  "value": -0.5,
+  "digits": 2,
+  "locale": "de",
+  "result": "−0,50"
+ },
+ {
+  "kind": "percent",
+  "value": -0.005,
+  "digits": 2,
+  "locale": "de",
+  "result": "−0,50 %"
+ },
+ {
+  "kind": "number",
+  "value": -0.04,
+  "digits": 0,
+  "locale": "en",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": -0.0004,
+  "digits": 0,
+  "locale": "en",
+  "result": "0%"
+ },
+ {
+  "kind": "number",
+  "value": -0.04,
+  "digits": 0,
+  "locale": "de",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": -0.0004,
+  "digits": 0,
+  "locale": "de",
+  "result": "0 %"
+ },
+ {
+  "kind": "number",
+  "value": -0.04,
+  "digits": 1,
+  "locale": "en",
+  "result": "0.0"
+ },
+ {
+  "kind": "percent",
+  "value": -0.0004,
+  "digits": 1,
+  "locale": "en",
+  "result": "0.0%"
+ },
+ {
+  "kind": "number",
+  "value": -0.04,
+  "digits": 1,
+  "locale": "de",
+  "result": "0,0"
+ },
+ {
+  "kind": "percent",
+  "value": -0.0004,
+  "digits": 1,
+  "locale": "de",
+  "result": "0,0 %"
+ },
+ {
+  "kind": "number",
+  "value": -0.04,
+  "digits": 2,
+  "locale": "en",
+  "result": "−0.04"
+ },
+ {
+  "kind": "percent",
+  "value": -0.0004,
+  "digits": 2,
+  "locale": "en",
+  "result": "−0.04%"
+ },
+ {
+  "kind": "number",
+  "value": -0.04,
+  "digits": 2,
+  "locale": "de",
+  "result": "−0,04"
+ },
+ {
+  "kind": "percent",
+  "value": -0.0004,
+  "digits": 2,
+  "locale": "de",
+  "result": "−0,04 %"
+ },
+ {
+  "kind": "number",
+  "value": 1.005,
+  "digits": 0,
+  "locale": "en",
+  "result": "1"
+ },
+ {
+  "kind": "percent",
+  "value": 0.010049999999999998,
+  "digits": 0,
+  "locale": "en",
+  "result": "1%"
+ },
+ {
+  "kind": "number",
+  "value": 1.005,
+  "digits": 0,
+  "locale": "de",
+  "result": "1"
+ },
+ {
+  "kind": "percent",
+  "value": 0.010049999999999998,
+  "digits": 0,
+  "locale": "de",
+  "result": "1 %"
+ },
+ {
+  "kind": "number",
+  "value": 1.005,
+  "digits": 1,
+  "locale": "en",
+  "result": "1.0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.010049999999999998,
+  "digits": 1,
+  "locale": "en",
+  "result": "1.0%"
+ },
+ {
+  "kind": "number",
+  "value": 1.005,
+  "digits": 1,
+  "locale": "de",
+  "result": "1,0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.010049999999999998,
+  "digits": 1,
+  "locale": "de",
+  "result": "1,0 %"
+ },
+ {
+  "kind": "number",
+  "value": 1.005,
+  "digits": 2,
+  "locale": "en",
+  "result": "1.00"
+ },
+ {
+  "kind": "percent",
+  "value": 0.010049999999999998,
+  "digits": 2,
+  "locale": "en",
+  "result": "1.00%"
+ },
+ {
+  "kind": "number",
+  "value": 1.005,
+  "digits": 2,
+  "locale": "de",
+  "result": "1,00"
+ },
+ {
+  "kind": "percent",
+  "value": 0.010049999999999998,
+  "digits": 2,
+  "locale": "de",
+  "result": "1,00 %"
+ },
+ {
+  "kind": "number",
+  "value": 2184,
+  "digits": 0,
+  "locale": "en",
+  "result": "2,184"
+ },
+ {
+  "kind": "percent",
+  "value": 21.84,
+  "digits": 0,
+  "locale": "en",
+  "result": "2,184%"
+ },
+ {
+  "kind": "number",
+  "value": 2184,
+  "digits": 0,
+  "locale": "de",
+  "result": "2 184"
+ },
+ {
+  "kind": "percent",
+  "value": 21.84,
+  "digits": 0,
+  "locale": "de",
+  "result": "2 184 %"
+ },
+ {
+  "kind": "number",
+  "value": 2184,
+  "digits": 1,
+  "locale": "en",
+  "result": "2,184.0"
+ },
+ {
+  "kind": "percent",
+  "value": 21.84,
+  "digits": 1,
+  "locale": "en",
+  "result": "2,184.0%"
+ },
+ {
+  "kind": "number",
+  "value": 2184,
+  "digits": 1,
+  "locale": "de",
+  "result": "2 184,0"
+ },
+ {
+  "kind": "percent",
+  "value": 21.84,
+  "digits": 1,
+  "locale": "de",
+  "result": "2 184,0 %"
+ },
+ {
+  "kind": "number",
+  "value": 2184,
+  "digits": 2,
+  "locale": "en",
+  "result": "2,184.00"
+ },
+ {
+  "kind": "percent",
+  "value": 21.84,
+  "digits": 2,
+  "locale": "en",
+  "result": "2,184.00%"
+ },
+ {
+  "kind": "number",
+  "value": 2184,
+  "digits": 2,
+  "locale": "de",
+  "result": "2 184,00"
+ },
+ {
+  "kind": "percent",
+  "value": 21.84,
+  "digits": 2,
+  "locale": "de",
+  "result": "2 184,00 %"
+ },
+ {
+  "kind": "number",
+  "value": -2184.5,
+  "digits": 0,
+  "locale": "en",
+  "result": "−2,184"
+ },
+ {
+  "kind": "percent",
+  "value": -21.845,
+  "digits": 0,
+  "locale": "en",
+  "result": "−2,184%"
+ },
+ {
+  "kind": "number",
+  "value": -2184.5,
+  "digits": 0,
+  "locale": "de",
+  "result": "−2 184"
+ },
+ {
+  "kind": "percent",
+  "value": -21.845,
+  "digits": 0,
+  "locale": "de",
+  "result": "−2 184 %"
+ },
+ {
+  "kind": "number",
+  "value": -2184.5,
+  "digits": 1,
+  "locale": "en",
+  "result": "−2,184.5"
+ },
+ {
+  "kind": "percent",
+  "value": -21.845,
+  "digits": 1,
+  "locale": "en",
+  "result": "−2,184.5%"
+ },
+ {
+  "kind": "number",
+  "value": -2184.5,
+  "digits": 1,
+  "locale": "de",
+  "result": "−2 184,5"
+ },
+ {
+  "kind": "percent",
+  "value": -21.845,
+  "digits": 1,
+  "locale": "de",
+  "result": "−2 184,5 %"
+ },
+ {
+  "kind": "number",
+  "value": -2184.5,
+  "digits": 2,
+  "locale": "en",
+  "result": "−2,184.50"
+ },
+ {
+  "kind": "percent",
+  "value": -21.845,
+  "digits": 2,
+  "locale": "en",
+  "result": "−2,184.50%"
+ },
+ {
+  "kind": "number",
+  "value": -2184.5,
+  "digits": 2,
+  "locale": "de",
+  "result": "−2 184,50"
+ },
+ {
+  "kind": "percent",
+  "value": -21.845,
+  "digits": 2,
+  "locale": "de",
+  "result": "−2 184,50 %"
+ },
+ {
+  "kind": "number",
+  "value": 1234567.891,
+  "digits": 0,
+  "locale": "en",
+  "result": "1,234,568"
+ },
+ {
+  "kind": "percent",
+  "value": 12345.67891,
+  "digits": 0,
+  "locale": "en",
+  "result": "1,234,568%"
+ },
+ {
+  "kind": "number",
+  "value": 1234567.891,
+  "digits": 0,
+  "locale": "de",
+  "result": "1 234 568"
+ },
+ {
+  "kind": "percent",
+  "value": 12345.67891,
+  "digits": 0,
+  "locale": "de",
+  "result": "1 234 568 %"
+ },
+ {
+  "kind": "number",
+  "value": 1234567.891,
+  "digits": 1,
+  "locale": "en",
+  "result": "1,234,567.9"
+ },
+ {
+  "kind": "percent",
+  "value": 12345.67891,
+  "digits": 1,
+  "locale": "en",
+  "result": "1,234,567.9%"
+ },
+ {
+  "kind": "number",
+  "value": 1234567.891,
+  "digits": 1,
+  "locale": "de",
+  "result": "1 234 567,9"
+ },
+ {
+  "kind": "percent",
+  "value": 12345.67891,
+  "digits": 1,
+  "locale": "de",
+  "result": "1 234 567,9 %"
+ },
+ {
+  "kind": "number",
+  "value": 1234567.891,
+  "digits": 2,
+  "locale": "en",
+  "result": "1,234,567.89"
+ },
+ {
+  "kind": "percent",
+  "value": 12345.67891,
+  "digits": 2,
+  "locale": "en",
+  "result": "1,234,567.89%"
+ },
+ {
+  "kind": "number",
+  "value": 1234567.891,
+  "digits": 2,
+  "locale": "de",
+  "result": "1 234 567,89"
+ },
+ {
+  "kind": "percent",
+  "value": 12345.67891,
+  "digits": 2,
+  "locale": "de",
+  "result": "1 234 567,89 %"
+ },
+ {
+  "kind": "number",
+  "value": 0.000123,
+  "digits": 0,
+  "locale": "en",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": 1.23e-06,
+  "digits": 0,
+  "locale": "en",
+  "result": "0%"
+ },
+ {
+  "kind": "number",
+  "value": 0.000123,
+  "digits": 0,
+  "locale": "de",
+  "result": "0"
+ },
+ {
+  "kind": "percent",
+  "value": 1.23e-06,
+  "digits": 0,
+  "locale": "de",
+  "result": "0 %"
+ },
+ {
+  "kind": "number",
+  "value": 0.000123,
+  "digits": 1,
+  "locale": "en",
+  "result": "0.0"
+ },
+ {
+  "kind": "percent",
+  "value": 1.23e-06,
+  "digits": 1,
+  "locale": "en",
+  "result": "0.0%"
+ },
+ {
+  "kind": "number",
+  "value": 0.000123,
+  "digits": 1,
+  "locale": "de",
+  "result": "0,0"
+ },
+ {
+  "kind": "percent",
+  "value": 1.23e-06,
+  "digits": 1,
+  "locale": "de",
+  "result": "0,0 %"
+ },
+ {
+  "kind": "number",
+  "value": 0.000123,
+  "digits": 2,
+  "locale": "en",
+  "result": "0.00"
+ },
+ {
+  "kind": "percent",
+  "value": 1.23e-06,
+  "digits": 2,
+  "locale": "en",
+  "result": "0.00%"
+ },
+ {
+  "kind": "number",
+  "value": 0.000123,
+  "digits": 2,
+  "locale": "de",
+  "result": "0,00"
+ },
+ {
+  "kind": "percent",
+  "value": 1.23e-06,
+  "digits": 2,
+  "locale": "de",
+  "result": "0,00 %"
+ },
+ {
+  "kind": "number",
+  "value": 99.95,
+  "digits": 0,
+  "locale": "en",
+  "result": "100"
+ },
+ {
+  "kind": "percent",
+  "value": 0.9995,
+  "digits": 0,
+  "locale": "en",
+  "result": "100%"
+ },
+ {
+  "kind": "number",
+  "value": 99.95,
+  "digits": 0,
+  "locale": "de",
+  "result": "100"
+ },
+ {
+  "kind": "percent",
+  "value": 0.9995,
+  "digits": 0,
+  "locale": "de",
+  "result": "100 %"
+ },
+ {
+  "kind": "number",
+  "value": 99.95,
+  "digits": 1,
+  "locale": "en",
+  "result": "100.0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.9995,
+  "digits": 1,
+  "locale": "en",
+  "result": "100.0%"
+ },
+ {
+  "kind": "number",
+  "value": 99.95,
+  "digits": 1,
+  "locale": "de",
+  "result": "100,0"
+ },
+ {
+  "kind": "percent",
+  "value": 0.9995,
+  "digits": 1,
+  "locale": "de",
+  "result": "100,0 %"
+ },
+ {
+  "kind": "number",
+  "value": 99.95,
+  "digits": 2,
+  "locale": "en",
+  "result": "99.95"
+ },
+ {
+  "kind": "percent",
+  "value": 0.9995,
+  "digits": 2,
+  "locale": "en",
+  "result": "99.95%"
+ },
+ {
+  "kind": "number",
+  "value": 99.95,
+  "digits": 2,
+  "locale": "de",
+  "result": "99,95"
+ },
+ {
+  "kind": "percent",
+  "value": 0.9995,
+  "digits": 2,
+  "locale": "de",
+  "result": "99,95 %"
+ }
+]

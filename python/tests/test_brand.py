@@ -1,0 +1,110 @@
+import logging
+import shutil
+
+import pytest
+import yaml
+
+import hairline as hl
+from hairline.brand import brand_report, find_brand, load_brand
+
+BRAND = {
+    "meta": {"name": "Example University Hospital"},
+    "color": {"palette": {"harbor": "#0b3d6e", "poppy": "#f2545b", "glacier": "#8cc8ff", "fern": "#7fd8a0"},
+              "foreground": "harbor"},
+    "defaults": {"hairline": {"categorical": ["harbor", "poppy", "glacier", "fern"], "adapt": "readable"}},
+}
+
+
+@pytest.fixture
+def example(repo_root):
+    return repo_root / "brands" / "example" / "_brand.yml"
+
+
+def write_brand(folder, adapt="readable", categorical=None, **colors):
+    content = yaml.safe_load(yaml.safe_dump(BRAND))
+    content["color"]["palette"].update(colors)
+    content["defaults"]["hairline"]["adapt"] = adapt
+    if categorical is not None:
+        content["defaults"]["hairline"]["categorical"] = categorical
+    path = folder / "_brand.yml"
+    path.write_text(yaml.safe_dump(content, sort_keys=False))
+    return path
+
+
+def test_example_brand_readable_passes(example):
+    brand = load_brand(example)
+    assert brand.name == "Example University Hospital" and brand.adapt == "readable"
+    assert hl.check_palette(brand.colors_used).passed
+    assert brand.neutral["ink"] == "#0b3d6e" and brand.sizes == {"title": 14} and brand.locale == "de"
+
+
+def test_exact_mode_warns_about_light_slots(tmp_path):
+    with pytest.warns(UserWarning, match="glacier.*below 3:1"):
+        brand = load_brand(write_brand(tmp_path, adapt="exact"))
+    assert brand.colors_used == brand.colors_given
+
+
+def test_bad_hex_message(tmp_path):
+    with pytest.raises(ValueError, match=r"_brand.yml: color.palette.glacier: '#8cc8f' is not a 6-digit hex colour"):
+        load_brand(write_brand(tmp_path, glacier="#8cc8f"))
+
+
+def test_unknown_categorical_name(tmp_path):
+    with pytest.raises(ValueError, match=r"defaults.hairline.categorical\[2\]: 'ice' is not in color.palette"):
+        load_brand(write_brand(tmp_path, categorical=["harbor", "poppy", "ice"]))
+
+
+def test_unknown_adapt_mode(tmp_path):
+    with pytest.raises(ValueError, match=r"defaults.hairline.adapt: 'strict' must be 'exact' or 'readable'"):
+        load_brand(write_brand(tmp_path, adapt="strict"))
+
+
+def test_yaml_syntax_error(tmp_path):
+    path = tmp_path / "_brand.yml"
+    path.write_text("color:\n  palette: [unclosed\n")
+    with pytest.raises(ValueError, match=r"_brand.yml: line \d+"):
+        load_brand(path)
+
+
+def test_auto_lookup_stops_at_project_root(tmp_path, example):
+    project = tmp_path / "project"
+    (project / "analysis" / "deep").mkdir(parents=True)
+    (project / "pyproject.toml").write_text("")
+    shutil.copy(example, tmp_path / "_brand.yml")
+    assert find_brand(project / "analysis" / "deep") is None
+    shutil.copy(example, project / "_brand.yml")
+    assert find_brand(project / "analysis" / "deep") == project / "_brand.yml"
+
+
+def test_use_finds_brand_and_announces_once(tmp_path, example, monkeypatch, caplog):
+    shutil.copy(example, tmp_path / "_brand.yml")
+    monkeypatch.chdir(tmp_path)
+    with caplog.at_level(logging.INFO, logger="hairline"):
+        settings = hl.use()
+        hl.use()
+    assert settings.brand_name == "Example University Hospital" and settings.locale == "de"
+    assert sum("Using brand" in record.message for record in caplog.records) == 1
+
+
+def test_explicit_arguments_beat_brand(tmp_path, example, monkeypatch):
+    shutil.copy(example, tmp_path / "_brand.yml")
+    monkeypatch.chdir(tmp_path)
+    settings = hl.use(locale="en", palette="lagoon")
+    assert settings.locale == "en" and settings.palette_name == "lagoon"
+
+
+def test_use_brand_false_disables_lookup(tmp_path, example, monkeypatch):
+    shutil.copy(example, tmp_path / "_brand.yml")
+    monkeypatch.chdir(tmp_path)
+    assert hl.use(brand=False).brand_name is None
+
+
+def test_brand_slot_guard(example):
+    hl.use(brand=example)
+    with pytest.raises(ValueError, match="brand 'Example University Hospital' has 4 slots but 5 categories"):
+        hl.palette(n=5)
+
+
+def test_brand_report_lists_slots(example):
+    report = brand_report(load_brand(example))
+    assert "harbor" in report and "#0b3d6e" in report and "passed" in report
