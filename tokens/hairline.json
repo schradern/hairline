@@ -541,5 +541,22 @@
     "label_gap": 0.4,
     "horizontal_count": 8,
     "horizontal_length": 14
+  },
+  "fit": {
+    "band_opacity": 0.12,
+    "points": 64
+  },
+  "correlation": {
+    "max_cell": 4.0,
+    "gap_pt": 2,
+    "label_gap": 0.4,
+    "ramp": "blue-coral",
+    "key": [
+      -1,
+      -0.5,
+      0,
+      0.5,
+      1
+    ]
   }
 }

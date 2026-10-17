@@ -117,6 +117,18 @@ def rate_rows() -> list[dict]:
     return rows
 
 
+def patient_rows(rng: np.random.Generator) -> list[dict]:
+    """Admission measurements with the usual links: lactate and creatinine rise with SOFA, stays lengthen."""
+    sofa = rng.uniform(2, 14, 160)
+    rows = []
+    for score in sofa:
+        rows.append({"sofa": round(float(score), 1), "lactate": round(float(0.6 + 0.3 * score + rng.normal(0, 0.8)), 2),
+                     "creatinine": round(float(0.7 + 0.08 * score + rng.normal(0, 0.25)), 2),
+                     "age": int(rng.normal(64, 12)),
+                     "length_of_stay": round(float(2 + 0.5 * score + rng.gamma(2, 1.5)), 1)})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -135,6 +147,7 @@ def main() -> None:
     write("budget.csv", budget_rows())
     write("admissions.csv", admission_rows(rng))
     write("rates.csv", rate_rows())
+    write("patients.csv", patient_rows(rng))
 
 
 if __name__ == "__main__":

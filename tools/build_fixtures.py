@@ -17,6 +17,8 @@ import pandas as pd
 
 from hairline.brand import load_brand
 from hairline.charts.common import fold_other
+from hairline.charts.correlation import correlation_spec
+from hairline.charts.correlation_geometry import correlation_drawing
 from hairline.charts.donut import donut_rings
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.charts.forest import forest_spec
@@ -321,6 +323,21 @@ def statistics_cases() -> dict:
                          for value in (0.0004, 0.001, 0.0123, 0.0999, 0.1, 0.5, 0.999) for locale in ("en", "de")]}
 
 
+def correlation_cases() -> list[dict]:
+    use(brand=False)
+    generator = np.random.default_rng(31)
+    sofa = generator.uniform(2, 14, 60).round(1)
+    data = pd.DataFrame({"sofa": sofa, "lactate": (0.6 + 0.3 * sofa + generator.normal(0, 0.8, 60)).round(2),
+                         "age": generator.normal(64, 12, 60).round(),
+                         "length_of_stay": (2 + 0.5 * sofa + generator.gamma(2, 1.5, 60)).round(1)})
+    cases = []
+    for method in ("pearson", "spearman"):
+        spec = correlation_spec(data, None, method)
+        cases.append({"data": data.to_dict(orient="list"), "method": method, "spec": spec, "box": [20, 60, 440, 240],
+                      "shapes": correlation_drawing(spec, Box(20, 60, 440, 240), fake_measure, DRAWING_STYLE)})
+    return cases
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -341,6 +358,7 @@ def main() -> int:
     write("survival.json", survival_cases())
     write("density.json", density_cases())
     write("statistics.json", statistics_cases())
+    write("correlation.json", {"style": DRAWING_STYLE, "cases": correlation_cases()})
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
