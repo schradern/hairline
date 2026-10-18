@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 AUTHOR, INITIALS, YEAR, KEY = "Nikolas Schrader", "Schrader N", "2026", "schrader2026hairline"
+DOI = "10.5281/zenodo.23456212"
 TITLE = "hairline: Clean, Predictable Figures for Medical and Data Science"
 STYLES = ("text", "bibtex")
 
@@ -14,6 +15,6 @@ def citation(style: str = "text") -> str:
         raise ValueError(f"hairline: unknown citation style {style!r}; use {' or '.join(STYLES)}")
     note = f"Python package version {__version__}"
     if style == "text":
-        return f"{INITIALS} ({YEAR}). {TITLE}. {note}."
-    fields = {"title": TITLE, "author": AUTHOR, "year": YEAR, "note": note}
+        return f"{INITIALS} ({YEAR}). {TITLE}. {note}. doi:{DOI}"
+    fields = {"title": TITLE, "author": AUTHOR, "year": YEAR, "note": note, "doi": DOI}
     return "\n".join([f"@Manual{{{KEY},", *(f"  {name} = {{{value}}}," for name, value in fields.items()), "}"])

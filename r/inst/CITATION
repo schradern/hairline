@@ -8,6 +8,7 @@ bibentry(
   author = person("Nikolas", "Schrader", comment = c(ORCID = "0009-0001-4616-3804")),
   year = "2026",
   note = paste("R package version", version),
+  doi = "10.5281/zenodo.23456212",
   textVersion = paste0("Schrader N (2026). hairline: Clean, Predictable Figures for Medical and Data Science. ",
-                       "R package version ", version, ".")
+                       "R package version ", version, ". doi:10.5281/zenodo.23456212")
 )

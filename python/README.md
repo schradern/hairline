@@ -112,6 +112,7 @@ and `hl.citation("bibtex")` this entry:
   author = {Nikolas Schrader},
   year = {2026},
   note = {Python package version 0.1.0},
+  doi = {10.5281/zenodo.23456212},
 }
 ```
 

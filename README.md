@@ -5,7 +5,7 @@
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-2474cf)](python/LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-2474cf)](python/README.md)
 [![R 4.3+](https://img.shields.io/badge/R-4.3%2B-2474cf)](r/README.md)
-[![Cite](https://img.shields.io/badge/cite-CITATION.cff-ef675a)](CITATION.cff)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23456211.svg)](https://doi.org/10.5281/zenodo.23456211)
 
 ![ICU bed occupancy in small multiples, drawn with hairline](docs/images/hero.png)
 
@@ -246,7 +246,8 @@ cat(hl_brand_report())
 
 ## How to cite
 
-If hairline helped you make the figures in your work, please cite it. GitHub's "Cite this repository" button
+If hairline helped you make the figures in your work, please cite it: [doi:10.5281/zenodo.23456212](https://doi.org/10.5281/zenodo.23456212) for
+version 0.1.0, or [doi:10.5281/zenodo.23456211](https://doi.org/10.5281/zenodo.23456211) for every version. GitHub's "Cite this repository" button
 reads [`CITATION.cff`](CITATION.cff); each package prints its reference:
 
 ```python
@@ -266,6 +267,7 @@ citation("hairline")
   author = {Nikolas Schrader},
   year = {2026},
   note = {Python package version 0.1.0},
+  doi = {10.5281/zenodo.23456212},
 }
 ```
 

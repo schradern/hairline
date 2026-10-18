@@ -8,5 +8,6 @@ test_that("the citation gives the same entry as the Python package", {
   entry <- unname(as.character(utils::toBibtex(read_citation())))
   expect_equal(entry[1], "@Manual{schrader2026hairline,")
   expect_true("  note = {R package version 0.1.0}," %in% entry)
+  expect_true("  doi = {10.5281/zenodo.23456212}," %in% entry)
   expect_match(format(read_citation(), style = "text"), "Schrader N \\(2026\\)")
 })

@@ -7,12 +7,13 @@ BIBTEX = """@Manual{schrader2026hairline,
   author = {Nikolas Schrader},
   year = {2026},
   note = {Python package version 0.1.0},
+  doi = {10.5281/zenodo.23456212},
 }"""
 
 
 def test_citation_text_matches_the_r_package_wording():
     assert hl.citation() == ("Schrader N (2026). hairline: Clean, Predictable Figures for Medical and Data "
-                             "Science. Python package version 0.1.0.")
+                             "Science. Python package version 0.1.0. doi:10.5281/zenodo.23456212")
 
 
 def test_citation_bibtex_has_the_same_shape_as_in_r():
