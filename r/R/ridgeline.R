@@ -1,0 +1,67 @@
+# Ridgeline plot, mirroring the Python ridgeline(): one density ridge per group on a shared x-axis, the first
+# group on top, overlapping the row above, medians marked.
+
+ridge_layers <- function(curve, values, base, scale, colour, medians) {
+  settings <- hl_settings()
+  rules <- hl_tokens()$ridgeline
+  outline <- data.frame(x = curve$grid, y = base + curve$height * scale)
+  corners <- rbind(data.frame(x = curve$grid[1], y = base), outline,
+                   data.frame(x = curve$grid[length(curve$grid)], y = base))
+  layers <- list(ggplot2::geom_polygon(data = corners, ggplot2::aes(.data$x, .data$y), fill = settings$neutral$surface,
+                                       colour = NA, inherit.aes = FALSE),
+                 ggplot2::geom_polygon(data = corners, ggplot2::aes(.data$x, .data$y), fill = colour,
+                                       alpha = rules$fill_opacity, colour = NA, inherit.aes = FALSE),
+                 ggplot2::geom_path(data = outline, ggplot2::aes(.data$x, .data$y), colour = colour,
+                                    linewidth = pt_to_mm(hl_tokens()$lines$data * settings$base_size),
+                                    inherit.aes = FALSE))
+  if (medians) {
+    middle <- density_quantiles(values, 0.5)
+    top <- base + stats::approx(curve$grid, curve$height, middle)$y * scale
+    median <- ggplot2::geom_segment(data = data.frame(x = middle, y = base, yend = top),
+                                    ggplot2::aes(.data$x, .data$y, xend = .data$x, yend = .data$yend),
+                                    colour = settings$neutral$ink, inherit.aes = FALSE,
+                                    linewidth = pt_to_mm(hl_tokens()$reference$width * settings$base_size))
+    median$hairline_secondary <- TRUE
+    layers[[4]] <- median
+  }
+  layers
+}
+
+#' Ridgeline plot
+#'
+#' One density ridge per group on a shared x-axis, the first group on top,
+#' each overlapping the row above; all ridges share one height scale, and a
+#' short line marks each median.
+#'
+#' @param data A data frame.
+#' @param group,value Columns: the grouping and the measurement; or a formula `value ~ group` as `group`.
+#' @param title,subtitle,caption Frame texts; the title defaults to the columns.
+#' @param order Group order, top to bottom.
+#' @param medians Mark the medians.
+#' @return A ggplot with the hairline frame.
+#' @export
+hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL,
+                         medians = TRUE) {
+  if (inherits(group, "formula")) {
+    sides <- formula_sides(group)
+    value <- deparse(sides$left)
+    group <- sides$right[1]
+  }
+  check_columns(data, c(group, value))
+  rules <- hl_tokens()$ridgeline
+  names <- order %||% unique(as.character(data[[group]]))
+  values <- lapply(names, function(name) stats::na.omit(data[[value]][as.character(data[[group]]) == name]))
+  curves <- lapply(values, density_curve)
+  peak <- max(c(0, unlist(lapply(curves, function(curve) if (is.null(curve)) 0 else max(curve$height)))))
+  scale <- (1 + rules$overlap) / if (peak > 0) peak else 1
+  plot <- ggplot2::ggplot()
+  for (index in seq_along(names)) {
+    if (is.null(curves[[index]])) next
+    plot <- plot + ridge_layers(curves[[index]], values[[index]], length(names) - index, scale,
+                                hl_color(names[index]), medians)
+  }
+  plot + ggplot2::scale_y_continuous(breaks = rev(seq_along(names) - 1), labels = names, expand = c(0, 0),
+                                     limits = c(0, length(names) + rules$overlap + rules$headroom)) +
+    ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
+                  caption = caption, x = humanise(value), y = NULL) + theme_hairline()
+}

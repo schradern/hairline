@@ -11,6 +11,7 @@ from hairline.charts.kaplan_meier import kaplan_meier
 from hairline.charts.partition import partition
 from hairline.charts.prisma import prisma
 from hairline.charts.raincloud import raincloud
+from hairline.charts.ridgeline import ridgeline
 from hairline.charts.risk_of_bias import risk_of_bias
 from hairline.charts.sankey import sankey
 from hairline.charts.scatter import scatter
@@ -29,6 +30,6 @@ __all__ = [
     "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Settings", "arcs", "bars", "check_palette", "color",
     "colors", "correlation", "current_settings", "donut", "dotplot", "figure", "forest", "format_interval",
     "format_number", "format_percent", "frame", "funnel", "kaplan_meier", "load_tokens", "palette", "partition",
-    "prisma", "raincloud", "ramp", "risk_of_bias", "sankey", "save", "scatter", "timeseries", "use",
+    "prisma", "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter", "timeseries", "use",
 ]
 __version__ = "0.1.0"
