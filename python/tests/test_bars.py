@@ -1,3 +1,4 @@
+import matplotlib.colors as mcolors
 import pandas as pd
 import pytest
 
@@ -46,3 +47,29 @@ def test_stacked_shares_reach_one_hundred_percent():
         x = round(patch.get_x(), 6)
         tops[x] = max(tops.get(x, 0), patch.get_y() + patch.get_height())
     assert all(top == pytest.approx(1) for top in tops.values())
+
+
+def outcomes():
+    return pd.DataFrame({"unit": ["Medical"] * 5 + ["Surgical"] * 4 + ["Neuro"] * 3,
+                         "outcome": ["Home", "Home", "Home", "Ward", "Died", "Home", "Home", "Ward", "Ward",
+                                     "Home", "Ward", "Died"]})
+
+
+def test_stacked_segments_carry_their_values_and_bars_their_totals():
+    figure = hl.bars(outcomes(), "unit", by="outcome", stacked=True, sort="given")
+    texts = [text.get_text() for text in figure.ax.texts]
+    assert texts.count("5") == 1 and texts.count("4") == 1 and texts.count("3") == 2
+    inside = [text for text in figure.ax.texts if text.get_gid() == "hairline-segment"]
+    assert {text.get_text() for text in inside} >= {"3", "2"}
+
+
+def test_stacked_shares_label_percentages_and_skip_totals():
+    figure = hl.bars(outcomes(), "unit", by="outcome", stacked=True, percent=True, horizontal=True)
+    texts = [text.get_text() for text in figure.ax.texts]
+    assert "60%" in texts and not any(text.get_gid() == "hairline-total" for text in figure.ax.texts)
+
+
+def test_stacked_segments_are_separated_by_surface_gaps():
+    figure = hl.bars(outcomes(), "unit", by="outcome", stacked=True)
+    edges = {mcolors.to_hex(patch.get_edgecolor()) for patch in figure.ax.patches}
+    assert edges == {figure.settings.neutral["surface"]}

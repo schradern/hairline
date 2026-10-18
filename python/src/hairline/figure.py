@@ -41,7 +41,7 @@ class HairlineFigure:
     x_title_text: str | None = None
     legend_items: list[LegendItem] | None = None
     collect_legend: bool = False
-    percent_axes: set[int] = field(default_factory=set)
+    percent_axes: set[tuple[int, str]] = field(default_factory=set)
     auto_limits: dict[tuple[int, str], bool] = field(default_factory=dict)
     applied_limits: dict[tuple[int, str], tuple[float, float]] = field(default_factory=dict)
     light_slot_done: set[int] = field(default_factory=set)
@@ -126,9 +126,9 @@ class HairlineFigure:
         self.collect_legend = items is None
         self.legend_items = None if items is None else validate_items(items)
 
-    def percent_axis(self, index: int) -> None:
-        """Treat panel `index`'s y values as shares and label them as percentages."""
-        self.percent_axes.add(index)
+    def percent_axis(self, index: int, which: str = "y") -> None:
+        """Treat panel `index`'s values on axis `which` ("y" or "x") as shares and label them as percentages."""
+        self.percent_axes.add((index, which))
 
     def layout_report(self) -> dict:
         """Frame positions in pt from the top-left corner, as of the last draw."""

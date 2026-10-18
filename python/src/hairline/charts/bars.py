@@ -8,6 +8,7 @@ import pandas as pd
 
 from hairline import entities
 from hairline.charts.common import check_columns, humanise, with_counts
+from hairline.charts.correlation_geometry import text_color
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_number, format_percent
 from hairline.settings import current_settings, role_size
@@ -41,34 +42,73 @@ def bar_values(table: pd.DataFrame, category: str, value: str, by: str | None, n
     return [float(sums.get(name, 0.0)) / (float(totals[name]) if percent else 1.0) for name in names]
 
 
-def value_label(ax, value: float, position: tuple[float, float], horizontal: bool, percent: bool) -> None:
+def value_text(value: float, percent: bool) -> str:
+    locale = current_settings().locale
+    return format_percent(value, 0, locale) if percent else format_number(value, 0, locale)
+
+
+def value_label(ax, value: float, position: tuple[float, float], horizontal: bool, percent: bool,
+                gid: str = "hairline-value") -> None:
     settings = current_settings()
-    text = format_percent(value, 0, settings.locale) if percent else format_number(value, 0, settings.locale)
     gap = load_tokens()["bars"]["label_gap"] * role_size(settings, "label")
-    ax.annotate(text, xy=position, xytext=(gap, 0) if horizontal else (0, gap), textcoords="offset points",
-                ha="left" if horizontal else "center", va="center" if horizontal else "bottom",
-                fontsize=role_size(settings, "label"), color=settings.neutral["muted"], fontfamily=settings.font,
-                annotation_clip=False)
+    ax.annotate(value_text(value, percent), xy=position, xytext=(gap, 0) if horizontal else (0, gap),
+                textcoords="offset points", ha="left" if horizontal else "center",
+                va="center" if horizontal else "bottom", fontsize=role_size(settings, "label"),
+                color=settings.neutral["muted"], fontfamily=settings.font, annotation_clip=False, gid=gid)
+
+
+def segment_label(ax, value: float, centre: tuple[float, float], color: str, percent: bool) -> None:
+    """The segment's value in its middle, in ink or surface, whichever contrasts more with the fill."""
+    settings = current_settings()
+    ax.text(*centre, value_text(value, percent), ha="center", va="center", fontsize=role_size(settings, "label"),
+            color=text_color(color, {"neutral": settings.neutral}), fontfamily=settings.font, gid="hairline-segment")
+
+
+def stacked_labels(ax, spots: list[float], base: list[float], heights: list[float], color: str, options: dict) -> None:
+    smallest = load_tokens()["bars"]["segment_min"] * options["largest"]
+    for spot, low, height in zip(spots, base, heights, strict=True):
+        if height >= smallest and height > 0:
+            middle = low + height / 2
+            segment_label(ax, height, (middle, spot) if options["horizontal"] else (spot, middle), color,
+                          options["percent"])
 
 
 def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], options: dict) -> None:
     category, value, by = options["category"], options["value"], options["by"]
-    width, horizontal, stacked = load_tokens()["bars"]["width"], options["horizontal"], options["stacked"]
+    rules, horizontal, stacked = load_tokens()["bars"], options["horizontal"], options["stacked"]
     positions = [len(names) - 1 - index if horizontal else index for index in range(len(names))]
-    base, single = [0.0] * len(names), width if stacked else width / len(groups)
+    base, single = [0.0] * len(names), rules["width"] if stacked else rules["width"] / len(groups)
+    edge = {"edgecolor": current_settings().neutral["surface"], "linewidth": rules["gap_pt"] / 2} if stacked else \
+        {"linewidth": 0}
+    options = {**options, "largest": max_total(table, category, value, by, names, groups, options)}
     for index, group in enumerate(groups):
         heights = bar_values(table, category, value, by, names, group, options["percent"])
         offset = 0.0 if stacked else (index - (len(groups) - 1) / 2) * single
         color = entities.color(group) if by else current_settings().palette[0]
         where = [position + offset for position in positions]
         draw = ax.barh if horizontal else ax.bar
-        draw(where, heights, single * 0.92, base, color=color, label=group if by else "_nolegend_", linewidth=0)
-        if options["labels"] and not stacked:
+        draw(where, heights, single * 0.92, base, color=color, label=group if by else "_nolegend_", **edge)
+        if stacked and options["labels"]:
+            stacked_labels(ax, where, base, heights, color, options)
+        elif options["labels"]:
             for spot, height in zip(where, heights, strict=True):
                 value_label(ax, height, (height, spot) if horizontal else (spot, height), horizontal,
                             options["percent"])
         if stacked:
             base = [low + height for low, height in zip(base, heights, strict=True)]
+    if stacked and options["labels"] and not options["percent"]:
+        for spot, total in zip(positions, base, strict=True):
+            value_label(ax, total, (total, spot) if horizontal else (spot, total), horizontal, False,
+                        "hairline-total")
+
+
+def max_total(table: pd.DataFrame, category: str, value: str, by: str | None, names: list[str], groups: list[str],
+              options: dict) -> float:
+    if options["percent"]:
+        return 1.0
+    if options["stacked"]:
+        return float(table.groupby(category)[value].sum().max())
+    return float(table[value].max())
 
 
 def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | None = None, *,
@@ -80,7 +120,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     single series are sorted by value unless `order` or `sort="given"` says otherwise."""
     data, value = with_counts(data, value)
     check_columns(data, [category, value, by])
-    table, names, groups = bar_table(data, category, value, by, order, sort or ("given" if by else "value"))
+    table, names, groups = bar_table(data, category, value, by, order,
+                                     sort or ("given" if by and not stacked else "value"))
     horizontal = is_long(names) if horizontal is None else horizontal
     result = figure(title or f"{humanise(value)} by {str(category).replace('_', ' ')}", subtitle=subtitle,
                     caption=caption, size=size)
@@ -89,8 +130,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
                                                     "horizontal": horizontal, "stacked": stacked, "percent": percent,
                                                     "labels": labels})
     result.categories(0, list(reversed(names)) if horizontal else names, "y" if horizontal else "x")
-    if percent and not horizontal:
-        result.percent_axis(0)
+    if percent:
+        result.percent_axis(0, "x" if horizontal else "y")
     if by:
         result.legend()
     return result

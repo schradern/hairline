@@ -57,7 +57,7 @@ def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
                 if which == "y":
                     labels.append(result)
                 continue
-            percent = which == "y" and index in figure.percent_axes
+            percent = (index, which) in figure.percent_axes
             result = configure_ticks(ax, which, tick_interval(figure, index, which), percent,
                                      figure.settings.locale, tick_target(figure, which))
             figure.applied_limits[(index, which)] = current_limits(ax, which)

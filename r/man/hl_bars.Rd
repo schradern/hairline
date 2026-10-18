@@ -38,11 +38,11 @@ hl_bars(
 
 \item{horizontal}{Force horizontal (\code{TRUE}) or vertical (\code{FALSE}) bars.}
 
-\item{sort}{\code{"value"} or \code{"given"}; default by value for a single series.}
+\item{sort}{\code{"value"} or \code{"given"}; default by value, except for groups side by side.}
 
 \item{order}{Category order.}
 
-\item{labels}{Print the values at the bar ends.}
+\item{labels}{Print the values: at the bar ends, or inside stacked segments with the totals at the ends.}
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
 for the number of groups and are not remembered for other charts.}

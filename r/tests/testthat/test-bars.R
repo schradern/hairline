@@ -38,3 +38,26 @@ test_that("the dot plot sorts by value and draws dots", {
   expect_equal(rows, c("B", "D", "A", "C"))
   expect_equal(sum(vapply(shapes, function(shape) identical(shape$role, "dot"), logical(1))), 4)
 })
+
+outcomes <- function() {
+  data.frame(unit = rep(c("Medical", "Surgical", "Neuro"), c(5, 4, 3)),
+             outcome = c("Home", "Home", "Home", "Ward", "Died", "Home", "Home", "Ward", "Ward", "Home", "Ward", "Died"))
+}
+
+test_that("stacked segments carry their values, bars their totals, segments are separated", {
+  hl_use(brand = FALSE)
+  plot <- hl_bars(outcomes(), "unit", by = "outcome", stacked = TRUE, sort = "given")
+  built <- ggplot2::ggplot_build(plot)
+  texts <- unlist(lapply(built@data[-1], `[[`, "label"))
+  expect_equal(sum(texts == "5"), 1)
+  expect_equal(sum(texts == "3"), 2)
+  expect_true(all(built@data[[1]]$colour == hl_settings()$neutral$surface))
+})
+
+test_that("stacked shares label percentages on a horizontal percent axis", {
+  hl_use(brand = FALSE)
+  plot <- hl_bars(outcomes(), "unit", by = "outcome", stacked = TRUE, percent = TRUE, horizontal = TRUE)
+  texts <- unlist(lapply(ggplot2::ggplot_build(plot)@data[-1], `[[`, "label"))
+  expect_true("60%" %in% texts)
+  expect_length(ggplot2::ggplot_build(plot)@data, 2)
+})
