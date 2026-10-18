@@ -39,7 +39,7 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
          call. = FALSE)
   }
   digits <- study_digits(study_numbers(study$data[[variable]]))
-  label <- study_label(study, variable)
+  label <- study_label_unit(study, variable)
   parts <- study_subsets(study)
   rows <- lapply(parts, function(part) {
     values <- part$rows[[variable]]
@@ -52,8 +52,13 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
   data <- study_present_rows(study, variable)
   data[[variable]] <- as.numeric(data[[variable]])
   names <- if (is.null(study$roles$group)) "Overall" else vapply(parts[-length(parts)], `[[`, character(1), "name")
-  chart <- if (length(names) >= hl_tokens()$study$ridgeline_from) hl_ridgeline else hl_raincloud
-  figure <- chart(data, study_group_column, variable, order = names, title = study_by_title(study, label))
+  title <- study_by_title(study, study_label(study, variable))
+  figure <- if (length(names) >= hl_tokens()$study$ridgeline_from) {
+    hl_ridgeline(data, study_group_column, variable, order = names, title = title)
+  } else {
+    hl_raincloud(data, study_group_column, variable, order = names, title = title,
+                 y_title = study_measure(study, variable))
+  }
   shown <- if (is.null(study$roles$group)) rows else rows[-length(rows)]
   text <- sprintf("%s, %s: %s.", label, study_stat_labels[[stats[1]]],
                   listed_text(vapply(shown, function(row) paste(row[1], row[3]), character(1))))
@@ -79,7 +84,7 @@ hl_compare <- function(study, variable) {
 
 compare_numeric <- function(study, variable) {
   data <- study_present_rows(study, variable)
-  label <- study_label(study, variable)
+  label <- study_label_unit(study, variable)
   digits <- study_digits(study_numbers(data[[variable]]))
   names <- Filter(function(name) any(data[[study_group_column]] == name), study$groups)
   samples <- lapply(names, function(name) study_numbers(data[[variable]][data[[study_group_column]] == name]))
@@ -96,7 +101,8 @@ compare_numeric <- function(study, variable) {
   subtitle <- if (!is.null(test) && length(names) > 2) paste0(test[1], ", ", test[2]) else NULL
   data[[variable]] <- as.numeric(data[[variable]])
   figure <- hl_raincloud(data, study_group_column, variable, order = names, comparisons = pairs,
-                         title = study_by_title(study, label), subtitle = subtitle)
+                         title = study_by_title(study, study_label(study, variable)), subtitle = subtitle,
+                         y_title = study_measure(study, variable))
   text <- paste0(label, ", median (IQR): ", listed_text(paste(names, summaries)),
                  if (!is.null(test)) sprintf(" (%s, %s).", test[1], test[2]) else ".")
   study_result(figure, table, values, text)

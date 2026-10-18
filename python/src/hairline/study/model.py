@@ -28,6 +28,7 @@ class Study:
     groups: list[str]
     unit: str
     checks: list[Finding] = field(default_factory=list)
+    units: dict[str, str] = field(default_factory=dict)
 
     @property
     def group(self) -> str | None:
@@ -35,6 +36,16 @@ class Study:
 
     def label(self, column: str) -> str:
         return self.labels.get(column, humanise(column))
+
+    def measure(self, column: str) -> str | None:
+        """The column's unit, e.g. "years" or "mmol/l"; none when the label already says it ("Months")."""
+        unit = self.units.get(column)
+        return None if unit and unit.lower() == self.label(column).lower() else unit
+
+    def label_unit(self, column: str) -> str:
+        """'Age (years)', or the bare label without a unit."""
+        unit = self.measure(column)
+        return f"{self.label(column)} ({unit})" if unit else self.label(column)
 
     def require(self, columns: Sequence[str | None], endpoint: str) -> None:
         """Refuse an endpoint while its columns have errors; name each one."""
@@ -68,6 +79,18 @@ class Study:
         return effects(self, model_or_table, measure, size, **options)
 
 
+def unit_findings(roles: dict[str, str], variables: list[str], types: dict[str, str],
+                  units: Mapping[str, str]) -> list[Finding]:
+    """Numeric variables (and follow-up time) need a unit, so mixed tables and panels say what they measure."""
+    measured = [*([roles["time"]] if "time" in roles else []), *(name for name in variables
+                                                              if types.get(name) == "numeric")]
+    missing = [name for name in measured if not units.get(name)]
+    if not missing:
+        return []
+    return [Finding("warning", ", ".join(missing), "numeric columns without a unit", (),
+                    "give each a unit, for example years or mmol/l, so tables and panels name it")]
+
+
 def run_checks(data: pd.DataFrame, roles: dict[str, str], variables: list[str], groups: list[str]) -> list[Finding]:
     limit, columns = load_tokens()["study"]["example_rows"], set(data.columns)
     named = [*roles.items(), *(("variable", name) for name in variables)]
@@ -90,17 +113,18 @@ def run_checks(data: pd.DataFrame, roles: dict[str, str], variables: list[str], 
 def study(data: pd.DataFrame, group: str | None = None, time: str | None = None, event: str | None = None,
           id: str | None = None, variables: Sequence[str] | None = None, *, labels: Mapping[str, str] | None = None,
           types: Mapping[str, str] | None = None, order: Sequence[str] | None = None,
-          unit: str | None = None) -> Study:
-    """Describe a dataset once: the comparison `group`, follow-up `time` and `event`, the `id`, and the `variables`
-    to characterise (default: every other column). Checks run now; print the study to read them."""
+          unit: str | None = None, units: Mapping[str, str] | None = None) -> Study:
+    """Describe a dataset once: the comparison `group`, follow-up `time` and `event`, the `id`, the `variables`
+    to characterise (default: every other column) and their `units` ({"age": "years"}). Checks run now; print
+    the study to read them."""
     roles = {role: column for role, column in zip(ROLES, (group, time, event, id), strict=True) if column is not None}
     used = set(roles.values())
     names = list(variables) if variables is not None else [column for column in data.columns if column not in used]
     kinds = {name: (types or {}).get(name) or infer_type(data[name]) for name in names if name in data.columns}
     groups = list(order) if order else (levels(data[group], ordered=False) if group in data.columns else [])
-    checks = run_checks(data, roles, names, groups)
+    checks = run_checks(data, roles, names, groups) + unit_findings(roles, names, kinds, units or {})
     result = Study(data, roles, names, dict(labels or {}), kinds, groups,
-                   unit or load_tokens()["study"]["unit"], checks)
+                   unit or load_tokens()["study"]["unit"], checks, dict(units or {}))
     if checks:
         errors = sum(finding.level == "error" for finding in checks)
         warnings.warn(f"hairline: study: {errors} errors, {len(checks) - errors} warnings; print the study to read "

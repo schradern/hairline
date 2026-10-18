@@ -13,7 +13,7 @@ study_subsets <- function(study) {
 describe_numeric <- function(study, name, parts, stats) {
   digits <- study_digits(study_numbers(study$data[[name]]))
   rows <- lapply(stats, function(stat) {
-    c(paste0(study_label(study, name), ", ", study_stat_labels[[stat]]),
+    c(paste0(study_label_unit(study, name), ", ", study_stat_labels[[stat]]),
       vapply(parts, function(part) {
         numeric_summary(study_numbers(part$rows[[name]]), stat, digits, sum(study_is_missing(part$rows[[name]])))
       }, character(1)))
@@ -103,6 +103,9 @@ study_overview <- function(study, parts) {
     ggplot2::scale_colour_manual(values = colours, guide = "none") +
     ggplot2::labs(title = title, subtitle = "Median and interquartile range", x = NULL, y = NULL) + theme_hairline() +
     hl_legend(list())
+  for (name in numeric) {
+    plot <- plot + hl_panel_header(panel = study_label(study, name), qualifier = study_measure(study, name))
+  }
   plot@meta$hairline_height_mm <- rules$overview_frame_mm +
     panel_rows * (rules$overview_panel_mm + length(shown) * rules$overview_row_mm)
   plot

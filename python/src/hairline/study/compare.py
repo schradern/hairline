@@ -51,7 +51,7 @@ def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iq
     study.require([study.group, variable], "distribution")
     if study.types.get(variable) != "numeric":
         raise ValueError(f"hairline: distribution: '{variable}' is categorical; use compare() for its shares")
-    digits, label = digits_for(numbers(study.data[variable])), study.label(variable)
+    digits, label = digits_for(numbers(study.data[variable])), study.label_unit(variable)
     parts = subsets(study)
     rows = [[name, format_number(int((~is_missing(subset[variable])).sum()), 0),
              *[numeric_text(numbers(subset[variable]), stat, digits, int(is_missing(subset[variable]).sum()))
@@ -61,8 +61,10 @@ def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iq
     data = present_rows(study, variable).assign(**{variable: lambda frame: frame[variable].astype(float)})
     names = [name for name, _ in parts[:-1]] if study.group else [OVERALL]
     chart = ridgeline if len(names) >= load_tokens()["study"]["ridgeline_from"] else raincloud
-    title = f"{label} by {str(study.group).replace('_', ' ')}" if study.group else label
-    figure = chart(data, GROUP, variable, order=names, title=title, size=size)
+    name = study.label(variable)
+    title = f"{name} by {str(study.group).replace('_', ' ')}" if study.group else name
+    extra = {"y_title": study.measure(variable)} if chart is raincloud else {}
+    figure = chart(data, GROUP, variable, order=names, title=title, size=size, **extra)
     shown = rows[:-1] if study.group else rows
     text = f"{label}, {STAT_LABELS[stats[0]]}: {listed([f'{row[0]} {row[2]}' for row in shown])}."
     return Result(figure, table, values, text)
@@ -78,7 +80,7 @@ def compare(study: Study, variable: str, size: str = "double") -> Result:
 
 
 def compare_numeric(study: Study, variable: str, size: str) -> Result:
-    data, label = present_rows(study, variable), study.label(variable)
+    data, label = present_rows(study, variable), study.label_unit(variable)
     digits = digits_for(numbers(data[variable]))
     names = [name for name in study.groups if (data[GROUP] == name).any()]
     samples = [numbers(data[data[GROUP] == name][variable]) for name in names]
@@ -91,8 +93,8 @@ def compare_numeric(study: Study, variable: str, size: str) -> Result:
     pairs = [(names[0], names[1], test[1])] if test and len(names) == 2 else []
     subtitle = f"{test[0]}, {test[1]}" if test and len(names) > 2 else None
     figure = raincloud(data.assign(**{variable: data[variable].astype(float)}), GROUP, variable, order=names,
-                       comparisons=pairs, title=f"{label} by {str(study.group).replace('_', ' ')}",
-                       subtitle=subtitle, size=size)
+                       comparisons=pairs, title=f"{study.label(variable)} by {str(study.group).replace('_', ' ')}",
+                       subtitle=subtitle, y_title=study.measure(variable), size=size)
     parts = listed([f"{name} {summary}" for name, summary in zip(names, summaries, strict=True)])
     text = f"{label}, median (IQR): {parts}" + (f" ({test[0]}, {test[1]})." if test else ".")
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "median (IQR)"]), values, text)

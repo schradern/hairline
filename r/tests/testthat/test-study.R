@@ -10,7 +10,8 @@ fixture_frame <- function(columns) {
 fixture_study <- function(fixture) {
   data <- fixture_frame(fixture$cohort)
   suppressWarnings(hl_study(data, group = "arm", time = "months", event = "died", id = "id",
-                            variables = c("age", "sex", "sofa", "score")))
+                            variables = c("age", "sex", "sofa", "score"),
+                            units = c(age = "years", months = "months")))
 }
 
 expect_result <- function(result, case) {
@@ -47,6 +48,7 @@ test_that("study endpoints match the shared fixture", {
   expect_result(hl_survival(study), fixture$survival)
   effects <- fixture_frame(fixture$effects_table)
   expect_result(hl_effects(study, effects, measure = "OR"), fixture$effects)
-  three <- suppressWarnings(hl_study(fixture_frame(fixture$three), group = "arm", variables = "lactate"))
+  three <- suppressWarnings(hl_study(fixture_frame(fixture$three), group = "arm", variables = "lactate",
+                                     units = c(lactate = "mmol/l")))
   expect_result(hl_compare(three, "lactate"), fixture$compare_three)
 })

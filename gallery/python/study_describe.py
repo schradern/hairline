@@ -11,7 +11,8 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     study = hl.study(data("cohort"), group="arm", time="months", event="died", id="id",
                      variables=["age", "sex", "sofa", "lactate"],
-                     labels={"sofa": "SOFA score", "lactate": "Lactate (mmol/l)"})
+                     labels={"sofa": "SOFA score", "lactate": "Lactate"},
+                     units={"age": "years", "sofa": "points", "lactate": "mmol/l", "months": "months"})
 result = study.describe()
 result.figure.caption = "Synthetic data."
 finish(result.figure, "study_describe")

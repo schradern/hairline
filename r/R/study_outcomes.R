@@ -43,9 +43,11 @@ hl_survival <- function(study) {
   grouped <- !is.null(study$roles$group)
   title <- if (grouped) paste("Survival by", gsub("_", " ", study$roles$group)) else "Survival"
   figure <- hl_kaplan_meier(data, time, event, by = if (grouped) study_group_column, order = names, title = title,
-                            x_title = study_label(study, time))
+                            x_title = study_label_unit(study, time))
   medians <- if (grouped) listed_text(vapply(rows, function(row) paste(row[1], row[4]), character(1))) else rows[[1]][4]
-  text <- paste0("Median ", tolower(study_label(study, time)), ": ", medians,
+  unit <- study_measure(study, time)
+  measured <- paste0(tolower(study_label(study, time)), if (!is.null(unit)) sprintf(" (%s)", unit))
+  text <- paste0("Median ", measured, ": ", medians,
                  if (!is.null(test)) sprintf(" (log-rank %s).", test) else ".")
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "Events", "Median")

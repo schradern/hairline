@@ -16,10 +16,12 @@
 #' @param types Named types overriding the inference, e.g. `c(score = "categorical")`.
 #' @param order Group order; default order of first appearance.
 #' @param unit What a row is, for the texts; default "participants".
+#' @param units Named units of numeric columns, e.g. `c(age = "years", lactate = "mmol/l")`; tables, panel
+#'   headers and texts name them.
 #' @return A `hairline_study`.
 #' @export
 hl_study <- function(data, group = NULL, time = NULL, event = NULL, id = NULL, variables = NULL, labels = NULL,
-                     types = NULL, order = NULL, unit = NULL) {
+                     types = NULL, order = NULL, unit = NULL, units = NULL) {
   roles <- Filter(Negate(is.null), list(group = group, time = time, event = event, id = id))
   variables <- variables %||% setdiff(names(data), unlist(roles))
   kinds <- vapply(intersect(variables, names(data)), function(name) {
@@ -27,9 +29,10 @@ hl_study <- function(data, group = NULL, time = NULL, event = NULL, id = NULL, v
   }, character(1))
   has_group <- !is.null(group) && group %in% names(data)
   groups <- order %||% if (has_group) study_levels(data[[group]], FALSE) else character()
-  checks <- run_study_checks(data, roles, variables, groups)
+  checks <- c(run_study_checks(data, roles, variables, groups), unit_findings(roles, variables, kinds, as.list(units)))
   study <- structure(list(data = data, roles = roles, variables = variables, labels = as.list(labels), types = kinds,
-                          groups = groups, unit = unit %||% hl_tokens()$study$unit, checks = checks),
+                          groups = groups, unit = unit %||% hl_tokens()$study$unit, checks = checks,
+                          units = as.list(units)),
                      class = "hairline_study")
   if (length(checks)) {
     errors <- sum(vapply(checks, function(finding) finding$level == "error", logical(1)))
@@ -49,6 +52,26 @@ print.hairline_study <- function(x, ...) {
 }
 
 study_label <- function(study, column) study$labels[[column]] %||% humanise(column)
+
+# The column's unit; none when the label already says it ("Months").
+study_measure <- function(study, column) {
+  unit <- study$units[[column]]
+  if (!is.null(unit) && tolower(unit) == tolower(study_label(study, column))) NULL else unit
+}
+
+study_label_unit <- function(study, column) {
+  unit <- study_measure(study, column)
+  if (is.null(unit)) study_label(study, column) else sprintf("%s (%s)", study_label(study, column), unit)
+}
+
+# Numeric variables (and follow-up time) need a unit, so mixed tables and panels say what they measure.
+unit_findings <- function(roles, variables, types, units) {
+  measured <- c(roles$time, variables[variables %in% names(types) & types[variables] == "numeric"])
+  missing <- measured[!vapply(measured, function(name) nzchar(units[[name]] %||% ""), logical(1))]
+  if (!length(missing)) return(list())
+  list(study_finding("warning", paste(missing, collapse = ", "), "numeric columns without a unit", integer(),
+                     "give each a unit, for example years or mmol/l, so tables and panels name it"))
+}
 
 study_require <- function(study, columns, endpoint) {
   errors <- Filter(function(finding) finding$level == "error" && finding$column %in% columns, study$checks)

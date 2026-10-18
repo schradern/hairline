@@ -49,9 +49,10 @@ def survival(study: Study, size: str = "double") -> Result:
     values = {**{row[0]: row[3] for row in rows}, **({"p": test} if test else {})}
     figure = kaplan_meier(data, time, event, by=GROUP if study.group else None, order=names,
                           title=f"Survival by {str(study.group).replace('_', ' ')}" if study.group else "Survival",
-                          x_title=study.label(time), size=size)
+                          x_title=study.label_unit(time), size=size)
     medians = listed([f"{row[0]} {row[3]}" for row in rows]) if study.group else rows[0][3]
-    text = f"Median {study.label(time).lower()}: {medians}" + (f" (log-rank {test})." if test else ".")
+    unit = f" ({study.measure(time)})" if study.measure(time) else ""
+    text = f"Median {study.label(time).lower()}{unit}: {medians}" + (f" (log-rank {test})." if test else ".")
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "Events", "Median"]), values, text)
 
 

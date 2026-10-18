@@ -36,7 +36,7 @@ def numeric_rows(study: Study, name: str, parts: list, stats: Sequence[str]) -> 
     for stat in stats:
         texts = [numeric_text(numbers(rows_[name]), stat, digits, int(is_missing(rows_[name]).sum()))
                  for _, rows_ in parts]
-        rows.append([f"{study.label(name)}, {STAT_LABELS[stat]}", *texts])
+        rows.append([f"{study.label_unit(name)}, {STAT_LABELS[stat]}", *texts])
         values.setdefault(name, dict(zip([label for label, _ in parts], texts, strict=True)))
     return rows, values
 
@@ -103,6 +103,6 @@ def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:
                 ax.plot([low, high], [y, y], color=colors[label], solid_capstyle="butt")
                 ax.scatter([middle], [y], color=colors[label], zorder=3)
             result.categories(index, list(reversed(names)), "y")
-            result.panel_header(index, study.label(name))
+            result.panel_header(index, study.label(name), study.measure(name))
             ax.set_ylim(-0.6, len(shown) - 0.4)
     return result

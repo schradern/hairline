@@ -47,8 +47,8 @@ def study_cases() -> dict:
         warnings.simplefilter("ignore")
         data = cohort_data()
         cohort = study(frame(data), group="arm", time="months", event="died", id="id",
-                       variables=["age", "sex", "sofa", "score"])
-        three = study(frame(three_arm_data()), group="arm", variables=["lactate"])
+                       variables=["age", "sex", "sofa", "score"], units={"age": "years", "months": "months"})
+        three = study(frame(three_arm_data()), group="arm", variables=["lactate"], units={"lactate": "mmol/l"})
         broken = cohort_data()
         broken["died"] = [2] + broken["died"][1:]
         failing = study(frame(broken), group="arm", time="months", event="died", variables=["age"])

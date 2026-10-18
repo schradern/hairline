@@ -31,14 +31,15 @@ def quiet(**roles):
 
 def test_checks_report_without_changing_the_data():
     data = cohort()
-    with pytest.warns(UserWarning, match="0 errors, 4 warnings"):
+    with pytest.warns(UserWarning, match="0 errors, 5 warnings"):
         study = hl.study(data, group="arm", time="months", event="died", id="id",
-                         variables=["age", "sex", "sofa", "score"])
+                         variables=["age", "sex", "sofa", "score"], units={"age": "years", "months": "months"})
     problems = [(finding.column, finding.problem) for finding in study.checks]
     assert ("id", "1 rows repeat an id") in problems
     assert ("age", "1 missing (2.5%)") in problems
     assert any(column == "sex" and "'female '" in problem for column, problem in problems)
     assert any(column == "score" and problem.startswith("stored as text") for column, problem in problems)
+    assert ("sofa", "numeric columns without a unit") in problems
     assert data.equals(cohort())
 
 
@@ -53,11 +54,12 @@ def test_errors_block_only_the_endpoints_that_need_the_column():
 
 
 def test_describe_builds_table_one_with_counts_and_shares():
-    study = quiet(group="arm", variables=["age", "sex"])
+    study = quiet(group="arm", variables=["age", "sex"], units={"age": "years"})
     result = study.describe()
     assert list(result.table.columns) == ["Characteristic", "Standard care", "Early mobilisation", "Overall"]
     assert result.table.iloc[0].tolist() == ["n", "20", "20", "40"]
-    assert result.table.iloc[1, 0] == "Age, median (IQR)"
+    assert result.table.iloc[1, 0] == "Age (years), median (IQR)"
+    assert result.figure.headers[0].qualifier == "years"
     assert result.values["n"]["Overall"] == "40"
     assert result.text == "40 participants: 20 in Standard care and 20 in Early mobilisation."
     assert result.table.iloc[2, 0] == "Sex, n (%)"

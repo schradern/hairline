@@ -14,7 +14,8 @@ hl_study(
   labels = NULL,
   types = NULL,
   order = NULL,
-  unit = NULL
+  unit = NULL,
+  units = NULL
 )
 }
 \arguments{
@@ -35,6 +36,9 @@ hl_study(
 \item{order}{Group order; default order of first appearance.}
 
 \item{unit}{What a row is, for the texts; default "participants".}
+
+\item{units}{Named units of numeric columns, e.g. \code{c(age = "years", lactate = "mmol/l")}; tables, panel
+headers and texts name them.}
 }
 \value{
 A \code{hairline_study}.
