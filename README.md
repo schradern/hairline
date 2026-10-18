@@ -2,9 +2,10 @@
 
 **Clean, predictable figures for medical and data science, in Python and R.**
 
-[![Licence: MIT](https://img.shields.io/badge/licence-MIT-2474cf)](python/LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-2474cf)](python/README.md)
-[![R 4.3+](https://img.shields.io/badge/R-4.3%2B-2474cf)](r/README.md)
+[![PyPI](https://img.shields.io/pypi/v/hairline?color=0a6ddd)](https://pypi.org/project/hairline/)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-0a6ddd)](python/LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-0a6ddd)](python/README.md)
+[![R 4.3+](https://img.shields.io/badge/R-4.3%2B-0a6ddd)](r/README.md)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23456211.svg)](https://doi.org/10.5281/zenodo.23456211)
 
 ![ICU bed occupancy in small multiples, drawn with hairline](docs/images/hero.png)

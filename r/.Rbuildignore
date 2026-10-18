@@ -1,3 +1,4 @@
 ^\.lintr$
 ^tests/testthat/fixtures/README$
 ^Rplots\.pdf$
+^cran-comments\.md$
