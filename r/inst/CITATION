@@ -1,10 +1,13 @@
+version <- if (is.null(meta$Version)) as.character(utils::packageVersion("hairline")) else meta$Version
+
 bibentry(
   bibtype = "Manual",
+  key = "schrader2026hairline",
   header = "To cite hairline in publications, please use:",
   title = "hairline: Clean, Predictable Figures for Medical and Data Science",
-  author = person("Nikolas", "Schrader"),
+  author = person("Nikolas", "Schrader", comment = c(ORCID = "0009-0001-4616-3804")),
   year = "2026",
-  note = paste("R package version", meta$Version),
+  note = paste("R package version", version),
   textVersion = paste0("Schrader N (2026). hairline: Clean, Predictable Figures for Medical and Data Science. ",
-                       "R package version ", meta$Version, ".")
+                       "R package version ", version, ".")
 )

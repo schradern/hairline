@@ -46,7 +46,7 @@ targets of every figure. Install the R package first (`R CMD INSTALL r`).
 
 ## Author
 
-Nikolas Schrader (<hi@nikolasschrader.com>).
+Nikolas Schrader (<hi@nikolasschrader.com>), ORCID [0009-0001-4616-3804](https://orcid.org/0009-0001-4616-3804).
 
 ## How to cite
 

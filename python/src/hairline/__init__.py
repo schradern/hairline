@@ -21,6 +21,7 @@ from hairline.charts.spread import spread
 from hairline.charts.swatches import swatches
 from hairline.charts.timeseries import timeseries
 from hairline.charts.venn import venn
+from hairline.citation import citation
 from hairline.color.check import PaletteReport, check_palette
 from hairline.entities import color, colors
 from hairline.errors import HairlineLayoutError
@@ -34,11 +35,11 @@ from hairline.tokens import load_tokens
 
 __all__ = [
     "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Result", "Settings", "Study", "arcs", "bars",
-    "brand_report", "check_palette", "chord", "color", "colormap", "colors", "correlation", "current_settings",
-    "donut", "dotplot", "figure", "forest", "format_interval", "format_number", "format_percent", "frame", "funnel",
-    "kaplan_meier", "load_brand", "load_tokens", "palette", "palettes", "partition", "prisma", "raincloud", "ramp",
-    "ridgeline", "risk_of_bias", "sankey", "save", "scatter", "spread", "study", "swatches", "timeseries", "use",
-    "venn",
+    "brand_report", "check_palette", "chord", "citation", "color", "colormap", "colors", "correlation",
+    "current_settings", "donut", "dotplot", "figure", "forest", "format_interval", "format_number", "format_percent",
+    "frame", "funnel", "kaplan_meier", "load_brand", "load_tokens", "palette", "palettes", "partition", "prisma",
+    "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter", "spread", "study", "swatches",
+    "timeseries", "use", "venn",
 ]
 __version__ = "0.1.0"
 

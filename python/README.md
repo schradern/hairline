@@ -91,19 +91,19 @@ description, and no timestamps: the same figure gives the same bytes again.
 
 ## Author
 
-Nikolas Schrader (<hi@nikolasschrader.com>).
+Nikolas Schrader (<hi@nikolasschrader.com>), ORCID [0009-0001-4616-3804](https://orcid.org/0009-0001-4616-3804).
 
 ## How to cite
 
-If hairline helped you make the figures in your work, please cite it:
+If hairline helped you make the figures in your work, please cite it; `hl.citation()` gives the reference
+and `hl.citation("bibtex")` this entry:
 
 ```bibtex
-@software{schrader2026hairline,
-  author  = {Schrader, Nikolas},
-  title   = {hairline: Clean, Predictable Figures for Medical and Data Science},
-  year    = {2026},
-  version = {0.1.0},
-  note    = {Python package}
+@Manual{schrader2026hairline,
+  title = {hairline: Clean, Predictable Figures for Medical and Data Science},
+  author = {Nikolas Schrader},
+  year = {2026},
+  note = {Python package version 0.1.0},
 }
 ```
 
