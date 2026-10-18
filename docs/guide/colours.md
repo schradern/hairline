@@ -126,11 +126,13 @@ defaults:
       Surgery: poppy
     groups:                                 # units that share their section's hue, in tints
       Surgery: [Unit C, Unit D]
+    sequential: harbor                      # the hue of the brand's ramp for amounts
+    diverging: [harbor, poppy]              # the low and high poles of its diverging ramp
 ```
 
 ```python
 hl.use(brand=["_brand.yml", "units.yml"])   # institution first, then the project
-hl.brand_report()                           # what was taken from the brand, and the check results
+hl.brand_report()                           # each colour, the layer it came from, and the check results
 ```
 
 ```r
@@ -160,7 +162,10 @@ report$failures
 ## Ramps in your own plots
 
 hairline's own charts use ramps where they need one, as the correlation heatmap does. In a plot of your own,
-`colormap()` turns a ramp into a matplotlib colormap; in R the continuous scales take the ramp's name.
+`colormap()` turns a ramp into a matplotlib colormap; in R the continuous scales take the ramp's name. While a
+brand is active, its own ramps `brand-sequential` and `brand-diverging` are the default: made from the colours
+its `sequential:` and `diverging:` entries name, else from its first one and two colours, and used by
+`colormap()` without a name, the continuous scales without a ramp and the heatmap.
 
 ```python
 import numpy as np

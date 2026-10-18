@@ -15,7 +15,8 @@ overriding earlier ones.}
 \value{
 A list with \code{name}, \code{path}, \code{names}, \code{colors_given}, \code{colors_used}, \code{adapt}, \code{font},
 \code{heading_font}, \code{heading_weight}, \code{neutral}, \code{base_size}, \code{sizes}, \code{locale}, \code{entity_colors},
-\code{entity_failures}, \code{output}.
+\code{entity_failures}, \code{output}, \code{sequential_hue}, \code{diverging_hues}, \code{layers} (the file paths), \code{slot_origins}
+and \code{entity_origins} (the layer that set each colour).
 }
 \description{
 Parses a \verb{_brand.yml} file in the brand.yml format. Errors name the file,

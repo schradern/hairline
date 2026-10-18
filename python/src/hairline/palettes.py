@@ -9,7 +9,8 @@ hairline picks colours for you; these functions show and change them.
   "lagoon", "calm", "deep". Purpose sets: "pair", "pair-teal", "pair-violet" (two groups), "ink" (greyscale
   print), "judgement" (low, some concerns, high). `use(palette="calm")` makes one the default.
 - Amounts take a ramp: "blues", "teals", "oranges", "berries", "greys" (sequential), "blue-coral", "teal-berry"
-  (diverging). `colormap()` turns one into a matplotlib colormap.
+  (diverging). `colormap()` turns one into a matplotlib colormap. While a brand is active, its own ramps
+  "brand-sequential" and "brand-diverging" are the default for `ramp()`, `colormap()` and the heatmap.
 - Colours follow names across charts: `use(colors={"Unit B": "#e8a628"})` pins them, `color()` reads them; a
   brand file can hold the palette and the pinned colours. `check_palette()` measures your own colours.
 """
@@ -96,12 +97,15 @@ def interpolate(colors: Sequence[str], count: int) -> list[str]:
     return result
 
 
-def ramp(name: str, n: int | None = None) -> list[str]:
+def ramp(name: str | None = None, n: int | None = None) -> list[str]:
     """Colours for amounts. Sequential ramps run light to dark in one hue ("blues", "teals", "oranges",
     "berries", "greys"); diverging ramps run from one pole through a neutral midpoint to the other ("blue-coral",
     "teal-berry"), for values below and above a reference. `n` other than the stored 7 (or 13) interpolates in
-    OKLab. `colormap()` turns a ramp into a matplotlib colormap; `palettes()` lists them all."""
-    ramps = load_tokens()["ramps"]
+    OKLab. While a brand is active, "brand-sequential" and "brand-diverging" follow its colours, and `None` (the
+    default) gives "brand-sequential", else "blues". `colormap()` turns a ramp into a matplotlib colormap;
+    `palettes()` lists them all."""
+    ramps = active_ramps()
+    name = default_ramp() if name is None else name
     if name not in ramps and named_colors(name) is not None:
         raise ValueError(f"hairline: {name!r} is a palette, not a ramp; use palette({name!r}) for groups")
     if name not in ramps:
@@ -110,14 +114,33 @@ def ramp(name: str, n: int | None = None) -> list[str]:
     return colors if n is None or n == len(colors) else interpolate(colors, n)
 
 
+BRAND_RAMPS = ("brand-sequential", "brand-diverging")
+
+
+def active_ramps() -> dict[str, list[str]]:
+    """The token ramps, and while a brand is active its own two."""
+    from hairline.settings import current_settings
+    return {**{name: list(colors) for name, colors in load_tokens()["ramps"].items()},
+            **{name: list(colors) for name, colors in current_settings().ramps.items()}}
+
+
+def default_ramp(kind: str = "sequential") -> str:
+    """The ramp used where none is named: the brand's while one is active, else blues and the heatmap's."""
+    brand = "brand-sequential" if kind == "sequential" else "brand-diverging"
+    if brand in active_ramps():
+        return brand
+    return "blues" if kind == "sequential" else load_tokens()["correlation"]["ramp"]
+
+
 def ramp_kind(name: str) -> str:
-    return "diverging" if name in load_tokens()["ramp_definitions"]["diverging"] else "sequential"
+    diverging = {*load_tokens()["ramp_definitions"]["diverging"], "brand-diverging"}
+    return "diverging" if name in diverging else "sequential"
 
 
 def swatch_rows(names: Sequence[str] | None = None) -> list[dict]:
     """Colour sets as rows (name, kind, use, colours), grouped by kind in catalogue order."""
     tokens = load_tokens()
-    every = [*tokens["palettes"], *PURPOSE_SETS, *tokens["ramps"]]
+    every = [*tokens["palettes"], *PURPOSE_SETS, *active_ramps()]
     unknown = [name for name in names or () if name not in every]
     if unknown:
         raise ValueError(f"hairline: unknown colour set {unknown[0]!r}; use one of {', '.join(every)}")
@@ -149,7 +172,9 @@ def palettes(kind: str | None = None) -> pd.DataFrame:
     return table if kind is None else table[table["kind"] == kind].reset_index(drop=True)
 
 
-def colormap(name: str, n: int | None = None, reverse: bool = False) -> LinearSegmentedColormap:
-    """A ramp as a matplotlib colormap, for `imshow`, `pcolormesh` or `scatter(c=...)`; `reverse` flips it."""
+def colormap(name: str | None = None, n: int | None = None, reverse: bool = False) -> LinearSegmentedColormap:
+    """A ramp as a matplotlib colormap, for `imshow`, `pcolormesh` or `scatter(c=...)`; `reverse` flips it. `None`
+    gives the default ramp (the brand's while one is active)."""
+    name = default_ramp() if name is None else name
     colors = ramp(name, n)
     return LinearSegmentedColormap.from_list(f"{name}_r" if reverse else name, colors[::-1] if reverse else colors)

@@ -101,8 +101,11 @@ register_brand_fonts <- function(content, path, font_dir = dirname(path)) {
                                       sprintf("font file %s not found", missing[1]))
       systemfonts::register_font(entry$family, plain = paths[1])
     } else if (identical(source, "google")) {
-      warning(sprintf(paste0("hairline: %s: typography.fonts[%d]: Google font download is not supported; ",
-                             "install the font or use source: file"), basename(path), index - 1), call. = FALSE)
+      family <- entry$family %||% ""
+      warning(sprintf(paste0("hairline: %s: typography.fonts[%d]: '%s' comes from Google Fonts, which hairline does ",
+                             "not download; install it (https://fonts.google.com/specimen/%s) or put its files next ",
+                             "to the brand file with source: file"), basename(path), index - 1, family,
+                      gsub(" ", "+", family, fixed = TRUE)), call. = FALSE)
     }
   }
 }
@@ -134,7 +137,8 @@ brand_entities <- function(content, palette, categorical, used, path) {
 #' @param output Export type whose overrides apply: `"screen"`, `"pdf"`, `"html"` or `"docx"`.
 #' @return A list with `name`, `path`, `names`, `colors_given`, `colors_used`, `adapt`, `font`,
 #'   `heading_font`, `heading_weight`, `neutral`, `base_size`, `sizes`, `locale`, `entity_colors`,
-#'   `entity_failures`, `output`.
+#'   `entity_failures`, `output`, `sequential_hue`, `diverging_hues`, `layers` (the file paths), `slot_origins`
+#'   and `entity_origins` (the layer that set each colour).
 #' @examples
 #' path <- file.path(tempdir(), "_brand.yml")
 #' writeLines(c("meta:", "  name: Example Hospital", "color:", "  palette:",
@@ -164,14 +168,19 @@ hl_load_brand <- function(path, output = NULL) {
   used <- if (adapt == "readable" && length(categorical$colors)) adapt_readable(categorical$colors) else
     categorical$colors
   entities <- checked_entities(brand_entities(content, palette, categorical$names, used, path), adapt, path)
-  entity_colors <- grouped_entities(entities$colors, brand_get(content, "defaults.hairline.groups") %||% list(), path)
+  groups <- brand_get(content, "defaults.hairline.groups") %||% list()
+  entity_colors <- grouped_entities(entities$colors, groups, path)
+  hues <- brand_ramp_hues(content, palette, path)
   list(name = name, path = normalizePath(source$path), names = categorical$names, colors_given = categorical$colors,
        colors_used = used, adapt = adapt, font = brand_get(content, "typography.base.family"),
        heading_font = brand_get(content, "typography.headings.family"),
        heading_weight = brand_get(content, "typography.headings.weight"),
        neutral = brand_neutral(content, palette, path), base_size = brand_get(content, "defaults.hairline.base_size"),
        sizes = brand_get(content, "defaults.hairline.sizes") %||% list(), locale = locale,
-       entity_colors = entity_colors, entity_failures = entities$failures, output = output)
+       entity_colors = entity_colors, entity_failures = entities$failures, output = output,
+       sequential_hue = hues$sequential, diverging_hues = hues$diverging, layers = source$paths,
+       slot_origins = brand_slot_origins(source$layers, output, categorical$names, palette),
+       entity_origins = brand_entity_origins(source$layers, output, names(entity_colors), groups))
 }
 
 #' Find a brand file
@@ -203,7 +212,9 @@ hl_find_brand <- function(start = getwd()) {
 #' Brand report
 #'
 #' @param brand A brand from [hl_load_brand()], or `NULL` for the active one.
-#' @return A character string table: slot, name, colour as given, as used, light slot, checks.
+#' @return A character string: the layers by number with their paths, then per slot the name, colour as
+#'   given and as used, light slot and the layer that set it, the checks, and the pinned or grouped colours with
+#'   their layers.
 #' @examples
 #' path <- file.path(tempdir(), "_brand.yml")
 #' writeLines(c("meta:", "  name: Example Hospital", "color:", "  palette:",
@@ -215,17 +226,22 @@ hl_brand_report <- function(brand = NULL) {
   brand <- brand %||% hairline_state$brand
   if (is.null(brand)) return("No brand is active.")
   report <- if (length(brand$colors_used)) hl_check_palette(brand$colors_used) else NULL
-  rows <- c(sprintf("Brand '%s' from %s (adapt: %s)", brand$name, brand$path, brand$adapt),
-            "slot  name        given    used     light")
+  layers <- brand$layers %||% brand$path
+  rows <- c(sprintf("Brand '%s' (adapt: %s)", brand$name, brand$adapt),
+            sprintf("layer %d: %s", seq_along(layers), layers), "slot  name        given    used     light  layer")
   for (slot in seq_along(brand$colors_used)) {
     light <- if (!is.null(report) && slot %in% report$light_slots) "yes" else ""
-    rows <- c(rows, sprintf("%-5d %-11s %s  %s  %s", slot, brand$names[slot], brand$colors_given[slot],
-                            brand$colors_used[slot], light))
+    origin <- if (slot <= length(brand$slot_origins)) brand$slot_origins[slot] else ""
+    row <- sprintf("%-5d %-11s %s  %s  %-5s  %s", slot, brand$names[slot], brand$colors_given[slot],
+                   brand$colors_used[slot], light, origin)
+    rows <- c(rows, sub("\\s+$", "", row))
   }
   checks <- if (is.null(report)) "checks: no colours" else if (report$passed) "checks: passed" else
     paste("checks:", paste(report$failures, collapse = "; "))
   entities <- brand$entity_colors %||% character()
-  entity_rows <- c(sprintf("entity %s: %s", names(entities), unlist(entities)),
+  origins <- if (is.null(brand$entity_origins)) rep("", length(entities)) else brand$entity_origins[names(entities)]
+  tags <- ifelse(!is.na(origins) & nzchar(origins), sprintf(" (layer %s)", origins), "")
+  entity_rows <- c(sprintf("entity %s: %s%s", names(entities), unlist(entities), tags),
                    sprintf("entity check: %s", brand$entity_failures %||% character()))
   paste(c(rows, checks, if (length(entities)) entity_rows), collapse = "\n")
 }
@@ -258,5 +274,6 @@ brand_layer <- function(settings, brand) {
     settings[c("base_size", "base_size_explicit")] <- list(as.numeric(brand$base_size), TRUE)
   }
   if (!is.null(brand$locale)) settings$locale <- brand$locale
+  settings$ramps <- brand_ramps(brand)
   settings
 }

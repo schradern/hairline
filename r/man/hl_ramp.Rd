@@ -4,10 +4,11 @@
 \alias{hl_ramp}
 \title{Sequential or diverging ramp}
 \usage{
-hl_ramp(name, n = NULL)
+hl_ramp(name = NULL, n = NULL)
 }
 \arguments{
-\item{name}{Ramp name, e.g. \code{"blues"} or \code{"blue-coral"}.}
+\item{name}{Ramp name, e.g. \code{"blues"} or \code{"blue-coral"}; \code{NULL} for the default ramp (the brand's while one is
+active, else \code{"blues"}).}
 
 \item{n}{Number of colours; other counts than the stored 7 (or 13) interpolate in OKLab.}
 }
@@ -20,6 +21,9 @@ Colours for amounts. Sequential ramps run light to dark in one hue
 ramps run from one pole through a neutral midpoint to the other
 (\code{"blue-coral"}, \code{"teal-berry"}), for values below and above a reference.
 \code{\link[=scale_colour_hairline_c]{scale_colour_hairline_c()}} and \code{\link[=scale_fill_hairline_c]{scale_fill_hairline_c()}} use them in a plot.
+While a brand is active, \code{"brand-sequential"} and \code{"brand-diverging"} follow
+its colours (its \code{sequential} and \code{diverging} entries, else its first one
+and two colours) and become the default.
 }
 \examples{
 hl_ramp("blues")

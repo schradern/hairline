@@ -12,6 +12,8 @@ import matplotlib
 
 from hairline import entities
 from hairline.brand import Brand, find_brand, load_brand
+from hairline.color.ramps import diverging_ramp, sequential_ramp
+from hairline.color.space import hex_to_oklch
 from hairline.fonts import register_fonts, resolve_family
 from hairline.palettes import palette as resolve_palette
 from hairline.tokens import load_tokens
@@ -32,6 +34,7 @@ class Settings:
     base_size_explicit: bool = False
     accent: str | None = None
     scheme: str = "light"
+    ramps: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
 _state: dict[str, object] = {"current": None, "announced": set(), "arguments": {}}
@@ -119,7 +122,17 @@ def brand_layer(base: Settings, brand: Brand | None) -> Settings:
         changes |= {"base_size": float(brand.base_size), "base_size_explicit": True}
     if brand.locale:
         changes["locale"] = brand.locale
+    changes["ramps"] = brand_ramps(brand)
     return Settings(**{**base.__dict__, **changes})
+
+
+def brand_ramps(brand: Brand) -> dict[str, tuple[str, ...]]:
+    """The brand's ramps: `sequential` and `diverging` hues, else the hues of its first one and two colours."""
+    used = brand.colors_used
+    hue = brand.sequential_hue if brand.sequential_hue is not None else (hex_to_oklch(used[0])[2] if used else None)
+    pair = brand.diverging_hues or ((hex_to_oklch(used[0])[2], hex_to_oklch(used[1])[2]) if len(used) > 1 else None)
+    ramps = {} if hue is None else {"brand-sequential": tuple(sequential_ramp(hue))}
+    return ramps | ({} if pair is None else {"brand-diverging": tuple(diverging_ramp(*pair))})
 
 
 def reapply() -> None:

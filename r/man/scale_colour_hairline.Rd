@@ -11,9 +11,9 @@ scale_colour_hairline(palette = NULL, ...)
 
 scale_fill_hairline(palette = NULL, ...)
 
-scale_colour_hairline_c(ramp = "blues", ...)
+scale_colour_hairline_c(ramp = NULL, ...)
 
-scale_fill_hairline_c(ramp = "blues", ...)
+scale_fill_hairline_c(ramp = NULL, ...)
 }
 \arguments{
 \item{palette}{Palette or purpose-set name (see \code{\link[=hl_palettes]{hl_palettes()}}), hex vector, or \code{NULL} for the active
@@ -22,7 +22,8 @@ palette with entity colours.}
 \item{...}{Passed to the underlying ggplot2 scale.}
 
 \item{ramp}{Ramp name for continuous scales: \code{"blues"}, \code{"teals"}, \code{"oranges"}, \code{"berries"}, \code{"greys"}, or a
-diverging \code{"blue-coral"} or \code{"teal-berry"} for values on both sides of a midpoint.}
+diverging \code{"blue-coral"} or \code{"teal-berry"} for values on both sides of a midpoint; \code{NULL} for the default
+ramp (the brand's while one is active, else \code{"blues"}).}
 }
 \value{
 A ggplot2 scale.

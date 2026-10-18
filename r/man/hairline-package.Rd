@@ -9,11 +9,11 @@
 A design system for 'ggplot2' figures: one frame for titles, legends, panels and captions, a fixed spacing and type scale, colour-vision checked palettes, brand files in the 'brand.yml' format, and print-ready export. Produces output matching the 'hairline' Python package.
 }
 \author{
-\strong{Maintainer}: Nikolas Schrader \email{hi@nikolasschrader.com} [copyright holder]
+\strong{Maintainer}: Nikolas Schrader \email{hi@nikolasschrader.com} (\href{https://orcid.org/0009-0001-4616-3804}{ORCID}) [copyright holder]
 
 Authors:
 \itemize{
-  \item Nikolas Schrader \email{hi@nikolasschrader.com} [copyright holder]
+  \item Nikolas Schrader \email{hi@nikolasschrader.com} (\href{https://orcid.org/0009-0001-4616-3804}{ORCID}) [copyright holder]
 }
 
 }

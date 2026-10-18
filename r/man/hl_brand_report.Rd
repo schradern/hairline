@@ -10,7 +10,9 @@ hl_brand_report(brand = NULL)
 \item{brand}{A brand from \code{\link[=hl_load_brand]{hl_load_brand()}}, or \code{NULL} for the active one.}
 }
 \value{
-A character string table: slot, name, colour as given, as used, light slot, checks.
+A character string: the layers by number with their paths, then per slot the name, colour as
+given and as used, light slot and the layer that set it, the checks, and the pinned or grouped colours with
+their layers.
 }
 \description{
 Brand report

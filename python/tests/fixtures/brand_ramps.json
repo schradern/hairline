@@ -1,0 +1,130 @@
+{
+ "rule": {
+  "sequential": [
+   {
+    "hue": 30.0,
+    "colors": [
+     "#ffe9e5",
+     "#ffbaae",
+     "#ff8573",
+     "#e06351",
+     "#ba4637",
+     "#913024",
+     "#661f17"
+    ]
+   },
+   {
+    "hue": 140.0,
+    "colors": [
+     "#cdffc2",
+     "#9ee38f",
+     "#76c564",
+     "#53a640",
+     "#388624",
+     "#246611",
+     "#164709"
+    ]
+   },
+   {
+    "hue": 290.0,
+    "colors": [
+     "#eeecff",
+     "#ccc6ff",
+     "#ad9eff",
+     "#907ae9",
+     "#725dc3",
+     "#564499",
+     "#3b2e6c"
+    ]
+   },
+   {
+    "hue": null,
+    "colors": [
+     "#eeeeee",
+     "#cecece",
+     "#aeaeae",
+     "#8f8f8f",
+     "#717171",
+     "#555555",
+     "#3a3a3a"
+    ]
+   }
+  ],
+  "diverging": [
+   {
+    "hues": [
+     250.0,
+     40.0
+    ],
+    "colors": [
+     "#003c6b",
+     "#005798",
+     "#0774c6",
+     "#3093ec",
+     "#67b3ff",
+     "#a8d2ff",
+     "#efefed",
+     "#ffbba4",
+     "#fe895f",
+     "#de673b",
+     "#b84a1e",
+     "#8f330c",
+     "#652206"
+    ]
+   }
+  ]
+ },
+ "example": {
+  "brand-sequential": [
+   "#e3f0ff",
+   "#aad2ff",
+   "#6db2ff",
+   "#3992ed",
+   "#1a73c7",
+   "#04569c",
+   "#033b6e"
+  ],
+  "brand-diverging": [
+   "#033b6e",
+   "#04569c",
+   "#1a73c7",
+   "#3992ed",
+   "#6db2ff",
+   "#aad2ff",
+   "#efefed",
+   "#ffb9b6",
+   "#ff8383",
+   "#e06062",
+   "#ba4448",
+   "#912e32",
+   "#661e21"
+  ]
+ },
+ "explicit_yaml": "meta:\n  name: Ramp test\ncolor:\n  palette:\n    harbor: \"#0b3d6e\"\n    poppy: \"#f2545b\"\n    glacier: \"#8cc8ff\"\n    fern: \"#7fd8a0\"\ndefaults:\n  hairline:\n    categorical: [harbor, poppy, glacier, fern]\n    sequential: poppy\n    diverging: [glacier, fern]\n",
+ "explicit": {
+  "brand-sequential": [
+   "#ffe8e7",
+   "#ffb9b6",
+   "#ff8383",
+   "#e06062",
+   "#ba4448",
+   "#912e32",
+   "#661e21"
+  ],
+  "brand-diverging": [
+   "#003d67",
+   "#005993",
+   "#0076c0",
+   "#2095ea",
+   "#5fb5ff",
+   "#a4d3ff",
+   "#efefed",
+   "#80e8a7",
+   "#4aca82",
+   "#01ab62",
+   "#00884d",
+   "#006739",
+   "#004726"
+  ]
+ }
+}

@@ -38,7 +38,8 @@ read_brand_layers <- function(paths, output) {
   if (!is.null(output) && !is.null(outputs[[output]])) {
     content <- merge_brand(content, list(defaults = list(hairline = outputs[[output]])))
   }
-  list(content = content, label = label, font_dir = font_dir, path = paths[length(paths)])
+  list(content = content, label = label, font_dir = font_dir, path = paths[length(paths)], layers = layers,
+       paths = normalizePath(paths), output = output)
 }
 
 entity_pair_failures <- function(colors) {
@@ -86,4 +87,49 @@ grouped_entities <- function(colors, groups, label) {
     }
   }
   colors
+}
+
+# Which brand layer set a value, mirroring the Python package's brand_origins: its 1-based number, with the export
+# type when an `outputs` override set it (that override applies last, so it is looked for first).
+brand_has_path <- function(layer, keys) {
+  node <- layer
+  for (key in keys) {
+    if (!is.list(node) || !key %in% names(node)) return(FALSE)
+    node <- node[[key]]
+  }
+  TRUE
+}
+
+brand_origin <- function(layers, output, keys) {
+  if (!is.null(output) && identical(keys[1:2], c("defaults", "hairline"))) {
+    override <- c("defaults", "hairline", "outputs", output, keys[-(1:2)])
+    for (index in rev(seq_along(layers))) {
+      if (brand_has_path(layers[[index]], override)) return(sprintf("%d, %s", index, output))
+    }
+  }
+  for (index in rev(seq_along(layers))) if (brand_has_path(layers[[index]], keys)) return(as.character(index))
+  ""
+}
+
+# A palette name comes from `color.palette`; a hex entry from `categorical`, else primary/secondary/tertiary.
+brand_slot_origins <- function(layers, output, names, palette) {
+  vapply(names, function(name) {
+    if (name %in% names(palette)) return(brand_origin(layers, output, c("color", "palette", name)))
+    candidates <- c(brand_origin(layers, output, c("defaults", "hairline", "categorical")),
+                    vapply(c("primary", "secondary", "tertiary"), function(role) {
+                      brand_origin(layers, output, c("color", role))
+                    }, character(1)))
+    c(candidates[nzchar(candidates)], "")[1]
+  }, character(1), USE.NAMES = FALSE)
+}
+
+# A pinned colour comes from `colors`; a group member's tint from the group in `groups` that lists it.
+brand_entity_origins <- function(layers, output, entities, groups) {
+  vapply(entities, function(name) {
+    origin <- brand_origin(layers, output, c("defaults", "hairline", "colors", name))
+    group <- Filter(function(group) name %in% unlist(groups[[group]]), names(groups %||% list()))
+    if (!nzchar(origin) && length(group)) origin <- brand_origin(layers, output, c("defaults", "hairline", "groups",
+                                                                                   group[1]))
+    origin
+  }, character(1))
 }

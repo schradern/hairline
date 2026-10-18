@@ -81,3 +81,22 @@ test_that("brand layers, export overrides and entity checks match the Python ref
   expect_equal(exact$failures, as.character(unlist(expected$exact_failures)))
   expect_error(hl_load_brand(paths, output = "slides"), "output 'slides' must be one of screen, pdf, html, docx")
 })
+
+test_that("the report names the layer each value came from, as in Python", {
+  expected <- read_fixture("brand.json")$layered$report
+  paths <- c(example_brand(), testthat::test_path("fixtures", "example_units.yml"))
+  lines <- strsplit(hl_brand_report(hl_load_brand(paths)), "\n", fixed = TRUE)[[1]]
+  expect_equal(lines[2:3], paste0("layer ", 1:2, ": ", normalizePath(paths)))
+  expect_equal(sub("^(layer [0-9]+): .*$", "\\1", lines), unlist(expected))
+})
+
+test_that("an export override is named with its layer", {
+  folder <- withr::local_tempdir()
+  writeLines(c("color:", "  palette:", "    harbor: \"#0b3d6e\"", "    poppy: \"#f2545b\"", "defaults:", "  hairline:",
+               "    categorical: [harbor, poppy]"), file.path(folder, "_brand.yml"))
+  writeLines(c("defaults:", "  hairline:", "    outputs:", "      docx:", "        colors:", "          Unit A: poppy"),
+             file.path(folder, "project.yml"))
+  report <- hl_brand_report(hl_load_brand(file.path(folder, c("_brand.yml", "project.yml")), output = "docx"))
+  entity <- grep("^entity Unit A:", strsplit(report, "\n", fixed = TRUE)[[1]], value = TRUE)
+  expect_true(endsWith(entity, "(layer 2, docx)"))
+})

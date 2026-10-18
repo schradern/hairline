@@ -9,6 +9,7 @@ from __future__ import annotations
 import itertools
 import json
 import math
+import re
 import sys
 import warnings
 from pathlib import Path
@@ -17,7 +18,7 @@ import numpy as np
 import pandas as pd
 from study_fixtures import spread_cases, study_cases
 
-from hairline.brand import load_brand
+from hairline.brand import brand_report, load_brand
 from hairline.brand_entities import checked_entities
 from hairline.charts.arcs import arcs_spec
 from hairline.charts.arcs_geometry import arcs_drawing
@@ -39,14 +40,14 @@ from hairline.charts.prisma_geometry import prisma_drawing
 from hairline.charts.raincloud import bracket_levels
 from hairline.charts.risk_of_bias import risk_of_bias_spec
 from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
-from hairline.charts.swatches_geometry import swatches_drawing
-from hairline.palettes import swatch_rows
 from hairline.charts.sankey import sankey_spec
 from hairline.charts.sankey_geometry import sankey_drawing
+from hairline.charts.swatches_geometry import swatches_drawing
 from hairline.charts.venn import venn_spec
 from hairline.charts.venn_geometry import venn_drawing
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
+from hairline.color.ramps import diverging_ramp, sequential_ramp
 from hairline.color.space import hex_to_oklch
 from hairline.color.tints import tints
 from hairline.color.vision import contrast, delta_e, simulate
@@ -55,6 +56,7 @@ from hairline.layout.frame import compute_frame
 from hairline.layout.geometry import Box, frame_input_from_dict, load_font_metrics
 from hairline.marks import point_fill, point_step
 from hairline.numbers import format_number, format_p, format_percent
+from hairline.palettes import swatch_rows
 from hairline.settings import use
 from hairline.stats.density import bandwidth, density, jitter_offsets, quantiles
 from hairline.stats.survival import km_estimate, km_median
@@ -170,9 +172,10 @@ def layered_brand_case() -> dict:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         exact = checked_entities({"Unit A": "#0b3d6e", "Unit B": "#1d4f86"}, "exact", "test")
+    report = [re.sub(r"^(layer \d+): .*$", r"\1", line) for line in brand_report(brand).splitlines()]
     return {"name": brand.name, "entity_colors": brand.entity_colors, "entity_failures": brand.entity_failures,
             "docx_base_size": docx.base_size, "html_grid": load_brand(paths, output="html").neutral["grid"],
-            "exact_failures": exact[1]}
+            "exact_failures": exact[1], "report": report}
 
 
 def entity_cases() -> list[dict]:
@@ -450,6 +453,39 @@ def swatch_cases() -> dict:
                       "shapes": swatches_drawing({"rows": rows}, box, fake_measure, DRAWING_STYLE)})
     return {"style": DRAWING_STYLE, "cases": cases}
 
+
+EXPLICIT_RAMPS_BRAND = """meta:
+  name: Ramp test
+color:
+  palette:
+    harbor: "#0b3d6e"
+    poppy: "#f2545b"
+    glacier: "#8cc8ff"
+    fern: "#7fd8a0"
+defaults:
+  hairline:
+    categorical: [harbor, poppy, glacier, fern]
+    sequential: poppy
+    diverging: [glacier, fern]
+"""
+
+
+def brand_ramp_cases() -> dict:
+    """The ramp rule on a few hues, and the ramps of the example brand and of a brand that names its hues."""
+    import tempfile
+    rule = {"sequential": [{"hue": hue, "colors": sequential_ramp(hue)} for hue in (30.0, 140.0, 290.0, None)],
+            "diverging": [{"hues": [250.0, 40.0], "colors": diverging_ramp(250.0, 40.0)}]}
+    example = use(brand=REPO / "brands" / "example" / "_brand.yml").ramps
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "_brand.yml"
+        path.write_text(EXPLICIT_RAMPS_BRAND, encoding="utf-8")
+        explicit = use(brand=path).ramps
+    use(brand=False)
+    return {"rule": rule, "example": {name: list(colors) for name, colors in example.items()},
+            "explicit_yaml": EXPLICIT_RAMPS_BRAND,
+            "explicit": {name: list(colors) for name, colors in explicit.items()}}
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -480,6 +516,7 @@ def main() -> int:
     write("study.json", study_cases())
     write("spread.json", spread_cases(DRAWING_STYLE, fake_measure))
     write("swatches.json", swatch_cases())
+    write("brand_ramps.json", brand_ramp_cases())
     return 0
 
 

@@ -64,7 +64,11 @@ the units of a section tints of the section's colour.
 
 A \verb{_brand.yml} file holds an institution's palette (\verb{defaults: hairline: categorical:}), found from the working directory upwards or given with
 \code{hl_use(brand = )}; several files layer from institution to project, and
-\code{\link[=hl_brand_report]{hl_brand_report()}} shows what was taken. Any vector of hex colours can be
+\code{\link[=hl_brand_report]{hl_brand_report()}} shows what was taken and which layer each colour came
+from. While a brand is active, its ramps \code{"brand-sequential"} and
+\code{"brand-diverging"} (from its \verb{sequential:} and \verb{diverging:} colours, else
+its first one and two colours) are the default for \code{\link[=hl_ramp]{hl_ramp()}}, the
+continuous scales and the correlation heatmap. Any vector of hex colours can be
 a palette; \code{\link[=hl_check_palette]{hl_check_palette()}} measures how far apart the colours are for
 colour-blind readers and everyone else, and their contrast with the
 background (\code{pairs = "all"} for scatter plots and small multiples).

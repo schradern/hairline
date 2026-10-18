@@ -51,7 +51,11 @@
 #' A `_brand.yml` file holds an institution's palette (`defaults: hairline:
 #' categorical:`), found from the working directory upwards or given with
 #' `hl_use(brand = )`; several files layer from institution to project, and
-#' [hl_brand_report()] shows what was taken. Any vector of hex colours can be
+#' [hl_brand_report()] shows what was taken and which layer each colour came
+#' from. While a brand is active, its ramps `"brand-sequential"` and
+#' `"brand-diverging"` (from its `sequential:` and `diverging:` colours, else
+#' its first one and two colours) are the default for [hl_ramp()], the
+#' continuous scales and the correlation heatmap. Any vector of hex colours can be
 #' a palette; [hl_check_palette()] measures how far apart the colours are for
 #' colour-blind readers and everyone else, and their contrast with the
 #' background (`pairs = "all"` for scatter plots and small multiples).

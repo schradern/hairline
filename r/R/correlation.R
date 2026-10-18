@@ -2,7 +2,7 @@
 # values in the cells, each variable named on the empty diagonal, colour key in the legend row.
 
 correlation_colour <- function(value) {
-  colours <- hl_ramp(hl_tokens()$correlation$ramp)
+  colours <- hl_ramp(default_ramp("diverging"))
   colours[round((value + 1) / 2 * (length(colours) - 1)) + 1]
 }
 

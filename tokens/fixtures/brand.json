@@ -41,6 +41,22 @@
   "html_grid": "#e6e8eb",
   "exact_failures": [
    "Unit A / Unit B: normal-vision ΔE 6.7 is below 15"
+  ],
+  "report": [
+   "Brand 'Example University Hospital, ICU project' (adapt: readable)",
+   "layer 1",
+   "layer 2",
+   "slot  name        given    used     light  layer",
+   "1     harbor      #0b3d6e  #24578d         1",
+   "2     poppy       #f2545b  #f2545b         1",
+   "3     glacier     #8cc8ff  #75b4ed  yes    1",
+   "4     fern        #7fd8a0  #6bc48d  yes    1",
+   "checks: passed",
+   "entity Unit A: #588cc7 (layer 2)",
+   "entity Unit B: #25578e (layer 2)",
+   "entity Surgery: #f2545b (layer 2)",
+   "entity Unit C: #ff7e7e (layer 2)",
+   "entity Unit D: #ffaba8 (layer 2)"
   ]
  }
 }

@@ -13,7 +13,7 @@ from hairline.charts.correlation_geometry import correlation_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_number
-from hairline.palettes import ramp
+from hairline.palettes import default_ramp, ramp
 from hairline.settings import current_settings
 from hairline.stats.tests import ranks
 from hairline.tokens import load_tokens
@@ -21,7 +21,7 @@ from hairline.tokens import load_tokens
 
 def ramp_color(value: float) -> str:
     """Colour of a correlation on the diverging ramp: -1 at the low pole, 0 at the grey midpoint, 1 at the high pole."""
-    colors = ramp(load_tokens()["correlation"]["ramp"])
+    colors = ramp(default_ramp("diverging"))
     return colors[round((value + 1) / 2 * (len(colors) - 1))]
 
 

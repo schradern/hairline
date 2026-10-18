@@ -83,8 +83,12 @@ interpolate_colors <- function(colors, count) {
 #' ramps run from one pole through a neutral midpoint to the other
 #' (`"blue-coral"`, `"teal-berry"`), for values below and above a reference.
 #' [scale_colour_hairline_c()] and [scale_fill_hairline_c()] use them in a plot.
+#' While a brand is active, `"brand-sequential"` and `"brand-diverging"` follow
+#' its colours (its `sequential` and `diverging` entries, else its first one
+#' and two colours) and become the default.
 #'
-#' @param name Ramp name, e.g. `"blues"` or `"blue-coral"`.
+#' @param name Ramp name, e.g. `"blues"` or `"blue-coral"`; `NULL` for the default ramp (the brand's while one is
+#'   active, else `"blues"`).
 #' @param n Number of colours; other counts than the stored 7 (or 13) interpolate in OKLab.
 #' @return Character vector of hex colours.
 #' @seealso [hl_palettes()], [hl_swatches()].
@@ -93,8 +97,9 @@ interpolate_colors <- function(colors, count) {
 #' hl_ramp("blues", n = 3)
 #' hl_ramp("blue-coral", n = 5)
 #' @export
-hl_ramp <- function(name, n = NULL) {
-  ramps <- hl_tokens()$ramps
+hl_ramp <- function(name = NULL, n = NULL) {
+  ramps <- active_ramps()
+  name <- name %||% default_ramp()
   if (!name %in% names(ramps) && !is.null(named_colours(name))) {
     stop(sprintf("hairline: '%s' is a palette, not a ramp; use hl_palette('%s') for groups", name, name),
          call. = FALSE)
@@ -107,12 +112,24 @@ hl_ramp <- function(name, n = NULL) {
   if (is.null(n) || n == length(colors)) colors else interpolate_colors(colors, n)
 }
 
-ramp_kind <- function(name) if (name %in% names(hl_tokens()$ramp_definitions$diverging)) "diverging" else "sequential"
+# The token ramps, and while a brand is active its own two.
+active_ramps <- function() c(lapply(hl_tokens()$ramps, unname), hl_settings()$ramps %||% list())
+
+# The ramp used where none is named: the brand's while one is active, else blues and the heatmap's.
+default_ramp <- function(kind = "sequential") {
+  brand <- if (kind == "sequential") "brand-sequential" else "brand-diverging"
+  if (brand %in% names(active_ramps())) return(brand)
+  if (kind == "sequential") "blues" else hl_tokens()$correlation$ramp
+}
+
+ramp_kind <- function(name) {
+  if (name %in% c(names(hl_tokens()$ramp_definitions$diverging), "brand-diverging")) "diverging" else "sequential"
+}
 
 # Colour sets as rows (name, kind, use, colours), grouped by kind in catalogue order.
 swatch_rows <- function(names = NULL) {
   tokens <- hl_tokens()
-  every <- c(names(tokens$palettes), purpose_sets, names(tokens$ramps))
+  every <- c(names(tokens$palettes), purpose_sets, names(active_ramps()))
   unknown <- setdiff(names, every)
   if (length(unknown) > 0) {
     stop(sprintf("hairline: unknown colour set '%s'; use one of %s", unknown[1], paste(every, collapse = ", ")),

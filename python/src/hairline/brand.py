@@ -12,6 +12,7 @@ import yaml
 from matplotlib import font_manager
 
 from hairline.brand_entities import checked_entities, grouped_entities
+from hairline.brand_origins import entity_origins, slot_origins
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.space import HEX_PATTERN, hex_to_oklch
@@ -42,6 +43,9 @@ class Brand:
     entity_colors: dict[str, str] = field(default_factory=dict)
     entity_failures: list[str] = field(default_factory=list)
     output: str | None = None
+    layers: list[str] = field(default_factory=list)
+    slot_origins: list[str] = field(default_factory=list)
+    entity_origins: dict[str, str] = field(default_factory=dict)
 
 
 def merged(base: dict, layer: dict) -> dict:
@@ -83,6 +87,7 @@ class BrandFile:
         content: dict = {}
         for layer in layers:
             content = merged(content, layer)
+        self.layers, self.output = layers, output
         self.content = self.for_output(content, output)
 
     def for_output(self, content: dict, output: str | None) -> dict:
@@ -181,13 +186,18 @@ def register_brand_fonts(source: BrandFile) -> None:
                     raise source.fail(f"typography.fonts[{index}].files[{file_index}]", f"font file {path} not found")
                 font_manager.fontManager.addfont(str(path))
         elif kind == "google":
-            warnings.warn(f"hairline: {source.label}: typography.fonts[{index}]: Google font download is not "
-                          "supported; install the font or use source: file", UserWarning, stacklevel=3)
+            family = str(entry.get("family", ""))
+            warnings.warn(f"hairline: {source.label}: typography.fonts[{index}]: {family!r} comes from Google Fonts, "
+                          f"which hairline does not download; install it (https://fonts.google.com/specimen/"
+                          f"{family.replace(' ', '+')}) or put its files next to the brand file with source: file",
+                          UserWarning, stacklevel=3)
 
 
 def ramp_hues(source: BrandFile, palette: dict[str, str]) -> tuple[float | None, tuple[float, float] | None]:
     sequential = source.get("defaults.hairline.sequential")
     diverging = source.get("defaults.hairline.diverging")
+    if diverging is not None and (not isinstance(diverging, list) or len(diverging) != 2):
+        raise source.fail("defaults.hairline.diverging", "must list two colours, the low and the high pole")
     hue = hex_to_oklch(resolve_color(source, "defaults.hairline.sequential", sequential, palette))[2] \
         if sequential is not None else None
     pair = tuple(hex_to_oklch(resolve_color(source, "defaults.hairline.diverging", value, palette))[2]
@@ -238,8 +248,12 @@ def load_brand(path: str | os.PathLike | list, output: str | None = None) -> Bra
     hue, pair = ramp_hues(source, palette)
     used = adapt_readable(given) if mode == "readable" and given else list(given)
     entities, failures = checked_entities(entity_section(source, palette, names, used), mode, source.label)
-    entities = grouped_entities(entities, source.get("defaults.hairline.groups", {}), source.fail)
+    groups = source.get("defaults.hairline.groups", {})
+    entities = grouped_entities(entities, groups, source.fail)
     return Brand(name=name, path=source.path, names=names, colors_given=given, output=output,
+                 layers=[str(path.resolve()) for path in source.paths],
+                 slot_origins=slot_origins(source.layers, output, names, palette),
+                 entity_origins=entity_origins(source.layers, output, list(entities), groups),
                  colors_used=used, adapt=mode, entity_colors=entities, entity_failures=failures,
                  font=source.get("typography.base.family"), heading_font=source.get("typography.headings.family"),
                  heading_weight=source.get("typography.headings.weight"), neutral=neutral_section(source, palette),
@@ -260,24 +274,29 @@ def find_brand(start: str | os.PathLike | None = None) -> Path | None:
 
 
 def brand_report(brand: Brand | None = None) -> str:
-    """Plain-text table: slot, name, colour as given, as used, light slot, overall check; `None` reports the
-    brand the last `use()` applied."""
+    """Plain-text report: the layers by number with their paths, then per slot the name, colour as given and as
+    used, light slot and the layer that set it, the checks, and the pinned or grouped colours with their layers.
+    `None` reports the brand the last `use()` applied."""
     if brand is None:
         from hairline.settings import active_brand
         brand = active_brand()
     if brand is None:
         return "No brand is active."
     report = check_palette(brand.colors_used) if brand.colors_used else None
-    rows = [f"Brand '{brand.name}' from {Path(brand.path).resolve()} (adapt: {brand.adapt})",
-            "slot  name        given    used     light"]
+    layers = brand.layers or [str(Path(brand.path).resolve())]
+    rows = [f"Brand '{brand.name}' (adapt: {brand.adapt})",
+            *(f"layer {index}: {path}" for index, path in enumerate(layers, start=1)),
+            "slot  name        given    used     light  layer"]
     for slot, (name, given, used) in enumerate(zip(brand.names, brand.colors_given, brand.colors_used, strict=True),
                                                start=1):
         light = "yes" if report and slot in report.light_slots else ""
-        rows.append(f"{slot:<5} {name:<11} {given}  {used}  {light}")
+        origin = brand.slot_origins[slot - 1] if slot <= len(brand.slot_origins) else ""
+        rows.append(f"{slot:<5} {name:<11} {given}  {used}  {light:<5}  {origin}".rstrip())
     if report is None:
         rows.append("checks: no colours")
     else:
         rows.append("checks: passed" if report.passed else f"checks: {'; '.join(report.failures)}")
-    rows += [f"entity {name}: {color}" for name, color in brand.entity_colors.items()]
+    rows += [f"entity {name}: {color}" + (f" (layer {brand.entity_origins[name]})" if brand.entity_origins.get(name)
+                                          else "") for name, color in brand.entity_colors.items()]
     rows += [f"entity check: {failure}" for failure in brand.entity_failures]
     return "\n".join(rows)

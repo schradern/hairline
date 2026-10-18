@@ -585,7 +585,9 @@
     "berries": "amounts, light to dark",
     "greys": "amounts in greyscale",
     "blue-coral": "below and above a midpoint",
-    "teal-berry": "below and above a midpoint"
+    "teal-berry": "below and above a midpoint",
+    "brand-sequential": "the active brand's ramp",
+    "brand-diverging": "the active brand's diverging ramp"
   },
   "swatches": {
     "swatch": 1.3,

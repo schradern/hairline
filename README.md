@@ -166,7 +166,7 @@ defaults:
 ```python
 hl.use(brand="brands/example/_brand.yml")              # or let hairline find _brand.yml itself
 hl.use(brand=["brands/example/_brand.yml", "brands/example/units.yml"], output="docx")
-print(hl.brand_report())                               # colours as given and as used, light slots, checks
+print(hl.brand_report())                               # each colour as given and used, its layer, the checks
 ```
 
 ```r
@@ -182,11 +182,15 @@ cat(hl_brand_report())
   nudges its lightness until the colours pass the colour-vision and contrast checks; `adapt: exact` uses them
   as given and warns. `colors:` pins a colour to a unit or arm, `groups:` gives a section's units tints of the
   section's colour.
+- **Ramps.** `sequential:` and `diverging:` name the colours whose hues make the brand's own ramps,
+  `brand-sequential` and `brand-diverging`; without them the brand's first one and two colours do. While the
+  brand is active they are the default for heatmaps and continuous colour scales.
 - **Fonts and text.** A font from the system or from a file next to the brand (`source: file`); a Google font
   needs installing first. `base_size` and `sizes` set the type scale, `locale: de` writes decimal commas, and
   `muted`, `faint`, `grid`, `axis` and `band` set the neutral greys.
 - **Layers.** Files stack from institution to project to document, each overriding only the keys it sets, as
-  [`brands/example/units.yml`](brands/example/units.yml) does over the institution's file.
+  [`brands/example/units.yml`](brands/example/units.yml) does over the institution's file; the brand report
+  names the layer each colour came from.
 - **Per export type.** `outputs:` holds overrides for `screen`, `pdf`, `html` or `docx`, such as a larger
   text size for Word; `use(output="docx")` or the document editor picks the one that applies.
 - **In a document.** A document editor that runs code can pass the document's brand layers, export type

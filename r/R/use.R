@@ -6,7 +6,7 @@ default_settings <- function() {
   list(font = tokens$font$family, base_size = tokens$type$base_size, sizes = list(),
        palette = unname(tokens$palettes[[name]]), palette_name = name, palette_label = sprintf("palette '%s'", name),
        locale = tokens$default_locale, background = "#ffffff", neutral = tokens$neutral, brand_name = NULL,
-       base_size_explicit = FALSE, accent = NULL, scheme = "light")
+       base_size_explicit = FALSE, accent = NULL, scheme = "light", ramps = list())
 }
 
 # The dark scheme swaps every neutral token (a brand's light neutrals do not carry over); the accent is checked as a

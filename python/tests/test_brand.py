@@ -159,5 +159,27 @@ def test_brand_report_reads_the_active_brand_as_in_r(example, monkeypatch):
     monkeypatch.chdir(example.parent)
     hl.use(brand="_brand.yml")
     assert hl.brand_report().startswith("Brand 'Example University Hospital'")
-    assert f"from {example.resolve()} " in hl.brand_report()
+    assert f"layer 1: {example.resolve()}" in hl.brand_report().splitlines()
     hl.use(brand=False)
+
+
+def test_the_report_names_the_layer_each_value_came_from(repo_root):
+    folder = repo_root / "brands" / "example"
+    report = hl.brand_report(load_brand([folder / "_brand.yml", folder / "units.yml"]))
+    lines = report.splitlines()
+    assert lines[1:3] == [f"layer {index}: {(folder / name).resolve()}"
+                          for index, name in ((1, "_brand.yml"), (2, "units.yml"))]
+    assert lines[3] == "slot  name        given    used     light  layer"
+    assert lines[4].split()[-1] == "1"
+    assert "entity Unit A: " in report and [line for line in lines if line.startswith("entity Unit A:")][0].endswith(
+        "(layer 2)")
+
+
+def test_an_export_override_is_named_with_its_layer(tmp_path):
+    base, project = tmp_path / "_brand.yml", tmp_path / "project.yml"
+    base.write_text('color:\n  palette:\n    harbor: "#0b3d6e"\n    poppy: "#f2545b"\n'
+                    "defaults:\n  hairline:\n    categorical: [harbor, poppy]\n", encoding="utf-8")
+    project.write_text("defaults:\n  hairline:\n    outputs:\n      docx:\n        colors:\n          Unit A: poppy\n",
+                       encoding="utf-8")
+    report = hl.brand_report(load_brand([base, project], output="docx"))
+    assert [line for line in report.splitlines() if line.startswith("entity Unit A:")][0].endswith("(layer 2, docx)")
