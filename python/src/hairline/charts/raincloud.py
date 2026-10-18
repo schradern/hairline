@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import pandas as pd
 from matplotlib.patches import Polygon, Rectangle
@@ -99,7 +99,8 @@ def check_comparisons(comparisons: Sequence[tuple[str, str, str]], names: list[s
 
 def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
               caption: str | None = None, y_title: str | None = None, order: Sequence[str] | None = None,
-              comparisons: str | Sequence[tuple] = (), size: str = "onehalf") -> HairlineFigure:
+              comparisons: str | Sequence[tuple] = (), colors: Mapping[str, str] | None = None,
+              size: str = "onehalf") -> HairlineFigure:
     """Distributions per group. `comparisons`: "all" or "adjacent" pairs, (group, group) pairs, or
     (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p."""
     check_columns(data, [group, value])
@@ -109,8 +110,9 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     comparisons = resolve_comparisons(comparisons, groups, value)
     check_comparisons(comparisons, names)
     rules, result = load_tokens()["raincloud"], figure(title, subtitle=subtitle, caption=caption, size=size)
-    for position, (name, rows) in enumerate(groups):
-        draw_group(result.ax, rows[value], position, entities.color(name), rules)
+    with entities.chart(names, colors):
+        for position, (name, rows) in enumerate(groups):
+            draw_group(result.ax, rows[value], position, entities.color(name), rules)
     draw_brackets(result.ax, comparisons, names, data[value], rules)
     result.categories(0, names)
     result.ax.set_xlim(-0.6, len(names) - 0.4)

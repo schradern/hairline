@@ -26,10 +26,9 @@ test_that("highlighting a series keeps its colour and greys the rest", {
     theme_hairline() + hl_highlight(series = "Unit B")
   data <- ggplot2::ggplot_build(plot)@data[[1]]
   colours <- unique(data$colour)
-  expect_setequal(colours, c("#e8a628", "#b3b8be"))
+  expect_setequal(colours, c("#ef675a", "#b3b8be"))
   base <- 0.14 * 9 / ggplot2::.pt
-  # slot 2 is a light slot, so it also carries the light-slot factor, as in Python
-  expect_equal(unique(data$linewidth[data$colour == "#e8a628"]), 1.15 * 1.3 * base, tolerance = 1e-6)
+  expect_equal(unique(data$linewidth[data$colour == "#ef675a"]), 1.15 * base, tolerance = 1e-6)
   expect_equal(unique(data$linewidth[data$colour == "#b3b8be"]), 0.85 * base, tolerance = 1e-6)
 })
 

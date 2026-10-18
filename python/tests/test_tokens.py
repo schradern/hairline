@@ -10,7 +10,7 @@ def test_tokens_have_all_sections():
     tokens = load_tokens()
     assert set(tokens) >= SECTIONS
     assert tokens["palettes"]["daylight"] == [
-        "#2474cf", "#e8a628", "#53b0de", "#b93780", "#44aa5a", "#8362cd", "#ef675a", "#00afa9",
+        "#2474cf", "#ef675a", "#b93780", "#53b0de", "#e8a628", "#00afa9", "#8362cd", "#44aa5a",
     ]
     assert tokens["spacing"]["panel_rows"] == 2.25
 

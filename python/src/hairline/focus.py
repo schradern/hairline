@@ -72,13 +72,13 @@ def apply_entity_colors(figure: HairlineFigure) -> None:
     """Labelled series drawn in a palette colour take their entity's colour (custom colours stay)."""
     from hairline import entities
     palette = set(figure.settings.palette)
-    for ax in figure.axes:
-        for artist in data_artists(ax):
-            label = artist.get_label()
-            if id(artist) in figure.entity_done or label.startswith("_") or artist_color(artist) not in palette:
-                continue
+    artists = [artist for ax in figure.axes for artist in data_artists(ax)
+               if id(artist) not in figure.entity_done and not artist.get_label().startswith("_")
+               and artist_color(artist) in palette]
+    with entities.chart([artist.get_label() for artist in artists]):
+        for artist in artists:
             figure.entity_done.add(id(artist))
-            artist.set_color(entities.color(label))
+            artist.set_color(entities.color(artist.get_label()))
 
 
 def apply_highlight(figure: HairlineFigure) -> None:

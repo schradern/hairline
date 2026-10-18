@@ -3,23 +3,23 @@
   {
    "colors": [
     "#2474cf",
-    "#e8a628",
-    "#53b0de",
-    "#b93780",
-    "#44aa5a",
-    "#8362cd",
     "#ef675a",
-    "#00afa9"
+    "#b93780",
+    "#53b0de",
+    "#e8a628",
+    "#00afa9",
+    "#8362cd",
+    "#44aa5a"
    ],
    "pairs": "adjacent",
    "passed": true,
-   "worst_cvd": 12.390641533794671,
-   "worst_normal": 25.921424354752286,
-   "head_all_pairs": 17.73679886154187,
+   "worst_cvd": 15.72653107211884,
+   "worst_normal": 17.256539116717214,
+   "head_all_pairs": 13.960230003365915,
    "light_slots": [
-    2,
-    3,
+    4,
     5,
+    6,
     8
    ],
    "failures": 0,
@@ -28,23 +28,23 @@
   {
    "colors": [
     "#2474cf",
-    "#e8a628",
-    "#53b0de",
-    "#b93780",
-    "#44aa5a",
-    "#8362cd",
     "#ef675a",
-    "#00afa9"
+    "#b93780",
+    "#53b0de",
+    "#e8a628",
+    "#00afa9",
+    "#8362cd",
+    "#44aa5a"
    ],
    "pairs": "all",
    "passed": false,
    "worst_cvd": 2.0514046208254277,
    "worst_normal": 9.10524191989439,
-   "head_all_pairs": 17.73679886154187,
+   "head_all_pairs": 13.960230003365915,
    "light_slots": [
-    2,
-    3,
+    4,
     5,
+    6,
     8
    ],
    "failures": 2,
@@ -53,24 +53,24 @@
   {
    "colors": [
     "#c63c8a",
-    "#ef852e",
-    "#01aac6",
     "#5152c1",
+    "#01aac6",
     "#90c045",
     "#e17a93",
     "#854494",
-    "#009775"
+    "#009775",
+    "#ef852e"
    ],
    "pairs": "adjacent",
    "passed": true,
-   "worst_cvd": 10.73892129165643,
-   "worst_normal": 22.666238594974683,
-   "head_all_pairs": 10.38821574436972,
+   "worst_cvd": 9.28141498673629,
+   "worst_normal": 20.708857970115034,
+   "head_all_pairs": 10.238272258911051,
    "light_slots": [
-    2,
     3,
+    4,
     5,
-    6
+    8
    ],
    "failures": 0,
    "warnings": 0
@@ -78,24 +78,24 @@
   {
    "colors": [
     "#c63c8a",
-    "#ef852e",
-    "#01aac6",
     "#5152c1",
+    "#01aac6",
     "#90c045",
     "#e17a93",
     "#854494",
-    "#009775"
+    "#009775",
+    "#ef852e"
    ],
    "pairs": "all",
    "passed": false,
    "worst_cvd": 2.8099534312466656,
    "worst_normal": 11.404163735650393,
-   "head_all_pairs": 10.38821574436972,
+   "head_all_pairs": 10.238272258911051,
    "light_slots": [
-    2,
     3,
+    4,
     5,
-    6
+    8
    ],
    "failures": 2,
    "warnings": 0
@@ -103,23 +103,23 @@
   {
    "colors": [
     "#ef7926",
-    "#00b4bc",
     "#794db6",
-    "#d2b223",
     "#c83065",
+    "#eb9a75",
+    "#00b4bc",
     "#70b445",
     "#2d6fcd",
-    "#eb9a75"
+    "#d2b223"
    ],
    "pairs": "adjacent",
    "passed": true,
-   "worst_cvd": 15.156520324028516,
-   "worst_normal": 27.950440575479508,
-   "head_all_pairs": 18.901228853575976,
+   "worst_cvd": 9.793797789731135,
+   "worst_normal": 15.466461376370821,
+   "head_all_pairs": 13.789712685005066,
    "light_slots": [
     1,
-    2,
     4,
+    5,
     6,
     8
    ],
@@ -129,23 +129,23 @@
   {
    "colors": [
     "#ef7926",
-    "#00b4bc",
     "#794db6",
-    "#d2b223",
     "#c83065",
+    "#eb9a75",
+    "#00b4bc",
     "#70b445",
     "#2d6fcd",
-    "#eb9a75"
+    "#d2b223"
    ],
    "pairs": "all",
    "passed": false,
    "worst_cvd": 3.4850942548869757,
    "worst_normal": 8.479255589396221,
-   "head_all_pairs": 18.901228853575976,
+   "head_all_pairs": 13.789712685005066,
    "light_slots": [
     1,
-    2,
     4,
+    5,
     6,
     8
    ],
@@ -155,23 +155,23 @@
   {
    "colors": [
     "#006eb3",
-    "#ef6661",
+    "#349d62",
     "#32a5d4",
     "#ddac37",
-    "#ad65be",
-    "#349d62",
+    "#20bcb2",
     "#2e4d99",
-    "#20bcb2"
+    "#ad65be",
+    "#ef6661"
    ],
    "pairs": "adjacent",
    "passed": true,
-   "worst_cvd": 13.750523232082996,
-   "worst_normal": 26.44580405982781,
-   "head_all_pairs": 16.481172454736086,
+   "worst_cvd": 13.32296736230234,
+   "worst_normal": 16.496058789751075,
+   "head_all_pairs": 15.56922713735472,
    "light_slots": [
     3,
     4,
-    8
+    5
    ],
    "failures": 0,
    "warnings": 0
@@ -179,23 +179,23 @@
   {
    "colors": [
     "#006eb3",
-    "#ef6661",
+    "#349d62",
     "#32a5d4",
     "#ddac37",
-    "#ad65be",
-    "#349d62",
+    "#20bcb2",
     "#2e4d99",
-    "#20bcb2"
+    "#ad65be",
+    "#ef6661"
    ],
    "pairs": "all",
    "passed": false,
    "worst_cvd": 3.4981867880756132,
    "worst_normal": 9.368102249256694,
-   "head_all_pairs": 16.481172454736086,
+   "head_all_pairs": 15.56922713735472,
    "light_slots": [
     3,
     4,
-    8
+    5
    ],
    "failures": 2,
    "warnings": 0
@@ -203,22 +203,22 @@
   {
    "colors": [
     "#2e65a0",
-    "#c56e4f",
-    "#55a9d6",
-    "#a74662",
     "#7d9039",
-    "#6e519d",
+    "#a74662",
+    "#55a9d6",
     "#d59741",
-    "#008e82"
+    "#008e82",
+    "#6e519d",
+    "#c56e4f"
    ],
    "pairs": "adjacent",
    "passed": true,
    "worst_cvd": 11.495397641233918,
-   "worst_normal": 22.651916008117066,
-   "head_all_pairs": 17.15005368131159,
+   "worst_normal": 20.516276715291205,
+   "head_all_pairs": 9.990674489945572,
    "light_slots": [
-    3,
-    7
+    4,
+    5
    ],
    "failures": 0,
    "warnings": 0
@@ -226,22 +226,22 @@
   {
    "colors": [
     "#2e65a0",
-    "#c56e4f",
-    "#55a9d6",
-    "#a74662",
     "#7d9039",
-    "#6e519d",
+    "#a74662",
+    "#55a9d6",
     "#d59741",
-    "#008e82"
+    "#008e82",
+    "#6e519d",
+    "#c56e4f"
    ],
    "pairs": "all",
    "passed": false,
    "worst_cvd": 1.0385063826677234,
    "worst_normal": 9.3149789473165,
-   "head_all_pairs": 17.15005368131159,
+   "head_all_pairs": 9.990674489945572,
    "light_slots": [
-    3,
-    7
+    4,
+    5
    ],
    "failures": 2,
    "warnings": 0
@@ -252,15 +252,15 @@
     "#da6d5d",
     "#3c88b8",
     "#923240",
-    "#7baf6f",
-    "#7f3e7a",
     "#d5a13c",
-    "#007c60"
+    "#007c60",
+    "#7baf6f",
+    "#7f3e7a"
    ],
    "pairs": "adjacent",
    "passed": true,
    "worst_cvd": 13.626020698962185,
-   "worst_normal": 24.366357667197093,
+   "worst_normal": 18.772038253825468,
    "head_all_pairs": 13.626020698962185,
    "light_slots": [
     5,
@@ -275,10 +275,10 @@
     "#da6d5d",
     "#3c88b8",
     "#923240",
-    "#7baf6f",
-    "#7f3e7a",
     "#d5a13c",
-    "#007c60"
+    "#007c60",
+    "#7baf6f",
+    "#7f3e7a"
    ],
    "pairs": "all",
    "passed": false,
@@ -392,23 +392,23 @@
   {
    "colors": [
     "#2474cf",
-    "#e8a628",
-    "#53b0de",
-    "#b93780",
-    "#44aa5a",
-    "#8362cd",
     "#ef675a",
-    "#00afa9"
+    "#b93780",
+    "#53b0de",
+    "#e8a628",
+    "#00afa9",
+    "#8362cd",
+    "#44aa5a"
    ],
    "adapted": [
     "#2474cf",
-    "#e8a628",
-    "#53b0de",
-    "#b93780",
-    "#44aa5a",
-    "#8362cd",
     "#ef675a",
-    "#00afa9"
+    "#b93780",
+    "#53b0de",
+    "#e8a628",
+    "#00afa9",
+    "#8362cd",
+    "#44aa5a"
    ]
   }
  ],

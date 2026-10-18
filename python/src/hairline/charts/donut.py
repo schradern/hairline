@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import pandas as pd
 
@@ -34,16 +34,17 @@ def segment(name: str, amount: float, total: float, color: str, parent: int | No
             "color": color, "parent": parent, "index": index}
 
 
-def top_ring(data: pd.DataFrame, column: str, value: str, fold: bool) -> list[dict]:
+def top_ring(data: pd.DataFrame, column: str, value: str, fold: bool,
+             colors: Mapping[str, str] | None = None) -> list[dict]:
     """Top-level segments in entity colours; a folded "Other" slice is drawn in context grey."""
     grouped = totals(data, [column], value)
     names, amounts = [str(name) for name in grouped[column]], list(grouped[value])
     folded = fold and len(names) > load_tokens()["donut"]["max_slices"]
     if folded:
         names, amounts = fold_other(names, amounts, load_tokens()["donut"]["max_slices"])
-    colors = [entities.color(name) for name in (names[:-1] if folded else names)]
-    if folded:
-        colors.append(load_tokens()["focus"]["context"])
+    named = names[:-1] if folded else names
+    palette = entities.colors_for(named, colors)
+    colors = [palette[name] for name in named] + ([load_tokens()["focus"]["context"]] if folded else [])
     total = sum(amounts)
     return [segment(name, amount, total, color, None, index)
             for index, (name, amount, color) in enumerate(zip(names, amounts, colors, strict=True))]
@@ -60,13 +61,13 @@ def child_ring(data: pd.DataFrame, levels: list[str], value: str, parents: list[
 
 
 def donut_rings(data: pd.DataFrame, label: str | None, value: str, levels: Sequence[str] | None,
-                chart: str = "donut") -> list[list[dict]]:
+                chart: str = "donut", colors: Mapping[str, str] | None = None) -> list[list[dict]]:
     """Segments per ring, inner to outer; children follow their parent's order and use its tints."""
     levels = list(levels) if levels else [label]
     check_columns(data, levels + [value])
     if len(levels) > load_tokens()["donut"]["max_levels"]:
         raise ValueError(f"hairline: {chart}: {len(levels)} levels given ({', '.join(levels)}); at most 3 levels fit")
-    rings = [top_ring(data, levels[0], value, fold=len(levels) == 1)]
+    rings = [top_ring(data, levels[0], value, fold=len(levels) == 1, colors=colors)]
     total = sum(item["value"] for item in rings[0])
     for depth in range(1, len(levels)):
         rings.append(child_ring(data, levels[:depth + 1], value, rings[-1], total))
@@ -76,13 +77,14 @@ def donut_rings(data: pd.DataFrame, label: str | None, value: str, levels: Seque
 def donut(data: pd.DataFrame, label: str | None = None, value: str | None = None, *,
           levels: Sequence[str] | None = None, title: str | None = None,
           subtitle: str | None = None, caption: str | None = None, labels: str | None = None, total: bool = True,
-          total_label: str | None = None, size: str = "onehalf") -> HairlineFigure:
+          total_label: str | None = None, colors: Mapping[str, str] | None = None,
+          size: str = "onehalf") -> HairlineFigure:
     """Donut with labels outside (one ring) or a hierarchical key (nested rings); `labels="ring"` labels the arcs.
 
     Without `value`, every row counts once."""
     data, value = with_counts(data, value)
     title = title or f"{humanise(value)} by {joined(levels or [label])}"
-    rings = donut_rings(data, label, value, levels)
+    rings = donut_rings(data, label, value, levels, colors=colors)
     mode = labels or ("outside" if len(rings) == 1 else "key")
     if mode not in LABEL_MODES or (mode == "outside" and len(rings) > 1):
         raise ValueError(f"hairline: donut: labels {mode!r} does not fit {len(rings)} ring(s); use "

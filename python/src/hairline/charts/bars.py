@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import pandas as pd
 
@@ -17,7 +17,7 @@ from hairline.tokens import load_tokens
 def bar_table(data: pd.DataFrame, category: str, value: str, by: str | None, order: Sequence[str] | None,
               sort: str) -> tuple[pd.DataFrame, list[str], list[str]]:
     """Sums per category (and group), the category order and the group order."""
-    columns = [category] + ([by] if by else [])
+    columns = list(dict.fromkeys([category] + ([by] if by else [])))
     table = data.groupby(columns, sort=False, dropna=False)[value].sum().reset_index()
     table[category] = table[category].astype(str)
     names = list(order) if order else list(dict.fromkeys(table[category]))
@@ -74,7 +74,8 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
 def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | None = None, *,
          title: str | None = None, subtitle: str | None = None, caption: str | None = None, stacked: bool = False,
          percent: bool = False, horizontal: bool | None = None, sort: str | None = None,
-         order: Sequence[str] | None = None, labels: bool = True, size: str = "onehalf") -> HairlineFigure:
+         order: Sequence[str] | None = None, labels: bool = True, colors: Mapping[str, str] | None = None,
+         size: str = "onehalf") -> HairlineFigure:
     """Bars per category; without `value` rows are counted. Long or many labels turn the bars horizontal;
     single series are sorted by value unless `order` or `sort="given"` says otherwise."""
     data, value = with_counts(data, value)
@@ -83,9 +84,10 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     horizontal = is_long(names) if horizontal is None else horizontal
     result = figure(title or f"{humanise(value)} by {str(category).replace('_', ' ')}", subtitle=subtitle,
                     caption=caption, size=size)
-    draw_bars(result.ax, table, names, groups, {"category": category, "value": value, "by": by,
-                                                "horizontal": horizontal, "stacked": stacked, "percent": percent,
-                                                "labels": labels})
+    with entities.chart(groups if by else [], colors):
+        draw_bars(result.ax, table, names, groups, {"category": category, "value": value, "by": by,
+                                                    "horizontal": horizontal, "stacked": stacked, "percent": percent,
+                                                    "labels": labels})
     result.categories(0, list(reversed(names)) if horizontal else names, "y" if horizontal else "x")
     if percent and not horizontal:
         result.percent_axis(0)

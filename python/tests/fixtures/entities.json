@@ -2,13 +2,13 @@
  {
   "palette": [
    "#2474cf",
-   "#e8a628",
-   "#53b0de",
-   "#b93780",
-   "#44aa5a",
-   "#8362cd",
    "#ef675a",
-   "#00afa9"
+   "#b93780",
+   "#53b0de",
+   "#e8a628",
+   "#00afa9",
+   "#8362cd",
+   "#44aa5a"
   ],
   "label": "palette 'daylight'",
   "fixed": {},
@@ -19,20 +19,20 @@
   ],
   "expected": {
    "Unit A": "#2474cf",
-   "Unit B": "#e8a628",
-   "Unit D": "#53b0de"
+   "Unit B": "#ef675a",
+   "Unit D": "#b93780"
   }
  },
  {
   "palette": [
    "#2474cf",
-   "#e8a628",
-   "#53b0de",
-   "#b93780",
-   "#44aa5a",
-   "#8362cd",
    "#ef675a",
-   "#00afa9"
+   "#b93780",
+   "#53b0de",
+   "#e8a628",
+   "#00afa9",
+   "#8362cd",
+   "#44aa5a"
   ],
   "label": "palette 'daylight'",
   "fixed": {
@@ -44,21 +44,21 @@
    "Unit F"
   ],
   "expected": {
-   "Unit A": "#e8a628",
+   "Unit A": "#ef675a",
    "Unit B": "#2474cf",
-   "Unit F": "#53b0de"
+   "Unit F": "#b93780"
   }
  },
  {
   "palette": [
    "#2474cf",
-   "#e8a628",
-   "#53b0de",
-   "#b93780",
-   "#44aa5a",
-   "#8362cd",
    "#ef675a",
-   "#00afa9"
+   "#b93780",
+   "#53b0de",
+   "#e8a628",
+   "#00afa9",
+   "#8362cd",
+   "#44aa5a"
   ],
   "label": "palette 'daylight'",
   "fixed": {
@@ -76,17 +76,17 @@
  {
   "palette": [
    "#2474cf",
-   "#e8a628",
-   "#53b0de",
-   "#b93780",
-   "#44aa5a",
-   "#8362cd",
    "#ef675a",
-   "#00afa9"
+   "#b93780",
+   "#53b0de",
+   "#e8a628",
+   "#00afa9",
+   "#8362cd",
+   "#44aa5a"
   ],
   "label": "palette 'daylight'",
   "fixed": {
-   "a": "#53b0de",
+   "a": "#b93780",
    "b": "#2474cf"
   },
   "requests": [
@@ -95,9 +95,9 @@
    "a"
   ],
   "expected": {
-   "c": "#e8a628",
-   "d": "#b93780",
-   "a": "#53b0de"
+   "c": "#ef675a",
+   "d": "#53b0de",
+   "a": "#b93780"
   }
  },
  {

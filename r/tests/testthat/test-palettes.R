@@ -4,7 +4,7 @@ test_that("shipped palettes pass and daylight has the documented light slots", {
     expect_true(report$passed, label = name)
     expect_gte(report$worst_cvd, 8)
   }
-  expect_equal(hl_check_palette(hl_palette("daylight"))$light_slots, c(2L, 3L, 5L, 8L))
+  expect_equal(hl_check_palette(hl_palette("daylight"))$light_slots, c(4L, 5L, 6L, 8L))
 })
 
 test_that("too many categories raise a named error", {

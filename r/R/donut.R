@@ -22,7 +22,7 @@ donut_segment <- function(name, amount, total, colour, parent, index) {
        parent = parent, index = index)
 }
 
-top_ring <- function(data, column, value, fold) {
+top_ring <- function(data, column, value, fold, colors = NULL) {
   grouped <- donut_totals(data, column, value)
   names <- as.character(grouped[[column]])
   amounts <- grouped[[value]]
@@ -32,7 +32,7 @@ top_ring <- function(data, column, value, fold) {
     names <- result$labels
     amounts <- result$values
   }
-  colours <- vapply(if (folded) names[-length(names)] else names, hl_color, character(1), USE.NAMES = FALSE)
+  colours <- unname(colours_for(if (folded) names[-length(names)] else names, colors))
   if (folded) colours <- c(colours, hl_tokens()$focus$context)
   lapply(seq_along(names), function(index) {
     donut_segment(names[index], amounts[index], sum(amounts), colours[index], NULL, index - 1L)
@@ -54,14 +54,14 @@ child_ring <- function(data, levels, value, parents, total) {
   ring
 }
 
-donut_rings <- function(data, label, value, levels = NULL, chart = "donut") {
+donut_rings <- function(data, label, value, levels = NULL, chart = "donut", colors = NULL) {
   levels <- levels %||% label
   check_columns(data, c(levels, value))
   if (length(levels) > hl_tokens()$donut$max_levels) {
     stop(sprintf("hairline: %s: %d levels given (%s); at most 3 levels fit", chart, length(levels),
                  paste(levels, collapse = ", ")), call. = FALSE)
   }
-  rings <- list(top_ring(data, levels[1], value, fold = length(levels) == 1))
+  rings <- list(top_ring(data, levels[1], value, fold = length(levels) == 1, colors = colors))
   total <- sum(vapply(rings[[1]], `[[`, numeric(1), "value"))
   for (depth in seq_along(levels)[-1]) {
     rings[[depth]] <- child_ring(data, levels[seq_len(depth)], value, rings[[depth - 1]], total)
@@ -84,15 +84,17 @@ donut_rings <- function(data, label, value, levels = NULL, chart = "donut") {
 #' @param labels `"outside"` (one ring), `"key"` or `"ring"`; `NULL` picks outside for one ring, key otherwise.
 #' @param total Show the total in the centre.
 #' @param total_label Text under the total, e.g. `"patients"`.
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_donut <- function(data, label = NULL, value = NULL, levels = NULL, title = NULL, subtitle = NULL, caption = NULL,
-                     labels = NULL, total = TRUE, total_label = NULL) {
+                     labels = NULL, total = TRUE, total_label = NULL, colors = NULL) {
   counted <- with_counts(data, value)
   data <- counted$data
   value <- counted$value
   title <- title %||% paste(humanise(value), "by", joined(levels %||% label))
-  rings <- donut_rings(data, label, value, levels)
+  rings <- donut_rings(data, label, value, levels, colors = colors)
   mode <- labels %||% if (length(rings) == 1) "outside" else "key"
   if (!mode %in% c("outside", "key", "ring") || (mode == "outside" && length(rings) > 1)) {
     stop(sprintf("hairline: donut: labels '%s' does not fit %d ring(s); use %s", mode, length(rings),

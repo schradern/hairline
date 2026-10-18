@@ -33,9 +33,10 @@ def test_one_panel_per_group_with_two_levels_of_detail():
     assert raw.get_alpha() == pytest.approx(0.3) and raw.get_linewidth() == pytest.approx(0.055 * 9)
     assert mean.get_linewidth() == pytest.approx(0.14 * 9)
     assert mcolors.to_hex(mean.get_color()) == mcolors.to_hex(raw.get_color()) == hl.color("Unit A")
-    light_raw, light_mean = data_lines(figure.axes[1])
-    assert light_raw.get_linewidth() == pytest.approx(0.055 * 9)
-    assert light_mean.get_linewidth() == pytest.approx(1.3 * 0.14 * 9)
+    second_raw, second_mean = data_lines(figure.axes[1])
+    assert second_raw.get_linewidth() == pytest.approx(0.055 * 9)
+    assert second_mean.get_linewidth() == pytest.approx(0.14 * 9)
+    assert mcolors.to_hex(second_mean.get_color()) == hl.palette()[1]
 
 
 def test_trailing_rolling_mean_with_partial_windows():

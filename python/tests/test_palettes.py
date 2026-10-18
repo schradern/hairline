@@ -1,3 +1,4 @@
+import itertools
 import json
 
 import pytest
@@ -5,6 +6,7 @@ import pytest
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklch
+from hairline.color.vision import delta_e
 from hairline.palettes import light_slots, palette, ramp
 
 SHIPPED = ["daylight", "bloom", "citrus", "lagoon", "calm", "deep"]
@@ -19,8 +21,22 @@ def test_shipped_palettes_pass(name):
 
 
 def test_daylight_light_slots():
-    assert check_palette(palette("daylight")).light_slots == [2, 3, 5, 8]
-    assert light_slots(palette("daylight")) == [2, 3, 5, 8]
+    assert check_palette(palette("daylight")).light_slots == [4, 5, 6, 8]
+    assert light_slots(palette("daylight")) == [4, 5, 6, 8]
+
+
+@pytest.mark.parametrize("name", SHIPPED)
+def test_the_first_colours_form_the_most_readable_sets(name):
+    """Two and three groups take the first two and three slots in every chart; each set stays readable."""
+    colors = palette(name)
+    for count in (2, 3):
+        pairs = list(itertools.combinations(colors[:count], 2))
+        assert min(delta_e(a, b, kind) for a, b in pairs for kind in ("protan", "deutan")) >= 8
+        assert min(delta_e(a, b, None) for a, b in pairs) >= 15
+
+
+def test_daylight_takes_no_light_slot_below_four_groups():
+    assert not set(light_slots(palette("daylight"))) & {1, 2, 3}
 
 
 def test_brand_exact_fails_band():

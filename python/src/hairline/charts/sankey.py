@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import pandas as pd
 
@@ -34,7 +34,8 @@ def aggregate_links(data: pd.DataFrame, columns: list[str], value: str, group: s
             for (index, source, target, key_group), amount in totals.items() if amount > 0]
 
 
-def column_nodes(data: pd.DataFrame, columns: list[str], links: list[dict], color_column: int | None) -> list:
+def column_nodes(data: pd.DataFrame, columns: list[str], links: list[dict], color_column: int | None,
+                 palette: Mapping[str, str]) -> list:
     settings, nodes = current_settings(), []
     for index, column in enumerate(columns):
         names = list(dict.fromkeys(str(name) for name in data[column]))
@@ -44,7 +45,8 @@ def column_nodes(data: pd.DataFrame, columns: list[str], links: list[dict], colo
             outgoing = sum(link["value"] for link in links if link["column"] == index and link["source"] == name)
             amount = max(incoming, outgoing)
             if amount > 0:
-                color = entities.color(name) if index == color_column else settings.neutral["muted"]
+                color = palette.get(name, settings.neutral["muted"]) if index == color_column else \
+                    settings.neutral["muted"]
                 column_nodes.append({"name": name, "value": amount, "value_text": format_number(amount, 0),
                                      "color": color})
         nodes.append(column_nodes)
@@ -52,7 +54,7 @@ def column_nodes(data: pd.DataFrame, columns: list[str], links: list[dict], colo
 
 
 def sankey_spec(data: pd.DataFrame, columns: Sequence[str], value: str, *, color_by: str | None = None,
-                headings: Sequence[str] | None = None) -> dict:
+                headings: Sequence[str] | None = None, colors: Mapping[str, str] | None = None) -> dict:
     """Nodes per column and links with colours and formatted values, ready for the geometry."""
     columns = list(columns)
     check_columns(data, columns + [value])
@@ -62,10 +64,12 @@ def sankey_spec(data: pd.DataFrame, columns: Sequence[str], value: str, *, color
         check_columns(data, [group])
     links = aggregate_links(data, columns, value, group)
     color_column = columns.index(group) if group in columns else None
-    nodes = column_nodes(data, columns, links, color_column)
+    groups = list(dict.fromkeys(link["group"] for link in links))
+    palette = entities.colors_for(groups, colors) if group else {}
+    nodes = column_nodes(data, columns, links, color_column, palette)
     faint = current_settings().neutral["faint"]
     for link in links:
-        link["color"] = entities.color(link["group"]) if group else faint
+        link["color"] = palette[link["group"]] if group else faint
     groups = list(dict.fromkeys(link["group"] for link in links))
     return {"headings": list(headings) if headings else columns, "nodes": nodes, "links": links, "groups": groups}
 
@@ -73,12 +77,12 @@ def sankey_spec(data: pd.DataFrame, columns: Sequence[str], value: str, *, color
 def sankey(data: pd.DataFrame, columns: Sequence[str], value: str | None = None, *, title: str | None = None,
            subtitle: str | None = None,
            caption: str | None = None, color_by: str | None = None, headings: Sequence[str] | None = None,
-           size: str = "onehalf") -> HairlineFigure:
+           colors: Mapping[str, str] | None = None, size: str = "onehalf") -> HairlineFigure:
     """Flows from left to right through `columns`; links take the colour of their group in `color_by`."""
     data, value = with_counts(data, value)
     title = title or f"{humanise(value)} from {joined(columns[:1])} to {joined(columns[-1:])}"
     spec = sankey_spec(data, columns, value, color_by=color_by,
-                       headings=headings or [humanise(column) for column in columns])
+                       headings=headings or [humanise(column) for column in columns], colors=colors)
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: sankey_drawing(spec, box, measure, style))
     return result

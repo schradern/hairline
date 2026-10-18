@@ -41,7 +41,7 @@ from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklch
 from hairline.color.tints import tints
 from hairline.color.vision import contrast, delta_e, simulate
-from hairline.entities import assign_colors
+from hairline.entities import assign_colors, chart_colors
 from hairline.layout.frame import compute_frame
 from hairline.layout.geometry import Box, frame_input_from_dict, load_font_metrics
 from hairline.marks import point_fill, point_step
@@ -389,6 +389,17 @@ def flow_cases() -> dict:
                      for data, spec in zip((transfers, crowded), arc_specs, strict=True)]}
 
 
+def chart_colour_cases() -> list[dict]:
+    daylight = load_tokens()["palettes"]["daylight"]
+    inputs = [({}, {}, {}, ["Female", "Male"]), ({}, {"Surgical": daylight[0]}, {}, ["Female", "Male"]),
+              ({}, {"A": daylight[0], "X": daylight[0]}, {}, ["A", "X"]),
+              ({"F": "#000000"}, {"R": daylight[1]}, {"O": "#ffffff"}, ["O", "F", "R", "N1", "N2"]),
+              ({"Control": daylight[0]}, {"Arm A": daylight[2]}, {}, ["Arm A", "Arm B", "Control"])]
+    return [{"palette": daylight, "fixed": fixed, "remembered": remembered, "override": override, "names": names,
+             "expected": chart_colors(daylight, "palette 'daylight'", fixed, remembered, override, names)}
+            for fixed, remembered, override, names in inputs]
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -403,6 +414,7 @@ def main() -> int:
     write("frame.json", frame_cases())
     write("brand.json", brand_cases())
     write("entities.json", entity_cases())
+    write("chart_colours.json", chart_colour_cases())
     write("points.json", point_cases())
     write("chart_helpers.json", chart_helper_cases())
     write("donut.json", {"style": DRAWING_STYLE, "cases": donut_cases()})

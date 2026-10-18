@@ -136,19 +136,20 @@ headers_for <- function(plot, data, y, stats, percent, threshold, share_label, k
 #' @param events List of `list(x, label)` event markers.
 #' @param order Group order; defaults to the order of appearance.
 #' @param raw_label,mean_label Legend labels of the two lines.
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, caption = NULL, window = 7, raw = TRUE,
                           period_mean = FALSE, percent = FALSE, threshold = NULL, threshold_label = NULL,
                           threshold_legend = NULL, stats = c("mean", "median"), share_label = NULL, key = NULL,
                           key_panels = NULL, highlight = NULL, qualifiers = list(), bands = list(), events = list(),
-                          order = NULL, raw_label = "Raw values", mean_label = NULL) {
+                          order = NULL, raw_label = "Raw values", mean_label = NULL, colors = NULL) {
   check_columns(data, c(x, y, by))
   title <- title %||% if (is.null(by)) paste(humanise(y), "over time") else paste(humanise(y), "by", gsub("_", " ", by))
   data <- prepared_series(data, x, y, by, order, window)
-  colours <- stats::setNames(vapply(levels(data$.group), function(name) {
-    if (is.null(by)) hl_settings()$palette[1] else hl_color(name)
-  }, character(1)), levels(data$.group))
+  colours <- if (is.null(by)) stats::setNames(hl_settings()$palette[1], levels(data$.group)) else
+    colours_for(levels(data$.group), colors)
   share_label <- share_label %||% paste("≥", if (is.null(threshold)) "" else value_formatter(percent)(threshold, 0))
   plot <- ggplot2::ggplot(data) + mark_layers(bands, events, data[[x]], levels(data$.group))
   if (period_mean) plot <- plot + period_mean_layer(data, y)

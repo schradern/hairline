@@ -63,3 +63,23 @@ test_that("brand files map entities to palette names", {
   expect_error(hl_use(brand = path), "defaults.hairline.colors.Unit B: 'lavender' is not in color.palette")
   hl_use(brand = FALSE)
 })
+
+test_that("chart colours follow the shared fixture", {
+  for (case in read_fixture("chart_colours.json")) {
+    named <- function(values) if (length(values)) unlist(values) else character()
+    result <- chart_colours(unlist(case$palette), "palette 'daylight'", named(case$fixed), named(case$remembered),
+                            named(case$override), unlist(case$names))
+    expect_equal(result, unlist(case$expected))
+  }
+})
+
+test_that("new groups in a later chart start at the first slot, a chart override is not remembered", {
+  hl_use(brand = FALSE)
+  daylight <- hl_palette("daylight")
+  colours_for(c("Surgical", "Medical"))
+  expect_equal(unname(colours_for(c("Female", "Male"))), daylight[1:2])
+  plot <- hl_bars(data.frame(sex = c("Female", "Male", "Male")), "sex", by = "sex", colors = c(Male = "#123456"))
+  fills <- unique(ggplot2::ggplot_build(plot)@data[[1]]$fill)
+  expect_true("#123456" %in% fills)
+  expect_false(identical(unname(hl_colors()["Male"]), "#123456"))
+})

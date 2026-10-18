@@ -13,7 +13,8 @@ hl_scatter(
   subtitle = NULL,
   caption = NULL,
   fit = "linear",
-  order = NULL
+  order = NULL,
+  colors = NULL
 )
 }
 \arguments{
@@ -28,6 +29,9 @@ hl_scatter(
 \item{fit}{\code{"linear"} or \code{NULL}.}
 
 \item{order}{Group order.}
+
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+for the number of groups and are not remembered for other charts.}
 }
 \value{
 A ggplot with the hairline frame.

@@ -1,4 +1,5 @@
-# Entity colours: one colour per entity for the whole session.
+# Entity colours: per chart, groups take the colour set for their count; a name keeps its
+# colour across charts unless that would clash within one chart. The same rules as the Python package's entities.
 
 assign_colors <- function(palette, label, fixed, requests) {
   mapping <- fixed
@@ -16,6 +17,50 @@ assign_colors <- function(palette, label, fixed, requests) {
     taken <- c(taken, free[1])
   }
   unlist(mapping[requests])
+}
+
+chart_colours <- function(palette, label, fixed, remembered, override, names) {
+  names <- unique(names)
+  result <- character()
+  for (name in names) {
+    if (name %in% names(override)) result[[name]] <- override[[name]] else
+      if (name %in% names(fixed)) result[[name]] <- fixed[[name]]
+  }
+  used <- unname(result)
+  for (name in setdiff(names, names(result))) {
+    colour <- if (name %in% names(remembered)) remembered[[name]] else NA_character_
+    if (!is.na(colour) && !colour %in% used) {
+      result[[name]] <- colour
+      used <- c(used, colour)
+    }
+  }
+  for (name in setdiff(names, names(result))) {
+    free <- setdiff(palette, used)
+    if (length(free) == 0) {
+      stop(sprintf(paste0("hairline: %s has %d slots but %d categories need colours: %s; ",
+                          "fold small categories into 'Other' or split the figure into panels"),
+                   label, length(palette), length(names), paste(names, collapse = ", ")), call. = FALSE)
+    }
+    result[[name]] <- free[1]
+    used <- c(used, free[1])
+  }
+  result[names]
+}
+
+# The colours of one chart's groups; names seen for the first time are remembered for later charts, a chart's own
+# `colors` are not.
+colours_for <- function(names, colors = NULL) {
+  settings <- hl_settings()
+  state <- entity_state()
+  override <- if (length(colors)) stats::setNames(tolower(unname(colors)), names(colors)) else character()
+  mapping <- chart_colours(settings$palette, settings$palette_label, state$fixed, state$auto, override,
+                           as.character(names))
+  fresh <- setdiff(names(mapping), c(names(override), names(state$fixed), names(state$auto)))
+  if (length(fresh)) {
+    state$auto <- c(state$auto, mapping[fresh])
+    hairline_state$entities <- state
+  }
+  mapping
 }
 
 configure_entities <- function(fixed) {
@@ -68,7 +113,7 @@ entity_scales <- function(plot, built) {
     if (is.null(scale) || user_scale || !scale$is_discrete() || isTRUE(scale$hairline_resolved)) next
     levels <- scale$get_limits()
     if (length(levels) == 0) next
-    values <- vapply(levels, hl_color, character(1))
+    values <- colours_for(levels)
     replacement <- ggplot2::scale_colour_manual(values = values, aesthetics = aesthetic)
     replacement$hairline_entity <- TRUE
     replacement$hairline_resolved <- TRUE

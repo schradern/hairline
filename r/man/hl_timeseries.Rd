@@ -29,7 +29,8 @@ hl_timeseries(
   events = list(),
   order = NULL,
   raw_label = "Raw values",
-  mean_label = NULL
+  mean_label = NULL,
+  colors = NULL
 )
 }
 \arguments{
@@ -66,6 +67,9 @@ hl_timeseries(
 \item{order}{Group order; defaults to the order of appearance.}
 
 \item{raw_label, mean_label}{Legend labels of the two lines.}
+
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+for the number of groups and are not remembered for other charts.}
 }
 \value{
 A ggplot with the hairline frame.

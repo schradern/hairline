@@ -4,12 +4,12 @@ two_series <- function() {
 
 test_that("series colours follow slots and refuse too many categories", {
   hl_use(brand = FALSE)
-  expect_equal(series_colors(c("Home", "Rehab")), c(Home = "#2474cf", Rehab = "#e8a628"))
+  expect_equal(series_colors(c("Home", "Rehab")), c(Home = "#2474cf", Rehab = "#ef675a"))
   expect_error(series_colors(paste("group", 1:9)), "palette 'daylight' has 8 slots but 9 categories", fixed = TRUE)
 })
 
 test_that("light-slot lines are drawn 1.3 times heavier", {
-  hl_use(brand = FALSE)
+  hl_use(brand = FALSE, palette = c("#2474cf", "#e8a628"))
   plot <- ggplot2::ggplot(two_series(), ggplot2::aes(x, y, colour = group)) + ggplot2::geom_line() + theme_hairline()
   data <- ggplot2::ggplot_build(plot)@data[[1]]
   widths <- tapply(data$linewidth, data$colour, unique)
@@ -25,7 +25,7 @@ test_that("point fills and density steps match the shared fixture", {
 })
 
 test_that("points carry no outline and light slots get the darker fill", {
-  hl_use(brand = FALSE)
+  hl_use(brand = FALSE, palette = c("#2474cf", "#e8a628"))
   plot <- ggplot2::ggplot(two_series(), ggplot2::aes(x, y, colour = group)) + ggplot2::geom_point() + theme_hairline()
   data <- ggplot2::ggplot_build(plot)@data[[1]]
   expect_true(all(data$shape == 16 & data$stroke == 0))
@@ -53,7 +53,7 @@ test_that("explicit point size and opacity are kept", {
 })
 
 test_that("point legend swatches show the darker fill", {
-  hl_use(brand = FALSE)
+  hl_use(brand = FALSE, palette = c("#2474cf", "#e8a628"))
   plot <- ggplot2::ggplot(two_series(), ggplot2::aes(x, y, colour = group)) + ggplot2::geom_point() + theme_hairline()
   items <- legend_items(ggplot2::ggplot_build(plot))
   colours <- vapply(items, function(item) item$colour, character(1))

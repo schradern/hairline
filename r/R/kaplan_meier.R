@@ -94,11 +94,13 @@ km_layers <- function(layers, colours, median_line) {
 #' @param times Times for the number at risk; default the x-axis breaks.
 #' @param order Group order.
 #' @param test Add the log-rank p to the key numbers when there are groups.
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = NULL, subtitle = NULL, caption = NULL,
                             x_title = "Time", endpoint = "Survival", median_line = TRUE, stats = character(),
-                            at_risk = TRUE, times = NULL, order = NULL, test = TRUE) {
+                            at_risk = TRUE, times = NULL, order = NULL, test = TRUE, colors = NULL) {
   if (inherits(time, "formula")) {
     sides <- formula_sides(time)
     time <- as.character(sides$left[[2]])
@@ -113,7 +115,7 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
   grouped <- !is.null(by) || length(estimates) > 1
   names <- vapply(estimates, function(estimate) if (nzchar(estimate$name)) estimate$name else endpoint, character(1))
   for (index in seq_along(estimates)) estimates[[index]]$name <- names[index]
-  colours <- stats::setNames(if (grouped) vapply(names, hl_color, character(1)) else hl_settings()$palette[1], names)
+  colours <- if (grouped) colours_for(names, colors) else stats::setNames(hl_settings()$palette[1], names)
   max_time <- max(vapply(estimates, function(estimate) max(estimate$table$time), numeric(1)))
   moments <- times %||% nice_breaks(0, max_time)
   medians <- paste(vapply(estimates, function(estimate) {

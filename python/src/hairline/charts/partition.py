@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import pandas as pd
 
@@ -74,7 +74,7 @@ def partition_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> li
 def partition(data: pd.DataFrame, levels: Sequence[str], value: str | None = None, *, title: str | None = None,
               subtitle: str | None = None,
               caption: str | None = None, level_names: Sequence[str] | None = None,
-              size: str = "onehalf") -> HairlineFigure:
+              colors: Mapping[str, str] | None = None, size: str = "onehalf") -> HairlineFigure:
     """Partition bars: the documented alternative to a nested donut, read top to bottom."""
     levels = list(levels)
     data, value = with_counts(data, value)
@@ -83,7 +83,7 @@ def partition(data: pd.DataFrame, levels: Sequence[str], value: str | None = Non
     if len(names) != len(levels):
         raise ValueError(f"hairline: partition: {len(levels)} levels but {len(names)} level name(s); give one name "
                          "per level")
-    spec = {"rings": donut_rings(data, None, value, levels, chart="partition"), "levels": names}
+    spec = {"rings": donut_rings(data, None, value, levels, chart="partition", colors=colors), "levels": names}
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: partition_drawing(spec, box, measure, style))
     result.legend([("square", segment["color"], segment["name"]) for segment in spec["rings"][0]])

@@ -39,7 +39,7 @@ link_total <- function(links, column, end, name) {
   sum(vapply(links, function(link) if (link$column == column && link[[end]] == name) link$value else 0, numeric(1)))
 }
 
-sankey_nodes <- function(data, columns, links, color_column) {
+sankey_nodes <- function(data, columns, links, color_column, palette) {
   muted <- hl_settings()$neutral$muted
   lapply(seq_along(columns), function(index) {
     nodes <- list()
@@ -48,7 +48,7 @@ sankey_nodes <- function(data, columns, links, color_column) {
       outgoing <- link_total(links, index - 1, "source", name)
       amount <- max(incoming, outgoing)
       if (amount <= 0) next
-      colour <- if (identical(index, color_column)) hl_color(name) else muted
+      colour <- if (identical(index, color_column) && name %in% names(palette)) palette[[name]] else muted
       nodes[[length(nodes) + 1]] <- list(name = name, value = amount, value_text = hl_format_number(amount, 0),
                                          color = colour)
     }
@@ -56,16 +56,18 @@ sankey_nodes <- function(data, columns, links, color_column) {
   })
 }
 
-sankey_spec <- function(data, columns, value, color_by = NULL, headings = NULL) {
+sankey_spec <- function(data, columns, value, color_by = NULL, headings = NULL, colors = NULL) {
   check_columns(data, c(columns, value))
   sankey_check(data, columns, value)
   group <- if (identical(color_by, "none")) NULL else color_by %||% columns[length(columns)]
   if (!is.null(group)) check_columns(data, group)
   links <- sankey_links(data, columns, value, group)
   color_column <- if (!is.null(group) && group %in% columns) match(group, columns) else NULL
-  nodes <- sankey_nodes(data, columns, links, color_column)
+  groups <- unique(vapply(links, `[[`, character(1), "group"))
+  palette <- if (is.null(group)) character() else colours_for(groups, colors)
+  nodes <- sankey_nodes(data, columns, links, color_column, palette)
   faint <- hl_settings()$neutral$faint
-  links <- lapply(links, function(link) c(link, color = if (is.null(group)) faint else hl_color(link$group)))
+  links <- lapply(links, function(link) c(link, color = if (is.null(group)) faint else palette[[link$group]]))
   list(headings = as.list(headings %||% columns), nodes = nodes, links = links,
        groups = unique(vapply(links, `[[`, character(1), "group")))
 }
@@ -83,15 +85,17 @@ sankey_spec <- function(data, columns, value, color_by = NULL, headings = NULL) 
 #' @param title,subtitle,caption Frame texts.
 #' @param color_by Column whose groups colour the links, or `"none"`.
 #' @param headings Column headings; default the column names.
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_sankey <- function(data, columns, value = NULL, title = NULL, subtitle = NULL, caption = NULL, color_by = NULL,
-                      headings = NULL) {
+                      headings = NULL, colors = NULL) {
   counted <- with_counts(data, value)
   data <- counted$data
   value <- counted$value
   title <- title %||% paste(humanise(value), "from", joined(columns[1]), "to", joined(columns[length(columns)]))
-  spec <- sankey_spec(data, columns, value, color_by, headings %||% humanise(columns))
+  spec <- sankey_spec(data, columns, value, color_by, headings %||% humanise(columns), colors)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
     theme_hairline(axes = FALSE)

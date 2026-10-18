@@ -2,10 +2,12 @@ import json
 import shutil
 
 import matplotlib.colors as mcolors
+import pandas as pd
 import pytest
 
 import hairline as hl
-from hairline.entities import assign_colors
+from hairline import entities as hl_entities
+from hairline.entities import assign_colors, chart_colors
 
 DAYLIGHT = hl.load_tokens()["palettes"]["daylight"]
 
@@ -79,3 +81,39 @@ def test_fixture_cases(repo_root):
                 assign_colors(case["palette"], case["label"], case["fixed"], case["requests"])
         else:
             assert assign_colors(case["palette"], case["label"], case["fixed"], case["requests"]) == case["expected"]
+
+
+def test_new_groups_in_a_later_chart_start_at_the_first_slot():
+    hl.use()
+    with hl_entities.chart(["Surgical", "Medical"]):
+        pass
+    with hl_entities.chart(["Female", "Male"]) as colours:
+        assert colours == {"Female": DAYLIGHT[0], "Male": DAYLIGHT[1]}
+    assert hl.color("Surgical") == DAYLIGHT[0]
+
+
+def test_a_clash_only_moves_the_colour_within_that_chart():
+    hl.use()
+    with hl_entities.chart(["A"]):
+        pass
+    with hl_entities.chart(["X"]):
+        pass
+    with hl_entities.chart(["A", "X"]) as colours:
+        assert colours == {"A": DAYLIGHT[0], "X": DAYLIGHT[1]}
+    with hl_entities.chart(["X"]) as colours:
+        assert colours == {"X": DAYLIGHT[0]}
+
+
+def test_a_chart_override_is_not_remembered():
+    hl.use()
+    data = pd.DataFrame({"sex": ["Female", "Male", "Male"]})
+    figure = hl.bars(data, "sex", by="sex", colors={"Male": "#123456"})
+    faces = {mcolors.to_hex(patch.get_facecolor()) for patch in figure.ax.patches}
+    assert "#123456" in faces and DAYLIGHT[0] in faces
+    assert hl.colors().get("Male") != "#123456"
+
+
+def test_chart_colours_rule():
+    assert chart_colors(DAYLIGHT, "palette", {"F": "#000000"}, {"R": DAYLIGHT[1]}, {"O": "#ffffff"},
+                        ["O", "F", "R", "N1", "N2"]) == {"O": "#ffffff", "F": "#000000", "R": DAYLIGHT[1],
+                                                         "N1": DAYLIGHT[0], "N2": DAYLIGHT[2]}

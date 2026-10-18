@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -43,9 +43,20 @@ def draw_median(ax, values: pd.Series, curve: tuple[list[float], list[float]], b
             linewidth=load_tokens()["reference"]["width"] * settings.base_size, gid=MEDIAN_ID, label="_nolegend_")
 
 
+def draw_ridges(ax, groups: list, curves: list, scale: float, value: str, medians: bool) -> None:
+    """Top row first, so each lower ridge is drawn in front of the one above."""
+    for index, ((name, rows), curve) in enumerate(zip(groups, curves, strict=True)):
+        base, layer = float(len(groups) - 1 - index), 1 + index * 0.01
+        if curve is None:
+            continue
+        draw_ridge(ax, curve, base, scale, entities.color(name), layer)
+        if medians:
+            draw_median(ax, rows[value].dropna(), curve, base, scale, layer)
+
+
 def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
               caption: str | None = None, order: Sequence[str] | None = None, medians: bool = True,
-              size: str = "onehalf") -> HairlineFigure:
+              colors: Mapping[str, str] | None = None, size: str = "onehalf") -> HairlineFigure:
     """Distributions per group as overlapping ridges, the first group on top; all ridges share one height scale."""
     check_columns(data, [group, value])
     rules, groups = load_tokens()["ridgeline"], groups_of(data, group, order)
@@ -54,13 +65,8 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     scale = (1 + rules["overlap"]) / peak
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=caption, size=size)
-    for index, ((name, rows), curve) in enumerate(zip(groups, curves, strict=True)):
-        base, layer = float(len(groups) - 1 - index), 1 + index * 0.01
-        if curve is None:
-            continue
-        draw_ridge(result.ax, curve, base, scale, entities.color(name), layer)
-        if medians:
-            draw_median(result.ax, rows[value].dropna(), curve, base, scale, layer)
+    with entities.chart([name for name, _ in groups], colors):
+        draw_ridges(result.ax, groups, curves, scale, value, medians)
     result.categories(0, [name for name, _ in reversed(groups)], "y")
     result.ax.set_ylim(0, len(groups) + rules["overlap"] + rules["headroom"])
     result.x_title(humanise(value))

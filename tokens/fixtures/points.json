@@ -86,19 +86,14 @@
    "fill": "#c63c8a"
   },
   {
-   "hex": "#ef852e",
+   "hex": "#5152c1",
    "surface": "#ffffff",
-   "fill": "#e1781b"
+   "fill": "#5152c1"
   },
   {
    "hex": "#01aac6",
    "surface": "#ffffff",
    "fill": "#00a3be"
-  },
-  {
-   "hex": "#5152c1",
-   "surface": "#ffffff",
-   "fill": "#5152c1"
   },
   {
    "hex": "#90c045",
@@ -121,14 +116,14 @@
    "fill": "#009775"
   },
   {
+   "hex": "#ef852e",
+   "surface": "#ffffff",
+   "fill": "#e1781b"
+  },
+  {
    "hex": "#ef7926",
    "surface": "#ffffff",
    "fill": "#e8731c"
-  },
-  {
-   "hex": "#00b4bc",
-   "surface": "#ffffff",
-   "fill": "#009fa7"
   },
   {
    "hex": "#794db6",
@@ -136,14 +131,19 @@
    "fill": "#794db6"
   },
   {
-   "hex": "#d2b223",
-   "surface": "#ffffff",
-   "fill": "#a98d00"
-  },
-  {
    "hex": "#c83065",
    "surface": "#ffffff",
    "fill": "#c83065"
+  },
+  {
+   "hex": "#eb9a75",
+   "surface": "#ffffff",
+   "fill": "#d0815d"
+  },
+  {
+   "hex": "#00b4bc",
+   "surface": "#ffffff",
+   "fill": "#009fa7"
   },
   {
    "hex": "#70b445",
@@ -156,9 +156,9 @@
    "fill": "#2d6fcd"
   },
   {
-   "hex": "#eb9a75",
+   "hex": "#d2b223",
    "surface": "#ffffff",
-   "fill": "#d0815d"
+   "fill": "#a98d00"
   },
   {
    "hex": "#006eb3",
@@ -166,9 +166,9 @@
    "fill": "#006eb3"
   },
   {
-   "hex": "#ef6661",
+   "hex": "#349d62",
    "surface": "#ffffff",
-   "fill": "#ef6661"
+   "fill": "#349d62"
   },
   {
    "hex": "#32a5d4",
@@ -181,14 +181,9 @@
    "fill": "#bc8d00"
   },
   {
-   "hex": "#ad65be",
+   "hex": "#20bcb2",
    "surface": "#ffffff",
-   "fill": "#ad65be"
-  },
-  {
-   "hex": "#349d62",
-   "surface": "#ffffff",
-   "fill": "#349d62"
+   "fill": "#00a198"
   },
   {
    "hex": "#2e4d99",
@@ -196,9 +191,14 @@
    "fill": "#2e4d99"
   },
   {
-   "hex": "#20bcb2",
+   "hex": "#ad65be",
    "surface": "#ffffff",
-   "fill": "#00a198"
+   "fill": "#ad65be"
+  },
+  {
+   "hex": "#ef6661",
+   "surface": "#ffffff",
+   "fill": "#ef6661"
   },
   {
    "hex": "#2e65a0",
@@ -206,14 +206,9 @@
    "fill": "#2e65a0"
   },
   {
-   "hex": "#c56e4f",
+   "hex": "#7d9039",
    "surface": "#ffffff",
-   "fill": "#c56e4f"
-  },
-  {
-   "hex": "#55a9d6",
-   "surface": "#ffffff",
-   "fill": "#489cc9"
+   "fill": "#7d9039"
   },
   {
    "hex": "#a74662",
@@ -221,14 +216,9 @@
    "fill": "#a74662"
   },
   {
-   "hex": "#7d9039",
+   "hex": "#55a9d6",
    "surface": "#ffffff",
-   "fill": "#7d9039"
-  },
-  {
-   "hex": "#6e519d",
-   "surface": "#ffffff",
-   "fill": "#6e519d"
+   "fill": "#489cc9"
   },
   {
    "hex": "#d59741",
@@ -239,6 +229,16 @@
    "hex": "#008e82",
    "surface": "#ffffff",
    "fill": "#008e82"
+  },
+  {
+   "hex": "#6e519d",
+   "surface": "#ffffff",
+   "fill": "#6e519d"
+  },
+  {
+   "hex": "#c56e4f",
+   "surface": "#ffffff",
+   "fill": "#c56e4f"
   },
   {
    "hex": "#2b5591",
@@ -261,16 +261,6 @@
    "fill": "#923240"
   },
   {
-   "hex": "#7baf6f",
-   "surface": "#ffffff",
-   "fill": "#699c5d"
-  },
-  {
-   "hex": "#7f3e7a",
-   "surface": "#ffffff",
-   "fill": "#7f3e7a"
-  },
-  {
    "hex": "#d5a13c",
    "surface": "#ffffff",
    "fill": "#bb8819"
@@ -279,6 +269,16 @@
    "hex": "#007c60",
    "surface": "#ffffff",
    "fill": "#007c60"
+  },
+  {
+   "hex": "#7baf6f",
+   "surface": "#ffffff",
+   "fill": "#699c5d"
+  },
+  {
+   "hex": "#7f3e7a",
+   "surface": "#ffffff",
+   "fill": "#7f3e7a"
   }
  ],
  "steps": [

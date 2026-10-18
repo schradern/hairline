@@ -38,10 +38,12 @@ ridge_layers <- function(curve, values, base, scale, colour, medians) {
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param order Group order, top to bottom.
 #' @param medians Mark the medians.
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL,
-                         medians = TRUE) {
+                         medians = TRUE, colors = NULL) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
@@ -55,10 +57,11 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   peak <- max(c(0, unlist(lapply(curves, function(curve) if (is.null(curve)) 0 else max(curve$height)))))
   scale <- (1 + rules$overlap) / if (peak > 0) peak else 1
   plot <- ggplot2::ggplot()
+  palette <- colours_for(names, colors)
   for (index in seq_along(names)) {
     if (is.null(curves[[index]])) next
     plot <- plot + ridge_layers(curves[[index]], values[[index]], length(names) - index, scale,
-                                hl_color(names[index]), medians)
+                                palette[[names[index]]], medians)
   }
   plot + ggplot2::scale_y_continuous(breaks = rev(seq_along(names) - 1), labels = names, expand = c(0, 0),
                                      limits = c(0, length(names) + rules$overlap + rules$headroom)) +

@@ -83,10 +83,12 @@ partition_drawing <- function(spec, box, measure, style) {
 #' @param value Column with the amounts; `NULL` counts rows.
 #' @param title,subtitle,caption Frame texts.
 #' @param level_names Row headings; default the column names.
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_partition <- function(data, levels, value = NULL, title = NULL, subtitle = NULL, caption = NULL,
-                         level_names = NULL) {
+                         level_names = NULL, colors = NULL) {
   counted <- with_counts(data, value)
   data <- counted$data
   value <- counted$value
@@ -96,7 +98,7 @@ hl_partition <- function(data, levels, value = NULL, title = NULL, subtitle = NU
     stop(sprintf("hairline: partition: %d levels but %d level name(s); give one name per level", length(levels),
                  length(names)), call. = FALSE)
   }
-  spec <- list(rings = donut_rings(data, NULL, value, levels, chart = "partition"), levels = as.list(names))
+  spec <- list(rings = donut_rings(data, NULL, value, levels, chart = "partition", colors = colors), levels = as.list(names))
   items <- lapply(spec$rings[[1]], function(segment) {
     list(kind = "square", colour = segment$color, label = segment$name)
   })

@@ -3,6 +3,8 @@ numbers."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import numpy as np
 import pandas as pd
 
@@ -34,7 +36,8 @@ def draw_fit(ax, x: pd.Series, y: pd.Series) -> None:
 
 def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title: str | None = None,
             subtitle: str | None = None, caption: str | None = None, fit: str | None = "linear",
-            order: list[str] | None = None, size: str = "onehalf") -> HairlineFigure:
+            order: list[str] | None = None, colors: Mapping[str, str] | None = None,
+            size: str = "onehalf") -> HairlineFigure:
     """Points per group (entity colours) and, with `fit="linear"`, a fit over all points with n, r and slope."""
     check_columns(data, [x, y, by])
     if fit not in ("linear", None):
@@ -42,9 +45,11 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
     rows = data.dropna(subset=[x, y])
     result = figure(title or f"{humanise(y)} and {str(x).replace('_', ' ')}", subtitle=subtitle, caption=caption,
                     size=size)
-    for name, group in groups_of(rows, by, order):
-        color = entities.color(name) if by else current_settings().palette[0]
-        result.ax.scatter(group[x], group[y], color=color, label=name if by else "_nolegend_")
+    groups = groups_of(rows, by, order)
+    with entities.chart([name for name, _ in groups] if by else [], colors):
+        for name, group in groups:
+            color = entities.color(name) if by else current_settings().palette[0]
+            result.ax.scatter(group[x], group[y], color=color, label=name if by else "_nolegend_")
     if fit:
         draw_fit(result.ax, rows[x], rows[y])
         result.panel_header(0, "Linear fit", stats=fit_stats(rows[x], rows[y], current_settings().locale))

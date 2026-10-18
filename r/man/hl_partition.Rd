@@ -11,7 +11,8 @@ hl_partition(
   title = NULL,
   subtitle = NULL,
   caption = NULL,
-  level_names = NULL
+  level_names = NULL,
+  colors = NULL
 )
 }
 \arguments{
@@ -24,6 +25,9 @@ hl_partition(
 \item{title, subtitle, caption}{Frame texts.}
 
 \item{level_names}{Row headings; default the column names.}
+
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+for the number of groups and are not remembered for other charts.}
 }
 \value{
 A ggplot with the hairline frame.

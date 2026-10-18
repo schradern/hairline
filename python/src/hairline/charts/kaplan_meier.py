@@ -3,7 +3,7 @@ the number at risk under the x-axis aligned to its ticks."""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -59,7 +59,7 @@ def kaplan_meier(data: pd.DataFrame, time: str, event: str, by: str | None = Non
                  subtitle: str | None = None, caption: str | None = None, x_title: str = "Time",
                  endpoint: str = "Survival", median_line: bool = True, stats: Sequence[tuple[str, str]] = (),
                  at_risk: bool = True, times: Sequence[float] | None = None, order: Sequence[str] | None = None,
-                 test: bool = True, size: str = "onehalf") -> HairlineFigure:
+                 test: bool = True, colors: Mapping[str, str] | None = None, size: str = "onehalf") -> HairlineFigure:
     """Survival curves per group from time and event (1 = event, 0 = censored) columns; with groups and `test`,
     the log-rank p joins the key numbers."""
     check_columns(data, [time, event, by])
@@ -70,9 +70,11 @@ def kaplan_meier(data: pd.DataFrame, time: str, event: str, by: str | None = Non
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     ax, estimates, rows = result.ax, [], []
     moments = list(times) if times is not None else nice_breaks(0, float(data[time].max()))
-    for name, group in groups_of(data, by, order):
+    groups = groups_of(data, by, order)
+    palette = entities.colors_for([name for name, _ in groups], colors) if by else {}
+    for name, group in groups:
         table = km_estimate(group[time], group[event])
-        color = entities.color(name) if by else current_settings().palette[0]
+        color = palette.get(name, current_settings().palette[0])
         draw_curve(ax, table, color, name or endpoint)
         estimates.append((name, table))
         rows.append((name or endpoint, color, [(moment, format_number(count, 0)) for moment, count in

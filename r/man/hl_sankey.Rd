@@ -12,7 +12,8 @@ hl_sankey(
   subtitle = NULL,
   caption = NULL,
   color_by = NULL,
-  headings = NULL
+  headings = NULL,
+  colors = NULL
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ hl_sankey(
 \item{color_by}{Column whose groups colour the links, or \code{"none"}.}
 
 \item{headings}{Column headings; default the column names.}
+
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+for the number of groups and are not remembered for other charts.}
 }
 \value{
 A ggplot with the hairline frame.

@@ -12,7 +12,8 @@ hl_ridgeline(
   subtitle = NULL,
   caption = NULL,
   order = NULL,
-  medians = TRUE
+  medians = TRUE,
+  colors = NULL
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ hl_ridgeline(
 \item{order}{Group order, top to bottom.}
 
 \item{medians}{Mark the medians.}
+
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+for the number of groups and are not remembered for other charts.}
 }
 \value{
 A ggplot with the hairline frame.

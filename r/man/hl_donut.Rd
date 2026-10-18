@@ -14,7 +14,8 @@ hl_donut(
   caption = NULL,
   labels = NULL,
   total = TRUE,
-  total_label = NULL
+  total_label = NULL,
+  colors = NULL
 )
 }
 \arguments{
@@ -33,6 +34,9 @@ hl_donut(
 \item{total}{Show the total in the centre.}
 
 \item{total_label}{Text under the total, e.g. \code{"patients"}.}
+
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+for the number of groups and are not remembered for other charts.}
 }
 \value{
 A ggplot with the hairline frame.

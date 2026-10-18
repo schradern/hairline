@@ -31,10 +31,12 @@ scatter_fit_layers <- function(x, y) {
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param fit `"linear"` or `NULL`.
 #' @param order Group order.
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, caption = NULL, fit = "linear",
-                       order = NULL) {
+                       order = NULL, colors = NULL) {
   check_columns(data, c(x, y, by))
   if (!is.null(fit) && !identical(fit, "linear")) {
     stop(sprintf("hairline: scatter: fit '%s' must be 'linear' or NULL", fit), call. = FALSE)
@@ -42,7 +44,7 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
   rows <- data[stats::complete.cases(data[, c(x, y)]), , drop = FALSE]
   groups <- if (is.null(by)) "" else order %||% unique(as.character(rows[[by]]))
   colours <- if (is.null(by)) stats::setNames(hl_settings()$palette[1], "") else
-    stats::setNames(vapply(groups, hl_color, character(1)), groups)
+    colours_for(groups, colors)
   plot <- ggplot2::ggplot()
   for (name in groups) {
     subset <- if (is.null(by)) rows else rows[as.character(rows[[by]]) == name, , drop = FALSE]

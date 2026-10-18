@@ -75,16 +75,19 @@ bar_layers <- function(frame, colours, horizontal, stacked, labels) {
 #' @param sort `"value"` or `"given"`; default by value for a single series.
 #' @param order Category order.
 #' @param labels Print the values at the bar ends.
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subtitle = NULL, caption = NULL,
-                    stacked = FALSE, percent = FALSE, horizontal = NULL, sort = NULL, order = NULL, labels = TRUE) {
+                    stacked = FALSE, percent = FALSE, horizontal = NULL, sort = NULL, order = NULL, labels = TRUE,
+                    colors = NULL) {
   counted <- with_counts(data, value)
   check_columns(counted$data, c(category, counted$value, by))
   parts <- bar_table(counted$data, category, counted$value, by, order, sort %||% if (is.null(by)) "value" else "given")
   horizontal <- horizontal %||% bars_horizontal(parts$names)
   colours <- if (is.null(by)) stats::setNames(hl_settings()$palette[1], "") else
-    stats::setNames(vapply(parts$groups, hl_color, character(1)), parts$groups)
+    colours_for(parts$groups, colors)
   plot <- ggplot2::ggplot() +
     bar_layers(bar_frame(parts, category, by, horizontal, percent), colours, horizontal, stacked, labels) +
     ggplot2::labs(title = title %||% paste(humanise(counted$value), "by", gsub("_", " ", category)),

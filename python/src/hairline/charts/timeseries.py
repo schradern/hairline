@@ -109,7 +109,8 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
                key_panels: Sequence[str] | None = None, highlight: Sequence[str] | None = None,
                qualifiers: Mapping[str, str] | None = None, bands: Sequence[Mapping] = (),
                events: Sequence[Mapping] = (), order: Sequence[str] | None = None, raw_label: str = "Raw values",
-               mean_label: str | None = None, size: str = "double") -> HairlineFigure:
+               mean_label: str | None = None, colors: Mapping[str, str] | None = None,
+               size: str = "double") -> HairlineFigure:
     """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers."""
     check_columns(data, [x, y, by])
     title = title or (f"{humanise(y)} by {str(by).replace('_', ' ')}" if by else f"{humanise(y)} over time")
@@ -118,9 +119,10 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     is_date = pd.api.types.is_datetime64_any_dtype(data[x])
     share_label = share_label or f"≥ {formatter(percent)(threshold, 0) if threshold is not None else ''}"
     labels = {"share_above": share_label, **STAT_LABELS}
+    palette = entities.colors_for([name for name, _ in groups], colors) if by else {}
     for index, (name, rows) in enumerate(groups):
         ax = result.axes[index]
-        draw_series(ax, rows, x, y, entities.color(name) if by else current_settings().palette[0], window, raw)
+        draw_series(ax, rows, x, y, palette.get(name, current_settings().palette[0]), window, raw)
         if period_mean:
             ax.axhline(rows[y].mean(), **{**reference_style(), "color": current_settings().neutral["muted"],
                                           "linestyle": (0, (3, 2.5))})
