@@ -4,9 +4,20 @@
 
 table_line_count <- function(table) if (is.null(table)) 0 else length(table$rows) + if (is.null(table$heading)) 0 else 1
 
-table_label_offset <- function(settings) {
+# Each row's key takes the legend swatch of the series with the same label (a square if there is none).
+table_keys <- function(parts) {
+  if (is.null(parts$table)) return(character())
+  kinds <- stats::setNames(vapply(parts$legend, `[[`, character(1), "kind"),
+                           vapply(parts$legend, `[[`, character(1), "label"))
+  vapply(parts$table$rows, function(row) if (row$label %in% names(kinds)) kinds[[row$label]] else "square",
+         character(1))
+}
+
+table_label_offset <- function(parts) {
   spacing <- hl_tokens()$spacing
-  (spacing$legend_swatch_square + spacing$legend_swatch_text) * settings$base_size
+  base <- parts$settings$base_size
+  widths <- vapply(table_keys(parts), swatch_width, numeric(1), base = base, spacing = spacing)
+  max(c(widths, if (!length(widths)) spacing$legend_swatch_square * base)) + spacing$legend_swatch_text * base
 }
 
 table_label_width <- function(parts) {
@@ -15,7 +26,7 @@ table_label_width <- function(parts) {
   rows <- parts$table$rows
   widest <- max(vapply(rows, function(row) text_width_pt(row$label, style), numeric(1)))
   values <- max(c(0, unlist(lapply(rows, function(row) vapply(row$text, text_width_pt, numeric(1), style = style)))))
-  table_label_offset(parts$settings) + widest + values / 2
+  table_label_offset(parts) + widest + values / 2
 }
 
 table_value_xs <- function(parts, plan) {
@@ -40,20 +51,20 @@ table_grobs <- function(parts, plan) {
     grobs[[1]] <- text_grob_pt(table$heading, left, baselines[1], label, height)
     baselines <- baselines[-1]
   }
-  side <- hl_tokens()$spacing$legend_swatch_square * settings$base_size
   cap <- font_metrics()$cap_height * label$size
+  keys <- table_keys(parts)
+  lines <- scaled_lines(line_scale(fitted_box(plan$layout$panels[[1]], parts$aspect)[3]))
   xs <- split(table_value_xs(parts, plan), rep(seq_along(table$rows), vapply(table$rows, function(row) {
     length(row$x)
   }, integer(1))))
   for (index in seq_along(table$rows)) {
     row <- table$rows[[index]]
-    top <- baselines[index] - cap / 2 - side / 2
     if (!is.null(row$colour)) {
-      grobs[[length(grobs) + 1]] <- grid::rectGrob(grid::unit(left, "pt"), grid::unit(height - top - side, "pt"),
-                                                   grid::unit(side, "pt"), grid::unit(side, "pt"), just = c(0, 0),
-                                                   gp = grid::gpar(fill = row$colour, col = NA))
+      key <- list(x = left, kind = keys[index], colour = row$colour)
+      grobs[[length(grobs) + 1]] <- swatch_grob(key, baselines[index] - cap / 2, height, settings$base_size,
+                                                hl_tokens()$spacing, lines)
     }
-    grobs <- c(grobs, list(text_grob_pt(row$label, left + table_label_offset(settings), baselines[index], label,
+    grobs <- c(grobs, list(text_grob_pt(row$label, left + table_label_offset(parts), baselines[index], label,
                                         height)),
                lapply(seq_along(row$text), function(item) {
                  align <- c("left", "right", "center")[match(edge_hjust((row$x[item] - range[1]) / diff(range)),

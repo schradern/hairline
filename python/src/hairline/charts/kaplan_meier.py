@@ -41,7 +41,7 @@ def draw_curve(ax, table: pd.DataFrame, color: str, label: str) -> None:
     ax.plot(times, survival, drawstyle="steps-post", color=color, linewidth=width, label=label)
     censored = table[table["censored"] > 0]
     ax.plot(censored["time"], censored["survival"], linestyle="none", marker="|", color=color,
-            markersize=rules["censor_tick"] * base, markeredgewidth=width, label="_nolegend_")
+            markersize=rules["censor_tick"] * base, markeredgewidth=rules["censor_width"] * base, label="_nolegend_")
 
 
 def median_text(table: pd.DataFrame) -> str:

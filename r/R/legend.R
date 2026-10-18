@@ -102,11 +102,17 @@ swatch_grob <- function(entry, center, height, base, spacing, lines) {
                                                           lineend = "butt"))
 }
 
-legend_grobs <- function(placed, centers, style, base, height, cap_height, scale = 1) {
-  spacing <- hl_tokens()$spacing
+# Line tokens with the data and secondary widths of a panel's step.
+scaled_lines <- function(scale) {
   lines <- hl_tokens()$lines
   lines$data <- lines$data * scale
   lines$secondary <- lines$secondary * scale
+  lines
+}
+
+legend_grobs <- function(placed, centers, style, base, height, cap_height, scale = 1) {
+  spacing <- hl_tokens()$spacing
+  lines <- scaled_lines(scale)
   grobs <- list()
   for (entry in placed) {
     center <- centers[entry$row + 1]

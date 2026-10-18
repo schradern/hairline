@@ -18,7 +18,7 @@ from hairline.layout.legend import draw_legend, items_from_axes, pack_rows
 from hairline.layout.measure import text_width, wrap
 from hairline.layout.panels import ComposedHeader, compose_header
 from hairline.layout.styles import header_gaps, header_styles, role_style
-from hairline.layout.table import draw_table, table_label_width, table_lines
+from hairline.layout.table import draw_table, table_keys, table_label_width, table_lines
 from hairline.layout.ticking import configure_all_ticks
 from hairline.marks import apply_light_slots, line_scale, scale_panel_lines
 from hairline.settings import role_size
@@ -62,10 +62,11 @@ def measure_texts(figure: HairlineFigure, width_pt: float, y_labels: list[list[s
     def wrapped(text: str | None, role: str) -> list[str]:
         style = role_style(settings, role)
         return wrap(text, style["family"], style["size"], style["weight"], usable) if text else []
-    widths = column_widths(figure, y_labels)
     legend = figure.legend_items if figure.legend_items is not None else (
         focus_legend_items(figure, items_from_axes(figure.axes)) + figure.extra_legend_items
         if figure.collect_legend else [])
+    figure.table_keys = table_keys(figure.table_spec, legend)
+    widths = column_widths(figure, y_labels)
     return Measured(wrapped(figure.title, "title"), wrapped(figure.subtitle, "subtitle"),
                     wrapped(figure.caption, "caption"), legend, widths[0], tuple(widths), x_tick_rows(figure))
 
@@ -198,7 +199,8 @@ def draw_frame(figure: HairlineFigure, layout: FrameLayout, measured: Measured, 
     artists += draw_lines(figure, layout.left, layout.subtitle_baselines, measured.subtitle, "subtitle")
     artists += draw_lines(figure, layout.left, layout.caption_baselines, measured.caption, "caption")
     artists += draw_legend(figure.figure, placed, layout.legend_row_centers, legend_style(figure), spacing, lines)
-    artists += draw_headers(figure, layout, composed) + draw_axis_titles(figure, layout) + draw_table(figure, layout)
+    artists += draw_headers(figure, layout, composed) + draw_axis_titles(figure, layout)
+    artists += draw_table(figure, layout, lines)
     figure.frame_artist.replace_children(run_drawings(figure) + artists)
 
 

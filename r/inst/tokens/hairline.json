@@ -499,6 +499,7 @@
   "survival": {
     "band_opacity": 0.15,
     "censor_tick": 0.6,
+    "censor_width": 0.055,
     "median_dash": [
       1,
       2

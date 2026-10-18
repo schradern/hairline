@@ -46,3 +46,12 @@ test_that("groups keep their given order in the legend", {
   items <- legend_items(ggplot2::ggplot_build(plot))
   expect_equal(vapply(items, `[[`, character(1), "label"), c("B", "A"))
 })
+
+test_that("at-risk keys match the legend lines", {
+  hl_use(brand = FALSE)
+  plot <- hl_kaplan_meier(km_data(), "months", "died", by = "arm")
+  parts <- frame_parts(ggplot2::ggplotGrob(plot)$table, ggplot2::ggplot_build(plot))
+  expect_equal(table_keys(parts), c("line", "line"))
+  spacing <- hl_tokens()$spacing
+  expect_equal(table_label_offset(parts), (spacing$legend_swatch_line + spacing$legend_swatch_text) * 9)
+})

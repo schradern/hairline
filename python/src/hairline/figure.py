@@ -61,6 +61,7 @@ class HairlineFigure:
     table_spec: dict | None = None
     category_axes: dict = field(default_factory=dict)
     table_value_xs: list = field(default_factory=list)
+    table_keys: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)

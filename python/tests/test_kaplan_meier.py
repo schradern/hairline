@@ -68,3 +68,12 @@ def test_number_at_risk_heading_and_rows():
 def test_missing_column_is_named():
     with pytest.raises(ValueError, match="column 'days' is not in the data"):
         hl.kaplan_meier(trial(), "days", "died", title="Survival")
+
+
+def test_at_risk_keys_match_the_legend_lines():
+    from hairline.layout.table import label_offset
+    figure = hl.kaplan_meier(trial(), "months", "died", by="arm")
+    drawn(figure)
+    assert figure.table_keys == ["line", "line"]
+    spacing, base = hl.load_tokens()["spacing"], figure.settings.base_size
+    assert label_offset(figure) == pytest.approx((spacing["legend_swatch_line"] + spacing["legend_swatch_text"]) * base)
