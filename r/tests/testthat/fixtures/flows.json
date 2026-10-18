@@ -937,25 +937,25 @@
      "name": "ED",
      "value": 81.0,
      "value_text": "81",
-     "color": "#2474cf"
+     "color": "#0a6ddd"
     },
     {
      "name": "ICU",
      "value": 132.0,
      "value_text": "132",
-     "color": "#ef675a"
+     "color": "#de4642"
     },
     {
      "name": "Ward",
      "value": 71.0,
      "value_text": "71",
-     "color": "#b93780"
+     "color": "#e79d01"
     },
     {
      "name": "Theatre",
      "value": 42.0,
      "value_text": "42",
-     "color": "#53b0de"
+     "color": "#019a98"
     }
    ],
    "links": [
@@ -985,7 +985,7 @@
    {
     "kind": "polygon",
     "role": "ribbon",
-    "fill": "#2474cf",
+    "fill": "#0a6ddd",
     "alpha": 0.45,
     "points": [
      [
@@ -1343,7 +1343,7 @@
    {
     "kind": "polygon",
     "role": "ribbon",
-    "fill": "#2474cf",
+    "fill": "#0a6ddd",
     "alpha": 0.45,
     "points": [
      [
@@ -1621,7 +1621,7 @@
    {
     "kind": "polygon",
     "role": "ribbon",
-    "fill": "#ef675a",
+    "fill": "#de4642",
     "alpha": 0.45,
     "points": [
      [
@@ -1939,7 +1939,7 @@
    {
     "kind": "polygon",
     "role": "ribbon",
-    "fill": "#ef675a",
+    "fill": "#de4642",
     "alpha": 0.45,
     "points": [
      [
@@ -2267,7 +2267,7 @@
     "role": "node",
     "name": "ED",
     "span": 87.4601226993865,
-    "fill": "#2474cf",
+    "fill": "#0a6ddd",
     "points": [
      [
       242.97877673071557,
@@ -2642,7 +2642,7 @@
     "role": "node",
     "name": "ICU",
     "span": 142.5276073619632,
-    "fill": "#ef675a",
+    "fill": "#de4642",
     "points": [
      [
       410.6744963303556,
@@ -3241,7 +3241,7 @@
     "role": "node",
     "name": "Ward",
     "span": 76.66257668711657,
-    "fill": "#b93780",
+    "fill": "#e79d01",
     "points": [
      [
       100.20809722995065,
@@ -3576,7 +3576,7 @@
     "role": "node",
     "name": "Theatre",
     "span": 45.34969325153375,
-    "fill": "#53b0de",
+    "fill": "#019a98",
     "points": [
      [
       116.50174082875778,
@@ -3965,19 +3965,19 @@
       "name": "Diabetes",
       "value": 5,
       "value_text": "5",
-      "color": "#2474cf"
+      "color": "#0a6ddd"
      },
      {
       "name": "Hypertension",
       "value": 4,
       "value_text": "4",
-      "color": "#ef675a"
+      "color": "#de4642"
      },
      {
       "name": "Obesity",
       "value": 3,
       "value_text": "3",
-      "color": "#b93780"
+      "color": "#e79d01"
      }
     ],
     "regions": [
@@ -4769,7 +4769,7 @@
        73.53876526959391
       ]
      ],
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.14,
      "series": "Diabetes",
      "tip": "Diabetes: 5",
@@ -5508,7 +5508,7 @@
        73.53876526959391
       ]
      ],
-     "fill": "#ef675a",
+     "fill": "#de4642",
      "alpha": 0.14,
      "series": "Hypertension",
      "tip": "Hypertension: 4",
@@ -6247,7 +6247,7 @@
        180.19830224926673
       ]
      ],
-     "fill": "#b93780",
+     "fill": "#e79d01",
      "alpha": 0.14,
      "series": "Obesity",
      "tip": "Obesity: 3",
@@ -6985,7 +6985,7 @@
       ]
      ],
      "width": 1.26,
-     "color": "#2474cf"
+     "color": "#0a6ddd"
     },
     {
      "kind": "line",
@@ -7716,7 +7716,7 @@
       ]
      ],
      "width": 1.26,
-     "color": "#ef675a"
+     "color": "#de4642"
     },
     {
      "kind": "line",
@@ -8447,7 +8447,7 @@
       ]
      ],
      "width": 1.26,
-     "color": "#b93780"
+     "color": "#c78600"
     },
     {
      "kind": "text",
@@ -8631,13 +8631,13 @@
       "name": "Screened",
       "value": 24,
       "value_text": "24",
-      "color": "#2474cf"
+      "color": "#0a6ddd"
      },
      {
       "name": "Confirmed",
       "value": 12,
       "value_text": "12",
-      "color": "#ef675a"
+      "color": "#de4642"
      }
     ],
     "regions": [
@@ -9397,7 +9397,7 @@
        111.57805132221691
       ]
      ],
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.14,
      "series": "Screened",
      "tip": "Screened: 24",
@@ -10136,7 +10136,7 @@
        155.04983361301782
       ]
      ],
-     "fill": "#ef675a",
+     "fill": "#de4642",
      "alpha": 0.14,
      "series": "Confirmed",
      "tip": "Confirmed: 12",
@@ -10874,7 +10874,7 @@
       ]
      ],
      "width": 1.26,
-     "color": "#2474cf"
+     "color": "#0a6ddd"
     },
     {
      "kind": "line",
@@ -11605,7 +11605,7 @@
       ]
      ],
      "width": 1.26,
-     "color": "#ef675a"
+     "color": "#de4642"
     },
     {
      "kind": "text",
@@ -11756,7 +11756,7 @@
       "value_text": "1"
      }
     ],
-    "color": "#2474cf",
+    "color": "#0a6ddd",
     "key": [
      {
       "value": 1,
@@ -11969,7 +11969,7 @@
        446.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -12182,7 +12182,7 @@
        446.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 3.4199999999999995,
      "alpha": 0.55,
      "role": "arc",
@@ -12395,7 +12395,7 @@
        446.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 3.4199999999999995,
      "alpha": 0.55,
      "role": "arc",
@@ -12608,7 +12608,7 @@
        446.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 3.4199999999999995,
      "alpha": 0.55,
      "role": "arc",
@@ -12821,7 +12821,7 @@
        446.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 3.4199999999999995,
      "alpha": 0.55,
      "role": "arc",
@@ -13034,7 +13034,7 @@
        446.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 3.4199999999999995,
      "alpha": 0.55,
      "role": "arc",
@@ -13247,7 +13247,7 @@
        446.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 3.4199999999999995,
      "alpha": 0.55,
      "role": "arc",
@@ -13842,7 +13842,7 @@
        64.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 3.4199999999999995,
      "alpha": 0.55,
      "part": "key"
@@ -13870,7 +13870,7 @@
        64.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "part": "key"
@@ -13972,7 +13972,7 @@
       "value_text": "1"
      }
     ],
-    "color": "#2474cf",
+    "color": "#0a6ddd",
     "key": [
      {
       "value": 0,
@@ -14185,7 +14185,7 @@
        369.1
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -14398,7 +14398,7 @@
        369.1
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -14611,7 +14611,7 @@
        369.1
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -14824,7 +14824,7 @@
        369.1
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -15037,7 +15037,7 @@
        369.1
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -15250,7 +15250,7 @@
        369.1
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -15463,7 +15463,7 @@
        369.1
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -15676,7 +15676,7 @@
        369.1
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "role": "arc",
@@ -16621,7 +16621,7 @@
        64.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 0.54,
      "alpha": 0.55,
      "part": "key"
@@ -16649,7 +16649,7 @@
        64.5
       ]
      ],
-     "color": "#2474cf",
+     "color": "#0a6ddd",
      "width": 6.299999999999999,
      "alpha": 0.55,
      "part": "key"

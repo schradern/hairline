@@ -62,7 +62,7 @@
        "value": 412.0,
        "share": 0.5316129032258065,
        "share_text": "53%",
-       "color": "#2474cf",
+       "color": "#0a6ddd",
        "parent": null,
        "index": 0
       },
@@ -71,7 +71,7 @@
        "value": 168.0,
        "share": 0.2167741935483871,
        "share_text": "22%",
-       "color": "#ef675a",
+       "color": "#de4642",
        "parent": null,
        "index": 1
       },
@@ -80,7 +80,7 @@
        "value": 97.0,
        "share": 0.12516129032258064,
        "share_text": "13%",
-       "color": "#b93780",
+       "color": "#e79d01",
        "parent": null,
        "index": 2
       },
@@ -89,7 +89,7 @@
        "value": 54.0,
        "share": 0.0696774193548387,
        "share_text": "7%",
-       "color": "#53b0de",
+       "color": "#019a98",
        "parent": null,
        "index": 3
       },
@@ -98,7 +98,7 @@
        "value": 23.0,
        "share": 0.02967741935483871,
        "share_text": "3%",
-       "color": "#e8a628",
+       "color": "#f07202",
        "parent": null,
        "index": 4
       },
@@ -107,7 +107,7 @@
        "value": 9.0,
        "share": 0.011612903225806452,
        "share_text": "1%",
-       "color": "#00afa9",
+       "color": "#06b1f7",
        "parent": null,
        "index": 5
       },
@@ -909,7 +909,7 @@
        108.00694477937472
       ]
      ],
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "series": "Home",
      "tip": "Home: 53%",
      "tip_at": [
@@ -1241,7 +1241,7 @@
        250.3801935507036
       ]
      ],
-     "fill": "#ef675a",
+     "fill": "#de4642",
      "series": "Rehabilitation",
      "tip": "Rehabilitation: 22%",
      "tip_at": [
@@ -1441,7 +1441,7 @@
        179.7296287116547
       ]
      ],
-     "fill": "#b93780",
+     "fill": "#e79d01",
      "series": "Other ward",
      "tip": "Other ward: 13%",
      "tip_at": [
@@ -1561,7 +1561,7 @@
        128.84611493333128
       ]
      ],
-     "fill": "#53b0de",
+     "fill": "#019a98",
      "series": "Care home",
      "tip": "Care home: 7%",
      "tip_at": [
@@ -1621,7 +1621,7 @@
        112.18997047452469
       ]
      ],
-     "fill": "#e8a628",
+     "fill": "#f07202",
      "series": "Died",
      "tip": "Died: 3%",
      "tip_at": [
@@ -1657,7 +1657,7 @@
        108.87840536603889
       ]
      ],
-     "fill": "#00afa9",
+     "fill": "#06b1f7",
      "series": "Hospice",
      "tip": "Hospice: 1%",
      "tip_at": [
@@ -2040,7 +2040,7 @@
        "value": 412.0,
        "share": 0.5636114911080712,
        "share_text": "56%",
-       "color": "#2474cf",
+       "color": "#0a6ddd",
        "parent": null,
        "index": 0
       },
@@ -2049,7 +2049,7 @@
        "value": 168.0,
        "share": 0.22982216142270862,
        "share_text": "23%",
-       "color": "#ef675a",
+       "color": "#de4642",
        "parent": null,
        "index": 1
       },
@@ -2058,7 +2058,7 @@
        "value": 97.0,
        "share": 0.1326949384404925,
        "share_text": "13%",
-       "color": "#b93780",
+       "color": "#e79d01",
        "parent": null,
        "index": 2
       },
@@ -2067,7 +2067,7 @@
        "value": 54.0,
        "share": 0.07387140902872777,
        "share_text": "7%",
-       "color": "#53b0de",
+       "color": "#019a98",
        "parent": null,
        "index": 3
       }
@@ -2078,7 +2078,7 @@
        "value": 250.0,
        "share": 0.34199726402188785,
        "share_text": "34%",
-       "color": "#3f8dea",
+       "color": "#2f86f9",
        "parent": 0,
        "index": 0
       },
@@ -2087,7 +2087,7 @@
        "value": 162.0,
        "share": 0.2216142270861833,
        "share_text": "22%",
-       "color": "#60a7ff",
+       "color": "#60a2ff",
        "parent": 0,
        "index": 1
       },
@@ -2096,7 +2096,7 @@
        "value": 120.0,
        "share": 0.16415868673050615,
        "share_text": "16%",
-       "color": "#ff8b7d",
+       "color": "#fb615a",
        "parent": 1,
        "index": 2
       },
@@ -2105,7 +2105,7 @@
        "value": 48.0,
        "share": 0.06566347469220246,
        "share_text": "7%",
-       "color": "#ffb5ab",
+       "color": "#ff9086",
        "parent": 1,
        "index": 3
       },
@@ -2114,7 +2114,7 @@
        "value": 97.0,
        "share": 0.1326949384404925,
        "share_text": "13%",
-       "color": "#d55198",
+       "color": "#ffb847",
        "parent": 2,
        "index": 4
       },
@@ -2123,7 +2123,7 @@
        "value": 54.0,
        "share": 0.07387140902872777,
        "share_text": "7%",
-       "color": "#6ecaf9",
+       "color": "#36b3b1",
        "parent": 3,
        "index": 5
       }
@@ -2956,7 +2956,7 @@
        144.90224303463253
       ]
      ],
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "series": "Home",
      "tip": "Home: 56%",
      "tip_at": [
@@ -3300,7 +3300,7 @@
        211.94238272670688
       ]
      ],
-     "fill": "#ef675a",
+     "fill": "#de4642",
      "series": "Rehabilitation",
      "tip": "Rehabilitation: 23%",
      "tip_at": [
@@ -3504,7 +3504,7 @@
        169.5772184912694
       ]
      ],
-     "fill": "#b93780",
+     "fill": "#e79d01",
      "series": "Other ward",
      "tip": "Other ward: 13%",
      "tip_at": [
@@ -3624,7 +3624,7 @@
        148.16780521105585
       ]
      ],
-     "fill": "#53b0de",
+     "fill": "#019a98",
      "series": "Care home",
      "tip": "Care home: 7%",
      "tip_at": [
@@ -4132,7 +4132,7 @@
        115.2517217526211
       ]
      ],
-     "fill": "#3f8dea",
+     "fill": "#2f86f9",
      "series": "Alone",
      "tip": "Alone: 34%",
      "tip_at": [
@@ -4472,7 +4472,7 @@
        216.21469839916992
       ]
      ],
-     "fill": "#60a7ff",
+     "fill": "#60a2ff",
      "series": "With support",
      "tip": "With support: 22%",
      "tip_at": [
@@ -4724,7 +4724,7 @@
        239.2559826516547
       ]
      ],
-     "fill": "#ff8b7d",
+     "fill": "#fb615a",
      "series": "Inpatient",
      "tip": "Inpatient: 16%",
      "tip_at": [
@@ -4836,7 +4836,7 @@
        188.02401899227505
       ]
      ],
-     "fill": "#ffb5ab",
+     "fill": "#ff9086",
      "series": "Outpatient",
      "tip": "Outpatient: 7%",
      "tip_at": [
@@ -5048,7 +5048,7 @@
        161.58560624472122
       ]
      ],
-     "fill": "#d55198",
+     "fill": "#ffb847",
      "series": "Other ward",
      "tip": "Other ward: 13%",
      "tip_at": [
@@ -5172,7 +5172,7 @@
        121.65420801779644
       ]
      ],
-     "fill": "#6ecaf9",
+     "fill": "#36b3b1",
      "series": "Care home",
      "tip": "Care home: 7%",
      "tip_at": [
@@ -5200,7 +5200,7 @@
        142.875
       ]
      ],
-     "fill": "#2474cf"
+     "fill": "#0a6ddd"
     },
     {
      "kind": "text",
@@ -5242,7 +5242,7 @@
        154.57500000000002
       ]
      ],
-     "fill": "#3f8dea"
+     "fill": "#2f86f9"
     },
     {
      "kind": "text",
@@ -5284,7 +5284,7 @@
        166.275
       ]
      ],
-     "fill": "#60a7ff"
+     "fill": "#60a2ff"
     },
     {
      "kind": "text",
@@ -5326,7 +5326,7 @@
        177.975
       ]
      ],
-     "fill": "#ef675a"
+     "fill": "#de4642"
     },
     {
      "kind": "text",
@@ -5368,7 +5368,7 @@
        189.675
       ]
      ],
-     "fill": "#ff8b7d"
+     "fill": "#fb615a"
     },
     {
      "kind": "text",
@@ -5410,7 +5410,7 @@
        201.375
       ]
      ],
-     "fill": "#ffb5ab"
+     "fill": "#ff9086"
     },
     {
      "kind": "text",
@@ -5452,7 +5452,7 @@
        213.07500000000002
       ]
      ],
-     "fill": "#b93780"
+     "fill": "#e79d01"
     },
     {
      "kind": "text",
@@ -5494,7 +5494,7 @@
        224.775
       ]
      ],
-     "fill": "#53b0de"
+     "fill": "#019a98"
     },
     {
      "kind": "text",
@@ -5578,7 +5578,7 @@
        "value": 412.0,
        "share": 0.5636114911080712,
        "share_text": "56%",
-       "color": "#2474cf",
+       "color": "#0a6ddd",
        "parent": null,
        "index": 0
       },
@@ -5587,7 +5587,7 @@
        "value": 168.0,
        "share": 0.22982216142270862,
        "share_text": "23%",
-       "color": "#ef675a",
+       "color": "#de4642",
        "parent": null,
        "index": 1
       },
@@ -5596,7 +5596,7 @@
        "value": 97.0,
        "share": 0.1326949384404925,
        "share_text": "13%",
-       "color": "#b93780",
+       "color": "#e79d01",
        "parent": null,
        "index": 2
       },
@@ -5605,7 +5605,7 @@
        "value": 54.0,
        "share": 0.07387140902872777,
        "share_text": "7%",
-       "color": "#53b0de",
+       "color": "#019a98",
        "parent": null,
        "index": 3
       }
@@ -5616,7 +5616,7 @@
        "value": 250.0,
        "share": 0.34199726402188785,
        "share_text": "34%",
-       "color": "#3f8dea",
+       "color": "#2f86f9",
        "parent": 0,
        "index": 0
       },
@@ -5625,7 +5625,7 @@
        "value": 162.0,
        "share": 0.2216142270861833,
        "share_text": "22%",
-       "color": "#60a7ff",
+       "color": "#60a2ff",
        "parent": 0,
        "index": 1
       },
@@ -5634,7 +5634,7 @@
        "value": 120.0,
        "share": 0.16415868673050615,
        "share_text": "16%",
-       "color": "#ff8b7d",
+       "color": "#fb615a",
        "parent": 1,
        "index": 2
       },
@@ -5643,7 +5643,7 @@
        "value": 48.0,
        "share": 0.06566347469220246,
        "share_text": "7%",
-       "color": "#ffb5ab",
+       "color": "#ff9086",
        "parent": 1,
        "index": 3
       },
@@ -5652,7 +5652,7 @@
        "value": 97.0,
        "share": 0.1326949384404925,
        "share_text": "13%",
-       "color": "#d55198",
+       "color": "#ffb847",
        "parent": 2,
        "index": 4
       },
@@ -5661,7 +5661,7 @@
        "value": 54.0,
        "share": 0.07387140902872777,
        "share_text": "7%",
-       "color": "#6ecaf9",
+       "color": "#36b3b1",
        "parent": 3,
        "index": 5
       }
@@ -6498,7 +6498,7 @@
        153.00877260489997
       ]
      ],
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "series": "Home",
      "tip": "Home: 56%",
      "tip_at": [
@@ -6846,7 +6846,7 @@
        262.1103078231598
       ]
      ],
-     "fill": "#ef675a",
+     "fill": "#de4642",
      "series": "Rehabilitation",
      "tip": "Rehabilitation: 23%",
      "tip_at": [
@@ -7054,7 +7054,7 @@
        193.67633989485026
       ]
      ],
-     "fill": "#b93780",
+     "fill": "#e79d01",
      "series": "Other ward",
      "tip": "Other ward: 13%",
      "tip_at": [
@@ -7178,7 +7178,7 @@
        158.59058932957214
       ]
      ],
-     "fill": "#53b0de",
+     "fill": "#019a98",
      "series": "Care home",
      "tip": "Care home: 7%",
      "tip_at": [
@@ -7694,7 +7694,7 @@
        105.5047847985373
       ]
      ],
-     "fill": "#3f8dea",
+     "fill": "#2f86f9",
      "series": "Alone",
      "tip": "Alone: 34%",
      "tip_at": [
@@ -8034,7 +8034,7 @@
        267.9316277848844
       ]
      ],
-     "fill": "#60a7ff",
+     "fill": "#60a2ff",
      "series": "With support",
      "tip": "With support: 22%",
      "tip_at": [
@@ -8294,7 +8294,7 @@
        305.8702439619476
       ]
      ],
-     "fill": "#ff8b7d",
+     "fill": "#fb615a",
      "series": "Inpatient",
      "tip": "Inpatient: 16%",
      "tip_at": [
@@ -8410,7 +8410,7 @@
        223.55760297326495
       ]
      ],
-     "fill": "#ffb5ab",
+     "fill": "#ff9086",
      "series": "Outpatient",
      "tip": "Outpatient: 7%",
      "tip_at": [
@@ -8622,7 +8622,7 @@
        180.87273866631062
       ]
      ],
-     "fill": "#d55198",
+     "fill": "#ffb847",
      "series": "Other ward",
      "tip": "Other ward: 13%",
      "tip_at": [
@@ -8746,7 +8746,7 @@
        116.11236151724938
       ]
      ],
-     "fill": "#6ecaf9",
+     "fill": "#36b3b1",
      "series": "Care home",
      "tip": "Care home: 7%",
      "tip_at": [
@@ -8770,7 +8770,7 @@
      "y": 247.14428348739423,
      "text": "23%",
      "role": "label",
-     "color": "#1b1e22",
+     "color": "#ffffff",
      "align": "center",
      "weight": null
     },
@@ -8780,7 +8780,7 @@
      "y": 161.76999197763158,
      "text": "13%",
      "role": "label",
-     "color": "#ffffff",
+     "color": "#1b1e22",
      "align": "center",
      "weight": null
     },

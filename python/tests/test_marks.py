@@ -11,7 +11,7 @@ from hairline.marks import line_style, point_fill, point_step, point_style, seri
 
 def test_series_colors_follow_slot_order():
     colors = series_colors(["Home", "Rehab", "Ward"])
-    assert colors == {"Home": "#2474cf", "Rehab": "#ef675a", "Ward": "#b93780"}
+    assert colors == {"Home": "#0a6ddd", "Rehab": "#de4642", "Ward": "#e79d01"}
 
 
 def test_too_many_categories_message():

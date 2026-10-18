@@ -5,9 +5,10 @@ hairline picks colours for you; these functions show and change them.
 - `palettes()` lists every colour set with its kind, number of colours, use and which one is active;
   `swatches()` draws them.
 - Groups take a palette's colours in order: two groups the first two, three the first three, and a group keeps
-  its colour when more are shown. Six palettes of eight colours: "daylight" (the default), "bloom", "citrus",
-  "lagoon", "calm", "deep". Purpose sets: "pair", "pair-teal", "pair-violet" (two groups), "ink" (greyscale
-  print), "judgement" (low, some concerns, high). `use(palette="calm")` makes one the default.
+  its colour when more are shown. Six palettes of eight colours, each opening blue then red: "daylight" (the
+  default), "calm", "deep", "lagoon", "citrus", "bold". Purpose sets: "pair", "pair-teal", "pair-violet" (two
+  groups), "ink" (greyscale print), "judgement" (low, some concerns, high). `use(palette="calm")` makes one the
+  default.
 - Amounts take a ramp: "blues", "teals", "oranges", "berries", "greys" (sequential), "blue-coral", "teal-berry"
   (diverging). `colormap()` turns one into a matplotlib colormap. While a brand is active, its own ramps
   "brand-sequential" and "brand-diverging" are the default for `ramp()`, `colormap()` and the heatmap.
@@ -66,8 +67,9 @@ def palette(name: str | Sequence[str] | None = None, n: int | None = None) -> li
     """Colours for groups, in the order hairline assigns them: two groups take slots 1-2, three groups slots 1-3,
     and a group keeps its colour when more are shown; `n` takes the first n slots and never repeats colours.
 
-    Six categorical palettes of eight slots: "daylight" (the default), "bloom", "citrus", "lagoon", "calm" and
-    "deep". Purpose sets: "pair", "pair-teal" and "pair-violet" for two groups, "ink" for greyscale print,
+    Six categorical palettes of eight slots, each opening blue then red so two groups always read blue against
+    red: "daylight" (vivid; the default), "calm", "deep" (prints in grey), "lagoon" (cool), "citrus" (warm) and
+    "bold" (slides). Purpose sets: "pair", "pair-teal" and "pair-violet" for two groups, "ink" for greyscale print,
     "judgement" for low, some concerns and high. `None` gives the active palette; a list of hex colours is checked
     and returned. `palettes()` lists every set with its use, `swatches()` draws them, and `use(palette=...)`
     makes one the default. For amounts, use `ramp()`."""

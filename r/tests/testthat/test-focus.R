@@ -26,9 +26,9 @@ test_that("highlighting a series keeps its colour and greys the rest", {
     theme_hairline() + hl_highlight(series = "Unit B")
   data <- ggplot2::ggplot_build(plot)@data[[1]]
   colours <- unique(data$colour)
-  expect_setequal(colours, c("#ef675a", "#b3b8be"))
+  expect_setequal(colours, c("#de4642", "#b3b8be"))
   base <- pt_to_linewidth(0.14 * 9)
-  expect_equal(unique(data$linewidth[data$colour == "#ef675a"]), 1.15 * base, tolerance = 1e-6)
+  expect_equal(unique(data$linewidth[data$colour == "#de4642"]), 1.15 * base, tolerance = 1e-6)
   expect_equal(unique(data$linewidth[data$colour == "#b3b8be"]), 0.85 * base, tolerance = 1e-6)
 })
 

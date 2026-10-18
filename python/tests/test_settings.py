@@ -38,7 +38,7 @@ def test_missing_font_warns_once():
 
 
 def test_palette_by_name_and_custom():
-    assert hl.use(palette="lagoon").palette[0] == "#006eb3"
+    assert hl.use(palette="lagoon").palette[0] == "#0c71d1"
     custom = hl.use(palette=["#112233", "#445566"])
     assert custom.palette_name == "custom" and hl.palette() == ["#112233", "#445566"]
 

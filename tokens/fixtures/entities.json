@@ -1,14 +1,14 @@
 [
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "label": "palette 'daylight'",
   "fixed": {},
@@ -18,25 +18,25 @@
    "Unit D"
   ],
   "expected": {
-   "Unit A": "#2474cf",
-   "Unit B": "#ef675a",
-   "Unit D": "#b93780"
+   "Unit A": "#0a6ddd",
+   "Unit B": "#de4642",
+   "Unit D": "#e79d01"
   }
  },
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "label": "palette 'daylight'",
   "fixed": {
-   "Unit B": "#2474cf"
+   "Unit B": "#0a6ddd"
   },
   "requests": [
    "Unit A",
@@ -44,21 +44,21 @@
    "Unit F"
   ],
   "expected": {
-   "Unit A": "#ef675a",
-   "Unit B": "#2474cf",
-   "Unit F": "#b93780"
+   "Unit A": "#de4642",
+   "Unit B": "#0a6ddd",
+   "Unit F": "#e79d01"
   }
  },
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "label": "palette 'daylight'",
   "fixed": {
@@ -69,25 +69,25 @@
    "Control"
   ],
   "expected": {
-   "Intervention": "#2474cf",
+   "Intervention": "#0a6ddd",
    "Control": "#5b6168"
   }
  },
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "label": "palette 'daylight'",
   "fixed": {
-   "a": "#b93780",
-   "b": "#2474cf"
+   "a": "#e79d01",
+   "b": "#0a6ddd"
   },
   "requests": [
    "c",
@@ -95,9 +95,9 @@
    "a"
   ],
   "expected": {
-   "c": "#ef675a",
-   "d": "#53b0de",
-   "a": "#b93780"
+   "c": "#de4642",
+   "d": "#019a98",
+   "a": "#e79d01"
   }
  },
  {

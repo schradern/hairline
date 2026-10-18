@@ -17,8 +17,9 @@ Character vector of hex colours.
 \description{
 Colours for groups, in the order hairline assigns them: two groups take
 slots 1-2, three groups slots 1-3, and a group keeps its colour when more
-are shown. There are six categorical palettes of eight slots (\code{"daylight"},
-the default, \code{"bloom"}, \code{"citrus"}, \code{"lagoon"}, \code{"calm"} and \code{"deep"}) and
+are shown. There are six categorical palettes of eight slots, each opening
+blue then red so two groups always read blue against red (\code{"daylight"}, the
+default, \code{"calm"}, \code{"deep"}, \code{"lagoon"}, \code{"citrus"} and \code{"bold"}), and
 purpose sets for common cases: \code{"pair"}, \code{"pair-teal"} and \code{"pair-violet"}
 for two groups, \code{"ink"} for greyscale print and \code{"judgement"} for low, some
 concerns and high. \code{\link[=hl_palettes]{hl_palettes()}} lists them all with their uses and

@@ -131,7 +131,7 @@
     },
     "x_title": "Or",
     "y_title": "Standard error",
-    "color": "#2474cf",
+    "color": "#0a6ddd",
     "egger": 0.01877356033920119
    },
    "shapes": [
@@ -387,7 +387,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -497,7 +497,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -607,7 +607,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -717,7 +717,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -827,7 +827,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -937,7 +937,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -1047,7 +1047,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -1157,7 +1157,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -1344,7 +1344,7 @@
     },
     "x_title": "Md",
     "y_title": "Standard error",
-    "color": "#2474cf",
+    "color": "#0a6ddd",
     "egger": 0.2175443415882028
    },
    "shapes": [
@@ -1574,7 +1574,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -1684,7 +1684,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -1794,7 +1794,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -1904,7 +1904,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [
@@ -2014,7 +2014,7 @@
     {
      "kind": "polygon",
      "role": "study",
-     "fill": "#2474cf",
+     "fill": "#0a6ddd",
      "alpha": 0.9,
      "points": [
       [

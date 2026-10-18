@@ -1,14 +1,14 @@
 [
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "fixed": {},
   "remembered": {},
@@ -18,24 +18,24 @@
    "Male"
   ],
   "expected": {
-   "Female": "#2474cf",
-   "Male": "#ef675a"
+   "Female": "#0a6ddd",
+   "Male": "#de4642"
   }
  },
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "fixed": {},
   "remembered": {
-   "Surgical": "#2474cf"
+   "Surgical": "#0a6ddd"
   },
   "override": {},
   "names": [
@@ -43,25 +43,25 @@
    "Male"
   ],
   "expected": {
-   "Female": "#2474cf",
-   "Male": "#ef675a"
+   "Female": "#0a6ddd",
+   "Male": "#de4642"
   }
  },
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "fixed": {},
   "remembered": {
-   "A": "#2474cf",
-   "X": "#2474cf"
+   "A": "#0a6ddd",
+   "X": "#0a6ddd"
   },
   "override": {},
   "names": [
@@ -69,26 +69,26 @@
    "X"
   ],
   "expected": {
-   "A": "#2474cf",
-   "X": "#ef675a"
+   "A": "#0a6ddd",
+   "X": "#de4642"
   }
  },
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "fixed": {
    "F": "#000000"
   },
   "remembered": {
-   "R": "#ef675a"
+   "R": "#de4642"
   },
   "override": {
    "O": "#ffffff"
@@ -103,27 +103,27 @@
   "expected": {
    "O": "#ffffff",
    "F": "#000000",
-   "R": "#ef675a",
-   "N1": "#2474cf",
-   "N2": "#b93780"
+   "R": "#de4642",
+   "N1": "#0a6ddd",
+   "N2": "#e79d01"
   }
  },
  {
   "palette": [
-   "#2474cf",
-   "#ef675a",
-   "#b93780",
-   "#53b0de",
-   "#e8a628",
-   "#00afa9",
-   "#8362cd",
-   "#44aa5a"
+   "#0a6ddd",
+   "#de4642",
+   "#e79d01",
+   "#019a98",
+   "#f07202",
+   "#06b1f7",
+   "#06a141",
+   "#8264e7"
   ],
   "fixed": {
-   "Control": "#2474cf"
+   "Control": "#0a6ddd"
   },
   "remembered": {
-   "Arm A": "#b93780"
+   "Arm A": "#e79d01"
   },
   "override": {},
   "names": [
@@ -132,9 +132,9 @@
    "Control"
   ],
   "expected": {
-   "Arm A": "#b93780",
-   "Arm B": "#ef675a",
-   "Control": "#2474cf"
+   "Arm A": "#e79d01",
+   "Arm B": "#de4642",
+   "Control": "#0a6ddd"
   }
  }
 ]

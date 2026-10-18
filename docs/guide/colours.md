@@ -50,12 +50,15 @@ The six categorical palettes have eight colours each:
 
 | Palette | Character |
 |---|---|
-| `daylight` | bright and balanced; the default |
-| `bloom` | playful, led by magenta |
-| `citrus` | sunny, high energy |
-| `lagoon` | fresh blue-green with coral |
-| `calm` | subdued, for long reports |
-| `deep` | dark and light, prints in grey |
+| `daylight` | vivid; the default: blue, red, amber |
+| `calm` | softer and lighter, for long reports: blue, red, mint |
+| `deep` | stays apart when printed in grey: dark blue, red, light amber |
+| `lagoon` | cool: blue, red, cyan |
+| `citrus` | warm: blue, red, gold |
+| `bold` | saturated, for slides and posters: blue, red, gold |
+
+Every set opens with its own blue, then its own red, so two groups always read blue against red, in any
+set. Violet, magenta and pink appear only in the last two slots.
 
 The purpose sets cover common cases: `pair`, `pair-teal` and `pair-violet` for two groups, `ink` for strict
 greyscale print, and `judgement` for low, some concerns and high.
@@ -224,6 +227,6 @@ hl_use(brand = FALSE)
 ## Light colours
 
 Some palette colours are light: their contrast with a white background is below 3:1 (in `daylight`, the
-colours in slots 4, 5, 6 and 8). hairline keeps them as they are for areas such as bars and donut segments,
+colours in slots 3, 5 and 6). hairline keeps them as they are for areas such as bars and donut segments,
 draws lines in them a little wider, and fills points with a darker shade of the same hue, so thin marks stay
 visible. Text never takes a data colour; labels and values stay in the text greys next to the coloured mark.

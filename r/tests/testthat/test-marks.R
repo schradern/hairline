@@ -4,7 +4,7 @@ two_series <- function() {
 
 test_that("series colours follow slots and refuse too many categories", {
   hl_use(brand = FALSE)
-  expect_equal(series_colors(c("Home", "Rehab")), c(Home = "#2474cf", Rehab = "#ef675a"))
+  expect_equal(series_colors(c("Home", "Rehab")), c(Home = "#0a6ddd", Rehab = "#de4642"))
   expect_error(series_colors(paste("group", 1:9)), "palette 'daylight' has 8 slots but 9 categories", fixed = TRUE)
 })
 

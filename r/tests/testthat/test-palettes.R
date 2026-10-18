@@ -1,10 +1,19 @@
 test_that("shipped palettes pass and daylight has the documented light slots", {
-  for (name in c("daylight", "bloom", "citrus", "lagoon", "calm", "deep")) {
+  for (name in c("daylight", "calm", "deep", "lagoon", "citrus", "bold")) {
     report <- hl_check_palette(hl_palette(name))
     expect_true(report$passed, label = name)
     expect_gte(report$worst_cvd, 8)
   }
-  expect_equal(hl_check_palette(hl_palette("daylight"))$light_slots, c(4L, 5L, 6L, 8L))
+  expect_equal(hl_check_palette(hl_palette("daylight"))$light_slots, c(3L, 5L, 6L))
+})
+
+test_that("every set opens blue then red and keeps violet late, as in Python", {
+  for (name in c("daylight", "calm", "deep", "lagoon", "citrus", "bold")) {
+    hues <- vapply(hl_palette(name), function(colour) hex_to_oklch(colour)[3], numeric(1))
+    expect_true(hues[1] >= 235 && hues[1] <= 270, label = name)
+    expect_true(hues[2] <= 35 || hues[2] >= 355, label = name)
+    expect_false(any(hues[3:6] >= 270 | hues[3:6] < 10), label = name)
+  }
 })
 
 test_that("too many categories raise a named error", {

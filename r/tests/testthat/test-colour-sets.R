@@ -21,7 +21,7 @@ test_that("swatch geometry matches the shared fixture", {
 })
 
 test_that("purpose sets are palettes by name", {
-  expect_equal(hl_palette("pair"), c("#2474cf", "#ef675a"))
+  expect_equal(hl_palette("pair"), c("#0a6ddd", "#de4642"))
   expect_equal(hl_palette("pair-violet"), c("#5152c1", "#ef852e"))
   expect_equal(hl_palette("ink", n = 3), c("#1b1e22", "#4a5057", "#767c84"))
   expect_equal(hl_palette("judgement"), c("#009775", "#e8a628", "#b93780"))
@@ -30,13 +30,13 @@ test_that("purpose sets are palettes by name", {
 test_that("a purpose set can be the active palette", {
   hl_use(brand = FALSE, palette = "pair")
   on.exit(hl_use(brand = FALSE))
-  expect_equal(hl_settings()$palette, c("#2474cf", "#ef675a"))
+  expect_equal(hl_settings()$palette, c("#0a6ddd", "#de4642"))
   expect_error(hl_palette(n = 3), "palette 'pair' has 2 slots but 3 categories", fixed = TRUE)
 })
 
 test_that("a ramp is not a palette, and unknown names list the choices", {
   expect_error(hl_palette("blues"), "'blues' is a ramp, not a palette; use hl_ramp('blues')", fixed = TRUE)
-  expect_error(hl_palette("sunset"), paste("available palettes: daylight, bloom, citrus, lagoon, calm, deep, pair,",
+  expect_error(hl_palette("sunset"), paste("available palettes: daylight, calm, deep, lagoon, citrus, bold, pair,",
                                            "pair-teal, pair-violet, ink, judgement"), fixed = TRUE)
 })
 
@@ -48,7 +48,7 @@ test_that("the catalogue lists every colour set with its use, as in Python", {
   expect_equal(nrow(table), 18)
   daylight <- table[table$name == "daylight", ]
   expect_true(daylight$active)
-  expect_equal(daylight$use, "bright and balanced; the default")
+  expect_equal(daylight$use, "vivid; the default")
   expect_equal(strsplit(daylight$colors, " ")[[1]], hl_palette("daylight"))
   expect_equal(hl_palettes("purpose")$name, c("pair", "pair-teal", "pair-violet", "ink", "judgement"))
   expect_error(hl_palettes("warm"), "unknown kind 'warm'; use one of categorical, purpose, sequential, diverging",

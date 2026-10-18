@@ -28,10 +28,11 @@ across a report.
 
 \code{\link[=hl_palettes]{hl_palettes()}} lists every colour set with its kind, number of colours,
 use, and which one is active; \code{\link[=hl_swatches]{hl_swatches()}} draws them. The six
-categorical palettes have eight colours each: \code{"daylight"} (bright and
-balanced; the default), \code{"bloom"} (playful, led by magenta), \code{"citrus"}
-(sunny, high energy), \code{"lagoon"} (fresh blue-green with coral), \code{"calm"}
-(subdued, for long reports) and \code{"deep"} (dark and light, prints in grey).
+categorical palettes have eight colours each. Every set opens with its own
+blue, then its own red, so two groups always read blue against red:
+\code{"daylight"} (vivid; the default), \code{"calm"} (softer and lighter, for long
+reports), \code{"deep"} (stays apart when printed in grey), \code{"lagoon"} (cool),
+\code{"citrus"} (warm) and \code{"bold"} (saturated, for slides).
 The purpose sets are \code{"pair"}, \code{"pair-teal"} and \code{"pair-violet"} for two
 groups, \code{"ink"} for greyscale print and \code{"judgement"} for low, some
 concerns and high. The ramps are \code{"blues"}, \code{"teals"}, \code{"oranges"},

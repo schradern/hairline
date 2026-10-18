@@ -81,204 +81,239 @@
    "fill": "#1b1e22"
   },
   {
-   "hex": "#c63c8a",
+   "hex": "#0a6ddd",
    "surface": "#ffffff",
-   "fill": "#c63c8a"
+   "fill": "#0a6ddd"
   },
   {
-   "hex": "#5152c1",
+   "hex": "#de4642",
    "surface": "#ffffff",
-   "fill": "#5152c1"
+   "fill": "#de4642"
   },
   {
-   "hex": "#01aac6",
+   "hex": "#e79d01",
    "surface": "#ffffff",
-   "fill": "#00a3be"
+   "fill": "#c78600"
   },
   {
-   "hex": "#90c045",
+   "hex": "#019a98",
    "surface": "#ffffff",
-   "fill": "#72a01c"
+   "fill": "#019a98"
   },
   {
-   "hex": "#e17a93",
+   "hex": "#f07202",
    "surface": "#ffffff",
-   "fill": "#da748d"
+   "fill": "#e76d00"
   },
   {
-   "hex": "#854494",
+   "hex": "#06b1f7",
    "surface": "#ffffff",
-   "fill": "#854494"
+   "fill": "#009ddc"
   },
   {
-   "hex": "#009775",
+   "hex": "#06a141",
    "surface": "#ffffff",
-   "fill": "#009775"
+   "fill": "#06a141"
   },
   {
-   "hex": "#ef852e",
+   "hex": "#8264e7",
    "surface": "#ffffff",
-   "fill": "#e1781b"
+   "fill": "#8264e7"
   },
   {
-   "hex": "#ef7926",
+   "hex": "#397abe",
    "surface": "#ffffff",
-   "fill": "#e8731c"
+   "fill": "#397abe"
   },
   {
-   "hex": "#794db6",
+   "hex": "#c66561",
    "surface": "#ffffff",
-   "fill": "#794db6"
+   "fill": "#c66561"
   },
   {
-   "hex": "#c83065",
+   "hex": "#43c49f",
    "surface": "#ffffff",
-   "fill": "#c83065"
+   "fill": "#0aa481"
   },
   {
-   "hex": "#eb9a75",
+   "hex": "#d7a447",
    "surface": "#ffffff",
-   "fill": "#d0815d"
+   "fill": "#bd8b29"
   },
   {
-   "hex": "#00b4bc",
+   "hex": "#3baee2",
    "surface": "#ffffff",
-   "fill": "#009fa7"
+   "fill": "#1f9bce"
   },
   {
-   "hex": "#70b445",
+   "hex": "#67a559",
    "surface": "#ffffff",
-   "fill": "#5ea130"
+   "fill": "#619f53"
   },
   {
-   "hex": "#2d6fcd",
+   "hex": "#a26dba",
    "surface": "#ffffff",
-   "fill": "#2d6fcd"
+   "fill": "#a26dba"
   },
   {
-   "hex": "#d2b223",
+   "hex": "#d67f50",
    "surface": "#ffffff",
-   "fill": "#a98d00"
+   "fill": "#cf794a"
   },
   {
-   "hex": "#006eb3",
+   "hex": "#1649ae",
    "surface": "#ffffff",
-   "fill": "#006eb3"
+   "fill": "#1649ae"
   },
   {
-   "hex": "#349d62",
+   "hex": "#dd574e",
    "surface": "#ffffff",
-   "fill": "#349d62"
+   "fill": "#dd574e"
   },
   {
-   "hex": "#32a5d4",
+   "hex": "#e4a409",
    "surface": "#ffffff",
-   "fill": "#299fcd"
+   "fill": "#bd8700"
   },
   {
-   "hex": "#ddac37",
+   "hex": "#a75001",
    "surface": "#ffffff",
-   "fill": "#bc8d00"
+   "fill": "#a75001"
   },
   {
-   "hex": "#20bcb2",
+   "hex": "#05aef3",
    "surface": "#ffffff",
-   "fill": "#00a198"
+   "fill": "#009ad8"
   },
   {
-   "hex": "#2e4d99",
+   "hex": "#079343",
    "surface": "#ffffff",
-   "fill": "#2e4d99"
+   "fill": "#079343"
   },
   {
-   "hex": "#ad65be",
+   "hex": "#7658cb",
    "surface": "#ffffff",
-   "fill": "#ad65be"
+   "fill": "#7658cb"
   },
   {
-   "hex": "#ef6661",
+   "hex": "#92ac01",
    "surface": "#ffffff",
-   "fill": "#ef6661"
+   "fill": "#879f00"
   },
   {
-   "hex": "#2e65a0",
+   "hex": "#0c71d1",
    "surface": "#ffffff",
-   "fill": "#2e65a0"
+   "fill": "#0c71d1"
   },
   {
-   "hex": "#7d9039",
+   "hex": "#da534f",
    "surface": "#ffffff",
-   "fill": "#7d9039"
+   "fill": "#da534f"
   },
   {
-   "hex": "#a74662",
+   "hex": "#0fb9cc",
    "surface": "#ffffff",
-   "fill": "#a74662"
+   "fill": "#009eaf"
   },
   {
-   "hex": "#55a9d6",
+   "hex": "#ef8604",
    "surface": "#ffffff",
-   "fill": "#489cc9"
+   "fill": "#de7c00"
   },
   {
-   "hex": "#d59741",
+   "hex": "#48b8fe",
    "surface": "#ffffff",
-   "fill": "#c1842b"
+   "fill": "#1b98dc"
   },
   {
-   "hex": "#008e82",
+   "hex": "#99ba22",
    "surface": "#ffffff",
-   "fill": "#008e82"
+   "fill": "#82a000"
   },
   {
-   "hex": "#6e519d",
+   "hex": "#5a62d2",
    "surface": "#ffffff",
-   "fill": "#6e519d"
+   "fill": "#5a62d2"
   },
   {
-   "hex": "#c56e4f",
+   "hex": "#05a152",
    "surface": "#ffffff",
-   "fill": "#c56e4f"
+   "fill": "#05a152"
   },
   {
-   "hex": "#2b5591",
+   "hex": "#0574c7",
    "surface": "#ffffff",
-   "fill": "#2b5591"
+   "fill": "#0574c7"
   },
   {
-   "hex": "#da6d5d",
+   "hex": "#d6464d",
    "surface": "#ffffff",
-   "fill": "#da6d5d"
+   "fill": "#d6464d"
   },
   {
-   "hex": "#3c88b8",
+   "hex": "#d4ad0a",
    "surface": "#ffffff",
-   "fill": "#3c88b8"
+   "fill": "#b08f00"
   },
   {
-   "hex": "#923240",
+   "hex": "#03b8ed",
    "surface": "#ffffff",
-   "fill": "#923240"
+   "fill": "#009dcb"
   },
   {
-   "hex": "#d5a13c",
+   "hex": "#ab3503",
    "surface": "#ffffff",
-   "fill": "#bb8819"
+   "fill": "#ab3503"
   },
   {
-   "hex": "#007c60",
+   "hex": "#7eba27",
    "surface": "#ffffff",
-   "fill": "#007c60"
+   "fill": "#68a000"
   },
   {
-   "hex": "#7baf6f",
+   "hex": "#8654cc",
    "surface": "#ffffff",
-   "fill": "#699c5d"
+   "fill": "#8654cc"
   },
   {
-   "hex": "#7f3e7a",
+   "hex": "#059a46",
    "surface": "#ffffff",
-   "fill": "#7f3e7a"
+   "fill": "#059a46"
+  },
+  {
+   "hex": "#1249e5",
+   "surface": "#ffffff",
+   "fill": "#1249e5"
+  },
+  {
+   "hex": "#e5011a",
+   "surface": "#ffffff",
+   "fill": "#e5011a"
+  },
+  {
+   "hex": "#dfa70d",
+   "surface": "#ffffff",
+   "fill": "#b98a00"
+  },
+  {
+   "hex": "#0ca8cf",
+   "surface": "#ffffff",
+   "fill": "#00a1c8"
+  },
+  {
+   "hex": "#e56806",
+   "surface": "#ffffff",
+   "fill": "#e56806"
+  },
+  {
+   "hex": "#0a938e",
+   "surface": "#ffffff",
+   "fill": "#0a938e"
+  },
+  {
+   "hex": "#7629d8",
+   "surface": "#ffffff",
+   "fill": "#7629d8"
   },
   {
    "hex": "#2d1b69",
@@ -371,204 +406,239 @@
    "fill": "#64676c"
   },
   {
-   "hex": "#c63c8a",
+   "hex": "#0a6ddd",
    "surface": "#16191d",
-   "fill": "#c63c8a"
+   "fill": "#0a6ddd"
   },
   {
-   "hex": "#5152c1",
+   "hex": "#de4642",
    "surface": "#16191d",
-   "fill": "#5658c8"
+   "fill": "#de4642"
   },
   {
-   "hex": "#01aac6",
+   "hex": "#e79d01",
    "surface": "#16191d",
-   "fill": "#01aac6"
+   "fill": "#e79d01"
   },
   {
-   "hex": "#90c045",
+   "hex": "#019a98",
    "surface": "#16191d",
-   "fill": "#90c045"
+   "fill": "#019a98"
   },
   {
-   "hex": "#e17a93",
+   "hex": "#f07202",
    "surface": "#16191d",
-   "fill": "#e17a93"
+   "fill": "#f07202"
   },
   {
-   "hex": "#854494",
+   "hex": "#06b1f7",
    "surface": "#16191d",
-   "fill": "#9150a1"
+   "fill": "#06b1f7"
   },
   {
-   "hex": "#009775",
+   "hex": "#06a141",
    "surface": "#16191d",
-   "fill": "#009775"
+   "fill": "#06a141"
   },
   {
-   "hex": "#ef852e",
+   "hex": "#8264e7",
    "surface": "#16191d",
-   "fill": "#ef852e"
+   "fill": "#8264e7"
   },
   {
-   "hex": "#ef7926",
+   "hex": "#397abe",
    "surface": "#16191d",
-   "fill": "#ef7926"
+   "fill": "#397abe"
   },
   {
-   "hex": "#794db6",
+   "hex": "#c66561",
    "surface": "#16191d",
-   "fill": "#7f53bd"
+   "fill": "#c66561"
   },
   {
-   "hex": "#c83065",
+   "hex": "#43c49f",
    "surface": "#16191d",
-   "fill": "#c83065"
+   "fill": "#43c49f"
   },
   {
-   "hex": "#eb9a75",
+   "hex": "#d7a447",
    "surface": "#16191d",
-   "fill": "#eb9a75"
+   "fill": "#d7a447"
   },
   {
-   "hex": "#00b4bc",
+   "hex": "#3baee2",
    "surface": "#16191d",
-   "fill": "#00b4bc"
+   "fill": "#3baee2"
   },
   {
-   "hex": "#70b445",
+   "hex": "#67a559",
    "surface": "#16191d",
-   "fill": "#70b445"
+   "fill": "#67a559"
   },
   {
-   "hex": "#2d6fcd",
+   "hex": "#a26dba",
    "surface": "#16191d",
-   "fill": "#2d6fcd"
+   "fill": "#a26dba"
   },
   {
-   "hex": "#d2b223",
+   "hex": "#d67f50",
    "surface": "#16191d",
-   "fill": "#d2b223"
+   "fill": "#d67f50"
   },
   {
-   "hex": "#006eb3",
+   "hex": "#1649ae",
    "surface": "#16191d",
-   "fill": "#006eb3"
+   "fill": "#2d62c9"
   },
   {
-   "hex": "#349d62",
+   "hex": "#dd574e",
    "surface": "#16191d",
-   "fill": "#349d62"
+   "fill": "#dd574e"
   },
   {
-   "hex": "#32a5d4",
+   "hex": "#e4a409",
    "surface": "#16191d",
-   "fill": "#32a5d4"
+   "fill": "#e4a409"
   },
   {
-   "hex": "#ddac37",
+   "hex": "#a75001",
    "surface": "#16191d",
-   "fill": "#ddac37"
+   "fill": "#a75001"
   },
   {
-   "hex": "#20bcb2",
+   "hex": "#05aef3",
    "surface": "#16191d",
-   "fill": "#20bcb2"
+   "fill": "#05aef3"
   },
   {
-   "hex": "#2e4d99",
+   "hex": "#079343",
    "surface": "#16191d",
-   "fill": "#4365b3"
+   "fill": "#079343"
   },
   {
-   "hex": "#ad65be",
+   "hex": "#7658cb",
    "surface": "#16191d",
-   "fill": "#ad65be"
+   "fill": "#7658cb"
   },
   {
-   "hex": "#ef6661",
+   "hex": "#92ac01",
    "surface": "#16191d",
-   "fill": "#ef6661"
+   "fill": "#92ac01"
   },
   {
-   "hex": "#2e65a0",
+   "hex": "#0c71d1",
    "surface": "#16191d",
-   "fill": "#346ba6"
+   "fill": "#0c71d1"
   },
   {
-   "hex": "#7d9039",
+   "hex": "#da534f",
    "surface": "#16191d",
-   "fill": "#7d9039"
+   "fill": "#da534f"
   },
   {
-   "hex": "#a74662",
+   "hex": "#0fb9cc",
    "surface": "#16191d",
-   "fill": "#a74662"
+   "fill": "#0fb9cc"
   },
   {
-   "hex": "#55a9d6",
+   "hex": "#ef8604",
    "surface": "#16191d",
-   "fill": "#55a9d6"
+   "fill": "#ef8604"
   },
   {
-   "hex": "#d59741",
+   "hex": "#48b8fe",
    "surface": "#16191d",
-   "fill": "#d59741"
+   "fill": "#48b8fe"
   },
   {
-   "hex": "#008e82",
+   "hex": "#99ba22",
    "surface": "#16191d",
-   "fill": "#008e82"
+   "fill": "#99ba22"
   },
   {
-   "hex": "#6e519d",
+   "hex": "#5a62d2",
    "surface": "#16191d",
-   "fill": "#7457a3"
+   "fill": "#5a62d2"
   },
   {
-   "hex": "#c56e4f",
+   "hex": "#05a152",
    "surface": "#16191d",
-   "fill": "#c56e4f"
+   "fill": "#05a152"
   },
   {
-   "hex": "#2b5591",
+   "hex": "#0574c7",
    "surface": "#16191d",
-   "fill": "#3c66a4"
+   "fill": "#0574c7"
   },
   {
-   "hex": "#da6d5d",
+   "hex": "#d6464d",
    "surface": "#16191d",
-   "fill": "#da6d5d"
+   "fill": "#d6464d"
   },
   {
-   "hex": "#3c88b8",
+   "hex": "#d4ad0a",
    "surface": "#16191d",
-   "fill": "#3c88b8"
+   "fill": "#d4ad0a"
   },
   {
-   "hex": "#923240",
+   "hex": "#03b8ed",
    "surface": "#16191d",
-   "fill": "#ad4a56"
+   "fill": "#03b8ed"
   },
   {
-   "hex": "#d5a13c",
+   "hex": "#ab3503",
    "surface": "#16191d",
-   "fill": "#d5a13c"
+   "fill": "#b94218"
   },
   {
-   "hex": "#007c60",
+   "hex": "#7eba27",
    "surface": "#16191d",
-   "fill": "#007c60"
+   "fill": "#7eba27"
   },
   {
-   "hex": "#7baf6f",
+   "hex": "#8654cc",
    "surface": "#16191d",
-   "fill": "#7baf6f"
+   "fill": "#8654cc"
   },
   {
-   "hex": "#7f3e7a",
+   "hex": "#059a46",
    "surface": "#16191d",
-   "fill": "#924f8c"
+   "fill": "#059a46"
+  },
+  {
+   "hex": "#1249e5",
+   "surface": "#16191d",
+   "fill": "#1d57f3"
+  },
+  {
+   "hex": "#e5011a",
+   "surface": "#16191d",
+   "fill": "#e5011a"
+  },
+  {
+   "hex": "#dfa70d",
+   "surface": "#16191d",
+   "fill": "#dfa70d"
+  },
+  {
+   "hex": "#0ca8cf",
+   "surface": "#16191d",
+   "fill": "#0ca8cf"
+  },
+  {
+   "hex": "#e56806",
+   "surface": "#16191d",
+   "fill": "#e56806"
+  },
+  {
+   "hex": "#0a938e",
+   "surface": "#16191d",
+   "fill": "#0a938e"
+  },
+  {
+   "hex": "#7629d8",
+   "surface": "#16191d",
+   "fill": "#813ae6"
   },
   {
    "hex": "#2d1b69",

@@ -20,10 +20,11 @@
 #' @section See what there is:
 #' [hl_palettes()] lists every colour set with its kind, number of colours,
 #' use, and which one is active; [hl_swatches()] draws them. The six
-#' categorical palettes have eight colours each: `"daylight"` (bright and
-#' balanced; the default), `"bloom"` (playful, led by magenta), `"citrus"`
-#' (sunny, high energy), `"lagoon"` (fresh blue-green with coral), `"calm"`
-#' (subdued, for long reports) and `"deep"` (dark and light, prints in grey).
+#' categorical palettes have eight colours each. Every set opens with its own
+#' blue, then its own red, so two groups always read blue against red:
+#' `"daylight"` (vivid; the default), `"calm"` (softer and lighter, for long
+#' reports), `"deep"` (stays apart when printed in grey), `"lagoon"` (cool),
+#' `"citrus"` (warm) and `"bold"` (saturated, for slides).
 #' The purpose sets are `"pair"`, `"pair-teal"` and `"pair-violet"` for two
 #' groups, `"ink"` for greyscale print and `"judgement"` for low, some
 #' concerns and high. The ramps are `"blues"`, `"teals"`, `"oranges"`,

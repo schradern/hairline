@@ -37,8 +37,9 @@ resolve_palette <- function(name) {
 #'
 #' Colours for groups, in the order hairline assigns them: two groups take
 #' slots 1-2, three groups slots 1-3, and a group keeps its colour when more
-#' are shown. There are six categorical palettes of eight slots (`"daylight"`,
-#' the default, `"bloom"`, `"citrus"`, `"lagoon"`, `"calm"` and `"deep"`) and
+#' are shown. There are six categorical palettes of eight slots, each opening
+#' blue then red so two groups always read blue against red (`"daylight"`, the
+#' default, `"calm"`, `"deep"`, `"lagoon"`, `"citrus"` and `"bold"`), and
 #' purpose sets for common cases: `"pair"`, `"pair-teal"` and `"pair-violet"`
 #' for two groups, `"ink"` for greyscale print and `"judgement"` for low, some
 #' concerns and high. [hl_palettes()] lists them all with their uses and

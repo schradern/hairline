@@ -9,7 +9,7 @@ from hairline.color.space import hex_to_oklch
 from hairline.color.vision import delta_e
 from hairline.palettes import light_slots, palette, ramp
 
-SHIPPED = ["daylight", "bloom", "citrus", "lagoon", "calm", "deep"]
+SHIPPED = ["daylight", "calm", "deep", "lagoon", "citrus", "bold"]
 BRAND_EXACT = ["#14325c", "#e8574f", "#8fc1f2", "#9ee0b4"]
 
 
@@ -21,8 +21,8 @@ def test_shipped_palettes_pass(name):
 
 
 def test_daylight_light_slots():
-    assert check_palette(palette("daylight")).light_slots == [4, 5, 6, 8]
-    assert light_slots(palette("daylight")) == [4, 5, 6, 8]
+    assert check_palette(palette("daylight")).light_slots == [3, 5, 6]
+    assert light_slots(palette("daylight")) == [3, 5, 6]
 
 
 @pytest.mark.parametrize("name", SHIPPED)
@@ -35,8 +35,12 @@ def test_the_first_colours_form_the_most_readable_sets(name):
         assert min(delta_e(a, b, None) for a, b in pairs) >= 15
 
 
-def test_daylight_takes_no_light_slot_below_four_groups():
-    assert not set(light_slots(palette("daylight"))) & {1, 2, 3}
+def test_every_set_opens_blue_then_red_and_keeps_violet_late():
+    """Two groups read blue against red in every set; violet, magenta and pink only in the last two slots."""
+    for name in SHIPPED:
+        hues = [hex_to_oklch(color)[2] for color in palette(name)]
+        assert 235 <= hues[0] <= 270 and (hues[1] <= 35 or hues[1] >= 355), name
+        assert not any(hue >= 270 or hue < 10 for hue in hues[2:6]), name
 
 
 def test_brand_exact_fails_band():
@@ -63,7 +67,7 @@ def test_too_many_categories():
 
 def test_custom_palette_and_subset():
     assert palette(["#112233", "#445566"]) == ["#112233", "#445566"]
-    assert palette("deep", n=3) == ["#2b5591", "#da6d5d", "#3c88b8"]
+    assert palette("deep", n=3) == ["#1649ae", "#dd574e", "#e4a409"]
 
 
 def test_unknown_palette_lists_names():

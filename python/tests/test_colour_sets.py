@@ -20,7 +20,7 @@ def plain_settings():
 
 
 def test_purpose_sets_are_palettes_by_name():
-    assert hl.palette("pair") == ["#2474cf", "#ef675a"]
+    assert hl.palette("pair") == ["#0a6ddd", "#de4642"]
     assert hl.palette("pair-violet") == ["#5152c1", "#ef852e"]
     assert hl.palette("ink", n=3) == ["#1b1e22", "#4a5057", "#767c84"]
     assert hl.palette("judgement") == ["#009775", "#e8a628", "#b93780"]
@@ -29,7 +29,7 @@ def test_purpose_sets_are_palettes_by_name():
 def test_a_purpose_set_can_be_the_active_palette():
     hl.use(palette="pair")
     data = pd.DataFrame({"arm": ["Control", "Mobilisation", "Control"]})
-    assert hl.current_settings().palette == ("#2474cf", "#ef675a")
+    assert hl.current_settings().palette == ("#0a6ddd", "#de4642")
     hl.bars(data, "arm", by="arm")
     with pytest.raises(ValueError, match="palette 'pair' has 2 slots but 3 categories"):
         hl.palette(n=3)
@@ -41,7 +41,7 @@ def test_a_ramp_is_not_a_palette():
 
 
 def test_unknown_names_list_palettes_and_purpose_sets():
-    with pytest.raises(ValueError, match="available palettes: daylight, bloom, citrus, lagoon, calm, deep, pair, "
+    with pytest.raises(ValueError, match="available palettes: daylight, calm, deep, lagoon, citrus, bold, pair, "
                                          "pair-teal, pair-violet, ink, judgement"):
         hl.palette("sunset")
 
@@ -52,7 +52,7 @@ def test_the_catalogue_lists_every_colour_set_with_its_use():
     assert list(table["kind"].unique()) == KINDS
     assert len(table) == 18
     daylight = table[table["name"] == "daylight"].iloc[0]
-    assert daylight["active"] and daylight["slots"] == 8 and daylight["use"] == "bright and balanced; the default"
+    assert daylight["active"] and daylight["slots"] == 8 and daylight["use"] == "vivid; the default"
     assert daylight["colors"].split() == hl.palette("daylight")
     assert table[table["name"] == "blue-coral"].iloc[0]["slots"] == 13
 
@@ -84,11 +84,11 @@ def test_swatches_draw_one_tagged_square_per_colour():
     shapes = swatches_drawing({"rows": rows}, Box(20, 60, 440, 300), fake_measure, STYLE)
     squares = [shape for shape in shapes if shape.get("role") == "swatch"]
     assert len(squares) == 8 + 7
-    assert squares[0]["tip"] == "daylight 1: #2474cf" and squares[0]["series"] == "daylight"
+    assert squares[0]["tip"] == "daylight 1: #0a6ddd" and squares[0]["series"] == "daylight"
     assert squares[8]["tip"] == "greys step 1: #eeeeee"
     texts = [shape["text"] for shape in shapes if shape["kind"] == "text"]
     headings = load_tokens()["swatches"]["headings"]
-    assert texts[:3] == [headings["categorical"], "daylight", "bright and balanced; the default"]
+    assert texts[:3] == [headings["categorical"], "daylight", "vivid; the default"]
 
 
 def test_near_white_swatches_get_an_outline():
