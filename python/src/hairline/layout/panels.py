@@ -14,6 +14,7 @@ class PanelHeader:
     qualifier: str | None = None
     stats: tuple[tuple[str, str], ...] = ()
     key: str | None = None
+    x_title: str | None = None
 
 
 @dataclass(frozen=True)

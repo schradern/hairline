@@ -12,10 +12,12 @@ study_subsets <- function(study) {
 
 describe_numeric <- function(study, name, parts, stats) {
   digits <- study_digits(study_numbers(study$data[[name]]))
+  whole <- is_whole(study_numbers(study$data[[name]]))
   rows <- lapply(stats, function(stat) {
     c(paste0(study_label_unit(study, name), ", ", study_stat_labels[[stat]]),
       vapply(parts, function(part) {
-        numeric_summary(study_numbers(part$rows[[name]]), stat, digits, sum(study_is_missing(part$rows[[name]])))
+        numeric_summary(study_numbers(part$rows[[name]]), stat, digits, sum(study_is_missing(part$rows[[name]])),
+                        whole)
       }, character(1)))
   })
   values <- stats::setNames(as.list(rows[[1]][-1]), vapply(parts, `[[`, character(1), "name"))
@@ -81,30 +83,44 @@ study_overview <- function(study, parts) {
   shown <- if (is.null(study$roles$group)) parts else parts[-length(parts)]
   names <- vapply(shown, `[[`, character(1), "name")
   rules <- hl_tokens()$study
+  spread_rules <- hl_tokens()$spread
   columns <- min(length(numeric), rules$overview_columns)
   panel_rows <- ceiling(length(numeric) / columns)
   overview_rows <- function(name) {
-    do.call(rbind, lapply(shown, function(part) {
-      limits <- density_quantiles(study_numbers(part$rows[[name]]), c(0.25, 0.5, 0.75))
-      data.frame(variable = study_label(study, name), group = part$name, x = limits[c(1, 3)], middle = limits[2])
+    do.call(rbind, lapply(seq_along(shown), function(position) {
+      limits <- density_quantiles(study_numbers(shown[[position]]$rows[[name]]), c(0, 0.25, 0.5, 0.75, 1))
+      data.frame(variable = study_label(study, name), group = shown[[position]]$name,
+                 y = length(shown) - position, low = limits[1], q1 = limits[2], middle = limits[3], q3 = limits[4],
+                 high = limits[5])
     }))
   }
-  lines <- do.call(rbind, lapply(numeric, overview_rows))
-  lines$variable <- factor(lines$variable, levels = vapply(numeric, study_label, character(1), study = study))
-  lines$group <- factor(lines$group, levels = rev(names))
+  rows <- do.call(rbind, lapply(numeric, overview_rows))
+  rows$variable <- factor(rows$variable, levels = vapply(numeric, study_label, character(1), study = study))
+  rows$group <- factor(rows$group, levels = names)
+  ranges <- rbind(cbind(rows, x = rows$low), cbind(rows, x = rows$high))
   colours <- if (is.null(study$roles$group)) stats::setNames(hl_settings()$palette[1], names) else
     colours_for(names, NULL)
   title <- if (is.null(study$roles$group)) "Characteristics" else
     paste("Characteristics by", gsub("_", " ", study$roles$group))
-  plot <- ggplot2::ggplot(lines, ggplot2::aes(y = .data$group, colour = .data$group)) +
-    ggplot2::geom_path(ggplot2::aes(x = .data$x, group = .data$group), lineend = "butt") +
-    ggplot2::geom_point(data = lines[!duplicated(lines[c("variable", "group")]), ], ggplot2::aes(x = .data$middle)) +
+  settings <- hl_settings()
+  range <- ggplot2::geom_path(data = ranges, ggplot2::aes(.data$x, .data$y, group = .data$group),
+                              colour = settings$neutral$faint, lineend = "butt", inherit.aes = FALSE,
+                              linewidth = pt_to_linewidth(hl_tokens()$reference$width * settings$base_size))
+  range$hairline_fixed <- TRUE
+  half <- spread_rules$band / 2
+  plot <- ggplot2::ggplot(rows) + range +
+    ggplot2::geom_rect(ggplot2::aes(xmin = .data$q1, xmax = .data$q3, ymin = .data$y - half, ymax = .data$y + half,
+                                    fill = .data$group), alpha = spread_rules$band_opacity, colour = NA) +
+    ggplot2::geom_point(ggplot2::aes(.data$middle, .data$y, colour = .data$group)) +
     ggplot2::facet_wrap(~variable, ncol = columns, scales = "free_x") +
+    ggplot2::scale_y_continuous(breaks = rev(seq_along(names) - 1), labels = names,
+                                limits = c(-0.6, length(names) - 0.4), expand = c(0, 0)) +
     ggplot2::scale_colour_manual(values = colours, guide = "none") +
-    ggplot2::labs(title = title, subtitle = "Median and interquartile range", x = NULL, y = NULL) + theme_hairline() +
-    hl_legend(list())
+    ggplot2::scale_fill_manual(values = colours, guide = "none") +
+    ggplot2::labs(title = title, subtitle = "Range, interquartile range and median", x = NULL, y = NULL) +
+    theme_hairline() + hl_legend(list())
   for (name in numeric) {
-    plot <- plot + hl_panel_header(panel = study_label(study, name), qualifier = study_measure(study, name))
+    plot <- plot + hl_panel_header(panel = study_label(study, name), x_title = study_measure(study, name))
   }
   plot@meta$hairline_height_mm <- rules$overview_frame_mm +
     panel_rows * (rules$overview_panel_mm + length(shown) * rules$overview_row_mm)

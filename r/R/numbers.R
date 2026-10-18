@@ -50,3 +50,15 @@ hl_format_interval <- function(estimate, low, high, digits = 2, locale = NULL) {
   parts <- vapply(c(estimate, low, high), hl_format_number, character(1), digits = digits, locale = locale)
   sprintf("%s [%s; %s]", parts[1], parts[2], parts[3])
 }
+
+is_whole <- function(values) length(values) > 0 && all(values == round(values))
+
+# Decimals for values and their quantiles: none for whole numbers (counts, scores), otherwise by the median magnitude
+# (tokens study.digit_steps). Means take one more for whole data.
+auto_digits <- function(values) {
+  if (is_whole(values)) return(0)
+  magnitude <- if (length(values)) stats::median(abs(values)) else 0
+  steps <- hl_tokens()$study$digit_steps
+  for (index in seq_len(nrow(steps))) if (magnitude >= steps$min[index]) return(steps$digits[index])
+  steps$digits[nrow(steps)]
+}

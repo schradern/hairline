@@ -51,3 +51,20 @@ def format_p(value: float, locale: str | None = None) -> str:
     if value < 0.001:
         return f"p < {format_number(0.001, 3, locale)}"
     return f"p = {format_number(value, 3 if value < 0.1 else 2, locale)}"
+
+
+def is_whole(values) -> bool:
+    import numpy as np
+    array = np.asarray(values, dtype=float)
+    return bool(len(array)) and bool(np.all(array == np.round(array)))
+
+
+def auto_digits(values) -> int:
+    """Decimals for values and their quantiles: none for whole numbers (counts, scores), otherwise by the median
+    magnitude: none from 10, one from 1, two below (tokens study.digit_steps). Means take one more for whole data."""
+    import numpy as np
+    if is_whole(values):
+        return 0
+    magnitude = float(np.median(np.abs(np.asarray(values, dtype=float)))) if len(values) else 0.0
+    steps = load_tokens()["study"]["digit_steps"]
+    return next((step["digits"] for step in steps if magnitude >= step["min"]), steps[-1]["digits"])

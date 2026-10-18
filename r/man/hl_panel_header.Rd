@@ -9,7 +9,8 @@ hl_panel_header(
   qualifier = NULL,
   stats = NULL,
   panel = NULL,
-  key = NULL
+  key = NULL,
+  x_title = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ hl_panel_header(
 \item{panel}{Facet label the header belongs to; \code{NULL} for a single-panel plot.}
 
 \item{key}{Name of the one key number to emphasise, e.g. \code{"Days over 90\%"}.}
+
+\item{x_title}{Title under this panel's own x-axis numbers, e.g. its unit when panels measure different things.}
 }
 \value{
 An object to add to a ggplot with \code{+}.

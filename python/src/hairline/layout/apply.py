@@ -104,7 +104,9 @@ def frame_input(figure: HairlineFigure, measured: Measured, size: tuple[float, f
                       y_title=figure.y_title_text is not None, x_title=figure.x_title_text is not None,
                       x_tick_labels=measured.x_tick_rows[-1], y_labels=first_column_has_axes(figure),
                       y_label_width_pt=measured.y_label_width, table_lines=table_lines(figure),
-                      column_label_widths=measured.column_label_widths, x_tick_rows=measured.x_tick_rows)
+                      column_label_widths=measured.column_label_widths, x_tick_rows=measured.x_tick_rows,
+                      x_title_rows=tuple(any(grid_position(figure, index)[0] == row and header.x_title
+                                             for index, header in figure.headers.items()) for row in range(rows)))
 
 
 def header_bounds(layout: FrameLayout, figure: HairlineFigure, index: int) -> tuple[float, float]:
@@ -188,6 +190,11 @@ def draw_axis_titles(figure: HairlineFigure, layout: FrameLayout) -> list:
     if figure.x_title_text is not None:
         right = max(box.x + box.width for box in layout.panels[:len(figure.axes)])
         artists.append(add_text(figure.figure, right, layout.x_title_baseline, figure.x_title_text, style, "right"))
+    for index, header in sorted(figure.headers.items()):
+        if header.x_title:
+            box = layout.panels[index]
+            baseline = layout.x_title_row_baselines[grid_position(figure, index)[0]]
+            artists.append(add_text(figure.figure, box.x + box.width, baseline, header.x_title, style, "right"))
     return artists
 
 

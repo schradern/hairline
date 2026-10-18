@@ -15,7 +15,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from study_fixtures import study_cases
+from study_fixtures import spread_cases, study_cases
 
 from hairline.brand import load_brand
 from hairline.brand_entities import checked_entities
@@ -122,6 +122,9 @@ def break_cases() -> list[dict]:
 FRAME_SIZES = {"title": 13.5, "subtitle": 9.0, "panel": 9.0, "label": 8.1, "caption": 7.65}
 FRAME_CASES = [
     {"width_pt": 482, "height_pt": 361},
+    {"width_pt": 493, "height_pt": 420, "subtitle_lines": 1, "panel_rows": 2, "panel_columns": 3,
+     "panel_header_lines": [1, 1], "x_tick_rows": [True, True], "x_title_rows": [True, True], "caption_lines": 1},
+    {"width_pt": 493, "height_pt": 300, "panel_columns": 3, "panel_header_lines": [1], "x_title_rows": [True]},
     {"width_pt": 482, "height_pt": 361, "subtitle_lines": 1, "legend_rows": 1, "caption_lines": 1, "y_title": True},
     {"width_pt": 241, "height_pt": 181, "title_lines": 2, "subtitle_lines": 2, "caption_lines": 2},
     {"width_pt": 493, "height_pt": 600, "subtitle_lines": 1, "legend_rows": 1, "caption_lines": 1, "panel_rows": 4,
@@ -459,6 +462,7 @@ def main() -> int:
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     write("study.json", study_cases())
+    write("spread.json", spread_cases(DRAWING_STYLE, fake_measure))
     return 0
 
 

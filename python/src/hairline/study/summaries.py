@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from hairline.numbers import format_number, format_percent
+from hairline.numbers import auto_digits, format_number, format_percent
 from hairline.stats.density import quantiles
 from hairline.tokens import load_tokens
 
@@ -20,15 +20,11 @@ def check_stats(stats: tuple[str, ...]) -> None:
 
 
 def digits_for(values: np.ndarray) -> int:
-    """Decimals by the median magnitude: none from 10, one from 1, two below (tokens study.digit_steps)."""
-    magnitude = float(np.median(np.abs(values))) if len(values) else 0.0
-    for step in load_tokens()["study"]["digit_steps"]:
-        if magnitude >= step["min"]:
-            return step["digits"]
-    return load_tokens()["study"]["digit_steps"][-1]["digits"]
+    return auto_digits(values)
 
 
-def numeric_text(values: np.ndarray, stat: str, digits: int, missing: int) -> str:
+def numeric_text(values: np.ndarray, stat: str, digits: int, missing: int, whole: bool = False) -> str:
+    """One statistic as text; `whole` (the variable holds whole numbers) gives means one more decimal."""
     if stat == "n_missing":
         return format_number(missing, 0)
     if not len(values):
@@ -41,8 +37,10 @@ def numeric_text(values: np.ndarray, stat: str, digits: int, missing: int) -> st
         low, middle, high = quantiles(values, [0.25, 0.5, 0.75])
         return f"{number(middle)} ({number(low)}{EMPTY}{number(high)})"
     if stat == "mean_sd":
+        extra = 1 if whole else 0
         spread = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
-        return f"{number(float(np.mean(values)))} ({number(spread)})"
+        mean_text = format_number(round(float(np.mean(values)), SNAP_DIGITS), digits + extra)
+        return f"{mean_text} ({format_number(round(spread, SNAP_DIGITS), digits + extra)})"
     return f"{number(float(np.min(values)))}{EMPTY}{number(float(np.max(values)))}"
 
 

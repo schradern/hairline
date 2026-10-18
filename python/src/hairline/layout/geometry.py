@@ -43,6 +43,7 @@ class FrameInput:
     table_lines: int = 0
     column_label_widths: tuple[float, ...] = ()
     x_tick_rows: tuple[bool, ...] = ()
+    x_title_rows: tuple[bool, ...] = ()
 
 
 @dataclass
@@ -58,6 +59,7 @@ class FrameLayout:
     y_title_left: float | None = None
     y_title_baseline: float | None = None
     x_title_baseline: float | None = None
+    x_title_row_baselines: list[float | None] = field(default_factory=list)
     caption_baselines: list[float] = field(default_factory=list)
     table_baselines: list[float] = field(default_factory=list)
 
@@ -74,7 +76,8 @@ def load_font_metrics() -> FontMetrics:
 
 
 def frame_input_from_dict(values: dict) -> FrameInput:
-    tuples = {key: tuple(values.get(key, ())) for key in ("panel_header_lines", "column_label_widths", "x_tick_rows")}
+    tuples = {key: tuple(values.get(key, ())) for key in ("panel_header_lines", "column_label_widths", "x_tick_rows",
+                                                          "x_title_rows")}
     return FrameInput(**{**values, **tuples})
 
 

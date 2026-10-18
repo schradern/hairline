@@ -3,7 +3,7 @@
 hairline_header <- S7::new_class("hairline_header", package = "hairline",
                                  properties = list(panel = S7::class_any, name = S7::class_any,
                                                    qualifier = S7::class_any, stats = S7::class_any,
-                                                   key = S7::class_any))
+                                                   key = S7::class_any, x_title = S7::class_any))
 
 #' Panel header with key numbers
 #'
@@ -16,9 +16,10 @@ hairline_header <- S7::new_class("hairline_header", package = "hairline",
 #' @param stats Named character vector of key numbers, e.g. `c(Mean = "61.4%", Median = "61.3%")`.
 #' @param panel Facet label the header belongs to; `NULL` for a single-panel plot.
 #' @param key Name of the one key number to emphasise, e.g. `"Days over 90%"`.
+#' @param x_title Title under this panel's own x-axis numbers, e.g. its unit when panels measure different things.
 #' @return An object to add to a ggplot with `+`.
 #' @export
-hl_panel_header <- function(name = NULL, qualifier = NULL, stats = NULL, panel = NULL, key = NULL) {
+hl_panel_header <- function(name = NULL, qualifier = NULL, stats = NULL, panel = NULL, key = NULL, x_title = NULL) {
   if (!is.null(stats) && (is.null(names(stats)) || any(!nzchar(names(stats))))) {
     stop("hairline: hl_panel_header(stats =) needs a named vector, e.g. c(Mean = \"61.4%\")", call. = FALSE)
   }
@@ -26,7 +27,7 @@ hl_panel_header <- function(name = NULL, qualifier = NULL, stats = NULL, panel =
     stop(sprintf("hairline: key '%s' is not one of the key numbers: %s", key, paste(names(stats), collapse = ", ")),
          call. = FALSE)
   }
-  hairline_header(panel = panel, name = name, qualifier = qualifier, stats = stats, key = key)
+  hairline_header(panel = panel, name = name, qualifier = qualifier, stats = stats, key = key, x_title = x_title)
 }
 
 add_hairline_header <- function(object, plot, ...) {
@@ -34,7 +35,7 @@ add_hairline_header <- function(object, plot, ...) {
   key <- object@panel %||% object@name %||% ".single"
   headers <- plot@meta$hairline_headers %||% list()
   headers[[key]] <- list(name = object@name %||% object@panel, qualifier = object@qualifier, stats = object@stats,
-                         key = object@key)
+                         key = object@key, x_title = object@x_title)
   plot@meta$hairline_headers <- headers
   plot
 }

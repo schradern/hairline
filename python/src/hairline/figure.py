@@ -72,14 +72,16 @@ class HairlineFigure:
         return self.axes[0]
 
     def panel_header(self, index: int, name: str, qualifier: str | None = None,
-                     stats: Sequence[tuple[str, str]] = (), key: str | None = None) -> None:
-        """Name, optional qualifier and key numbers ('Label', 'value') above panel `index`; `key` marks one."""
+                     stats: Sequence[tuple[str, str]] = (), key: str | None = None,
+                     x_title: str | None = None) -> None:
+        """Name, optional qualifier and key numbers ('Label', 'value') above panel `index`; `key` marks one.
+        `x_title` goes under this panel's own x-axis numbers (its unit, when panels measure different things)."""
         self.check_index(index)
         pairs = tuple((str(label), str(value)) for label, value in stats)
         if key is not None and key not in [label for label, _ in pairs]:
             raise ValueError(f"hairline: key {key!r} is not one of the key numbers: "
                              f"{', '.join(label for label, _ in pairs)}")
-        self.headers[index] = PanelHeader(name, qualifier, pairs, key)
+        self.headers[index] = PanelHeader(name, qualifier, pairs, key, x_title)
 
     def check_index(self, index: int) -> None:
         if not 0 <= index < len(self.axes):

@@ -12,14 +12,10 @@ check_study_stats <- function(stats) {
   }
 }
 
-study_digits <- function(values) {
-  magnitude <- if (length(values)) stats::median(abs(values)) else 0
-  steps <- hl_tokens()$study$digit_steps
-  for (index in seq_len(nrow(steps))) if (magnitude >= steps$min[index]) return(steps$digits[index])
-  steps$digits[nrow(steps)]
-}
+study_digits <- function(values) auto_digits(values)
 
-numeric_summary <- function(values, stat, digits, missing) {
+# One statistic as text; `whole` (the variable holds whole numbers) gives means one more decimal.
+numeric_summary <- function(values, stat, digits, missing, whole = FALSE) {
   if (stat == "n_missing") return(hl_format_number(missing, 0))
   if (!length(values)) return(study_empty)
   # Snap away float noise first: R and numpy reach the same quantile by different arithmetic.
@@ -29,7 +25,10 @@ numeric_summary <- function(values, stat, digits, missing) {
     return(sprintf("%s (%s%s%s)", number(limits[2]), number(limits[1]), study_empty, number(limits[3])))
   }
   if (stat == "mean_sd") {
-    return(sprintf("%s (%s)", number(mean(values)), number(if (length(values) > 1) stats::sd(values) else 0)))
+    places <- digits + if (whole) 1 else 0
+    spread <- if (length(values) > 1) stats::sd(values) else 0
+    return(sprintf("%s (%s)", hl_format_number(round(mean(values), study_snap_digits), places),
+                   hl_format_number(round(spread, study_snap_digits), places)))
   }
   paste0(number(min(values)), study_empty, number(max(values)))
 }

@@ -40,7 +40,8 @@ report_from_plan <- function(parts, plan) {
                    if (is.null(composed)) 0L else as.integer(composed$lines)
                  }, integer(1)),
                  y_title_left = layout$y_title_left, y_title_baseline = layout$y_title_baseline,
-                 x_title_baseline = layout$x_title_baseline, caption_baselines = layout$caption_baselines,
+                 x_title_baseline = layout$x_title_baseline, x_title_row_baselines = layout$x_title_row_baselines,
+                 caption_baselines = layout$caption_baselines,
                  title_line_rights = layout$left + vapply(plan$texts$title, text_width_pt, numeric(1),
                                                           style = title_style, USE.NAMES = FALSE),
                  legend_item_rights = vapply(plan$placed, `[[`, numeric(1), "right"),

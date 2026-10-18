@@ -35,6 +35,172 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null
+   ],
+   "caption_baselines": [],
+   "table_baselines": []
+  }
+ },
+ {
+  "input": {
+   "base_size": 9.0,
+   "sizes": {
+    "title": 13.5,
+    "subtitle": 9.0,
+    "panel": 9.0,
+    "label": 8.1,
+    "caption": 7.65
+   },
+   "width_pt": 493,
+   "height_pt": 420,
+   "subtitle_lines": 1,
+   "panel_rows": 2,
+   "panel_columns": 3,
+   "panel_header_lines": [
+    1,
+    1
+   ],
+   "x_tick_rows": [
+    true,
+    true
+   ],
+   "x_title_rows": [
+    true,
+    true
+   ],
+   "caption_lines": 1
+  },
+  "layout": {
+   "left": 15.75,
+   "right": 477.25,
+   "plot_left": 20.25,
+   "title_baselines": [
+    25.5105
+   ],
+   "subtitle_baselines": [
+    38.205
+   ],
+   "legend_row_centers": [],
+   "panel_header_baselines": [
+    [
+     60.236999999999995
+    ],
+    [
+     235.2459
+    ]
+   ],
+   "panels": [
+    [
+     20.25,
+     67.66199999999999,
+     140.33333333333334,
+     116.5881
+    ],
+    [
+     178.58333333333334,
+     67.66199999999999,
+     140.33333333333334,
+     116.5881
+    ],
+    [
+     336.9166666666667,
+     67.66199999999999,
+     140.33333333333334,
+     116.5881
+    ],
+    [
+     20.25,
+     242.67090000000002,
+     140.33333333333334,
+     116.5881
+    ],
+    [
+     178.58333333333334,
+     242.67090000000002,
+     140.33333333333334,
+     116.5881
+    ],
+    [
+     336.9166666666667,
+     242.67090000000002,
+     140.33333333333334,
+     116.5881
+    ]
+   ],
+   "y_title_left": null,
+   "y_title_baseline": null,
+   "x_title_baseline": 381.6753,
+   "x_title_row_baselines": [
+    206.6664,
+    381.6753
+   ],
+   "caption_baselines": [
+    402.52875
+   ],
+   "table_baselines": []
+  }
+ },
+ {
+  "input": {
+   "base_size": 9.0,
+   "sizes": {
+    "title": 13.5,
+    "subtitle": 9.0,
+    "panel": 9.0,
+    "label": 8.1,
+    "caption": 7.65
+   },
+   "width_pt": 493,
+   "height_pt": 300,
+   "panel_columns": 3,
+   "panel_header_lines": [
+    1
+   ],
+   "x_title_rows": [
+    true
+   ]
+  },
+  "layout": {
+   "left": 15.75,
+   "right": 477.25,
+   "plot_left": 20.25,
+   "title_baselines": [
+    25.5105
+   ],
+   "subtitle_baselines": [],
+   "legend_row_centers": [],
+   "panel_header_baselines": [
+    [
+     48.555
+    ]
+   ],
+   "panels": [
+    [
+     20.25,
+     55.98,
+     140.33333333333334,
+     204.0312
+    ],
+    [
+     178.58333333333334,
+     55.98,
+     140.33333333333334,
+     204.0312
+    ],
+    [
+     336.9166666666667,
+     55.98,
+     140.33333333333334,
+     204.0312
+    ]
+   ],
+   "y_title_left": null,
+   "y_title_baseline": null,
+   "x_title_baseline": 282.4275,
+   "x_title_row_baselines": [
+    282.4275
+   ],
    "caption_baselines": [],
    "table_baselines": []
   }
@@ -83,6 +249,9 @@
    "y_title_left": 15.75,
    "y_title_baseline": 78.5151,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null
+   ],
    "caption_baselines": [
     343.52875000000006
    ],
@@ -132,6 +301,9 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null
+   ],
    "caption_baselines": [
     154.36405,
     163.52874999999997
@@ -219,6 +391,12 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null,
+    null,
+    null,
+    null
+   ],
    "caption_baselines": [
     582.52875
    ],
@@ -309,6 +487,10 @@
    "y_title_left": 15.75,
    "y_title_baseline": 94.29390000000002,
    "x_title_baseline": 402.42750000000007,
+   "x_title_row_baselines": [
+    null,
+    null
+   ],
    "caption_baselines": [],
    "table_baselines": []
   }
@@ -365,6 +547,9 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null
+   ],
    "caption_baselines": [],
    "table_baselines": []
   }
@@ -410,6 +595,9 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null
+   ],
    "caption_baselines": [
     387.52875
    ],
@@ -465,6 +653,9 @@
    "y_title_left": 15.75,
    "y_title_baseline": 84.30030000000002,
    "x_title_baseline": 304.3459,
+   "x_title_row_baselines": [
+    null
+   ],
    "caption_baselines": [
     325.19935,
     334.36405,
@@ -547,6 +738,10 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null,
+    null
+   ],
    "caption_baselines": [],
    "table_baselines": []
   }
@@ -636,6 +831,10 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null,
+    null
+   ],
    "caption_baselines": [],
    "table_baselines": []
   }
@@ -682,6 +881,9 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": null,
+   "x_title_row_baselines": [
+    null
+   ],
    "caption_baselines": [
     343.52875
    ],
@@ -731,6 +933,9 @@
    "y_title_left": null,
    "y_title_baseline": null,
    "x_title_baseline": 284.33889999999997,
+   "x_title_row_baselines": [
+    null
+   ],
    "caption_baselines": [
     343.52874999999983
    ],

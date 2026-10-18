@@ -62,6 +62,13 @@ axis_title_grobs <- function(parts, plan) {
     grobs[[length(grobs) + 1]] <- text_grob_pt(parts$x_title, right, plan$layout$x_title_baseline, style,
                                                plan$size[2], "right")
   }
+  for (index in seq_along(parts$panels)) {
+    title <- panel_header_for(parts, index)$x_title
+    if (is.null(title)) next
+    box <- plan$layout$panels[[index]]
+    baseline <- plan$layout$x_title_row_baselines[[parts$panels[[index]]$row]]
+    grobs[[length(grobs) + 1]] <- text_grob_pt(title, box[1] + box[3], baseline, style, plan$size[2], "right")
+  }
   grobs
 }
 

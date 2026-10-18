@@ -59,7 +59,7 @@ def test_describe_builds_table_one_with_counts_and_shares():
     assert list(result.table.columns) == ["Characteristic", "Standard care", "Early mobilisation", "Overall"]
     assert result.table.iloc[0].tolist() == ["n", "20", "20", "40"]
     assert result.table.iloc[1, 0] == "Age (years), median (IQR)"
-    assert result.figure.headers[0].qualifier == "years"
+    assert result.figure.headers[0].x_title == "years"
     assert result.values["n"]["Overall"] == "40"
     assert result.text == "40 participants: 20 in Standard care and 20 in Early mobilisation."
     assert result.table.iloc[2, 0] == "Sex, n (%)"

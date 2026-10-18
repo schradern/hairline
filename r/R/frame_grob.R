@@ -16,6 +16,14 @@ column_label_widths <- function(parts) {
   widths
 }
 
+x_title_rows <- function(parts) {
+  rows <- logical(parts$rows)
+  for (index in seq_along(parts$panels)) {
+    if (!is.null(panel_header_for(parts, index)$x_title)) rows[parts$panels[[index]]$row] <- TRUE
+  }
+  rows
+}
+
 x_tick_rows <- function(parts) {
   rows <- logical(parts$rows)
   for (panel in parts$panels) if (!inherits(panel$axis_b, "zeroGrob")) rows[panel$row] <- TRUE
@@ -33,7 +41,7 @@ frame_spec <- function(parts, texts, size, legend_rows, header_lines) {
        table_lines = table_line_count(parts$table),
        y_label_width_pt = if (parts$bare) 0 else texts$column_widths[1],
        column_label_widths = if (parts$bare) numeric(parts$columns) else texts$column_widths,
-       x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts))
+       x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts), x_title_rows = x_title_rows(parts))
 }
 
 compose_all_headers <- function(parts, layout) {

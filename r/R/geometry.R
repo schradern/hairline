@@ -9,7 +9,7 @@ frame_defaults <- list(title_lines = 1, subtitle_lines = 0, legend_rows = 0, cap
                        panel_columns = 1, panel_header_lines = integer(), y_title = FALSE, x_title = FALSE,
                        x_tick_labels = TRUE, y_label_width_pt = 0, y_labels = TRUE, table_lines = 0,
                        column_label_widths = numeric(),
-                       x_tick_rows = logical())
+                       x_tick_rows = logical(), x_title_rows = logical())
 
 text_block <- function(size, count, metrics, line_gap) {
   if (count == 0) return(0)
@@ -41,6 +41,20 @@ inner_tick_band <- function(spec, row, spacing) {
   rows <- unlist(spec$x_tick_rows)
   shows <- row <= length(rows) && isTRUE(rows[row]) && row < spec$panel_rows
   if (shows) spacing$x_tick_labels * spec$sizes$label else 0
+}
+
+# Whether the panels of `row` carry their own axis titles (units under their tick numbers).
+has_row_titles <- function(spec, row) {
+  rows <- unlist(spec$x_title_rows)
+  row <= length(rows) && isTRUE(rows[row])
+}
+
+# The line under the last row: the figure's x title, or that row's own axis titles.
+bottom_title <- function(spec) isTRUE(spec$x_title) || has_row_titles(spec, spec$panel_rows)
+
+inner_title_band <- function(spec, row, spacing, metrics) {
+  if (!has_row_titles(spec, row) || row >= spec$panel_rows) return(0)
+  spacing$x_title * spec$base_size + spec$sizes$label * (metrics$cap_height + metrics$descender)
 }
 
 column_offsets <- function(spec, spacing) {
@@ -88,13 +102,13 @@ fixed_row_height <- function(spec, row, spacing, metrics, line_gap) {
   if (row == 1 && isTRUE(spec$y_title)) height <- height + text_block(spec$sizes$label, 1, metrics, line_gap) +
     spacing$y_title * base
   if (row > 1) height <- height + spacing$panel_rows * base
-  height + inner_tick_band(spec, row, spacing)
+  height + inner_tick_band(spec, row, spacing) + inner_title_band(spec, row, spacing, metrics)
 }
 
 fixed_bottom_height <- function(spec, spacing, metrics, line_gap) {
   base <- spec$base_size
   height <- if (isTRUE(spec$x_tick_labels)) spacing$x_tick_labels * spec$sizes$label else 0
-  if (isTRUE(spec$x_title)) height <- height + spacing$x_title * base + text_block(spec$sizes$label, 1, metrics, 0)
+  if (bottom_title(spec)) height <- height + spacing$x_title * base + text_block(spec$sizes$label, 1, metrics, 0)
   if (spec$table_lines > 0) {
     height <- height + spacing$table_gap * base + text_block(spec$sizes$label, spec$table_lines, metrics, line_gap)
   }

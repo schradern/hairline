@@ -116,3 +116,13 @@ def test_inner_rows_with_x_labels_get_the_tick_band():
     upper, lower = layout.panels[0], layout.panels[1]
     header_top = lower.y - 0.6 * BASE - line_height(9.0)
     assert header_top - (upper.y + upper.height) == pytest.approx(2.25 * BASE + 1.6 * 8.1)
+
+
+def test_rows_with_their_own_axis_titles_get_a_title_line():
+    plain = compute_frame(single_panel_spec(panel_rows=2, panel_header_lines=(1, 1), x_tick_rows=(True, True)),
+                          METRICS)
+    titled = compute_frame(single_panel_spec(panel_rows=2, panel_header_lines=(1, 1), x_tick_rows=(True, True),
+                                             x_title_rows=(True, True)), METRICS)
+    assert titled.x_title_row_baselines[0] > titled.panels[0].y + titled.panels[0].height
+    assert titled.x_title_row_baselines[1] == titled.x_title_baseline
+    assert titled.panels[0].height < plain.panels[0].height

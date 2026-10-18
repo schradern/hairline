@@ -8,15 +8,13 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from hairline.charts.bars import bars
-from hairline.charts.raincloud import raincloud
-from hairline.charts.ridgeline import ridgeline
-from hairline.numbers import format_number, format_p
+from hairline.charts.spread import spread
+from hairline.numbers import format_number, format_p, is_whole
 from hairline.stats.tests import chi_square, kruskal, rank_sum
 from hairline.study.columns import is_missing, level_text, levels, numbers
 from hairline.study.describe import OVERALL, subsets
 from hairline.study.result import Result
 from hairline.study.summaries import STAT_LABELS, check_stats, count_share, digits_for, numeric_text
-from hairline.tokens import load_tokens
 
 if TYPE_CHECKING:
     from hairline.study.model import Study
@@ -52,19 +50,18 @@ def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iq
     if study.types.get(variable) != "numeric":
         raise ValueError(f"hairline: distribution: '{variable}' is categorical; use compare() for its shares")
     digits, label = digits_for(numbers(study.data[variable])), study.label_unit(variable)
+    whole = is_whole(numbers(study.data[variable]))
     parts = subsets(study)
     rows = [[name, format_number(int((~is_missing(subset[variable])).sum()), 0),
-             *[numeric_text(numbers(subset[variable]), stat, digits, int(is_missing(subset[variable]).sum()))
+             *[numeric_text(numbers(subset[variable]), stat, digits, int(is_missing(subset[variable]).sum()), whole)
                for stat in stats]] for name, subset in parts]
     table = pd.DataFrame(rows, columns=["Group", "n", *[STAT_LABELS[stat] for stat in stats]])
     values = {row[0]: row[2] for row in rows}
     data = present_rows(study, variable).assign(**{variable: lambda frame: frame[variable].astype(float)})
     names = [name for name, _ in parts[:-1]] if study.group else [OVERALL]
-    chart = ridgeline if len(names) >= load_tokens()["study"]["ridgeline_from"] else raincloud
     name = study.label(variable)
     title = f"{name} by {str(study.group).replace('_', ' ')}" if study.group else name
-    extra = {"y_title": study.measure(variable)} if chart is raincloud else {}
-    figure = chart(data, GROUP, variable, order=names, title=title, size=size, **extra)
+    figure = spread(data, GROUP, variable, order=names, title=title, axis_title=study.measure(variable), size=size)
     shown = rows[:-1] if study.group else rows
     text = f"{label}, {STAT_LABELS[stats[0]]}: {listed([f'{row[0]} {row[2]}' for row in shown])}."
     return Result(figure, table, values, text)
@@ -90,11 +87,9 @@ def compare_numeric(study: Study, variable: str, size: str) -> Result:
                                                                                             strict=True)]
     rows += [["Test", "", f"{test[0]}, {test[1]}"]] if test else []
     values = {**dict(zip(names, summaries, strict=True)), **({"test": test[0], "p": test[1]} if test else {})}
-    pairs = [(names[0], names[1], test[1])] if test and len(names) == 2 else []
-    subtitle = f"{test[0]}, {test[1]}" if test and len(names) > 2 else None
-    figure = raincloud(data.assign(**{variable: data[variable].astype(float)}), GROUP, variable, order=names,
-                       comparisons=pairs, title=f"{study.label(variable)} by {str(study.group).replace('_', ' ')}",
-                       subtitle=subtitle, y_title=study.measure(variable), size=size)
+    figure = spread(data.assign(**{variable: data[variable].astype(float)}), GROUP, variable, order=names,
+                    title=f"{study.label(variable)} by {str(study.group).replace('_', ' ')}",
+                    subtitle=f"{test[0]}, {test[1]}" if test else None, axis_title=study.measure(variable), size=size)
     parts = listed([f"{name} {summary}" for name, summary in zip(names, summaries, strict=True)])
     text = f"{label}, median (IQR): {parts}" + (f" ({test[0]}, {test[1]})." if test else ".")
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "median (IQR)"]), values, text)

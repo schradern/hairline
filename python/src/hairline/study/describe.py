@@ -6,10 +6,12 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pandas as pd
+from matplotlib.patches import Rectangle
 
 from hairline import entities
 from hairline.figure import HairlineFigure, figure
-from hairline.numbers import format_number
+from hairline.marks import FIXED_ID
+from hairline.numbers import format_number, is_whole
 from hairline.stats.density import quantiles
 from hairline.study.columns import is_missing, level_text, levels, numbers
 from hairline.study.result import Result
@@ -31,10 +33,10 @@ def subsets(study: Study) -> list[tuple[str, pd.DataFrame]]:
 
 
 def numeric_rows(study: Study, name: str, parts: list, stats: Sequence[str]) -> tuple[list[list[str]], dict]:
-    digits = digits_for(numbers(study.data[name]))
+    digits, whole = digits_for(numbers(study.data[name])), is_whole(numbers(study.data[name]))
     rows, values = [], {}
     for stat in stats:
-        texts = [numeric_text(numbers(rows_[name]), stat, digits, int(is_missing(rows_[name]).sum()))
+        texts = [numeric_text(numbers(rows_[name]), stat, digits, int(is_missing(rows_[name]).sum()), whole)
                  for _, rows_ in parts]
         rows.append([f"{study.label_unit(name)}, {STAT_LABELS[stat]}", *texts])
         values.setdefault(name, dict(zip([label for label, _ in parts], texts, strict=True)))
@@ -79,8 +81,19 @@ def counts_text(study: Study, parts: list, counts: list[str]) -> str:
     return f"{total}: {', '.join(groups[:-1])} and {groups[-1]}." if len(groups) > 1 else f"{total}: {groups[0]}."
 
 
+def overview_row(ax, values, y: float, color: str, style: dict) -> None:
+    """One spread row on axes: range line, interquartile band, median dot (as the spread chart draws them)."""
+    rules = load_tokens()["spread"]
+    low, q1, middle, q3, high = quantiles(values, [0, 0.25, 0.5, 0.75, 1])
+    ax.plot([low, high], [y, y], color=style["faint"], linewidth=style["leader"], gid=FIXED_ID,
+            solid_capstyle="butt", label="_nolegend_")
+    ax.add_patch(Rectangle((q1, y - rules["band"] / 2), q3 - q1, rules["band"], facecolor=color, edgecolor="none",
+                           alpha=rules["band_opacity"], linewidth=0))
+    ax.scatter([middle], [y], color=color, zorder=3)
+
+
 def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:
-    """One panel per numeric variable: median and interquartile range per group, first group on top."""
+    """One panel per numeric variable: spread rows per group, first group on top, the unit under each axis."""
     numeric = [name for name in study.variables if study.types[name] == "numeric"]
     if not numeric:
         return None
@@ -91,18 +104,17 @@ def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:
     columns = min(len(numeric), rules["overview_columns"])
     rows = -(-len(numeric) // columns)
     height = rules["overview_frame_mm"] + rows * (rules["overview_panel_mm"] + len(shown) * rules["overview_row_mm"])
-    result = figure(title, subtitle="Median and interquartile range", size=size, height_mm=height,
+    result = figure(title, subtitle="Range, interquartile range and median", size=size, height_mm=height,
                     panels=len(numeric), layout="pair", columns=columns)
+    style = {"faint": result.settings.neutral["faint"],
+             "leader": load_tokens()["reference"]["width"] * result.settings.base_size}
     with entities.chart(names if study.group else [], None):
         colors = entities.colors_for(names, None) if study.group else {names[0]: result.settings.palette[0]}
         for index, name in enumerate(numeric):
             ax = result.axes[index]
-            for position, (label, rows) in enumerate(shown):
-                low, middle, high = quantiles(numbers(rows[name]), [0.25, 0.5, 0.75])
-                y = len(shown) - 1 - position
-                ax.plot([low, high], [y, y], color=colors[label], solid_capstyle="butt")
-                ax.scatter([middle], [y], color=colors[label], zorder=3)
+            for position, (label, subset) in enumerate(shown):
+                overview_row(ax, numbers(subset[name]), len(shown) - 1 - position, colors[label], style)
             result.categories(index, list(reversed(names)), "y")
-            result.panel_header(index, study.label(name), study.measure(name))
+            result.panel_header(index, study.label(name), x_title=study.measure(name))
             ax.set_ylim(-0.6, len(shown) - 0.4)
     return result

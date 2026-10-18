@@ -23,6 +23,13 @@ place_panel_rows <- function(state, spec, layout, spacing, height) {
       layout$panels[[length(layout$panels) + 1]] <- c(x, state$y, width, height)
     }
     state$y <- state$y + height + inner_tick_band(spec, row, spacing)
+    titled <- has_row_titles(spec, row) && row < spec$panel_rows
+    if (titled) {
+      state$y <- state$y + spacing$x_title * base
+      placed <- stack_lines(state, spec$sizes$label, 1)
+      state <- placed$state
+    }
+    layout$x_title_row_baselines[row] <- list(if (titled) placed$baselines else NULL)
   }
   list(state = state, layout = layout)
 }
@@ -30,11 +37,12 @@ place_panel_rows <- function(state, spec, layout, spacing, height) {
 place_bottom_block <- function(state, spec, layout, spacing) {
   base <- spec$base_size
   if (isTRUE(spec$x_tick_labels)) state$y <- state$y + spacing$x_tick_labels * spec$sizes$label
-  if (isTRUE(spec$x_title)) {
+  if (bottom_title(spec)) {
     state$y <- state$y + spacing$x_title * base
     placed <- stack_lines(state, spec$sizes$label, 1)
     state <- placed$state
     layout$x_title_baseline <- placed$baselines
+    if (has_row_titles(spec, spec$panel_rows)) layout$x_title_row_baselines[spec$panel_rows] <- list(placed$baselines)
   }
   if (spec$table_lines > 0) {
     state$y <- state$y + spacing$table_gap * base
@@ -60,7 +68,7 @@ compute_frame <- function(spec, metrics) {
                    spec$base_size else 0,
                  title_baselines = numeric(), subtitle_baselines = numeric(), legend_row_centers = numeric(),
                  panel_header_baselines = list(), panels = list(), y_title_left = NULL, y_title_baseline = NULL,
-                 x_title_baseline = NULL, caption_baselines = numeric(),
+                 x_title_baseline = NULL, x_title_row_baselines = list(), caption_baselines = numeric(),
                  table_baselines = numeric())
   state <- list(y = 0, metrics = metrics, line_gap = tokens$type$line_gap)
   placed <- place_header_block(state, spec, layout, spacing)

@@ -40,25 +40,22 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
   }
   digits <- study_digits(study_numbers(study$data[[variable]]))
   label <- study_label_unit(study, variable)
+  whole <- is_whole(study_numbers(study$data[[variable]]))
   parts <- study_subsets(study)
   rows <- lapply(parts, function(part) {
     values <- part$rows[[variable]]
     c(part$name, hl_format_number(sum(!study_is_missing(values)), 0),
       vapply(stats, numeric_summary, character(1), values = study_numbers(values), digits = digits,
-             missing = sum(study_is_missing(values))))
+             missing = sum(study_is_missing(values)), whole = whole))
   })
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", unname(study_stat_labels[stats]))
   data <- study_present_rows(study, variable)
   data[[variable]] <- as.numeric(data[[variable]])
   names <- if (is.null(study$roles$group)) "Overall" else vapply(parts[-length(parts)], `[[`, character(1), "name")
-  title <- study_by_title(study, study_label(study, variable))
-  figure <- if (length(names) >= hl_tokens()$study$ridgeline_from) {
-    hl_ridgeline(data, study_group_column, variable, order = names, title = title)
-  } else {
-    hl_raincloud(data, study_group_column, variable, order = names, title = title,
-                 y_title = study_measure(study, variable))
-  }
+  figure <- hl_spread(data, study_group_column, variable, order = names,
+                      title = study_by_title(study, study_label(study, variable)),
+                      axis_title = study_measure(study, variable))
   shown <- if (is.null(study$roles$group)) rows else rows[-length(rows)]
   text <- sprintf("%s, %s: %s.", label, study_stat_labels[[stats[1]]],
                   listed_text(vapply(shown, function(row) paste(row[1], row[3]), character(1))))
@@ -97,12 +94,11 @@ compare_numeric <- function(study, variable) {
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "median (IQR)")
   values <- c(stats::setNames(as.list(summaries), names), if (!is.null(test)) list(test = test[1], p = test[2]))
-  pairs <- if (!is.null(test) && length(names) == 2) list(c(names, test[2])) else list()
-  subtitle <- if (!is.null(test) && length(names) > 2) paste0(test[1], ", ", test[2]) else NULL
   data[[variable]] <- as.numeric(data[[variable]])
-  figure <- hl_raincloud(data, study_group_column, variable, order = names, comparisons = pairs,
-                         title = study_by_title(study, study_label(study, variable)), subtitle = subtitle,
-                         y_title = study_measure(study, variable))
+  figure <- hl_spread(data, study_group_column, variable, order = names,
+                      title = study_by_title(study, study_label(study, variable)),
+                      subtitle = if (!is.null(test)) paste0(test[1], ", ", test[2]),
+                      axis_title = study_measure(study, variable))
   text <- paste0(label, ", median (IQR): ", listed_text(paste(names, summaries)),
                  if (!is.null(test)) sprintf(" (%s, %s).", test[1], test[2]) else ".")
   study_result(figure, table, values, text)

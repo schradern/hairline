@@ -64,3 +64,24 @@ def study_cases() -> dict:
             "survival": result_case(cohort.survival()),
             "effects_table": effects.to_dict(orient="list"),
             "effects": result_case(cohort.effects(effects, measure="OR"))}
+
+
+def spread_cases(style: dict, measure) -> dict:
+    """Spread rows: whole counts with reference ticks, and shares on a percent axis from zero."""
+    from hairline.charts.spread import spread_spec
+    from hairline.charts.spread_geometry import spread_drawing
+    from hairline.layout.geometry import Box
+    generator = np.random.default_rng(13)
+    counts = {"group": ["A"] * 30 + ["B"] * 30 + ["C"] * 30,
+              "beds": [int(value) for value in np.concatenate([generator.poisson(mean, 30) for mean in (12, 9, 7)])]}
+    shares = {"group": counts["group"],
+              "share": [round(float(value), 3) for value in generator.beta(6, 2, 90)]}
+    box = Box(20, 60, 440, 200)
+    cases = []
+    for data, value, options in ((counts, "beds", {"marks": {"A": 16, "B": 12}, "mark_label": "beds"}),
+                                 (shares, "share", {"percent": True, "zero": True, "axis_title": "Share",
+                                                    "stats": ["median", "iqr", "n"]})):
+        spec = spread_spec(pd.DataFrame(data), "group", value, **options)
+        cases.append({"data": data, "value": value, "options": options, "spec": spec,
+                      "shapes": spread_drawing(spec, box, measure, style)})
+    return {"box": [box.x, box.y, box.width, box.height], "style": style, "cases": cases}
