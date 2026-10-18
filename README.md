@@ -73,6 +73,47 @@ hl_save(overview$figure, "cohort", formats = c("pdf", "png"), size = "double")
 The same study gives `compare()`, `distribution()`, `effects()`, `survival()` and `over_time()` in Python,
 and `hl_compare()`, `hl_distribution()`, `hl_effects()`, `hl_survival()` and `hl_over_time()` in R.
 
+## Saving figures
+
+One call writes every format you need, named after the figure and in a folder that is created if it is missing:
+
+```python
+hl.save(overview.figure, "figures/cohort", formats=["pdf", "png", "svg", "tiff", "html"])
+```
+
+```r
+hl_save(overview$figure, "figures/cohort", formats = c("pdf", "png", "svg", "tiff", "html"), size = "double")
+```
+
+| Format | For | What you get |
+|---|---|---|
+| `pdf` | journals, print | vector graphics with the font embedded; text stays selectable |
+| `png` | slides, Word, the web | 600 dpi by default (`dpi=`) |
+| `tiff` | journals that ask for TIFF | 600 dpi, LZW-compressed |
+| `svg` | editing, the web | vector graphics with text kept as text |
+| `html` | reports and web pages | an interactive figure in one self-contained file |
+
+**Sizes.** `size=` picks a preset, and the text size follows it: `"single"` (85 mm, a journal's single
+column), `"onehalf"` (120 mm), `"double"` (174 mm, two columns), `"a4"` (160 mm) and `"slide"` (254 × 143 mm,
+larger text). `width_mm=` and `height_mm=` set the size exactly. In Python the size belongs to the figure
+(`hl.figure(..., size="double")`, `hl.bars(..., size="double")`); in R it is given when saving
+(`hl_save(plot, "name", size = "double")`). Charts whose height follows their content, such as forest plots
+and Sankey diagrams, size themselves.
+
+**Every file** carries the figure's title and subtitle as its description and no timestamp;
+`background="transparent"` leaves out the white surface.
+
+### Interactive HTML
+
+![Hovering a Kaplan–Meier curve in the HTML export: the other arm fades and a tooltip shows the value](docs/images/interactive.png)
+
+- **Hover** a line, point, bar or segment: everything else fades and a tooltip shows its values, written in the
+  figure's number format.
+- **Legend:** hovering an entry brings its series forward. **Keyboard:** Tab moves through the series.
+- **One file:** the figure as SVG with its font, script and styles inside. It works offline, opens in any
+  browser, and its `<figure>` element can be placed in another HTML page or report as it is. The figure's title
+  and subtitle are its accessible name for screen readers.
+
 ## Gallery
 
 Every figure below comes from one short script in each language, on synthetic data; select a figure for its
