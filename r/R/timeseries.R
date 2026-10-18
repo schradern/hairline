@@ -55,7 +55,7 @@ mark_layers <- function(bands, events, data_x, groups) {
     band_layer$hairline_decoration <- TRUE
     layers[[length(layers) + 1]] <- band_layer
   }
-  width <- pt_to_mm(hl_tokens()$reference$width * settings$base_size)
+  width <- pt_to_linewidth(hl_tokens()$reference$width * settings$base_size)
   for (event in events) {
     frame <- panel_frame(data.frame(xintercept = as_axis_value(event$x, data_x)), event$panels, groups)
     layers[[length(layers) + 1]] <- ggplot2::geom_vline(data = frame, ggplot2::aes(xintercept = .data$xintercept),
@@ -71,19 +71,21 @@ series_layers <- function(data, x, y, raw, colours) {
   layers <- list()
   if (raw) {
     raw_layer <- ggplot2::geom_line(ggplot2::aes(.data[[x]], .data[[y]], colour = .data$.group),
-                                    linewidth = pt_to_mm(lines$secondary * base), alpha = lines$secondary_opacity)
+                                    linewidth = pt_to_linewidth(lines$secondary * base),
+                                    alpha = lines$secondary_opacity)
     raw_layer$hairline_secondary <- TRUE
     layers[[1]] <- raw_layer
   }
   c(layers, list(ggplot2::geom_line(ggplot2::aes(.data[[x]], .data$.mean, colour = .data$.group),
-                                    linewidth = pt_to_mm(lines$data * base)),
+                                    linewidth = pt_to_linewidth(lines$data * base)),
                  ggplot2::scale_colour_manual(values = colours, guide = "none")))
 }
 
 period_mean_layer <- function(data, y) {
   means <- stats::aggregate(data[[y]], list(.group = data$.group), mean)
   ggplot2::geom_hline(data = means, ggplot2::aes(yintercept = .data$x), colour = hl_settings()$neutral$muted,
-                      linetype = "32", linewidth = pt_to_mm(hl_tokens()$reference$width * hl_settings()$base_size))
+                      linetype = "32",
+                      linewidth = pt_to_linewidth(hl_tokens()$reference$width * hl_settings()$base_size))
 }
 
 timeseries_legend <- function(raw, period_mean, bands, raw_label, mean_label, threshold_legend) {

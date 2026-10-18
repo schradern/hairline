@@ -57,7 +57,7 @@ km_layer_data <- function(estimates) {
 km_layers <- function(layers, colours, median_line) {
   rules <- hl_tokens()$survival
   base <- hl_settings()$base_size
-  width <- pt_to_mm(hl_tokens()$lines$data * base)
+  width <- pt_to_linewidth(hl_tokens()$lines$data * base)
   band <- ggplot2::geom_ribbon(data = layers$bands, ggplot2::aes(.data$time, ymin = .data$low, ymax = .data$high,
                                                                  fill = .data$group, group = .data$group),
                                alpha = rules$band_opacity, inherit.aes = FALSE)
@@ -72,7 +72,7 @@ km_layers <- function(layers, colours, median_line) {
                  ggplot2::scale_fill_manual(values = colours, guide = "none"))
   if (!median_line) return(result)
   c(result, list(ggplot2::geom_hline(yintercept = 0.5, colour = hl_tokens()$reference$color, linetype = "13",
-                                     linewidth = pt_to_mm(hl_tokens()$reference$width * base))))
+                                     linewidth = pt_to_linewidth(hl_tokens()$reference$width * base))))
 }
 
 #' Kaplan–Meier curves

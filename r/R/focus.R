@@ -43,8 +43,8 @@ add_hairline_highlight <- function(object, plot, ...) {
 reference_layer <- function(object) {
   rules <- hl_tokens()$reference
   settings <- hl_settings()
-  arguments <- list(colour = rules$color, linewidth = pt_to_mm(rules$width * settings$base_size), linetype = "22",
-                    inherit.aes = FALSE)
+  arguments <- list(colour = rules$color, linewidth = pt_to_linewidth(rules$width * settings$base_size),
+                    linetype = "22", inherit.aes = FALSE)
   if (!is.null(object@y)) do.call(ggplot2::geom_hline, c(list(yintercept = object@y), arguments)) else
     do.call(ggplot2::geom_vline, c(list(xintercept = object@x), arguments))
 }

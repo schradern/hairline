@@ -18,7 +18,7 @@ raincloud_group_layers <- function(values, position, colour, rules) {
   median <- ggplot2::geom_segment(data = data.frame(x = position - half, xend = position + half, y = limits[2]),
                                   ggplot2::aes(.data$x, .data$y, xend = .data$xend, yend = .data$y),
                                   colour = settings$neutral$surface, lineend = "butt", inherit.aes = FALSE,
-                                  linewidth = pt_to_mm(hl_tokens()$lines$data * settings$base_size))
+                                  linewidth = pt_to_linewidth(hl_tokens()$lines$data * settings$base_size))
   median$hairline_secondary <- TRUE
   points <- data.frame(x = position + rules$points_centre + jitter_offsets(length(values)) * rules$points_spread,
                        y = values)
@@ -45,7 +45,7 @@ raincloud_bracket_layers <- function(comparisons, names, values, rules) {
     tick <- spread * rules$bracket_tick
     path <- ggplot2::geom_path(data = data.frame(x = span[c(1, 1, 2, 2)], y = c(y - tick, y, y, y - tick)),
                                ggplot2::aes(.data$x, .data$y), colour = colour, inherit.aes = FALSE,
-                               linewidth = pt_to_mm(hl_tokens()$reference$width * settings$base_size))
+                               linewidth = pt_to_linewidth(hl_tokens()$reference$width * settings$base_size))
     path$hairline_secondary <- TRUE
     label <- ggplot2::annotate("text", x = mean(span), y = y, label = comparisons[[index]][3], vjust = -0.35,
                                colour = colour, family = settings$font, size = role_size(settings, "label") /

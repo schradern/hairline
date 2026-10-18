@@ -12,7 +12,7 @@ ridge_layers <- function(curve, values, base, scale, colour, medians) {
                  ggplot2::geom_polygon(data = corners, ggplot2::aes(.data$x, .data$y), fill = colour,
                                        alpha = rules$fill_opacity, colour = NA, inherit.aes = FALSE),
                  ggplot2::geom_path(data = outline, ggplot2::aes(.data$x, .data$y), colour = colour,
-                                    linewidth = pt_to_mm(hl_tokens()$lines$data * settings$base_size),
+                                    linewidth = pt_to_linewidth(hl_tokens()$lines$data * settings$base_size),
                                     inherit.aes = FALSE))
   if (medians) {
     middle <- density_quantiles(values, 0.5)
@@ -20,7 +20,7 @@ ridge_layers <- function(curve, values, base, scale, colour, medians) {
     median <- ggplot2::geom_segment(data = data.frame(x = middle, y = base, yend = top),
                                     ggplot2::aes(.data$x, .data$y, xend = .data$x, yend = .data$yend),
                                     colour = settings$neutral$ink, inherit.aes = FALSE,
-                                    linewidth = pt_to_mm(hl_tokens()$reference$width * settings$base_size))
+                                    linewidth = pt_to_linewidth(hl_tokens()$reference$width * settings$base_size))
     median$hairline_secondary <- TRUE
     layers[[4]] <- median
   }

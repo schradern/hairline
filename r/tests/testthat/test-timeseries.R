@@ -17,10 +17,10 @@ test_that("one panel per group with raw values under the rolling mean in entity 
   raw <- built@data[[lines[1]]]
   mean <- built@data[[lines[2]]]
   expect_equal(unique(raw$alpha), 0.3)
-  expect_equal(unique(raw$linewidth), 0.055 * 9 / ggplot2::.pt, tolerance = 1e-6)
-  expect_equal(unique(mean$linewidth[mean$PANEL == 1]), 0.14 * 9 / ggplot2::.pt, tolerance = 1e-6)
+  expect_equal(unique(raw$linewidth), pt_to_linewidth(0.055 * 9), tolerance = 1e-6)
+  expect_equal(unique(mean$linewidth[mean$PANEL == 1]), pt_to_linewidth(0.14 * 9), tolerance = 1e-6)
   expect_equal(unique(mean$colour[mean$PANEL == 2]), hl_color("Unit B"))
-  expect_equal(unique(raw$linewidth[raw$PANEL == 2]), 0.055 * 9 / ggplot2::.pt, tolerance = 1e-6)
+  expect_equal(unique(raw$linewidth[raw$PANEL == 2]), pt_to_linewidth(0.055 * 9), tolerance = 1e-6)
 })
 
 test_that("the rolling mean is trailing with partial windows", {

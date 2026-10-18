@@ -2,6 +2,9 @@
 
 pt_to_mm <- function(value) value / ggplot2::.pt
 
+# ggplot draws a linewidth of 1 as .pt line-width units of 1/96 inch, so a width in pt needs 96/72 more.
+pt_to_linewidth <- function(value) pt_to_mm(value / 0.75)
+
 text_element <- function(settings, role, colour = NULL, face = NULL, ...) {
   definition <- hl_tokens()$type$roles[[role]]
   ggplot2::element_text(family = settings$font, size = role_size(settings, role),
@@ -40,9 +43,10 @@ frame_line_elements <- function(settings) {
   lines <- hl_tokens()$lines
   base <- settings$base_size
   ggplot2::theme(
-    panel.grid.major.y = ggplot2::element_line(colour = settings$neutral$grid, linewidth = pt_to_mm(lines$grid * base)),
+    panel.grid.major.y = ggplot2::element_line(colour = settings$neutral$grid,
+                                               linewidth = pt_to_linewidth(lines$grid * base)),
     panel.grid.major.x = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-    axis.line.x = ggplot2::element_line(colour = settings$neutral$axis, linewidth = pt_to_mm(lines$axis * base)),
+    axis.line.x = ggplot2::element_line(colour = settings$neutral$axis, linewidth = pt_to_linewidth(lines$axis * base)),
     axis.line.y = ggplot2::element_blank(), axis.ticks = ggplot2::element_blank(),
     axis.ticks.x = ggplot2::element_blank(), axis.ticks.y = ggplot2::element_blank(),
     axis.ticks.length = grid::unit(0, "pt"), panel.border = ggplot2::element_blank(),
@@ -73,7 +77,7 @@ frame_palette_elements <- function(settings) {
     palette.colour.discrete = function(n) hl_palette(n = n), palette.fill.discrete = function(n) hl_palette(n = n),
     palette.colour.continuous = hl_ramp("blues"), palette.fill.continuous = hl_ramp("blues"),
     geom = ggplot2::element_geom(ink = settings$neutral$ink, accent = settings$palette[1], paper = "#ffffff",
-                                 linewidth = pt_to_mm(lines$data * settings$base_size),
+                                 linewidth = pt_to_linewidth(lines$data * settings$base_size),
                                  pointsize = pt_to_mm(2 * lines$point_radius * settings$base_size / 0.75),
                                  family = settings$font)
   )
