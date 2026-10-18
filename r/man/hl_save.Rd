@@ -39,9 +39,11 @@ Writes \verb{name.<format>} for each format: PDF (vector), PNG and TIFF (600 dpi
 by default, TIFF LZW-compressed) and SVG (text kept as text). PDF, PNG and
 SVG files are named by the plot's title, with the title and subtitle as
 their description; none shows a timestamp or producer banner. PDF uses cairo
-where it is available (byte-identical across runs); otherwise svglite +
-rsvg, which is not byte-stable and needs \code{\link[=hl_install_font]{hl_install_font()}} to embed the
-bundled font.
+where it is available; otherwise svglite + rsvg. Both embed the bundled font
+once it can be found: cairo finds it on its own outside Windows, otherwise
+run \code{\link[=hl_install_font]{hl_install_font()}} once. PDFs are byte-identical across runs with
+cairo before 1.17.6; later versions keep a creation date inside a
+compressed stream that no PDF reader shows.
 }
 \examples{
 plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +

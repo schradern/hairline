@@ -74,9 +74,11 @@ png_crc <- function(bytes) {
 
 big_endian <- function(value, width = 4) as.raw((value %/% 256^((width - 1):0)) %% 256)
 
-# A tEXt chunk where the text is Latin-1, iTXt (UTF-8) otherwise, as Pillow writes them for the Python package.
+# A tEXt chunk where every character is Latin-1 (ISO 8859-1, code points up to 255), iTXt (UTF-8) otherwise, as
+# Pillow writes them for the Python package; decided by code point, not iconv, which maps "latin1" to cp1252 on Windows.
 png_text_chunk <- function(keyword, text) {
-  latin <- iconv(text, "UTF-8", "latin1", toRaw = TRUE)[[1]]
+  points <- utf8ToInt(enc2utf8(text))
+  latin <- if (all(points <= 255)) as.raw(points) else NULL
   type <- charToRaw(if (is.null(latin)) "iTXt" else "tEXt")
   data <- if (is.null(latin)) c(charToRaw(keyword), as.raw(c(0, 0, 0, 0, 0)), charToRaw(enc2utf8(text))) else
     c(charToRaw(keyword), as.raw(0), latin)

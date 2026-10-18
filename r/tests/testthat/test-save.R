@@ -23,22 +23,28 @@ test_that("PDF output is byte-stable on the cairo route", {
   skip_if_not(pdf_route() == "cairo", "the svglite + rsvg fallback route is not byte-stable")
   hl_use(brand = FALSE)
   folder <- withr::local_tempdir()
-  first <- hl_save(sample_hairline_plot(), file.path(folder, "a"), formats = "pdf")
-  second <- hl_save(sample_hairline_plot(), file.path(folder, "b"), formats = "pdf")
-  expect_identical(readBin(first, "raw", file.size(first)), readBin(second, "raw", file.size(second)))
+  first <- without_pdf_font_warning(hl_save(sample_hairline_plot(), file.path(folder, "a"), formats = "pdf"))
+  second <- without_pdf_font_warning(hl_save(sample_hairline_plot(), file.path(folder, "b"), formats = "pdf"))
+  first_bytes <- readBin(first, "raw", file.size(first))
+  skip_if(pdf_has_object_streams(first_bytes), "this cairo keeps its creation date in a compressed object stream")
+  expect_identical(first_bytes, readBin(second, "raw", file.size(second)))
 })
+
+# The bundled font reaches a PDF through fontconfig (cairo outside Windows) or once it is installed for the user.
+pdf_sees_bundled_font <- function() {
+  (pdf_route() == "cairo" && .Platform$OS.type != "windows") || font_installed_for_pdf()
+}
 
 test_that("PDF embeds the bundled font where the PDF route can see it", {
   hl_use(brand = FALSE)
-  skip_if_not(pdf_route() == "cairo" || font_installed_for_pdf(), "no PDF route that sees the bundled font here")
+  skip_if_not(pdf_sees_bundled_font(), "no PDF route that sees the bundled font here")
   path <- hl_save(sample_hairline_plot(), file.path(withr::local_tempdir(), "f"), formats = "pdf")
-  bytes <- readBin(path, "raw", file.size(path))
-  expect_true(grepl("HairlineSans", rawToChar(bytes[bytes != as.raw(0)]), useBytes = TRUE))
+  expect_true(pdf_contains(readBin(path, "raw", file.size(path)), "HairlineSans"))
 })
 
 test_that("a PDF without the bundled font warns and points to hl_install_font()", {
   hl_use(brand = FALSE)
-  skip_if(pdf_route() == "cairo" || font_installed_for_pdf(), "the bundled font reaches the PDF here")
+  skip_if(pdf_sees_bundled_font(), "the bundled font reaches the PDF here")
   expect_warning(hl_save(sample_hairline_plot(), file.path(withr::local_tempdir(), "f"), formats = "pdf"),
                  "hl_install_font")
 })
@@ -71,7 +77,7 @@ test_that("TIFF is LZW-compressed and the size preset sets the base size", {
 
 test_that("hl_install_font copies the bundled files into the user font folder", {
   home <- withr::local_tempdir()
-  withr::local_envvar(HOME = home)
+  withr::local_envvar(HOME = home, LOCALAPPDATA = home)
   paths <- hl_install_font(confirm = FALSE)
   expect_length(paths, 6)
   expect_true(all(file.exists(paths)))
@@ -102,7 +108,23 @@ test_that("the SVG name is escaped", {
   expect_true(grepl("<desc>Survival after ICU discharge. Dose &lt; 5 &amp; &gt; 1</desc>", svg, fixed = TRUE))
 })
 
+test_that("the PDF's last info dictionary holds the title and subject and nothing else", {
+  hl_use(brand = FALSE)
+  path <- suppressWarnings(hl_save(named_plot(), file.path(withr::local_tempdir(), "info"), formats = "pdf"))
+  bytes <- readBin(path, "raw", file.size(path))
+  section <- pdf_last_section(bytes)
+  info <- grepRaw("/Info [0-9]+ 0 R", bytes, value = TRUE, all = TRUE)
+  number <- sub("/Info ([0-9]+) 0 R", "\\1", rawToChar(info[[length(info)]]))
+  start <- grepRaw(paste0("\n", number, " 0 obj\n<< "), bytes, all = TRUE)
+  dictionary <- rawToChar(bytes[start[length(start)]:grepRaw(">>", bytes, offset = start[length(start)])])
+  expect_true(grepl(paste0("/Title ", pdf_text(named_title)), dictionary, fixed = TRUE))
+  expect_true(grepl(paste0("/Subject ", pdf_text(named_description)), dictionary, fixed = TRUE))
+  expect_false(grepl("Producer|CreationDate", dictionary))
+  expect_gt(section$offset, 0)
+})
+
 test_that("PDF readers see the title and subject, and no producer or timestamp", {
+  skip_on_cran()
   skip_if(Sys.which("pdfinfo") == "", "poppler's pdfinfo is not installed")
   hl_use(brand = FALSE)
   path <- suppressWarnings(hl_save(named_plot(), file.path(withr::local_tempdir(), "read"), formats = "pdf"))
@@ -123,4 +145,20 @@ test_that("a subtitle alone is the alt text, as in Python", {
   plot <- sample_hairline_plot() + ggplot2::labs(title = NULL, subtitle = "Weekly counts")
   expect_equal(figure_alt(plot), "Weekly counts")
   expect_null(figure_name(plot))
+})
+
+test_that("a font name inside a compressed object stream is found", {
+  hidden <- c(charToRaw("1 0 obj\n<< /Type /ObjStm /Filter /FlateDecode >>\nstream\n"),
+              memCompress(charToRaw("<< /BaseFont /ABCDEF+HairlineSans >>"), "gzip"),
+              charToRaw("\nendstream\nendobj\n"))
+  expect_length(grepRaw("HairlineSans", hidden, fixed = TRUE), 0)
+  expect_true(pdf_contains(hidden, "HairlineSans"))
+  expect_false(pdf_contains(hidden, "PublicSans"))
+})
+
+test_that("PNG text is Latin-1 only when every character is, as the PNG format defines it", {
+  chunk_type <- function(text) rawToChar(png_text_chunk("Description", text)[5:8])
+  expect_equal(chunk_type("Caf\u00e9 au lait"), "tEXt")
+  expect_equal(chunk_type("Kaplan\u2013Meier estimate"), "iTXt")
+  expect_true(as.raw(0xe9) %in% png_text_chunk("Title", "Caf\u00e9"))
 })

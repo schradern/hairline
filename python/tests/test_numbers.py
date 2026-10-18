@@ -37,3 +37,13 @@ def test_fixture_cases(repo_root):
     for case in json.loads((repo_root / "tokens/fixtures/numbers.json").read_text()):
         function = {"number": format_number, "percent": format_percent}[case["kind"]]
         assert function(case["value"], case["digits"], case["locale"]) == case["result"]
+
+
+@pytest.mark.parametrize(("value", "digits", "expected"), [
+    (8.65, 1, "8.7"), (8.649999999999999, 1, "8.7"), (2.45, 1, "2.5"), (0.125, 2, "0.13"), (0.25, 1, "0.3"),
+    (-2.45, 1, "−2.5"), (2.5, 0, "3"), (0.5, 0, "1"), (1234.5, 0, "1,235"), (8.6449, 1, "8.6"), (0.0, 2, "0.00"),
+    (-0.04, 1, "0.0"), (1e-7, 3, "0.000"),
+])
+def test_halves_round_up_on_every_platform(value, digits, expected):
+    """A value at the half rounds away from zero, whatever its binary representation; float noise does not decide."""
+    assert format_number(value, digits) == expected

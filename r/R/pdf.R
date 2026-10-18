@@ -76,9 +76,29 @@ strip_pdf_metadata <- function(path) {
   invisible(path)
 }
 
+# Whether `text` occurs in the PDF, in its plain bytes or inside a compressed stream: cairo 1.17.6 and later keep
+# font names and metadata in compressed object streams.
+pdf_contains <- function(bytes, text) {
+  if (length(grepRaw(text, bytes, fixed = TRUE))) return(TRUE)
+  for (start in grepRaw("stream", bytes, fixed = TRUE, all = TRUE)) {
+    if (start > 3 && identical(rawToChar(bytes[(start - 3):(start - 1)]), "end")) next
+    body <- start + 6
+    if (body <= length(bytes) && bytes[body] == as.raw(0x0d)) body <- body + 1
+    if (body <= length(bytes) && bytes[body] == as.raw(0x0a)) body <- body + 1
+    end <- grepRaw("endstream", bytes, offset = body, fixed = TRUE)
+    if (length(end) == 0 || end <= body) next
+    inflated <- tryCatch(memDecompress(bytes[body:(end - 1)], type = "gzip"), error = function(error) NULL)
+    if (!is.null(inflated) && length(grepRaw(text, inflated, fixed = TRUE))) return(TRUE)
+  }
+  FALSE
+}
+
+# cairo 1.17.6 and later write object streams, where the creation date cannot be blanked in place.
+pdf_has_object_streams <- function(bytes) length(grepRaw("/ObjStm", bytes, fixed = TRUE)) > 0
+
 warn_missing_pdf_font <- function(path) {
   bytes <- readBin(path, "raw", file.size(path))
-  if (length(grepRaw("HairlineSans", bytes)) == 0) {
+  if (!pdf_contains(bytes, "HairlineSans")) {
     warning(paste0("hairline: this R installation cannot reach the bundled font for PDF output, so the PDF uses a ",
                    "substitute font. Run hl_install_font() once (copies the font to your user font folder), or ",
                    "use formats = c(\"png\", \"svg\")."), call. = FALSE)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 from hairline.tokens import load_tokens
 
 
@@ -24,10 +26,24 @@ def group_thousands(integer_part: str, separator: str) -> str:
     return separator.join([integer_part, *groups])
 
 
+ROUNDING_TOLERANCE = 1e-9
+
+
+def fixed_text(magnitude: float, digits: int) -> str:
+    """`magnitude` (zero or more) with `digits` decimals, halves rounded up. Float noise below a billionth of the
+    last digit does not decide (8.649999999999999 is 8.65), so every platform prints the same digits."""
+    scaled = magnitude * 10**digits
+    units = str(math.floor(scaled + 0.5 + ROUNDING_TOLERANCE * max(1.0, scaled)))
+    if digits == 0:
+        return units
+    units = units.rjust(digits + 1, "0")
+    return f"{units[:-digits]}.{units[-digits:]}"
+
+
 def format_number(value: float, digits: int = 1, locale: str | None = None) -> str:
-    """Format with fixed decimals, locale separators and a true minus sign (U+2212)."""
+    """Format with fixed decimals (halves up), locale separators and a true minus sign (U+2212)."""
     symbols = locale_symbols(locale)
-    text = f"{abs(value):.{digits}f}"
+    text = fixed_text(abs(value), digits)
     integer_part, _, fraction = text.partition(".")
     body = group_thousands(integer_part, symbols["thousands"]) + (symbols["decimal"] + fraction if fraction else "")
     is_negative = value < 0 and any(character not in "0." for character in text)

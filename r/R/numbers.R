@@ -18,6 +18,18 @@ group_thousands <- function(integer_part, separator) {
   }
   paste(c(integer_part, groups), collapse = separator)
 }
+rounding_tolerance <- 1e-9
+
+# `magnitude` (zero or more) with `digits` decimals, halves rounded up. Float noise below a billionth of the last digit
+# does not decide (8.649999999999999 is 8.65), so every platform prints the same digits, as in the Python package.
+fixed_text <- function(magnitude, digits) {
+  scaled <- magnitude * 10^digits
+  units <- sprintf("%.0f", floor(scaled + 0.5 + rounding_tolerance * max(1, scaled)))
+  if (digits == 0) return(units)
+  units <- paste0(strrep("0", max(0, digits + 1 - nchar(units))), units)
+  paste0(substr(units, 1, nchar(units) - digits), ".", substring(units, nchar(units) - digits + 1))
+}
+
 
 #' Format numbers, percentages and intervals
 #'
@@ -35,7 +47,7 @@ group_thousands <- function(integer_part, separator) {
 #' @export
 hl_format_number <- function(value, digits = 1, locale = NULL) {
   symbols <- locale_symbols(locale)
-  text <- sprintf("%.*f", as.integer(digits), abs(value))
+  text <- fixed_text(abs(value), as.integer(digits))
   parts <- strsplit(text, ".", fixed = TRUE)[[1]]
   body <- group_thousands(parts[1], symbols$thousands)
   if (length(parts) > 1) body <- paste0(body, symbols$decimal, parts[2])
