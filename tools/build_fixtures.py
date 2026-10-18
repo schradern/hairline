@@ -14,6 +14,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from study_fixtures import study_cases
 
 from hairline.brand import load_brand
 from hairline.charts.arcs import arcs_spec
@@ -444,6 +445,7 @@ def main() -> int:
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
+    write("study.json", study_cases())
     return 0
 
 

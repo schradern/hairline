@@ -101,3 +101,25 @@ def egger(estimate: Sequence[float], se: Sequence[float]) -> float:
     fit = linear_fit(precision, standardised)
     intercept_se = fit["residual"] * math.sqrt(1 / fit["count"] + fit["mean_x"] ** 2 / fit["spread"])
     return 2 * (1 - t_cdf(abs(fit["intercept"] / intercept_se), fit["count"] - 2))
+
+
+def kruskal(samples: Sequence[Sequence[float]]) -> float:
+    """Kruskal–Wallis p over two or more samples, with the tie correction (as R's kruskal.test)."""
+    sizes = [len(sample) for sample in samples]
+    combined = ranks([value for sample in samples for value in sample])
+    total, bounds = sum(sizes), np.cumsum([0, *sizes])
+    statistic = 12 / (total * (total + 1)) * sum(combined[start:end].sum() ** 2 / (end - start)
+                                                 for start, end in zip(bounds[:-1], bounds[1:], strict=True))
+    statistic -= 3 * (total + 1)
+    _, ties = np.unique(combined, return_counts=True)
+    statistic /= 1 - (ties ** 3 - ties).sum() / (total ** 3 - total)
+    return chi2_sf(float(statistic), len(samples) - 1)
+
+
+def chi_square(counts: Sequence[Sequence[float]]) -> float:
+    """Pearson χ² test of independence on a table of counts, without continuity correction."""
+    observed = np.asarray(counts, dtype=float)
+    expected = np.outer(observed.sum(axis=1), observed.sum(axis=0)) / observed.sum()
+    used = expected > 0
+    statistic = float(((observed[used] - expected[used]) ** 2 / expected[used]).sum())
+    return chi2_sf(statistic, (observed.shape[0] - 1) * (observed.shape[1] - 1))

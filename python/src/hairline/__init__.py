@@ -26,13 +26,14 @@ from hairline.figure import HairlineFigure, figure, frame
 from hairline.numbers import format_interval, format_number, format_percent
 from hairline.palettes import palette, ramp
 from hairline.settings import Settings, current_settings, use
+from hairline.study import Result, Study, study
 from hairline.tokens import load_tokens
 
 __all__ = [
-    "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Settings", "arcs", "bars", "check_palette", "chord",
-    "color", "colors", "correlation", "current_settings", "donut", "dotplot", "figure", "forest", "format_interval",
-    "format_number", "format_percent", "frame", "funnel", "kaplan_meier", "load_tokens", "palette", "partition",
-    "prisma", "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter", "timeseries", "use",
-    "venn",
+    "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Result", "Settings", "Study", "arcs", "bars",
+    "check_palette", "chord", "color", "colors", "correlation", "current_settings", "donut", "dotplot", "figure",
+    "forest", "format_interval", "format_number", "format_percent", "frame", "funnel", "kaplan_meier", "load_tokens",
+    "palette", "partition", "prisma", "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter",
+    "study", "timeseries", "use", "venn",
 ]
 __version__ = "0.1.0"

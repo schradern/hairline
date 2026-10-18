@@ -11,7 +11,7 @@
 #' @export
 hl_layout_report <- function(plot, width_mm = NULL, height_mm = NULL, size = "onehalf") {
   plot <- plot_for_size(plot, size)
-  size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm))
+  size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm %||% plot@meta$hairline_height_mm))
   width_mm <- size_mm[1]
   height_mm <- size_mm[2]
   path <- tempfile(fileext = ".png")

@@ -80,7 +80,7 @@ hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", wid
     stop("hairline: SVG export needs the 'svglite' package", call. = FALSE)
   }
   plot <- plot_for_size(plot, size)
-  size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm))
+  size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm %||% plot@meta$hairline_height_mm))
   surface <- if (identical(background, "transparent")) "transparent" else "white"
   name <- strip_known_extension(name)
   dir.create(dirname(name), recursive = TRUE, showWarnings = FALSE)

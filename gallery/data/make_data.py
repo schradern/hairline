@@ -214,6 +214,20 @@ def comorbidity_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+def cohort_rows(rng: np.random.Generator) -> list[dict]:
+    """A two-arm trial cohort: baseline characteristics and follow-up, one row per patient."""
+    rows = []
+    for index in range(180):
+        arm = "Standard care" if index < 90 else "Early mobilisation"
+        sofa = round(float(rng.gamma(3.0, 2.2)), 1)
+        rows.append({"id": index + 1, "arm": arm, "sex": str(rng.choice(["Female", "Male"], p=[0.42, 0.58])),
+                     "age": int(round(float(np.clip(rng.normal(64, 12), 18, 95)))), "sofa": sofa,
+                     "lactate": round(float(rng.lognormal(0.7 + 0.04 * sofa, 0.35)), 1),
+                     "months": round(float(rng.exponential(14 if arm == "Standard care" else 19)), 1),
+                     "died": int(rng.random() < 0.7)})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -240,6 +254,7 @@ def main() -> None:
     write("destinations.csv", destination_rows(rng))
     write("transfers.csv", transfer_rows(rng))
     write("comorbidities.csv", comorbidity_rows(rng))
+    write("cohort.csv", cohort_rows(rng))
 
 
 if __name__ == "__main__":

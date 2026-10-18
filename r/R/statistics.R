@@ -57,3 +57,7 @@ format_p <- function(value, locale = NULL) {
   if (value < 0.001) return(paste("p <", hl_format_number(0.001, 3, locale)))
   paste("p =", hl_format_number(value, if (value < 0.1) 3 else 2, locale))
 }
+
+kruskal_p <- function(samples) stats::kruskal.test(samples)$p.value
+
+chi_square_p <- function(counts) suppressWarnings(stats::chisq.test(counts, correct = FALSE)$p.value)

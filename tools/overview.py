@@ -25,6 +25,7 @@ CHARTS = [("bars_admissions", "Bar chart"), ("bars_stacked", "Stacked bars"), ("
           ("donut_discharge", "Donut"), ("donut_nested", "Nested donut"), ("partition_discharge", "Partition bars"),
           ("sankey_budget", "Sankey"), ("arcs_pathways", "Arc diagram"),
           ("chord_transfers", "Chord diagram"), ("venn_comorbidities", "Venn diagram"),
+          ("study_describe", "Study: cohort overview"),
           ("occupancy_rows", "Time series, two levels of detail"), ("grid_panels", "Small multiples"),
           ("theme_scatter", "Scatter with the theme"), ("brand_example", "Brand file")]
 LANGUAGES = {"python": "Python", "r": "R"}
