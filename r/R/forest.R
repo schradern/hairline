@@ -110,6 +110,11 @@ forest_from_rma <- function(fit) {
 #'   from the model (logit and log links, Cox models).
 #' @param ... `study_heading`, `effect_heading`, `weight_heading`, `digits`.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' trials <- data.frame(study = c("Trial A", "Trial B", "Trial C"), or = c(0.62, 0.81, 0.47),
+#'                      low = c(0.41, 0.55, 0.25), high = c(0.94, 1.19, 0.88), weight = c(40, 35, 25))
+#' hl_forest(trials, "study", "or", "low", "high", weight = "weight",
+#'           pooled = list(estimate = 0.66, low = 0.52, high = 0.84, label = "Pooled"))
 #' @export
 hl_forest <- function(data, study = "study", estimate = "estimate", low = "low", high = "high", weight = NULL,
                       columns = character(), pooled = NULL, ratio = TRUE, favours = NULL, heterogeneity = NULL,

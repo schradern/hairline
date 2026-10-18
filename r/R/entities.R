@@ -77,6 +77,11 @@ entity_state <- function() hairline_state$entities %||% list(fixed = character()
 #'
 #' @param name Entity name, e.g. a ward or treatment arm.
 #' @return A hex colour, or a named character vector.
+#' @examples
+#' hl_use(colors = c("Unit A" = "#2474cf", "Unit B" = "#e8a628"))
+#' hl_color("Unit B")
+#' hl_colors()
+#' hl_use()
 #' @export
 hl_color <- function(name) {
   state <- entity_state()

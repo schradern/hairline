@@ -50,7 +50,7 @@ id_findings <- function(data, column, limit) {
 
 run_study_checks <- function(data, roles, variables, groups) {
   limit <- hl_tokens()$study$example_rows
-  named <- c(stats::setNames(unlist(roles), names(roles)),
+  named <- c(unlist(roles) %||% character(),
              stats::setNames(variables, rep("variable", length(variables))))
   choices <- paste("use one of:", paste(names(data), collapse = ", "))
   findings <- lapply(which(!named %in% names(data)), function(index) {

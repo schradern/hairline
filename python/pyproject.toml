@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.24"]
+requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
 [project]
@@ -7,9 +7,10 @@ name = "hairline"
 version = "0.1.0"
 description = "Clean, predictable figures for medical and data science, matching the hairline R package."
 readme = "README.md"
-license = "MIT"
-requires-python = ">=3.10"
-dependencies = ["matplotlib>=3.8", "numpy>=1.24", "pandas>=2.0", "pyyaml>=6.0"]
+license = "MIT AND OFL-1.1"
+license-files = ["LICENSE", "src/hairline/data/fonts/OFL.txt"]
+requires-python = ">=3.11"
+dependencies = ["cycler>=0.10", "matplotlib>=3.11", "numpy>=1.25", "pandas>=2.0", "pillow>=9", "pyyaml>=6.0"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -31,7 +32,7 @@ filterwarnings = ["error::DeprecationWarning:hairline"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "T20"]

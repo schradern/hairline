@@ -26,6 +26,8 @@ scheme_settings <- function(settings, scheme, background, accent) {
 
 #' Active hairline settings
 #' @return The settings list set by the last [hl_use()], or the defaults.
+#' @examples
+#' hl_settings()$font
 #' @export
 hl_settings <- function() hairline_state$settings %||% default_settings()
 
@@ -70,6 +72,10 @@ palette_fields <- function(palette) {
 #' @param accent Colour of a lone series (charts without groups), made readable against the background.
 #' @param scheme `"light"` (default) or `"dark"`: the dark neutral tokens (a brand's light neutrals do not carry over).
 #' @return The active settings, invisibly.
+#' @examples
+#' hl_use(base_size = 10, locale = "de", accent = "#0b6e4f")
+#' hl_settings()$locale
+#' hl_use()
 #' @export
 hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, locale = NULL,
                    background = NULL, brand = NULL, colors = NULL, output = NULL, accent = NULL, scheme = NULL) {

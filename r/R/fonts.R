@@ -35,3 +35,21 @@ resolve_family <- function(requested) {
   }
   bundled
 }
+
+# The base pdf() and postscript() devices (the default of Rscript and R CMD check) draw only the fonts in their own
+# databases and fail on any other family. There hairline's families are drawn as Helvetica, said once per session.
+alias_base_device_fonts <- function(family) {
+  device <- names(grDevices::dev.cur())
+  if (!device %in% c("pdf", "postscript")) return(invisible(FALSE))
+  database <- if (device == "pdf") grDevices::pdfFonts else grDevices::postscriptFonts
+  missing <- setdiff(c(family, paste(family, "Medium")), names(database()))
+  if (length(missing) == 0) return(invisible(FALSE))
+  do.call(database, stats::setNames(rep(list(database()$Helvetica), length(missing)), missing))
+  if (!isTRUE(hairline_state$base_device_warned)) {
+    hairline_state$base_device_warned <- TRUE
+    warning(sprintf(paste0("hairline: the %s() device cannot draw '%s', so its text is drawn in Helvetica and may ",
+                           "sit slightly off; hl_save() or a ragg device draws the real font"), device, family),
+            call. = FALSE)
+  }
+  invisible(TRUE)
+}

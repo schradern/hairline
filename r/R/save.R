@@ -78,6 +78,10 @@ write_format <- function(plot, path, format, size_mm, dpi, background, size = "o
 #' @param dpi Resolution for PNG and TIFF.
 #' @param background `NULL` for the plot's background or `"transparent"`.
 #' @return The written paths, invisibly.
+#' @examples
+#' plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
+#'   ggplot2::labs(title = "Fuel use by weight") + theme_hairline()
+#' hl_save(plot, file.path(tempdir(), "fuel"), formats = "png", size = "single", dpi = 150)
 #' @export
 hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", width_mm = NULL, height_mm = NULL,
                     dpi = 600, background = NULL) {

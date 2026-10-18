@@ -27,6 +27,11 @@ group_thousands <- function(integer_part, separator) {
 #' @param digits Decimal places.
 #' @param locale `"en"`, `"de"`, or `NULL` for the active setting.
 #' @return A character string.
+#' @examples
+#' hl_format_number(1234.5, 1)
+#' hl_format_number(-0.25, 2, locale = "de")
+#' hl_format_percent(0.125, 1)
+#' hl_format_interval(0.62, 0.41, 0.94)
 #' @export
 hl_format_number <- function(value, digits = 1, locale = NULL) {
   symbols <- locale_symbols(locale)

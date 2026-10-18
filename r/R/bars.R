@@ -136,6 +136,12 @@ bars_title <- function(value, category, by) {
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' admissions <- data.frame(
+#'   diagnosis = c("Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac", "Cardiac"),
+#'   sex = c("Female", "Male", "Male", "Female", "Male", "Male"))
+#' hl_bars(admissions, "diagnosis")
+#' hl_bars(admissions, "diagnosis", by = "sex", stacked = TRUE)
 #' @export
 hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subtitle = NULL, caption = NULL,
                     stacked = FALSE, percent = FALSE, horizontal = NULL, sort = NULL, order = NULL, labels = TRUE,

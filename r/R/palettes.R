@@ -22,6 +22,9 @@ resolve_palette <- function(name) {
 #' @param name Palette name, a vector of hex colours, or `NULL` for the active palette.
 #' @param n Number of categories; raises an error rather than repeating colours.
 #' @return Character vector of hex colours.
+#' @examples
+#' hl_palette()
+#' hl_palette(n = 3)
 #' @export
 hl_palette <- function(name = NULL, n = NULL) {
   resolved <- resolve_palette(name)
@@ -49,6 +52,9 @@ interpolate_colors <- function(colors, count) {
 #' @param name Ramp name, e.g. `"blues"` or `"blue-coral"`.
 #' @param n Number of colours; other counts than the stored 7 (or 13) interpolate in OKLab.
 #' @return Character vector of hex colours.
+#' @examples
+#' hl_ramp("blues")
+#' hl_ramp("blues", n = 3)
 #' @export
 hl_ramp <- function(name, n = NULL) {
   ramps <- hl_tokens()$ramps

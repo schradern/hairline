@@ -18,6 +18,14 @@ hairline_header <- S7::new_class("hairline_header", package = "hairline",
 #' @param key Name of the one key number to emphasise, e.g. `"Days over 90%"`.
 #' @param x_title Title under this panel's own x-axis numbers, e.g. its unit when panels measure different things.
 #' @return An object to add to a ggplot with `+`.
+#' @examples
+#' data <- data.frame(day = rep(1:10, 2), share = c(seq(0.6, 0.9, length.out = 10), rep(0.7, 10)),
+#'                    unit = rep(c("Unit A", "Unit B"), each = 10))
+#' ggplot2::ggplot(data, ggplot2::aes(day, share)) + ggplot2::geom_line() +
+#'   ggplot2::facet_wrap(~unit) +
+#'   ggplot2::labs(title = "Occupancy") + theme_hairline() +
+#'   hl_panel_header(panel = "Unit A", qualifier = "12 beds", stats = c(Mean = "75 %")) +
+#'   hl_panel_header(panel = "Unit B", qualifier = "8 beds", stats = c(Mean = "70 %"))
 #' @export
 hl_panel_header <- function(name = NULL, qualifier = NULL, stats = NULL, panel = NULL, key = NULL, x_title = NULL) {
   if (!is.null(stats) && (is.null(names(stats)) || any(!nzchar(names(stats))))) {

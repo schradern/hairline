@@ -55,3 +55,11 @@ Per group, first on top: the range as a thin line, the interquartile range
 as a band in the group's colour, the median as a dot, an optional reference
 tick, and the key numbers right-aligned.
 }
+\examples{
+set.seed(1)
+beds <- data.frame(unit = rep(c("Unit A", "Unit B", "Unit C"), each = 50),
+                   occupied = c(stats::rpois(50, 10), stats::rpois(50, 7), stats::rpois(50, 12)))
+hl_spread(beds, "unit", "occupied", marks = c("Unit A" = 12, "Unit B" = 8, "Unit C" = 14),
+          mark_label = "Beds",
+          zero = TRUE, axis_title = "Occupied beds")
+}

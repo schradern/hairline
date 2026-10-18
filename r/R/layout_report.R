@@ -8,6 +8,10 @@
 #' @param width_mm,height_mm Figure size in mm; override the preset.
 #' @param size Size preset, as in [hl_save()]; its base size applies unless one was set explicitly.
 #' @return A named list.
+#' @examples
+#' plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
+#'   ggplot2::labs(title = "Fuel use by weight") + theme_hairline()
+#' str(hl_layout_report(plot, size = "single")$panels)
 #' @export
 hl_layout_report <- function(plot, width_mm = NULL, height_mm = NULL, size = "onehalf") {
   framed <- frame_plan(plot, size, width_mm, height_mm, "hl_layout_report()")

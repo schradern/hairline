@@ -37,3 +37,8 @@ Groups as arcs on a ring, each sized by its total, and ribbons through the
 centre joining each pair (both directions combined), as wide as the pair's
 value at both ends; without \code{value} each row counts once.
 }
+\examples{
+transfers <- data.frame(origin = c("ICU", "Ward", "ICU", "Step-down", "Ward"),
+                        destination = c("Ward", "ICU", "Step-down", "Ward", "Step-down"))
+hl_chord(transfers, "origin", "destination")
+}

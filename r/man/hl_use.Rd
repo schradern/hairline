@@ -50,3 +50,8 @@ Precedence: these arguments > the brand (\verb{brand =} path, or a \verb{_brand.
 found from the working directory up to the project root; \code{brand = FALSE}
 disables the lookup) > hairline's defaults.
 }
+\examples{
+hl_use(base_size = 10, locale = "de", accent = "#0b6e4f")
+hl_settings()$locale
+hl_use()
+}

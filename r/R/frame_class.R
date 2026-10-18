@@ -23,6 +23,10 @@ hairline_theme <- S7::new_class("hairline_theme", package = "hairline",
 #' @param axes `FALSE` draws panels without axes, ticks, grid or baseline (donut, Sankey and the like);
 #'   with `coord_fixed()` the plot area keeps its shape, centred in the panel.
 #' @return An object to add to a ggplot with `+`.
+#' @examples
+#' ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
+#'   ggplot2::labs(title = "Fuel use by weight", subtitle = "32 cars, 1974", caption = "Motor Trend.",
+#'                 x = "Weight (1000 lb)", y = "Miles per gallon") + theme_hairline()
 #' @export
 theme_hairline <- function(base_size = NULL, font = NULL, axes = TRUE) {
   settings <- hl_settings()
@@ -71,6 +75,7 @@ called_from_package <- function(package) {
 }
 
 gtable_hairline_built <- function(data) {
+  alias_base_device_fonts((data@plot@meta$hairline_settings %||% hl_settings())$font)
   table <- NextMethod()
   # patchwork aligns the gtables of several plots itself; there each plot keeps the theme but not the frame.
   if (called_from_package("patchwork")) return(table)

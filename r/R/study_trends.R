@@ -30,6 +30,11 @@ study_dated_rows <- function(study, date, value) {
 #' @param value Numeric column to follow.
 #' @param window Observations in the trailing mean.
 #' @return A `hairline_result`.
+#' @examples
+#' set.seed(1)
+#' visits <- data.frame(day = 1:60, lactate = round(2 + sin(1:60 / 8) + stats::rnorm(60, 0, 0.3), 1))
+#' study <- hl_study(visits, units = c(day = "days", lactate = "mmol/l"))
+#' hl_over_time(study, "day", "lactate", window = 7)$text
 #' @export
 hl_over_time <- function(study, date, value, window = 7) {
   study_require(study, c(study$roles$group, value), "over_time")

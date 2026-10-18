@@ -15,3 +15,10 @@ A character string table: slot, name, colour as given, as used, light slot, chec
 \description{
 Brand report
 }
+\examples{
+path <- file.path(tempdir(), "_brand.yml")
+writeLines(c("meta:", "  name: Example Hospital", "color:", "  palette:",
+             "    harbor: \"#0b3d6e\"", "    poppy: \"#f2545b\"", "defaults:", "  hairline:",
+             "    categorical: [harbor, poppy]"), path)
+hl_brand_report(hl_load_brand(path))
+}

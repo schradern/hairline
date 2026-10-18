@@ -60,3 +60,9 @@ Step curves per group with 95 \% bands (Greenwood, log scale) and censor
 ticks, a dotted 50 \% line, medians and your statistics in the panel
 header, and the number at risk under the x-axis aligned to its ticks.
 }
+\examples{
+set.seed(1)
+trial <- data.frame(months = round(stats::rexp(60, 0.06), 1), died = stats::rbinom(60, 1, 0.6),
+                    arm = rep(c("Standard care", "Early mobilisation"), 30))
+hl_kaplan_meier(trial, "months", "died", by = "arm", x_title = "Months since discharge")
+}

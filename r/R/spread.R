@@ -177,6 +177,13 @@ spread_drawing <- function(spec, box, measure, style) {
 #' @param axis_title Title under the axis numbers, e.g. the unit.
 #' @param colors Named colours for this chart only.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' set.seed(1)
+#' beds <- data.frame(unit = rep(c("Unit A", "Unit B", "Unit C"), each = 50),
+#'                    occupied = c(stats::rpois(50, 10), stats::rpois(50, 7), stats::rpois(50, 12)))
+#' hl_spread(beds, "unit", "occupied", marks = c("Unit A" = 12, "Unit B" = 8, "Unit C" = 14),
+#'           mark_label = "Beds",
+#'           zero = TRUE, axis_title = "Occupied beds")
 #' @export
 hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption = NULL, order = NULL, marks = NULL,
                       mark_label = NULL, stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL,

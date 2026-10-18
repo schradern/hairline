@@ -20,3 +20,8 @@ Identified, screened, sought, assessed and included records with the
 exclusions beside them, phases as brackets on the left. Counts that do not
 add up give a warning.
 }
+\examples{
+hl_prisma(list(identified = 1240, duplicates = 260, screened = 980, excluded = 860, sought = 120,
+               not_retrieved = 10, assessed = 110, excluded_reasons = c("Wrong population" = 92),
+               included = 18))
+}

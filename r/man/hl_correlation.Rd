@@ -30,3 +30,6 @@ Correlations between numeric columns (all of them by default) as the
 lower triangle on a diverging ramp, values printed in the cells, each
 variable named on the empty diagonal; rows with gaps are left out.
 }
+\examples{
+hl_correlation(datasets::mtcars, c("mpg", "disp", "hp", "wt"))
+}

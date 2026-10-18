@@ -108,6 +108,10 @@ risk_of_bias_drawing <- function(spec, box, measure, style) {
 #' @param overall Name of the overall row; `NULL` leaves it out.
 #' @param title,subtitle,caption Frame texts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' trials <- data.frame(study = c("Trial 1", "Trial 2"), Randomisation = c("Low", "Some concerns"),
+#'                      Reporting = c("Low", "High"), check.names = FALSE)
+#' hl_risk_of_bias(trials, "study", domains = c("Randomisation", "Reporting"))
 #' @export
 hl_risk_of_bias <- function(data, study, domain = NULL, judgement = NULL, domains = NULL, overall = "Overall",
                             title = NULL, subtitle = NULL, caption = NULL) {

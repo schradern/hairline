@@ -55,3 +55,10 @@ Bars per category; without \code{value} the rows are counted. Long or many
 labels turn the bars horizontal; a single series is sorted by value unless
 \code{order} or \code{sort = "given"} says otherwise. Values sit at the bar ends.
 }
+\examples{
+admissions <- data.frame(
+  diagnosis = c("Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac", "Cardiac"),
+  sex = c("Female", "Male", "Male", "Female", "Male", "Male"))
+hl_bars(admissions, "diagnosis")
+hl_bars(admissions, "diagnosis", by = "sex", stacked = TRUE)
+}

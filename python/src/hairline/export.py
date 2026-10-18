@@ -114,7 +114,7 @@ def save(figure: HairlineFigure | Figure, name: str | os.PathLike, formats: Sequ
         except Exception as error:
             for leftover in [partial, *written]:
                 leftover.unlink(missing_ok=True)
-            raise RuntimeError(f"hairline: writing {path} failed: {error}") from error
+            raise RuntimeError(f"hairline: writing {path} failed: {type(error).__name__}: {error}") from error
         written.append(path)
     return written
 

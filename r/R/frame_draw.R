@@ -141,6 +141,7 @@ warn_dropped <- function(plan) {
 
 #' @export
 makeContent.hairline_frame <- function(x) {
+  alias_base_device_fonts(x$parts$settings$font)
   size <- c(grid::convertWidth(grid::unit(1, "npc"), "pt", valueOnly = TRUE),
             grid::convertHeight(grid::unit(1, "npc"), "pt", valueOnly = TRUE))
   plan <- tryCatch(plan_frame(x$parts, size), error = function(error) {

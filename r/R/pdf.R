@@ -93,6 +93,8 @@ warn_missing_pdf_font <- function(path) {
 #'
 #' @param confirm Ask before copying (default in interactive sessions).
 #' @return The installed file paths, invisibly.
+#' @examples
+#' if (interactive()) hl_install_font()
 #' @export
 hl_install_font <- function(confirm = interactive()) {
   folder <- switch(Sys.info()[["sysname"]],

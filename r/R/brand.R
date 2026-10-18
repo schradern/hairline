@@ -135,6 +135,13 @@ brand_entities <- function(content, palette, categorical, used, path) {
 #' @return A list with `name`, `path`, `names`, `colors_given`, `colors_used`, `adapt`, `font`,
 #'   `heading_font`, `heading_weight`, `neutral`, `base_size`, `sizes`, `locale`, `entity_colors`,
 #'   `entity_failures`, `output`.
+#' @examples
+#' path <- file.path(tempdir(), "_brand.yml")
+#' writeLines(c("meta:", "  name: Example Hospital", "color:", "  palette:",
+#'              "    harbor: \"#0b3d6e\"", "    poppy: \"#f2545b\"", "defaults:", "  hairline:",
+#'              "    categorical: [harbor, poppy]"), path)
+#' brand <- hl_load_brand(path, output = "pdf")
+#' brand$name
 #' @export
 hl_load_brand <- function(path, output = NULL) {
   source <- read_brand_layers(path, output)
@@ -174,6 +181,12 @@ hl_load_brand <- function(path, output = NULL) {
 #'
 #' @param start Folder to start from.
 #' @return The path, or `NULL`.
+#' @examples
+#' path <- file.path(tempdir(), "_brand.yml")
+#' writeLines(c("meta:", "  name: Example Hospital", "color:", "  palette:",
+#'              "    harbor: \"#0b3d6e\"", "    poppy: \"#f2545b\"", "defaults:", "  hairline:",
+#'              "    categorical: [harbor, poppy]"), path)
+#' hl_find_brand(tempdir())
 #' @export
 hl_find_brand <- function(start = getwd()) {
   folder <- normalizePath(start, mustWork = FALSE)
@@ -191,6 +204,12 @@ hl_find_brand <- function(start = getwd()) {
 #'
 #' @param brand A brand from [hl_load_brand()], or `NULL` for the active one.
 #' @return A character string table: slot, name, colour as given, as used, light slot, checks.
+#' @examples
+#' path <- file.path(tempdir(), "_brand.yml")
+#' writeLines(c("meta:", "  name: Example Hospital", "color:", "  palette:",
+#'              "    harbor: \"#0b3d6e\"", "    poppy: \"#f2545b\"", "defaults:", "  hairline:",
+#'              "    categorical: [harbor, poppy]"), path)
+#' hl_brand_report(hl_load_brand(path))
 #' @export
 hl_brand_report <- function(brand = NULL) {
   brand <- brand %||% hairline_state$brand

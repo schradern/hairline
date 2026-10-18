@@ -22,3 +22,8 @@ Adds hairline's theme and frame to a ggplot: title, subtitle, legend row,
 panel headers and caption on one left edge, with the spacing scale applied
 wherever the plot is printed or saved.
 }
+\examples{
+ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
+  ggplot2::labs(title = "Fuel use by weight", subtitle = "32 cars, 1974", caption = "Motor Trend.",
+                x = "Weight (1000 lb)", y = "Miles per gallon") + theme_hairline()
+}

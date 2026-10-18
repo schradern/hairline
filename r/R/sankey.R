@@ -88,6 +88,11 @@ sankey_spec <- function(data, columns, value, color_by = NULL, headings = NULL, 
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' budget <- data.frame(income = c("Salary", "Salary", "Benefit"),
+#'                      account = c("Joint", "Joint", "Savings"),
+#'                      spending = c("Rent", "Food", "Reserve"), euros = c(1200, 420, 150))
+#' hl_sankey(budget, c("income", "account", "spending"), "euros")
 #' @export
 hl_sankey <- function(data, columns, value = NULL, title = NULL, subtitle = NULL, caption = NULL, color_by = NULL,
                       headings = NULL, colors = NULL) {

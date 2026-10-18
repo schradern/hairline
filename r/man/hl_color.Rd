@@ -20,3 +20,9 @@ A hex colour, or a named character vector.
 slot the first time an entity is seen; the colour stays for the session.
 \code{hl_colors()} returns every colour fixed or assigned so far.
 }
+\examples{
+hl_use(colors = c("Unit A" = "#2474cf", "Unit B" = "#e8a628"))
+hl_color("Unit B")
+hl_colors()
+hl_use()
+}

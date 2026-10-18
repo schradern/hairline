@@ -38,3 +38,10 @@ One density ridge per group on a shared x-axis, the first group on top,
 each overlapping the row above; all ridges share one height scale, and a
 short line marks each median.
 }
+\examples{
+set.seed(1)
+diagnoses <- c("Sepsis", "Trauma", "Cardiac", "Respiratory", "Neuro")
+ages <- data.frame(diagnosis = rep(diagnoses, each = 40),
+                   age = round(stats::rnorm(200, rep(c(68, 45, 70, 62, 55), each = 40), 10)))
+hl_ridgeline(ages, "diagnosis", "age")
+}

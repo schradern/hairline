@@ -30,3 +30,8 @@ Discrete scales give every level its entity colour (see \code{\link[=hl_color]{h
 \code{palette} is \code{NULL}, or the palette's slots in order otherwise, and refuse
 more categories than slots; continuous scales use a sequential or diverging ramp.
 }
+\examples{
+ggplot2::ggplot(datasets::iris, ggplot2::aes(Sepal.Length, Petal.Length, colour = Species)) +
+  ggplot2::geom_point() + ggplot2::labs(title = "Petal by sepal length") + theme_hairline() +
+  scale_colour_hairline()
+}

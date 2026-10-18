@@ -20,3 +20,13 @@ the median per group. A fit already made (\code{survival::survfit}) can be
 passed as \code{fit}; it keeps its own intervals, and the log-rank test comes
 from the study's own time, event and group columns when they are set.
 }
+\examples{
+set.seed(1)
+cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+                     age = round(stats::rnorm(80, 64, 12)),
+                     sex = sample(c("Female", "Male"), 80, TRUE),
+                     months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+                  units = c(age = "years", months = "months"))
+hl_survival(study)$values
+}

@@ -78,3 +78,10 @@ test_that("a survfit gives the same survival result as the raw rows", {
   expect_equal(from_fit$values, from_rows$values)
   expect_equal(from_fit$text, from_rows$text)
 })
+
+test_that("a study without roles is accepted, as in Python", {
+  visits <- data.frame(day = 1:30, lactate = round(2 + sin(1:30 / 5), 1))
+  study <- hl_study(visits, units = c(day = "days", lactate = "mmol/l"))
+  expect_equal(study$variables, c("day", "lactate"))
+  expect_match(hl_over_time(study, "day", "lactate", window = 7)$text, "^Lactate")
+})

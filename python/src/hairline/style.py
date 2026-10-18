@@ -13,11 +13,12 @@ def text_params(settings: Settings) -> dict[str, object]:
     label = role_size(settings, "label")
     return {
         "font.family": [settings.font], "font.size": settings.base_size, "text.color": neutral["ink"],
-        "axes.titlesize": role_size(settings, "panel"), "axes.titleweight": 600, "axes.titlecolor": neutral["ink"],
-        "axes.titlelocation": "left", "axes.labelsize": label, "axes.labelcolor": neutral["muted"],
-        "xtick.labelsize": label, "ytick.labelsize": label, "xtick.color": neutral["faint"],
-        "ytick.color": neutral["faint"], "legend.fontsize": label, "legend.labelcolor": neutral["muted"],
-        "legend.frameon": False, "figure.titlesize": role_size(settings, "title"), "figure.titleweight": 600,
+        "axes.titlesize": role_size(settings, "panel"), "axes.titleweight": 600,
+        "axes.titlecolor": neutral["ink"], "axes.titlelocation": "left", "axes.labelsize": label,
+        "axes.labelcolor": neutral["muted"], "xtick.labelsize": label, "ytick.labelsize": label,
+        "xtick.color": neutral["faint"], "ytick.color": neutral["faint"], "legend.fontsize": label,
+        "legend.labelcolor": neutral["muted"], "legend.frameon": False,
+        "figure.titlesize": role_size(settings, "title"), "figure.titleweight": 600,
     }
 
 

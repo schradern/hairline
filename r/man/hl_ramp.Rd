@@ -17,3 +17,7 @@ Character vector of hex colours.
 \description{
 Sequential or diverging ramp
 }
+\examples{
+hl_ramp("blues")
+hl_ramp("blues", n = 3)
+}

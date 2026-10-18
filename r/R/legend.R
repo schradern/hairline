@@ -134,6 +134,10 @@ hairline_legend <- S7::new_class("hairline_legend", package = "hairline", proper
 #' @param items List of `list(kind, colour, label)`; `kind` is one of `"line"`, `"thin"`, `"dash"`,
 #'   `"band"`, `"dot"`, `"square"`.
 #' @return An object to add to a ggplot with `+`.
+#' @examples
+#' ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
+#'   ggplot2::labs(title = "Fuel use by weight") + theme_hairline() +
+#'   hl_legend(list(list(kind = "dot", colour = hl_palette(n = 1), label = "Car")))
 #' @export
 hl_legend <- function(items) {
   kinds <- c("line", "thin", "dash", "band", "dot", "square")

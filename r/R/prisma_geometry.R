@@ -115,6 +115,10 @@ prisma_drawing <- function(spec, box, measure, style) {
 #'   excluded, sought, not_retrieved, assessed, excluded_reasons (named numbers), included, reports.
 #' @param title,subtitle,caption Frame texts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' hl_prisma(list(identified = 1240, duplicates = 260, screened = 980, excluded = 860, sought = 120,
+#'                not_retrieved = 10, assessed = 110, excluded_reasons = c("Wrong population" = 92),
+#'                included = 18))
 #' @export
 hl_prisma <- function(counts, title = NULL, subtitle = NULL, caption = NULL) {
   spec <- prisma_spec(counts)

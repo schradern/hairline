@@ -45,6 +45,11 @@ row_target <- function(rows) if (rows == 1) 5 else if (rows == 2) 4 else 3
 #' @param target Preferred number of breaks; `NULL` follows the panel rows (5, 4, then 3).
 #' @param ... Passed to [ggplot2::scale_y_continuous()] or [ggplot2::scale_x_continuous()].
 #' @return A ggplot2 scale.
+#' @examples
+#' shares <- data.frame(unit = c("A", "B", "C"), share = c(0.42, 0.65, 0.81))
+#' ggplot2::ggplot(shares, ggplot2::aes(unit, share)) + ggplot2::geom_col() +
+#'   ggplot2::labs(title = "Share of beds occupied") + theme_hairline() +
+#'   scale_y_hairline(percent = TRUE)
 #' @export
 scale_y_hairline <- function(percent = FALSE, target = NULL, ...) hairline_position_scale("y", percent, target, ...)
 

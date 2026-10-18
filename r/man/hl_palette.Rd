@@ -17,3 +17,7 @@ Character vector of hex colours.
 \description{
 Palette colours in slot order
 }
+\examples{
+hl_palette()
+hl_palette(n = 3)
+}

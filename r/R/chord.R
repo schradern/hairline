@@ -134,6 +134,10 @@ chord_drawing <- function(spec, box, measure, style) {
 #' @param order Group order around the ring, clockwise from the top.
 #' @param colors Named colours for this chart only; they override the colour set for the number of groups.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' transfers <- data.frame(origin = c("ICU", "Ward", "ICU", "Step-down", "Ward"),
+#'                         destination = c("Ward", "ICU", "Step-down", "Ward", "Step-down"))
+#' hl_chord(transfers, "origin", "destination")
 #' @export
 hl_chord <- function(data, source, target, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL,
                      colors = NULL) {

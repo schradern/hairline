@@ -17,3 +17,8 @@ An object to add to a ggplot with \code{+}.
 Replaces the legend row collected from the plot's colour and fill scales
 with these items, e.g. to explain line kinds instead of groups.
 }
+\examples{
+ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
+  ggplot2::labs(title = "Fuel use by weight") + theme_hairline() +
+  hl_legend(list(list(kind = "dot", colour = hl_palette(n = 1), label = "Car")))
+}

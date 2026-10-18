@@ -21,3 +21,11 @@ A list with \code{name}, \code{path}, \code{names}, \code{colors_given}, \code{c
 Parses a \verb{_brand.yml} file in the brand.yml format. Errors name the file,
 the key path and the offending value.
 }
+\examples{
+path <- file.path(tempdir(), "_brand.yml")
+writeLines(c("meta:", "  name: Example Hospital", "color:", "  palette:",
+             "    harbor: \"#0b3d6e\"", "    poppy: \"#f2545b\"", "defaults:", "  hairline:",
+             "    categorical: [harbor, poppy]"), path)
+brand <- hl_load_brand(path, output = "pdf")
+brand$name
+}

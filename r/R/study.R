@@ -19,6 +19,15 @@
 #' @param units Named units of numeric columns, e.g. `c(age = "years", lactate = "mmol/l")`; tables, panel
 #'   headers and texts name them.
 #' @return A `hairline_study`.
+#' @examples
+#' set.seed(1)
+#' cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+#'                      age = round(stats::rnorm(80, 64, 12)),
+#'                      sex = sample(c("Female", "Male"), 80, TRUE),
+#'                      months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+#' study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+#'                   units = c(age = "years", months = "months"))
+#' study
 #' @export
 hl_study <- function(data, group = NULL, time = NULL, event = NULL, id = NULL, variables = NULL, labels = NULL,
                      types = NULL, order = NULL, unit = NULL, units = NULL) {

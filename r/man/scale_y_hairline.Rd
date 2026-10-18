@@ -24,3 +24,9 @@ Continuous position scales using hairline's 3–6 'nice' breaks, locale
 number formatting and limits that end on a break. Applied automatically to
 hairline plots; add explicitly to change \code{percent} or \code{target}.
 }
+\examples{
+shares <- data.frame(unit = c("A", "B", "C"), share = c(0.42, 0.65, 0.81))
+ggplot2::ggplot(shares, ggplot2::aes(unit, share)) + ggplot2::geom_col() +
+  ggplot2::labs(title = "Share of beds occupied") + theme_hairline() +
+  scale_y_hairline(percent = TRUE)
+}

@@ -21,3 +21,8 @@ Lays out the plot at the given size and returns the positions hairline
 computes (pt from the top-left corner); the same keys as the Python
 package's \code{layout_report()}, used for cross-language parity checks.
 }
+\examples{
+plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
+  ggplot2::labs(title = "Fuel use by weight") + theme_hairline()
+str(hl_layout_report(plot, size = "single")$panels)
+}

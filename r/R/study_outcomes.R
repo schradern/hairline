@@ -58,6 +58,15 @@ survival_text <- function(study, rows, grouped, test) {
 #' @param study A study from [hl_study()].
 #' @param fit Optional `survival::survfit`.
 #' @return A `hairline_result`.
+#' @examples
+#' set.seed(1)
+#' cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+#'                      age = round(stats::rnorm(80, 64, 12)),
+#'                      sex = sample(c("Female", "Male"), 80, TRUE),
+#'                      months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+#' study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+#'                   units = c(age = "years", months = "months"))
+#' hl_survival(study)$values
 #' @export
 hl_survival <- function(study, fit = NULL) {
   time <- study$roles$time
@@ -113,6 +122,16 @@ study_effect_rows <- function(model_or_table, study_column, estimate, low, high,
 #' @param digits Decimals of the estimates.
 #' @param ... Passed to [hl_forest()].
 #' @return A `hairline_result`.
+#' @examples
+#' set.seed(1)
+#' cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+#'                      age = round(stats::rnorm(80, 64, 12)),
+#'                      sex = sample(c("Female", "Male"), 80, TRUE),
+#'                      months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+#' study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+#'                   units = c(age = "years", months = "months"))
+#' model <- stats::glm(died ~ age + sex, family = stats::binomial, data = cohort)
+#' hl_effects(study, model, "OR")$values
 #' @export
 hl_effects <- function(study, model_or_table, measure = NULL, study_column = "study", estimate = "estimate",
                        low = "low", high = "high", exponentiate = NULL, digits = 2, ...) {

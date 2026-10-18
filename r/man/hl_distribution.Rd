@@ -19,3 +19,13 @@ A \code{hairline_result}; the figure is a raincloud, or a ridgeline from five gr
 \description{
 Distribution of one numeric variable by group
 }
+\examples{
+set.seed(1)
+cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+                     age = round(stats::rnorm(80, 64, 12)),
+                     sex = sample(c("Female", "Male"), 80, TRUE),
+                     months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+                  units = c(age = "years", months = "months"))
+hl_distribution(study, "age", stats = c("median_iqr", "range"))$values
+}

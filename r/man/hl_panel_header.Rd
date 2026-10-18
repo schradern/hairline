@@ -34,3 +34,12 @@ Adds a header line above a panel: the name, an optional qualifier, and key
 numbers right-aligned. When the numbers do not fit they move to a second
 line; numbers that still do not fit are dropped with a warning.
 }
+\examples{
+data <- data.frame(day = rep(1:10, 2), share = c(seq(0.6, 0.9, length.out = 10), rep(0.7, 10)),
+                   unit = rep(c("Unit A", "Unit B"), each = 10))
+ggplot2::ggplot(data, ggplot2::aes(day, share)) + ggplot2::geom_line() +
+  ggplot2::facet_wrap(~unit) +
+  ggplot2::labs(title = "Occupancy") + theme_hairline() +
+  hl_panel_header(panel = "Unit A", qualifier = "12 beds", stats = c(Mean = "75 \%")) +
+  hl_panel_header(panel = "Unit B", qualifier = "8 beds", stats = c(Mean = "70 \%"))
+}

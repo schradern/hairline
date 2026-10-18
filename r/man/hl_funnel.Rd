@@ -37,3 +37,8 @@ Effect against standard error (running down from 0) with pseudo 95 \%
 limits around the pooled estimate, a dashed pooled line and a solid null
 line; the pooled estimate and Egger's test become the key numbers.
 }
+\examples{
+trials <- data.frame(odds_ratio = c(0.84, 0.67, 0.91, 0.72, 0.55),
+                     se = c(0.12, 0.27, 0.09, 0.2, 0.35))
+hl_funnel(trials, "odds_ratio", "se")
+}

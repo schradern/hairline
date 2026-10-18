@@ -25,3 +25,9 @@ A character string.
 \description{
 Fixed decimals, locale separators (\code{"en"} or \code{"de"}) and a true minus sign.
 }
+\examples{
+hl_format_number(1234.5, 1)
+hl_format_number(-0.25, 2, locale = "de")
+hl_format_percent(0.125, 1)
+hl_format_interval(0.62, 0.41, 0.94)
+}

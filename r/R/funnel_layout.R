@@ -79,6 +79,10 @@ funnel_drawing <- function(spec, box, measure, style) {
 #' @param pooled Pooled estimate; inverse-variance weighted when `NULL`.
 #' @param x_title Axis title; defaults to the effect column.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' trials <- data.frame(odds_ratio = c(0.84, 0.67, 0.91, 0.72, 0.55),
+#'                      se = c(0.12, 0.27, 0.09, 0.2, 0.35))
+#' hl_funnel(trials, "odds_ratio", "se")
 #' @export
 hl_funnel <- function(data, estimate, se, title = NULL, subtitle = NULL, caption = NULL, ratio = TRUE, pooled = NULL,
                       x_title = NULL) {

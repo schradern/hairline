@@ -30,6 +30,15 @@ study_by_title <- function(study, label) {
 #' @param variable A numeric variable.
 #' @param stats Statistics as in [hl_describe()].
 #' @return A `hairline_result`; the figure is a raincloud, or a ridgeline from five groups.
+#' @examples
+#' set.seed(1)
+#' cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+#'                      age = round(stats::rnorm(80, 64, 12)),
+#'                      sex = sample(c("Female", "Male"), 80, TRUE),
+#'                      months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+#' study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+#'                   units = c(age = "years", months = "months"))
+#' hl_distribution(study, "age", stats = c("median_iqr", "range"))$values
 #' @export
 hl_distribution <- function(study, variable, stats = "median_iqr") {
   check_study_stats(stats)
@@ -71,6 +80,16 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
 #' @param study A study from [hl_study()] with a group.
 #' @param variable The variable to compare.
 #' @return A `hairline_result`.
+#' @examples
+#' set.seed(1)
+#' cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+#'                      age = round(stats::rnorm(80, 64, 12)),
+#'                      sex = sample(c("Female", "Male"), 80, TRUE),
+#'                      months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+#' study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+#'                   units = c(age = "years", months = "months"))
+#' hl_compare(study, "age")$text
+#' hl_compare(study, "sex")$table
 #' @export
 hl_compare <- function(study, variable) {
   if (is.null(study$roles$group)) stop("hairline: compare needs a group; set group = in hl_study()", call. = FALSE)

@@ -16,3 +16,10 @@ The path, or \code{NULL}.
 Looks for \verb{_brand.yml} from \code{start} upwards and stops at the project root
 (a folder containing \code{.git}, \verb{_quarto.yml}, \code{pyproject.toml} or \code{DESCRIPTION}).
 }
+\examples{
+path <- file.path(tempdir(), "_brand.yml")
+writeLines(c("meta:", "  name: Example Hospital", "color:", "  palette:",
+             "    harbor: \"#0b3d6e\"", "    poppy: \"#f2545b\"", "defaults:", "  hairline:",
+             "    categorical: [harbor, poppy]"), path)
+hl_find_brand(tempdir())
+}

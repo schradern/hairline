@@ -20,3 +20,8 @@ An object to add to a ggplot with \code{+}.
 A thin dashed line (threshold, target) behind the data in every panel, with
 an optional label at its end and an optional legend entry.
 }
+\examples{
+ggplot2::ggplot(datasets::airquality, ggplot2::aes(Day, Temp)) + ggplot2::geom_point() +
+  ggplot2::labs(title = "Daily temperature") + theme_hairline() +
+  hl_reference(y = 80, label = "80 F")
+}

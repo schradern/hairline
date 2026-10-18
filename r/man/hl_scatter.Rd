@@ -41,3 +41,6 @@ Points per group in their entity colours and, with \code{fit = "linear"}, a
 linear fit over all points with its 95 \% band; n, r and slope become the
 key numbers.
 }
+\examples{
+hl_scatter(datasets::mtcars, "wt", "mpg", title = "Fuel use by weight")
+}

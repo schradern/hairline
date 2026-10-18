@@ -83,6 +83,9 @@ venn_spec <- function(data, columns = NULL, colors = NULL, proportional = FALSE)
 #' @param colors Named colours for this chart only; they override the colour set for the number of sets.
 #' @param proportional Areas proportional to the counts (two sets only).
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' hl_venn(list(Diabetes = c(1, 2, 3, 5, 8), Hypertension = c(2, 3, 4, 8, 9, 10),
+#'              Obesity = c(3, 5, 9, 11)))
 #' @export
 hl_venn <- function(data, columns = NULL, title = NULL, subtitle = NULL, caption = NULL, colors = NULL,
                     proportional = FALSE) {

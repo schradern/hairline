@@ -16,6 +16,12 @@ hairline_reference <- S7::new_class("hairline_reference", package = "hairline",
 #' @param series Legend labels to keep in colour.
 #' @param panels Facet labels or 1-based panel numbers to keep in colour.
 #' @return An object to add to a ggplot with `+`.
+#' @examples
+#' data <- data.frame(day = rep(1:10, 3),
+#'                    share = c(seq(0.6, 0.9, length.out = 10), rep(0.7, 10), rep(0.8, 10)),
+#'                    unit = rep(c("Unit A", "Unit B", "Unit C"), each = 10))
+#' ggplot2::ggplot(data, ggplot2::aes(day, share, colour = unit)) + ggplot2::geom_line() +
+#'   ggplot2::labs(title = "Occupancy") + theme_hairline() + hl_highlight("Unit A")
 #' @export
 hl_highlight <- function(series = NULL, panels = NULL) hairline_highlight(series = series, panels = panels)
 
@@ -28,6 +34,10 @@ hl_highlight <- function(series = NULL, panels = NULL) hairline_highlight(series
 #' @param label Text at the end of the line, e.g. `"90 %"`.
 #' @param legend_label Text for a dashed legend entry.
 #' @return An object to add to a ggplot with `+`.
+#' @examples
+#' ggplot2::ggplot(datasets::airquality, ggplot2::aes(Day, Temp)) + ggplot2::geom_point() +
+#'   ggplot2::labs(title = "Daily temperature") + theme_hairline() +
+#'   hl_reference(y = 80, label = "80 F")
 #' @export
 hl_reference <- function(y = NULL, x = NULL, label = NULL, legend_label = NULL) {
   if (is.null(y) == is.null(x)) stop("hairline: hl_reference() needs exactly one of y = or x =", call. = FALSE)

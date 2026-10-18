@@ -79,3 +79,12 @@ One panel per group: raw values as a thin line under a trailing rolling
 mean in the group's entity colour, with key numbers in the panel headers,
 and optional period mean, threshold, highlighted periods and events.
 }
+\examples{
+set.seed(1)
+occupancy <- data.frame(date = rep(as.Date("2025-01-01") + 0:89, 2),
+                        unit = rep(c("Unit A", "Unit B"), each = 90),
+                        share = pmin(1, c(0.8 + stats::rnorm(90, 0, 0.05),
+                                          0.7 + stats::rnorm(90, 0, 0.05))))
+hl_timeseries(occupancy, "date", "share", by = "unit", percent = TRUE, threshold = 0.9,
+              threshold_label = "90 \%")
+}

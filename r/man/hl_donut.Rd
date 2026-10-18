@@ -50,3 +50,8 @@ levels with a hierarchical key; \code{labels = "ring"} labels the arcs instead.
 More than seven slices of a single ring fold into "Other". Children use
 tints of their parent's colour.
 }
+\examples{
+discharge <- data.frame(route = c("Home", "Rehabilitation", "Ward", "Died"),
+                        patients = c(412, 168, 97, 23))
+hl_donut(discharge, "route", "patients", total_label = "patients")
+}

@@ -57,6 +57,9 @@ grade_separation <- function(value, label, limits) {
 #' @param surface Background colour.
 #' @param pairs `"adjacent"` for bars, stacks and lines; `"all"` for scatter plots and small multiples.
 #' @return A list with `passed`, `worst_cvd`, `worst_normal`, `head_all_pairs`, `light_slots`, `warnings`, `failures`.
+#' @examples
+#' hl_check_palette(hl_palette(n = 4))
+#' hl_check_palette(c("#1f77b4", "#2b83c4"), pairs = "all")
 #' @export
 hl_check_palette <- function(colors, surface = "#ffffff", pairs = c("adjacent", "all")) {
   pairs <- match.arg(pairs)

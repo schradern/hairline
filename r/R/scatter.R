@@ -34,6 +34,8 @@ scatter_fit_layers <- function(x, y) {
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' hl_scatter(datasets::mtcars, "wt", "mpg", title = "Fuel use by weight")
 #' @export
 hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, caption = NULL, fit = "linear",
                        order = NULL, colors = NULL) {

@@ -18,3 +18,15 @@ A \code{hairline_result}: \code{figure}, \code{table}, \code{values} and \code{t
 One row per statistic or category, one column per group plus Overall,
 with an overview figure of the numeric variables (median and IQR).
 }
+\examples{
+set.seed(1)
+cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+                     age = round(stats::rnorm(80, 64, 12)),
+                     sex = sample(c("Female", "Male"), 80, TRUE),
+                     months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+                  units = c(age = "years", months = "months"))
+table_one <- hl_describe(study)
+table_one$table
+table_one$figure
+}

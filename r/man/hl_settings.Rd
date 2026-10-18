@@ -12,3 +12,6 @@ The settings list set by the last \code{\link[=hl_use]{hl_use()}}, or the defaul
 \description{
 Active hairline settings
 }
+\examples{
+hl_settings()$font
+}

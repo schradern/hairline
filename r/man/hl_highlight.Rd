@@ -19,3 +19,10 @@ Keeps the named series (legend labels of the colour or fill mapping) or
 panels (facet label or 1-based index) in their colours and draws every other
 data series in the context grey.
 }
+\examples{
+data <- data.frame(day = rep(1:10, 3),
+                   share = c(seq(0.6, 0.9, length.out = 10), rep(0.7, 10), rep(0.8, 10)),
+                   unit = rep(c("Unit A", "Unit B", "Unit C"), each = 10))
+ggplot2::ggplot(data, ggplot2::aes(day, share, colour = unit)) + ggplot2::geom_line() +
+  ggplot2::labs(title = "Occupancy") + theme_hairline() + hl_highlight("Unit A")
+}

@@ -23,3 +23,9 @@ Small multiples per group with the raw values and a trailing mean; the
 table gives n, mean (SD) and median (IQR) over the whole period. ISO date
 text (2025-01-31) is read as dates.
 }
+\examples{
+set.seed(1)
+visits <- data.frame(day = 1:60, lactate = round(2 + sin(1:60 / 8) + stats::rnorm(60, 0, 0.3), 1))
+study <- hl_study(visits, units = c(day = "days", lactate = "mmol/l"))
+hl_over_time(study, "day", "lactate", window = 7)$text
+}

@@ -38,3 +38,8 @@ concerns or high inside, and an overall row (each study's worst judgement)
 below a rule. Reads a long table (study, domain, judgement) or a wide one
 with one column per domain.
 }
+\examples{
+trials <- data.frame(study = c("Trial 1", "Trial 2"), Randomisation = c("Low", "Some concerns"),
+                     Reporting = c("Low", "High"), check.names = FALSE)
+hl_risk_of_bias(trials, "study", domains = c("Randomisation", "Reporting"))
+}

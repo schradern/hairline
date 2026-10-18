@@ -39,3 +39,14 @@ A \code{hairline_result}.
 From a fitted \code{lm}, \code{glm} or \code{coxph} model, or a table with estimate and
 interval columns; terms that are study columns take their labels.
 }
+\examples{
+set.seed(1)
+cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+                     age = round(stats::rnorm(80, 64, 12)),
+                     sex = sample(c("Female", "Male"), 80, TRUE),
+                     months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+                  units = c(age = "years", months = "months"))
+model <- stats::glm(died ~ age + sex, family = stats::binomial, data = cohort)
+hl_effects(study, model, "OR")$values
+}

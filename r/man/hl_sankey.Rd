@@ -41,3 +41,9 @@ scale; later columns are ordered to reduce crossings and links are ordered
 at both ends, so they never cross inside a node. Links take the colour of
 their group in \code{color_by} (default the last column).
 }
+\examples{
+budget <- data.frame(income = c("Salary", "Salary", "Benefit"),
+                     account = c("Joint", "Joint", "Savings"),
+                     spending = c("Rent", "Food", "Reserve"), euros = c(1200, 420, 150))
+hl_sankey(budget, c("income", "account", "spending"), "euros")
+}

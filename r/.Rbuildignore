@@ -1,2 +1,3 @@
 ^\.lintr$
 ^tests/testthat/fixtures/README$
+^Rplots\.pdf$

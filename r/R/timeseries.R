@@ -144,6 +144,14 @@ headers_for <- function(plot, data, y, stats, percent, threshold, share_label, k
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' set.seed(1)
+#' occupancy <- data.frame(date = rep(as.Date("2025-01-01") + 0:89, 2),
+#'                         unit = rep(c("Unit A", "Unit B"), each = 90),
+#'                         share = pmin(1, c(0.8 + stats::rnorm(90, 0, 0.05),
+#'                                           0.7 + stats::rnorm(90, 0, 0.05))))
+#' hl_timeseries(occupancy, "date", "share", by = "unit", percent = TRUE, threshold = 0.9,
+#'               threshold_label = "90 %")
 #' @export
 hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, caption = NULL, window = 7, raw = TRUE,
                           period_mean = FALSE, percent = FALSE, threshold = NULL, threshold_label = NULL,

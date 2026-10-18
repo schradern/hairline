@@ -17,3 +17,6 @@ Copies the bundled 'Hairline Sans' files into your user font folder so that
 every PDF route (cairo, rsvg, Quartz) can embed it. Nothing is installed
 unless you call this function.
 }
+\examples{
+if (interactive()) hl_install_font()
+}

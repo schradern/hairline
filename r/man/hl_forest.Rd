@@ -57,3 +57,9 @@ beside the intervals: squares sized by weight, a pooled diamond, a solid
 null line, a dashed pooled line, a log axis for ratios and "favours"
 labels under it. Heterogeneity goes into the caption.
 }
+\examples{
+trials <- data.frame(study = c("Trial A", "Trial B", "Trial C"), or = c(0.62, 0.81, 0.47),
+                     low = c(0.41, 0.55, 0.25), high = c(0.94, 1.19, 0.88), weight = c(40, 35, 25))
+hl_forest(trials, "study", "or", "low", "high", weight = "weight",
+          pooled = list(estimate = 0.66, low = 0.52, high = 0.84, label = "Pooled"))
+}

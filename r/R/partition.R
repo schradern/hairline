@@ -88,6 +88,12 @@ partition_drawing <- function(spec, box, measure, style) {
 #'   for the number of groups and are not remembered for other charts.
 #' @param order Top-level slices in this order; any others follow in their data order.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' discharge <- data.frame(route = c("Home", "Home", "Rehabilitation", "Ward"),
+#'                         support = c("Alone", "With support", "Inpatient", "Ward"),
+#'                         patients = c(250, 162, 168, 97))
+#' hl_partition(discharge, c("route", "support"), "patients",
+#'              level_names = c("Destination", "Support"))
 #' @export
 hl_partition <- function(data, levels, value = NULL, title = NULL, subtitle = NULL, caption = NULL,
                          level_names = NULL, colors = NULL, order = NULL) {

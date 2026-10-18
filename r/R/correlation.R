@@ -68,6 +68,8 @@ contrast_text <- function(fill, style) {
 #' @param method `"pearson"` or `"spearman"`.
 #' @param title,subtitle,caption Frame texts; the title defaults to the method.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' hl_correlation(datasets::mtcars, c("mpg", "disp", "hp", "wt"))
 #' @export
 hl_correlation <- function(data, columns = NULL, method = "pearson", title = NULL, subtitle = NULL, caption = NULL) {
   spec <- correlation_spec(data, columns, method)

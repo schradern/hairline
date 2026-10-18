@@ -96,6 +96,11 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' set.seed(1)
+#' stays <- data.frame(unit = rep(c("Surgical", "Medical"), each = 30),
+#'                     days = round(stats::rexp(60, 0.2), 1))
+#' hl_raincloud(stays, "unit", "days", y_title = "Days")
 #' @export
 hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, y_title = NULL,
                          order = NULL, comparisons = list(), colors = NULL) {

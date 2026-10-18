@@ -57,6 +57,17 @@ describe_text <- function(study, parts, counts) {
 #' @param study A study from [hl_study()].
 #' @param stats Statistics for numeric variables: `"median_iqr"`, `"mean_sd"`, `"range"`, `"n_missing"`.
 #' @return A `hairline_result`: `figure`, `table`, `values` and `text`.
+#' @examples
+#' set.seed(1)
+#' cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+#'                      age = round(stats::rnorm(80, 64, 12)),
+#'                      sex = sample(c("Female", "Male"), 80, TRUE),
+#'                      months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+#' study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+#'                   units = c(age = "years", months = "months"))
+#' table_one <- hl_describe(study)
+#' table_one$table
+#' table_one$figure
 #' @export
 hl_describe <- function(study, stats = "median_iqr") {
   check_study_stats(stats)

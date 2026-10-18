@@ -49,3 +49,13 @@ for \code{\link[=hl_describe]{hl_describe()}}, \code{\link[=hl_distribution]{hl_
 and \code{\link[=hl_effects]{hl_effects()}}. Checks report problems (print the study) and never
 change the data; errors block only the endpoints that need the column.
 }
+\examples{
+set.seed(1)
+cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
+                     age = round(stats::rnorm(80, 64, 12)),
+                     sex = sample(c("Female", "Male"), 80, TRUE),
+                     months = round(stats::rexp(80, 0.05), 1), died = stats::rbinom(80, 1, 0.4))
+study <- hl_study(cohort, group = "arm", time = "months", event = "died",
+                  units = c(age = "years", months = "months"))
+study
+}

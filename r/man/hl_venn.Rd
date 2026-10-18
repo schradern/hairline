@@ -35,3 +35,7 @@ with \code{proportional = TRUE}, two circles get areas proportional to their
 sizes and overlap by the shared count. Four or more sets are refused: show
 the intersections as bars instead.
 }
+\examples{
+hl_venn(list(Diabetes = c(1, 2, 3, 5, 8), Hypertension = c(2, 3, 4, 8, 9, 10),
+             Obesity = c(3, 5, 9, 11)))
+}

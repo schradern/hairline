@@ -8,6 +8,10 @@
 #' @param ramp Ramp name for continuous scales.
 #' @param ... Passed to the underlying ggplot2 scale.
 #' @return A ggplot2 scale.
+#' @examples
+#' ggplot2::ggplot(datasets::iris, ggplot2::aes(Sepal.Length, Petal.Length, colour = Species)) +
+#'   ggplot2::geom_point() + ggplot2::labs(title = "Petal by sepal length") + theme_hairline() +
+#'   scale_colour_hairline()
 #' @export
 scale_colour_hairline <- function(palette = NULL, ...) {
   scale <- ggplot2::discrete_scale(aesthetics = "colour", palette = function(n) hl_palette(palette, n = n), ...)

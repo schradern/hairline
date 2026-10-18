@@ -41,3 +41,10 @@ parent; the documented alternative to a nested donut. Labels sit inside
 the bars (name and share, else the share, else none); a legend row names
 the top level.
 }
+\examples{
+discharge <- data.frame(route = c("Home", "Home", "Rehabilitation", "Ward"),
+                        support = c("Alone", "With support", "Inpatient", "Ward"),
+                        patients = c(250, 162, 168, 97))
+hl_partition(discharge, c("route", "support"), "patients",
+             level_names = c("Destination", "Support"))
+}

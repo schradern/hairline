@@ -15,6 +15,10 @@
 #' @param reference Value for a vertical reference line.
 #' @param digits Decimals of the numbers.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' rates <- data.frame(unit = c("Medical", "Surgical", "Cardiac"), mortality = c(0.13, 0.08, 0.06),
+#'                     low = c(0.11, 0.07, 0.04), high = c(0.15, 0.10, 0.08))
+#' hl_dotplot(rates, "unit", "mortality", "low", "high")
 #' @export
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
                        sort = TRUE, ratio = FALSE, reference = NULL, digits = 2) {

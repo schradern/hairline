@@ -42,6 +42,12 @@ ridge_layers <- function(curve, values, base, scale, colour, medians) {
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' set.seed(1)
+#' diagnoses <- c("Sepsis", "Trauma", "Cardiac", "Respiratory", "Neuro")
+#' ages <- data.frame(diagnosis = rep(diagnoses, each = 40),
+#'                    age = round(stats::rnorm(200, rep(c(68, 45, 70, 62, 55), each = 40), 10)))
+#' hl_ridgeline(ages, "diagnosis", "age")
 #' @export
 hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL,
                          medians = TRUE, colors = NULL) {

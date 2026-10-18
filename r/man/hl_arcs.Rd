@@ -34,3 +34,8 @@ Nodes on a baseline and an arc above for each pair that exchanges
 something, its width following the value; without \code{value} each row counts
 once. Labels turn upright when they would collide.
 }
+\examples{
+moves <- data.frame(origin = c("ICU", "ICU", "Ward", "Theatre", "ICU", "Ward"),
+                    destination = c("Ward", "Ward", "Home", "ICU", "Home", "ICU"))
+hl_arcs(moves, "origin", "destination", order = c("Theatre", "ICU", "Ward", "Home"))
+}

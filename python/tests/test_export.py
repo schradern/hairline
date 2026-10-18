@@ -92,3 +92,14 @@ def test_pdf_readers_see_the_title_and_subject(tmp_path):
 def test_alt_text_leaves_out_an_empty_subtitle_as_in_r():
     assert figure_alt(sample_figure("")) == TITLE
     assert figure_alt(hl.figure("", subtitle="Weekly counts")) == "Weekly counts"
+
+
+def test_a_failed_write_names_the_underlying_error(tmp_path, monkeypatch):
+    def failing_write(*arguments):
+        raise KeyError(400)
+
+    monkeypatch.setattr("hairline.export.write_one", failing_write)
+    with pytest.raises(RuntimeError, match=r"failed: KeyError: 400$"):
+        hl.save(sample_figure(), tmp_path / "broken", formats=["svg"])
+    assert not list(tmp_path.iterdir())
+

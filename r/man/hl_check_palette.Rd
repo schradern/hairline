@@ -21,3 +21,7 @@ Runs hairline's palette checks: lightness band, chroma floor, separation
 under simulated protanopia and deuteranopia, normal-vision separation, and
 contrast against the surface.
 }
+\examples{
+hl_check_palette(hl_palette(n = 4))
+hl_check_palette(c("#1f77b4", "#2b83c4"), pairs = "all")
+}

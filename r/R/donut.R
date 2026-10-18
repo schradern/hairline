@@ -96,6 +96,10 @@ donut_rings <- function(data, label, value, levels = NULL, chart = "donut", colo
 #'   for the number of groups and are not remembered for other charts.
 #' @param order Top-level slices in this order; any others follow in their data order.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' discharge <- data.frame(route = c("Home", "Rehabilitation", "Ward", "Died"),
+#'                         patients = c(412, 168, 97, 23))
+#' hl_donut(discharge, "route", "patients", total_label = "patients")
 #' @export
 hl_donut <- function(data, label = NULL, value = NULL, levels = NULL, title = NULL, subtitle = NULL, caption = NULL,
                      labels = NULL, total = TRUE, total_label = NULL, colors = NULL, order = NULL) {

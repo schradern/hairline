@@ -42,3 +42,9 @@ Per group a half density, the box (interquartile range and median) and
 the points, with "n = …" under the group names. Comparison brackets show
 your test results and are stacked so they never overlap.
 }
+\examples{
+set.seed(1)
+stays <- data.frame(unit = rep(c("Surgical", "Medical"), each = 30),
+                    days = round(stats::rexp(60, 0.2), 1))
+hl_raincloud(stays, "unit", "days", y_title = "Days")
+}

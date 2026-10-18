@@ -118,6 +118,10 @@ arcs_drawing <- function(spec, box, measure, style) {
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param order Node order along the baseline.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' moves <- data.frame(origin = c("ICU", "ICU", "Ward", "Theatre", "ICU", "Ward"),
+#'                     destination = c("Ward", "Ward", "Home", "ICU", "Home", "ICU"))
+#' hl_arcs(moves, "origin", "destination", order = c("Theatre", "ICU", "Ward", "Home"))
 #' @export
 hl_arcs <- function(data, source, target, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL) {
   spec <- arcs_spec(data, source, target, value, order)

@@ -7,6 +7,8 @@ Description: A design system for 'ggplot2' figures: one frame for titles, legend
     palettes, brand files in the 'brand.yml' format, and print-ready export.
     Produces output matching the 'hairline' Python package.
 License: MIT + file LICENSE
+Copyright: The bundled 'Hairline Sans' font is a modified Public Sans, Copyright 2015 The
+    Public Sans Project Authors, under the SIL Open Font License 1.1; see inst/COPYRIGHTS.
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 4.3)
@@ -25,9 +27,11 @@ Imports:
     yaml
 Suggests:
     cowplot,
+    metafor,
     patchwork,
     png,
     rsvg,
+    survival,
     svglite,
     testthat (>= 3.0.0),
     withr

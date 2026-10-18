@@ -97,6 +97,11 @@ km_layers <- function(layers, colours, median_line) {
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
+#' @examples
+#' set.seed(1)
+#' trial <- data.frame(months = round(stats::rexp(60, 0.06), 1), died = stats::rbinom(60, 1, 0.6),
+#'                     arm = rep(c("Standard care", "Early mobilisation"), 30))
+#' hl_kaplan_meier(trial, "months", "died", by = "arm", x_title = "Months since discharge")
 #' @export
 hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = NULL, subtitle = NULL, caption = NULL,
                             x_title = "Time", endpoint = "Survival", median_line = TRUE, stats = character(),
