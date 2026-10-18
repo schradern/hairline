@@ -61,3 +61,8 @@ test_that("stacked shares label percentages on a horizontal percent axis", {
   expect_true("60%" %in% texts)
   expect_length(ggplot2::ggplot_build(plot)@data, 2)
 })
+
+test_that("grouped bars name both columns in the default title", {
+  data <- data.frame(unit = c("A", "A", "B"), sex = c("Female", "Male", "Female"))
+  expect_equal(hl_bars(data, "unit", by = "sex")@labels$title, "Count by unit and sex")
+})

@@ -38,3 +38,11 @@ def test_html_needs_a_hairline_figure(tmp_path):
     figure, _ = plt.subplots()
     with pytest.raises(RuntimeError, match="html export needs a figure made with hairline"):
         hl.save(figure, tmp_path / "plain", formats=("html",))
+
+
+def test_html_figure_is_named_by_title_and_subtitle(tmp_path):
+    hl.use(brand=False)
+    figure = hl.figure("Two series", subtitle="Weekly <counts>", size="onehalf")
+    figure.ax.plot([0, 1, 2], [1, 3, 2], label="North")
+    html, _ = targets_of(hl.save(figure, tmp_path / "named", formats=("html",))[0])
+    assert 'aria-label="Two series. Weekly &lt;counts>"' in html

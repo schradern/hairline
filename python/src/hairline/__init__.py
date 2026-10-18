@@ -1,5 +1,6 @@
 """hairline: clean, predictable figures for medical and data science."""
 
+from hairline.brand import brand_report, load_brand
 from hairline.charts.arcs import arcs
 from hairline.charts.bars import bars
 from hairline.charts.chord import chord
@@ -32,10 +33,10 @@ from hairline.tokens import load_tokens
 
 __all__ = [
     "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Result", "Settings", "Study", "arcs", "bars",
-    "check_palette", "chord", "color", "colors", "correlation", "current_settings", "donut", "dotplot", "figure",
-    "forest", "format_interval", "format_number", "format_percent", "frame", "funnel", "kaplan_meier", "load_tokens",
-    "palette", "partition", "prisma", "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter",
-    "spread", "study", "timeseries", "use", "venn",
+    "brand_report", "check_palette", "chord", "color", "colors", "correlation", "current_settings", "donut",
+    "dotplot", "figure", "forest", "format_interval", "format_number", "format_percent", "frame", "funnel",
+    "kaplan_meier", "load_brand", "load_tokens", "palette", "partition", "prisma", "raincloud", "ramp", "ridgeline",
+    "risk_of_bias", "sankey", "save", "scatter", "spread", "study", "timeseries", "use", "venn",
 ]
 __version__ = "0.1.0"
 

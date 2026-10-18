@@ -69,3 +69,19 @@ test_that("the donut plot reports its labels", {
   expect_equal(report$bare_panels, 0L)
   expect_length(report$drawing_texts, 2 * 5 + 2)
 })
+
+test_that("order sets the top ring sequence", {
+  data <- data.frame(destination = c("Home", "Rehab", "Ward", "Care home", "Died"), patients = c(412, 168, 97, 54, 23))
+  rings <- donut_rings(data, "destination", "patients", order = c("Died", "Home"))
+  expect_equal(vapply(rings[[1]], `[[`, character(1), "name"), c("Died", "Home", "Rehab", "Ward", "Care home"))
+})
+
+test_that("a folded Other slice uses the scheme's context grey", {
+  hl_use(brand = FALSE, scheme = "dark")
+  on.exit(hl_use(brand = FALSE))
+  data <- data.frame(unit = LETTERS[1:9], patients = 9:1)
+  ring <- donut_rings(data, "unit", "patients")[[1]]
+  other <- ring[[length(ring)]]
+  expect_equal(other$name, "Other")
+  expect_equal(other$color, hl_tokens()$focus$context_dark)
+})

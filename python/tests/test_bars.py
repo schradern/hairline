@@ -73,3 +73,8 @@ def test_stacked_segments_are_separated_by_surface_gaps():
     figure = hl.bars(outcomes(), "unit", by="outcome", stacked=True)
     edges = {mcolors.to_hex(patch.get_edgecolor()) for patch in figure.ax.patches}
     assert edges == {figure.settings.neutral["surface"]}
+
+
+def test_grouped_bars_name_both_columns_in_the_default_title():
+    data = pd.DataFrame({"unit": ["A", "A", "B"], "sex": ["Female", "Male", "Female"]})
+    assert hl.bars(data, "unit", by="sex").title == "Count by unit and sex"

@@ -22,10 +22,17 @@ donut_segment <- function(name, amount, total, colour, parent, index) {
        parent = parent, index = index)
 }
 
-top_ring <- function(data, column, value, fold, colors = NULL) {
+# Top-level segments in entity colours; a folded "Other" slice is drawn in context grey.
+top_ring <- function(data, column, value, fold, colors = NULL, order = NULL) {
   grouped <- donut_totals(data, column, value)
   names <- as.character(grouped[[column]])
   amounts <- grouped[[value]]
+  if (length(order) > 0) {
+    rank <- match(names, as.character(order), nomatch = length(order) + 1L)
+    sequence <- order(rank)
+    names <- names[sequence]
+    amounts <- amounts[sequence]
+  }
   folded <- fold && length(names) > hl_tokens()$donut$max_slices
   if (folded) {
     result <- fold_other(names, amounts, hl_tokens()$donut$max_slices)
@@ -33,7 +40,7 @@ top_ring <- function(data, column, value, fold, colors = NULL) {
     amounts <- result$values
   }
   colours <- unname(colours_for(if (folded) names[-length(names)] else names, colors))
-  if (folded) colours <- c(colours, hl_tokens()$focus$context)
+  if (folded) colours <- c(colours, context_colour())
   lapply(seq_along(names), function(index) {
     donut_segment(names[index], amounts[index], sum(amounts), colours[index], NULL, index - 1L)
   })
@@ -54,14 +61,15 @@ child_ring <- function(data, levels, value, parents, total) {
   ring
 }
 
-donut_rings <- function(data, label, value, levels = NULL, chart = "donut", colors = NULL) {
+# Segments per ring, inner to outer; children follow their parent's order and use its tints.
+donut_rings <- function(data, label, value, levels = NULL, chart = "donut", colors = NULL, order = NULL) {
   levels <- levels %||% label
   check_columns(data, c(levels, value))
   if (length(levels) > hl_tokens()$donut$max_levels) {
     stop(sprintf("hairline: %s: %d levels given (%s); at most 3 levels fit", chart, length(levels),
                  paste(levels, collapse = ", ")), call. = FALSE)
   }
-  rings <- list(top_ring(data, levels[1], value, fold = length(levels) == 1, colors = colors))
+  rings <- list(top_ring(data, levels[1], value, fold = length(levels) == 1, colors = colors, order = order))
   total <- sum(vapply(rings[[1]], `[[`, numeric(1), "value"))
   for (depth in seq_along(levels)[-1]) {
     rings[[depth]] <- child_ring(data, levels[seq_len(depth)], value, rings[[depth - 1]], total)
@@ -86,15 +94,16 @@ donut_rings <- function(data, label, value, levels = NULL, chart = "donut", colo
 #' @param total_label Text under the total, e.g. `"patients"`.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#' @param order Top-level slices in this order; any others follow in their data order.
 #' @return A ggplot with the hairline frame.
 #' @export
 hl_donut <- function(data, label = NULL, value = NULL, levels = NULL, title = NULL, subtitle = NULL, caption = NULL,
-                     labels = NULL, total = TRUE, total_label = NULL, colors = NULL) {
+                     labels = NULL, total = TRUE, total_label = NULL, colors = NULL, order = NULL) {
   counted <- with_counts(data, value)
   data <- counted$data
   value <- counted$value
   title <- title %||% paste(humanise(value), "by", joined(levels %||% label))
-  rings <- donut_rings(data, label, value, levels, colors = colors)
+  rings <- donut_rings(data, label, value, levels, colors = colors, order = order)
   mode <- labels %||% if (length(rings) == 1) "outside" else "key"
   if (!mode %in% c("outside", "key", "ring") || (mode == "outside" && length(rings) > 1)) {
     stop(sprintf("hairline: donut: labels '%s' does not fit %d ring(s); use %s", mode, length(rings),

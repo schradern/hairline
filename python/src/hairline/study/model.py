@@ -79,6 +79,7 @@ class Study:
         return over_time(self, date, value, window, size)
 
     def effects(self, model_or_table, measure: str | None = None, size: str = "double", **options) -> Result:
+        """Effects from a model or a table; options: study_column, estimate, low, high, exponentiate, digits."""
         from hairline.study.outcomes import effects
         return effects(self, model_or_table, measure, size, **options)
 

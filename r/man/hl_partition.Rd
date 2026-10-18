@@ -12,7 +12,8 @@ hl_partition(
   subtitle = NULL,
   caption = NULL,
   level_names = NULL,
-  colors = NULL
+  colors = NULL,
+  order = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ hl_partition(
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
 for the number of groups and are not remembered for other charts.}
+
+\item{order}{Top-level slices in this order; any others follow in their data order.}
 }
 \value{
 A ggplot with the hairline frame.

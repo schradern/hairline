@@ -221,15 +221,17 @@ def font_faces(family: str) -> str:
     return "".join(faces)
 
 
-def figure_html(svg: str, targets: dict, family: str) -> str:
+def figure_html(svg: str, targets: dict, family: str, alt: str = "") -> str:
     """One self-contained <figure>: static SVG, overlay, tooltip box, targets and script (embeddable as is)."""
     body = svg[svg.index("<svg"):]
     style = targets["style"]
     variables = f"--hl-ink:{style['ink']};--hl-surface:{style['surface']};--hl-axis:{style['axis']};" \
                 f"--hl-font:'{style['font']}'"
     data = json.dumps(targets, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    return (f'<figure class="hairline-figure" style="{variables}"><style>{font_faces(family)}{asset("hairline.css")}'
-            f'</style>{body}<svg class="hairline-overlay" viewBox="0 0 {targets["width"]} {targets["height"]}" '
+    label = alt.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+    return (f'<figure class="hairline-figure" style="{variables}" aria-label="{label}">'
+            f'<style>{font_faces(family)}{asset("hairline.css")}</style>{body}'
+            f'<svg class="hairline-overlay" viewBox="0 0 {targets["width"]} {targets["height"]}" '
             f'xmlns="http://www.w3.org/2000/svg"></svg><div class="hairline-tip"></div>'
             f'<script type="application/json" class="hairline-targets">{data}</script>'
             f'<script>{asset("hairline.js")}</script></figure>')

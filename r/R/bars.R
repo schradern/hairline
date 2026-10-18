@@ -110,6 +110,12 @@ bar_layers <- function(frame, colours, horizontal, stacked, labels, percent) {
                   vjust = if (horizontal) 0.5 else -gap)))
 }
 
+# "Count by unit", or "Count by unit and sex" when bars are split by a second column.
+bars_title <- function(value, category, by) {
+  split <- if (!is.null(by) && !identical(by, category)) paste(" and", gsub("_", " ", by)) else ""
+  paste0(humanise(value), " by ", gsub("_", " ", category), split)
+}
+
 #' Bar chart
 #'
 #' Bars per category; without `value` the rows are counted. Long or many
@@ -143,7 +149,7 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
     colours_for(parts$groups, colors)
   plot <- ggplot2::ggplot() +
     bar_layers(bar_frame(parts, category, by, horizontal, percent), colours, horizontal, stacked, labels, percent) +
-    ggplot2::labs(title = title %||% paste(humanise(counted$value), "by", gsub("_", " ", category)),
+    ggplot2::labs(title = title %||% bars_title(counted$value, category, by),
                   subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline() +
     bar_category_scale(horizontal)
   if (percent) plot <- plot + if (horizontal) scale_x_hairline(percent = TRUE) else scale_y_hairline(percent = TRUE)

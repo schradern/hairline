@@ -130,7 +130,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     table, names, groups = bar_table(data, category, value, by, order,
                                      sort or ("given" if by and not stacked else "value"))
     horizontal = is_long(names) if horizontal is None else horizontal
-    result = figure(title or f"{humanise(value)} by {str(category).replace('_', ' ')}", subtitle=subtitle,
+    split = f" and {str(by).replace('_', ' ')}" if by and by != category else ""
+    result = figure(title or f"{humanise(value)} by {str(category).replace('_', ' ')}{split}", subtitle=subtitle,
                     caption=caption, size=size)
     with entities.chart(groups if by else [], colors):
         draw_bars(result.ax, table, names, groups, {"category": category, "value": value, "by": by,

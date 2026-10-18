@@ -21,3 +21,14 @@ test_that("fit lines stay static and points are targets", {
   expect_length(targets$series, 1)
   expect_length(targets$series[[1]]$tips, 6)
 })
+
+test_that("the html figure is named by its title and subtitle", {
+  skip_if_not_installed("svglite")
+  hl_use(brand = FALSE)
+  data <- data.frame(x = 0:2, y = c(1, 3, 2))
+  plot <- ggplot2::ggplot(data, ggplot2::aes(x, y)) + ggplot2::geom_line() +
+    ggplot2::labs(title = "Two series", subtitle = "Weekly <counts>") + theme_hairline()
+  path <- hl_save(plot, file.path(withr::local_tempdir(), "named"), formats = "html")
+  html <- paste(readLines(path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
+  expect_true(grepl('aria-label="Two series. Weekly &lt;counts>"', html, fixed = TRUE))
+})

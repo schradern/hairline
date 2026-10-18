@@ -217,13 +217,15 @@ font_faces <- function(family) {
 }
 
 # One self-contained <figure>: static SVG, overlay, tooltip box, targets and script (embeddable as is).
-figure_html <- function(svg, targets, family) {
+figure_html <- function(svg, targets, family, alt = "") {
   body <- substring(svg, regexpr("<svg", svg, fixed = TRUE))
   style <- targets$style
   variables <- sprintf("--hl-ink:%s;--hl-surface:%s;--hl-axis:%s;--hl-font:'%s'", style$ink, style$surface,
                        style$axis, style$font)
   data <- gsub("</", "<\\/", jsonlite::toJSON(targets, auto_unbox = TRUE, digits = NA), fixed = TRUE)
-  paste0('<figure class="hairline-figure" style="', variables, '"><style>', font_faces(family),
+  label <- gsub("<", "&lt;", gsub('"', "&quot;", gsub("&", "&amp;", alt, fixed = TRUE), fixed = TRUE), fixed = TRUE)
+  paste0('<figure class="hairline-figure" style="', variables, '" aria-label="', label, '"><style>',
+         font_faces(family),
          interactive_asset("hairline.css"), "</style>", body, '<svg class="hairline-overlay" viewBox="0 0 ',
          targets$width, " ", targets$height, '" xmlns="http://www.w3.org/2000/svg"></svg>',
          '<div class="hairline-tip"></div><script type="application/json" class="hairline-targets">', data,
@@ -248,6 +250,7 @@ write_html <- function(plot, path, size, size_mm, background) {
   svg <- paste(readLines(svg_path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
   targets <- interactive_targets(plot, size, size_mm[1], size_mm[2])
   title <- plot@labels$title %||% ""
-  writeLines(html_page(title, figure_html(svg, targets, targets$style$font), targets$style$surface), path,
+  alt <- paste(c(plot@labels$title, plot@labels$subtitle), collapse = ". ")
+  writeLines(html_page(title, figure_html(svg, targets, targets$style$font, alt), targets$style$surface), path,
              useBytes = TRUE)
 }

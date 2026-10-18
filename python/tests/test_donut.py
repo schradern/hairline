@@ -6,6 +6,7 @@ from hairline.charts.donut import donut_rings
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.color.tints import tints
 from hairline.layout.geometry import Box
+from hairline.tokens import load_tokens
 
 STYLE = {"base": 9.0, "sizes": {"title": 13.5, "panel": 9.0, "label": 7.2, "caption": 7.2}, "line_gap": 0.25,
          "cap_height": 0.7, "descender": 0.21,
@@ -88,3 +89,16 @@ def test_donut_figure_reports_its_labels():
     report = figure.layout_report()
     assert report["bare_panels"] == [0]
     assert len(report["drawing_texts"]) == 2 * 5 + 2
+
+
+def test_order_sets_the_top_ring_sequence():
+    rings = donut_rings(discharge(), "destination", "patients", None, order=["Died", "Home"])
+    assert [segment["name"] for segment in rings[0]] == ["Died", "Home", "Rehab", "Ward", "Care home"]
+
+
+def test_folded_other_slice_uses_the_scheme_context_grey():
+    hl.use(brand=False, scheme="dark")
+    data = pd.DataFrame({"unit": list("ABCDEFGHI"), "patients": [9, 8, 7, 6, 5, 4, 3, 2, 1]})
+    other = donut_rings(data, "unit", "patients", None)[0][-1]
+    hl.use(brand=False)
+    assert other["name"] == "Other" and other["color"] == load_tokens()["focus"]["context_dark"]

@@ -5,7 +5,7 @@ import pytest
 from test_donut import STYLE, fake_measure
 
 import hairline as hl
-from hairline.charts.forest import forest_spec
+from hairline.charts.forest import forest_spec, ratio_model
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.layout.geometry import Box
 
@@ -84,3 +84,40 @@ def test_forest_figure_puts_heterogeneity_in_the_caption():
     figure.figure.canvas.draw()
     assert figure.layout_report()["bare_panels"] == [0]
     assert math.isfinite(figure.layout_report()["drawing_texts"][0][0])
+
+
+class Link:
+    pass
+
+
+class Logit(Link):
+    pass
+
+
+class Identity(Link):
+    pass
+
+
+class FittedModel:
+    """The duck type forest() reads: params, conf_int() and the model's family link, as statsmodels has them."""
+
+    def __init__(self, link):
+        self.params = pd.Series({"Intercept": 0.1, "age": math.log(2.0)})
+        self.model = type("GLM", (), {"family": type("Family", (), {"link": link})()})()
+
+    def conf_int(self):
+        return pd.DataFrame({0: [0.0, math.log(1.5)], 1: [0.2, math.log(3.0)]}, index=self.params.index)
+
+
+def test_logistic_models_are_exponentiated_by_default():
+    spec = hl.forest(FittedModel(Logit()))
+    assert ratio_model(FittedModel(Logit())) and not ratio_model(FittedModel(Identity()))
+    assert spec.title == "Effects by term"
+
+
+def test_effects_reads_a_logistic_model_as_odds_ratios():
+    ages = pd.DataFrame({"age": [50, 55, 60, 65, 70, 75, 80, 85, 90, 95]})
+    study = hl.study(ages, labels={"age": "Age"}, units={"age": "years"})
+    result = study.effects(FittedModel(Logit()), "OR")
+    assert result.values == {"Age": "OR 2.00 [1.50; 3.00]"}
+    assert study.effects(FittedModel(Identity()), digits=1).values == {"Age": "0.7 [0.4; 1.1]"}

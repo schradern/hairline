@@ -73,19 +73,20 @@ def partition_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> li
     return bars + texts
 
 
-def partition(data: pd.DataFrame, levels: Sequence[str], value: str | None = None, *, title: str | None = None,
-              subtitle: str | None = None,
-              caption: str | None = None, level_names: Sequence[str] | None = None,
-              colors: Mapping[str, str] | None = None, size: str = "onehalf") -> HairlineFigure:
+def partition(data: pd.DataFrame, levels: str | Sequence[str], value: str | None = None, *,
+              title: str | None = None, subtitle: str | None = None, caption: str | None = None,
+              level_names: Sequence[str] | None = None, colors: Mapping[str, str] | None = None,
+              order: Sequence[str] | None = None, size: str = "onehalf") -> HairlineFigure:
     """Partition bars: the documented alternative to a nested donut, read top to bottom."""
-    levels = list(levels)
+    levels = [levels] if isinstance(levels, str) else list(levels)
     data, value = with_counts(data, value)
     title = title or f"{humanise(value)} by {joined(levels)}"
     names = list(level_names) if level_names is not None else [humanise(level) for level in levels]
     if len(names) != len(levels):
         raise ValueError(f"hairline: partition: {len(levels)} levels but {len(names)} level name(s); give one name "
                          "per level")
-    spec = {"rings": donut_rings(data, None, value, levels, chart="partition", colors=colors), "levels": names}
+    spec = {"rings": donut_rings(data, None, value, levels, chart="partition", colors=colors, order=order),
+            "levels": names}
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: partition_drawing(spec, box, measure, style))
     result.legend([("square", segment["color"], segment["name"]) for segment in spec["rings"][0]])

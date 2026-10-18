@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from hairline.charts.forest import forest, model_table
+from hairline.charts.forest import forest, model_table, ratio_model
 from hairline.charts.kaplan_meier import estimates_from, kaplan_meier
 from hairline.numbers import format_interval, format_number, format_p
 from hairline.stats.survival import km_median
@@ -82,30 +82,32 @@ def survival_text(study: Study, rows: list, grouped: bool, test: str | None) -> 
     return f"Median {measured}{unit}: {medians}" + (f" (log-rank {test})." if test else ".")
 
 
-def effect_rows(model_or_table, options: dict) -> pd.DataFrame:
+def effect_rows(model_or_table, columns: tuple[str, str, str, str], exponentiate: bool | None) -> pd.DataFrame:
     """Term, estimate, low and high from a fitted model or a table with those columns."""
     if hasattr(model_or_table, "params") and hasattr(model_or_table, "conf_int"):
-        return model_table(model_or_table, options.get("exponentiate", False))
-    names = [options.get(key, key) for key in ("study", "estimate", "low", "high")]
-    missing = [name for name in names if name not in model_or_table.columns]
+        return model_table(model_or_table, ratio_model(model_or_table) if exponentiate is None else exponentiate)
+    missing = [name for name in columns if name not in model_or_table.columns]
     if missing:
         raise ValueError(f"hairline: effects: missing columns {', '.join(missing)}; columns: "
                          f"{', '.join(map(str, model_or_table.columns))}")
-    return model_or_table[names].set_axis(["term", "estimate", "low", "high"], axis=1)
+    return model_or_table[list(columns)].set_axis(["term", "estimate", "low", "high"], axis=1)
 
 
-def effects(study: Study, model_or_table, measure: str | None = None, size: str = "double", **options) -> Result:
-    """Estimates with 95 % intervals per term; term names that are study columns take their labels."""
-    rows = effect_rows(model_or_table, options).reset_index(drop=True)
-    digits, prefix = options.get("digits", 2), f"{measure} " if measure else ""
+def effects(study: Study, model_or_table, measure: str | None = None, size: str = "double", *,
+            study_column: str = "study", estimate: str = "estimate", low: str = "low", high: str = "high",
+            exponentiate: bool | None = None, digits: int = 2, **options) -> Result:
+    """Estimates with 95 % intervals per term from a fitted model or a table; term names that are study columns
+    take their labels. `options` go to forest()."""
+    rows = effect_rows(model_or_table, (study_column, estimate, low, high), exponentiate).reset_index(drop=True)
+    prefix = f"{measure} " if measure else ""
     terms = [study.label(term) if term in study.data.columns else str(term) for term in rows["term"]]
     texts = [prefix + format_interval(row.estimate, row.low, row.high, digits) for row in rows.itertuples()]
     table = pd.DataFrame({"Term": terms, "Estimate [95 % CI]": texts})
-    shown = rows.assign(term=terms)
-    passed = {key: value for key, value in options.items() if key not in ("study", "estimate", "low", "high",
-                                                                           "exponentiate")}
-    ratio_measure = measure in load_tokens()["study"]["ratio_measures"]
-    passed.setdefault("ratio", bool(options.get("exponentiate")) or ratio_measure)
-    figure = forest(shown, "term", "estimate", "low", "high", size=size, **passed)
+    modelled = hasattr(model_or_table, "params")
+    exponentiated = (ratio_model(model_or_table) if exponentiate is None else exponentiate) if modelled \
+        else bool(exponentiate)
+    ratio = exponentiated or measure in load_tokens()["study"]["ratio_measures"]
+    figure = forest(rows.assign(term=terms), "term", "estimate", "low", "high", ratio=ratio, size=size,
+                    digits=digits, **options)
     text = "; ".join(f"{term} {value}" for term, value in zip(terms, texts, strict=True)) + "."
     return Result(figure, table, dict(zip(terms, texts, strict=True)), text)

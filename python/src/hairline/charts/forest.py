@@ -94,20 +94,32 @@ def model_table(model, exponentiate: bool) -> pd.DataFrame:
     return table
 
 
+def ratio_model(model) -> bool:
+    """Log-odds and log-rate models (logistic, Poisson, Cox) are read as ratios, as R does for glm and coxph."""
+    inner = getattr(model, "model", None)
+    link = type(getattr(getattr(inner, "family", None), "link", None)).__name__.lower()
+    names = {type(inner).__name__, type(model).__name__}
+    return link in ("logit", "log") or bool(names & {"Logit", "Poisson", "NegativeBinomial", "PHReg"})
+
+
 def forest(data, study: str = "study", estimate: str = "estimate", low: str = "low", high: str = "high", *,
+           weight: str | None = None, columns: Mapping[str, str] | None = None, pooled: Mapping | None = None,
+           ratio: bool = True, favours: Sequence[str] | None = None, heterogeneity: str | None = None,
            title: str | None = None, subtitle: str | None = None, caption: str | None = None,
-           heterogeneity: str | None = None, exponentiate: bool = False, size: str = "onehalf",
-           **options) -> HairlineFigure:
-    """Forest plot from a results table or a fitted model (its terms, without the intercept); `exponentiate`
-    turns log odds or log hazards into ratios. `options` as for forest_spec (weight, columns, pooled, favours…)."""
+           exponentiate: bool | None = None, size: str = "onehalf", **options) -> HairlineFigure:
+    """Forest plot from a results table or a fitted model (its terms, without the intercept). For a model,
+    `exponentiate` (default: on for logistic, Poisson and Cox models) turns log odds or log hazards into ratios.
+    `options` as for forest_spec (study_heading, effect_heading, digits, marker, null)."""
     if hasattr(data, "params") and hasattr(data, "conf_int"):
+        exponentiate = ratio_model(data) if exponentiate is None else exponentiate
         data, study, estimate, low, high = model_table(data, exponentiate), "term", "estimate", "low", "high"
-        options.setdefault("ratio", exponentiate)
+        ratio = exponentiate
     elif not {study, estimate, low, high} <= set(getattr(data, "columns", [])):
         raise ValueError(f"hairline: forest needs the study, estimate, low and high columns ({study}, {estimate}, "
                          f"{low}, {high}); columns: {', '.join(map(str, getattr(data, 'columns', [])))}")
     title = title or f"Effects by {humanise(study).lower()}"
-    spec = forest_spec(data, study, estimate, low, high, color=lone_color(), **options)
+    spec = forest_spec(data, study, estimate, low, high, weight=weight, columns=columns, pooled=pooled, ratio=ratio,
+                       favours=favours, color=lone_color(), **options)
     note = ". ".join(part.rstrip(".") for part in (heterogeneity, caption) if part)
     result = figure(title, subtitle=subtitle, caption=note + "." if note else None, size=size)
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))

@@ -58,3 +58,8 @@ def test_partition_figure_reports_its_labels():
 def test_level_names_must_match_levels():
     with pytest.raises(ValueError, match="2 levels but 1 level name"):
         hl.partition(nested(), ["route", "detail"], "patients", title="T", level_names=["Destination"])
+
+
+def test_partition_takes_a_single_column_name():
+    data = pd.DataFrame({"unit": ["A", "A", "B"]})
+    assert hl.partition(data, "unit").title == "Count by unit"
