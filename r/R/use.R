@@ -68,7 +68,7 @@ palette_fields <- function(palette) {
 #' @param background `"#ffffff"`-style colour or `"transparent"`.
 #' @param brand Path to a `_brand.yml`, several paths as layers (institution first), `NULL` to look one up,
 #'   or `FALSE`.
-#' @param colors Named vector of entity colours, e.g. `c("Unit B" = "#e8a628")`; see [hl_color()].
+#' @param colors Named vector of entity colours, e.g. `c("Unit B" = "#e79d01")`; see [hl_color()].
 #' @param output Export type whose brand overrides apply: `"screen"`, `"pdf"`, `"html"` or `"docx"`.
 #' @param accent Colour of a lone series (charts without groups), made readable against the background.
 #' @param scheme `"light"` (default) or `"dark"`: the dark neutral tokens (a brand's light neutrals do not carry over).

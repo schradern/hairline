@@ -60,7 +60,7 @@ The six categorical palettes have eight colours each:
 Every set opens with its own blue, then its own red, so two groups always read blue against red, in any
 set. Violet, magenta and pink appear only in the last two slots.
 
-The purpose sets cover common cases: `pair`, `pair-teal` and `pair-violet` for two groups, `ink` for strict
+The purpose sets cover common cases: `pair`, `pair-teal` and `pair-print` (stays apart in grey) for two groups, `ink` for strict
 greyscale print, and `judgement` for low, some concerns and high.
 
 ## Choose a palette for the session
@@ -94,14 +94,14 @@ Within a session, a group keeps the colour it got first in every later chart, ev
 some of the groups. To decide the colours yourself, pin them to names:
 
 ```python
-hl.use(brand=False, colors={"Unit A": "#2474cf", "Unit B": "#e8a628"})
-hl.color("Unit B")               # '#e8a628'
+hl.use(brand=False, colors={"Unit A": "#0a6ddd", "Unit B": "#e79d01"})
+hl.color("Unit B")               # '#e79d01'
 hl.colors()                      # every name with its colour so far
 ```
 
 ```r
-hl_use(brand = FALSE, colors = c("Unit A" = "#2474cf", "Unit B" = "#e8a628"))
-hl_color("Unit B")               # "#e8a628"
+hl_use(brand = FALSE, colors = c("Unit A" = "#0a6ddd", "Unit B" = "#e79d01"))
+hl_color("Unit B")               # "#e79d01"
 hl_colors()                      # every name with its colour so far
 ```
 
@@ -151,13 +151,13 @@ is measured. `check_palette()` reports the numbers; `pairs="all"` checks every p
 small multiples where any two groups can meet.
 
 ```python
-report = hl.check_palette(["#2474cf", "#2b83c4", "#e8a628"], pairs="all")
+report = hl.check_palette(["#0a6ddd", "#2b83c4", "#e79d01"], pairs="all")
 report.passed                    # False: the two blues are too close
 report.failures                  # what failed, with the measured distances
 ```
 
 ```r
-report <- hl_check_palette(c("#2474cf", "#2b83c4", "#e8a628"), pairs = "all")
+report <- hl_check_palette(c("#0a6ddd", "#2b83c4", "#e79d01"), pairs = "all")
 report$passed
 report$failures
 ```

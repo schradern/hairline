@@ -29,7 +29,7 @@ hl_sankey(
 
 \item{headings}{Column headings; default the column names.}
 
-\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
 for the number of groups and are not remembered for other charts.}
 }
 \value{

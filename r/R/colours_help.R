@@ -25,7 +25,7 @@
 #' `"daylight"` (vivid; the default), `"calm"` (softer and lighter, for long
 #' reports), `"deep"` (stays apart when printed in grey), `"lagoon"` (cool),
 #' `"citrus"` (warm) and `"bold"` (saturated, for slides).
-#' The purpose sets are `"pair"`, `"pair-teal"` and `"pair-violet"` for two
+#' The purpose sets are `"pair"`, `"pair-teal"` and `"pair-print"` for two
 #' groups, `"ink"` for greyscale print and `"judgement"` for low, some
 #' concerns and high. The ramps are `"blues"`, `"teals"`, `"oranges"`,
 #' `"berries"` and `"greys"` (sequential) and `"blue-coral"` and
@@ -42,7 +42,7 @@
 #'
 #' @section Colour follows the name:
 #' Within a session a group keeps the colour it got first, in every later
-#' chart. Pin colours to names with `hl_use(colors = c("Unit B" = "#e8a628"))`
+#' chart. Pin colours to names with `hl_use(colors = c("Unit B" = "#e79d01"))`
 #' and read them back with [hl_color()] and [hl_colors()]. For colours that
 #' stay the same across a report whatever order the charts are drawn in, put
 #' them in the brand file under `defaults: hairline: colors:`; `groups:` gives

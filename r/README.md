@@ -69,7 +69,7 @@ hl_save(figure, "fuel", size = "single")
 Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its
 colour in every chart. `hl_palettes()` lists the six palettes, the purpose sets (two groups, greyscale print,
 risk of bias) and the ramps for amounts; `hl_swatches()` draws them; `hl_use(palette = "calm")` changes the
-default; `hl_use(colors = c("Unit B" = "#e8a628"))` pins a colour to a name; `scale_fill_hairline_c("blues")`
+default; `hl_use(colors = c("Unit B" = "#e79d01"))` pins a colour to a name; `scale_fill_hairline_c("blues")`
 gives a ramp to your own ggplots. `?hairline_colours` has the details.
 
 ## Files
@@ -82,7 +82,7 @@ timestamps.
 
 - `hl_use(brand = "_brand.yml")` applies an institution's colours, fonts and sizes from a
   [brand.yml](https://posit-dev.github.io/brand-yml/) file; several files layer from institution to document.
-- `hl_use(colors = c("Unit B" = "#e8a628"))` pins a colour to a name across every chart.
+- `hl_use(colors = c("Unit B" = "#e79d01"))` pins a colour to a name across every chart.
 - Palettes are checked for colour-vision separation and contrast; `hl_check_palette()` reports the numbers.
 - `hl_use(scheme = "dark", accent = "#0b6e4f")` draws on a dark surface with an accent for single series.
 

@@ -157,12 +157,12 @@
       "#de4642"
     ],
     "pair-teal": [
-      "#00afa9",
-      "#b93780"
+      "#019a98",
+      "#f07202"
     ],
-    "pair-violet": [
-      "#5152c1",
-      "#ef852e"
+    "pair-print": [
+      "#1649ae",
+      "#e4a409"
     ],
     "ink": [
       "#1b1e22",
@@ -172,9 +172,9 @@
       "#cdd0d4"
     ],
     "judgement": {
-      "low": "#009775",
-      "some": "#e8a628",
-      "high": "#b93780"
+      "low": "#019a98",
+      "some": "#e79d01",
+      "high": "#de4642"
     }
   },
   "ramp_definitions": {
@@ -575,8 +575,8 @@
     "citrus": "warm: gold after the pair",
     "bold": "saturated, for slides and posters",
     "pair": "two groups: blue and red",
-    "pair-teal": "two groups: teal and magenta",
-    "pair-violet": "two groups: violet and orange",
+    "pair-teal": "two groups: teal and orange",
+    "pair-print": "two groups that stay apart in grey",
     "ink": "greyscale print",
     "judgement": "low, some concerns, high",
     "blues": "amounts, light to dark",

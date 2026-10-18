@@ -93,7 +93,7 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #' @param order Group order.
 #' @param comparisons `"all"` or `"adjacent"` pairs, or a list of `c(group, group)` pairs (Wilcoxon rank-sum p
 #'   computed) or `c(group, group, text)` with your own result.
-#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @examples

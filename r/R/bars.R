@@ -133,7 +133,7 @@ bars_title <- function(value, category, by) {
 #' @param sort `"value"` or `"given"`; default by value, except for groups side by side.
 #' @param order Category order.
 #' @param labels Print the values: at the bar ends, or inside stacked segments with the totals at the ends.
-#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @examples

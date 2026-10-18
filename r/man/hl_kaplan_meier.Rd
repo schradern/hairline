@@ -49,7 +49,7 @@ hl_kaplan_meier(
 
 \item{test}{Add the log-rank p to the key numbers when there are groups.}
 
-\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
 for the number of groups and are not remembered for other charts.}
 }
 \value{

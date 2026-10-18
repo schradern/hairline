@@ -182,7 +182,7 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     a `_brand.yml` found from the working directory up to the project root; `brand=False` disables the lookup)
     > hairline's defaults. `output` ("screen", "pdf", "html", "docx") applies the brand's overrides for it.
     `palette` is a palette or purpose-set name ("calm", "pair"; see `palettes()`) or a list of hex colours;
-    `colors` pins colours to names ({"Unit B": "#e8a628"}) across every chart. `accent` colours a lone series
+    `colors` pins colours to names ({"Unit B": "#e79d01"}) across every chart. `accent` colours a lone series
     (charts without groups); `scheme="dark"` uses the dark neutral tokens.
     """
     from hairline.host import host_context

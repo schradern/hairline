@@ -1,6 +1,6 @@
 # Named palettes, purpose sets and ramps from the shared tokens.
 
-purpose_sets <- c("pair", "pair-teal", "pair-violet", "ink", "judgement")
+purpose_sets <- c("pair", "pair-teal", "pair-print", "ink", "judgement")
 colour_kinds <- c("categorical", "purpose", "sequential", "diverging")
 
 # A palette or purpose set by name (judgement in its order: low, some concerns, high); NULL for other names.
@@ -40,7 +40,7 @@ resolve_palette <- function(name) {
 #' are shown. There are six categorical palettes of eight slots, each opening
 #' blue then red so two groups always read blue against red (`"daylight"`, the
 #' default, `"calm"`, `"deep"`, `"lagoon"`, `"citrus"` and `"bold"`), and
-#' purpose sets for common cases: `"pair"`, `"pair-teal"` and `"pair-violet"`
+#' purpose sets for common cases: `"pair"`, `"pair-teal"` and `"pair-print"`
 #' for two groups, `"ink"` for greyscale print and `"judgement"` for low, some
 #' concerns and high. [hl_palettes()] lists them all with their uses and
 #' [hl_swatches()] draws them; make one the default with `hl_use(palette = )`.

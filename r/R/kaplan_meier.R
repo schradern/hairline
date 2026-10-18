@@ -94,7 +94,7 @@ km_layers <- function(layers, colours, median_line) {
 #' @param times Times for the number at risk; default the x-axis breaks.
 #' @param order Group order.
 #' @param test Add the log-rank p to the key numbers when there are groups.
-#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @examples

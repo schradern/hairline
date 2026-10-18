@@ -36,7 +36,7 @@ hl_donut(
 
 \item{total_label}{Text under the total, e.g. \code{"patients"}.}
 
-\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
 for the number of groups and are not remembered for other charts.}
 
 \item{order}{Top-level slices in this order; any others follow in their data order.}

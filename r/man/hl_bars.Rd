@@ -44,7 +44,7 @@ hl_bars(
 
 \item{labels}{Print the values: at the bar ends, or inside stacked segments with the totals at the ends.}
 
-\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
 for the number of groups and are not remembered for other charts.}
 }
 \value{

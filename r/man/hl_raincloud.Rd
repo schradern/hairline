@@ -31,7 +31,7 @@ hl_raincloud(
 \item{comparisons}{\code{"all"} or \code{"adjacent"} pairs, or a list of \code{c(group, group)} pairs (Wilcoxon rank-sum p
 computed) or \code{c(group, group, text)} with your own result.}
 
-\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#2474cf")}; they override the colour set
+\item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
 for the number of groups and are not remembered for other charts.}
 }
 \value{

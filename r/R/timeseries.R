@@ -141,7 +141,7 @@ headers_for <- function(plot, data, y, stats, percent, threshold, share_label, k
 #' @param events List of `list(x, label)` event markers.
 #' @param order Group order; defaults to the order of appearance.
 #' @param raw_label,mean_label Legend labels of the two lines.
-#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @examples

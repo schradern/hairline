@@ -92,7 +92,7 @@ donut_rings <- function(data, label, value, levels = NULL, chart = "donut", colo
 #' @param labels `"outside"` (one ring), `"key"` or `"ring"`; `NULL` picks outside for one ring, key otherwise.
 #' @param total Show the total in the centre.
 #' @param total_label Text under the total, e.g. `"patients"`.
-#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @param order Top-level slices in this order; any others follow in their data order.
 #' @return A ggplot with the hairline frame.

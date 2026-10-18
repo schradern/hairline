@@ -33,7 +33,7 @@ blue, then its own red, so two groups always read blue against red:
 \code{"daylight"} (vivid; the default), \code{"calm"} (softer and lighter, for long
 reports), \code{"deep"} (stays apart when printed in grey), \code{"lagoon"} (cool),
 \code{"citrus"} (warm) and \code{"bold"} (saturated, for slides).
-The purpose sets are \code{"pair"}, \code{"pair-teal"} and \code{"pair-violet"} for two
+The purpose sets are \code{"pair"}, \code{"pair-teal"} and \code{"pair-print"} for two
 groups, \code{"ink"} for greyscale print and \code{"judgement"} for low, some
 concerns and high. The ramps are \code{"blues"}, \code{"teals"}, \code{"oranges"},
 \code{"berries"} and \code{"greys"} (sequential) and \code{"blue-coral"} and
@@ -54,7 +54,7 @@ figure into panels.
 \section{Colour follows the name}{
 
 Within a session a group keeps the colour it got first, in every later
-chart. Pin colours to names with \code{hl_use(colors = c("Unit B" = "#e8a628"))}
+chart. Pin colours to names with \code{hl_use(colors = c("Unit B" = "#e79d01"))}
 and read them back with \code{\link[=hl_color]{hl_color()}} and \code{\link[=hl_colors]{hl_colors()}}. For colours that
 stay the same across a report whatever order the charts are drawn in, put
 them in the brand file under \verb{defaults: hairline: colors:}; \verb{groups:} gives

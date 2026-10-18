@@ -84,7 +84,7 @@ partition_drawing <- function(spec, box, measure, style) {
 #' @param value Column with the amounts; `NULL` counts rows.
 #' @param title,subtitle,caption Frame texts.
 #' @param level_names Row headings; default the column names.
-#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @param order Top-level slices in this order; any others follow in their data order.
 #' @return A ggplot with the hairline frame.

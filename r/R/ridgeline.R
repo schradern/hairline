@@ -39,7 +39,7 @@ ridge_layers <- function(curve, values, base, scale, colour, medians) {
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param order Group order, top to bottom.
 #' @param medians Mark the medians.
-#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @examples

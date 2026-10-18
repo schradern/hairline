@@ -2190,9 +2190,9 @@
    ],
    "overall": 3,
    "colors": {
-    "low": "#009775",
-    "some": "#e8a628",
-    "high": "#b93780"
+    "low": "#019a98",
+    "some": "#e79d01",
+    "high": "#de4642"
    }
   },
   "shapes": [
@@ -2209,7 +2209,7 @@
    {
     "kind": "polygon",
     "role": "low",
-    "fill": "#009775",
+    "fill": "#019a98",
     "points": [
      [
       75.80000000000001,
@@ -2248,7 +2248,7 @@
    {
     "kind": "polygon",
     "role": "some",
-    "fill": "#e8a628",
+    "fill": "#e79d01",
     "points": [
      [
       332.93333333333334,
@@ -2287,7 +2287,7 @@
    {
     "kind": "polygon",
     "role": "high",
-    "fill": "#b93780",
+    "fill": "#de4642",
     "points": [
      [
       396.9666666666667,
@@ -2336,7 +2336,7 @@
    {
     "kind": "polygon",
     "role": "low",
-    "fill": "#009775",
+    "fill": "#019a98",
     "points": [
      [
       75.80000000000001,
@@ -2375,7 +2375,7 @@
    {
     "kind": "polygon",
     "role": "some",
-    "fill": "#e8a628",
+    "fill": "#e79d01",
     "points": [
      [
       332.93333333333334,
@@ -2414,7 +2414,7 @@
    {
     "kind": "polygon",
     "role": "high",
-    "fill": "#b93780",
+    "fill": "#de4642",
     "points": [
      [
       396.9666666666667,
@@ -2463,7 +2463,7 @@
    {
     "kind": "polygon",
     "role": "low",
-    "fill": "#009775",
+    "fill": "#019a98",
     "points": [
      [
       75.80000000000001,
@@ -2502,7 +2502,7 @@
    {
     "kind": "polygon",
     "role": "some",
-    "fill": "#e8a628",
+    "fill": "#e79d01",
     "points": [
      [
       332.93333333333334,
@@ -2541,7 +2541,7 @@
    {
     "kind": "polygon",
     "role": "high",
-    "fill": "#b93780",
+    "fill": "#de4642",
     "points": [
      [
       396.9666666666667,
@@ -2606,7 +2606,7 @@
    {
     "kind": "polygon",
     "role": "low",
-    "fill": "#009775",
+    "fill": "#019a98",
     "points": [
      [
       75.80000000000001,
@@ -2645,7 +2645,7 @@
    {
     "kind": "polygon",
     "role": "some",
-    "fill": "#e8a628",
+    "fill": "#e79d01",
     "points": [
      [
       140.83333333333334,
@@ -2684,7 +2684,7 @@
    {
     "kind": "polygon",
     "role": "high",
-    "fill": "#b93780",
+    "fill": "#de4642",
     "points": [
      [
       268.9,

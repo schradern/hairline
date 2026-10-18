@@ -138,19 +138,19 @@
     {
      "name": "pair-teal",
      "kind": "purpose",
-     "use": "two groups: teal and magenta",
+     "use": "two groups: teal and orange",
      "colors": [
-      "#00afa9",
-      "#b93780"
+      "#019a98",
+      "#f07202"
      ]
     },
     {
-     "name": "pair-violet",
+     "name": "pair-print",
      "kind": "purpose",
-     "use": "two groups: violet and orange",
+     "use": "two groups that stay apart in grey",
      "colors": [
-      "#5152c1",
-      "#ef852e"
+      "#1649ae",
+      "#e4a409"
      ]
     },
     {
@@ -170,9 +170,9 @@
      "kind": "purpose",
      "use": "low, some concerns, high",
      "colors": [
-      "#009775",
-      "#e8a628",
-      "#b93780"
+      "#019a98",
+      "#e79d01",
+      "#de4642"
      ]
     },
     {
@@ -1911,7 +1911,7 @@
      "kind": "text",
      "x": 20,
      "y": 272.21999999999997,
-     "text": "two groups: teal and magenta",
+     "text": "two groups: teal and orange",
      "role": "label",
      "color": "#5b6168",
      "align": "left",
@@ -1920,7 +1920,7 @@
     {
      "kind": "polygon",
      "role": "swatch",
-     "fill": "#00afa9",
+     "fill": "#019a98",
      "points": [
       [
        160.4,
@@ -1940,7 +1940,7 @@
       ]
      ],
      "series": "pair-teal",
-     "tip": "pair-teal 1: #00afa9",
+     "tip": "pair-teal 1: #019a98",
      "tip_at": [
       166.25,
       265.19999999999993
@@ -1949,7 +1949,7 @@
     {
      "kind": "polygon",
      "role": "swatch",
-     "fill": "#b93780",
+     "fill": "#f07202",
      "points": [
       [
        174.1,
@@ -1969,7 +1969,7 @@
       ]
      ],
      "series": "pair-teal",
-     "tip": "pair-teal 2: #b93780",
+     "tip": "pair-teal 2: #f07202",
      "tip_at": [
       179.95,
       265.19999999999993
@@ -1979,7 +1979,7 @@
      "kind": "text",
      "x": 20,
      "y": 285.71999999999997,
-     "text": "pair-violet",
+     "text": "pair-print",
      "role": "label",
      "color": "#1b1e22",
      "align": "left",
@@ -1989,7 +1989,7 @@
      "kind": "text",
      "x": 20,
      "y": 294.71999999999997,
-     "text": "two groups: violet and orange",
+     "text": "two groups that stay apart in grey",
      "role": "label",
      "color": "#5b6168",
      "align": "left",
@@ -1998,7 +1998,7 @@
     {
      "kind": "polygon",
      "role": "swatch",
-     "fill": "#5152c1",
+     "fill": "#1649ae",
      "points": [
       [
        160.4,
@@ -2017,8 +2017,8 @@
        293.54999999999995
       ]
      ],
-     "series": "pair-violet",
-     "tip": "pair-violet 1: #5152c1",
+     "series": "pair-print",
+     "tip": "pair-print 1: #1649ae",
      "tip_at": [
       166.25,
       287.69999999999993
@@ -2027,7 +2027,7 @@
     {
      "kind": "polygon",
      "role": "swatch",
-     "fill": "#ef852e",
+     "fill": "#e4a409",
      "points": [
       [
        174.1,
@@ -2046,8 +2046,8 @@
        293.54999999999995
       ]
      ],
-     "series": "pair-violet",
-     "tip": "pair-violet 2: #ef852e",
+     "series": "pair-print",
+     "tip": "pair-print 2: #e4a409",
      "tip_at": [
       179.95,
       287.69999999999993
@@ -2241,7 +2241,7 @@
     {
      "kind": "polygon",
      "role": "swatch",
-     "fill": "#009775",
+     "fill": "#019a98",
      "points": [
       [
        160.4,
@@ -2261,7 +2261,7 @@
       ]
      ],
      "series": "judgement",
-     "tip": "judgement 1: #009775",
+     "tip": "judgement 1: #019a98",
      "tip_at": [
       166.25,
       332.69999999999993
@@ -2270,7 +2270,7 @@
     {
      "kind": "polygon",
      "role": "swatch",
-     "fill": "#e8a628",
+     "fill": "#e79d01",
      "points": [
       [
        174.1,
@@ -2290,7 +2290,7 @@
       ]
      ],
      "series": "judgement",
-     "tip": "judgement 2: #e8a628",
+     "tip": "judgement 2: #e79d01",
      "tip_at": [
       179.95,
       332.69999999999993
@@ -2299,7 +2299,7 @@
     {
      "kind": "polygon",
      "role": "swatch",
-     "fill": "#b93780",
+     "fill": "#de4642",
      "points": [
       [
        187.8,
@@ -2319,7 +2319,7 @@
       ]
      ],
      "series": "judgement",
-     "tip": "judgement 3: #b93780",
+     "tip": "judgement 3: #de4642",
      "tip_at": [
       193.65,
       332.69999999999993

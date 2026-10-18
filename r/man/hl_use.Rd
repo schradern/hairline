@@ -35,7 +35,7 @@ hex colours.}
 \item{brand}{Path to a \verb{_brand.yml}, several paths as layers (institution first), \code{NULL} to look one up,
 or \code{FALSE}.}
 
-\item{colors}{Named vector of entity colours, e.g. \code{c("Unit B" = "#e8a628")}; see \code{\link[=hl_color]{hl_color()}}.}
+\item{colors}{Named vector of entity colours, e.g. \code{c("Unit B" = "#e79d01")}; see \code{\link[=hl_color]{hl_color()}}.}
 
 \item{output}{Export type whose brand overrides apply: \code{"screen"}, \code{"pdf"}, \code{"html"} or \code{"docx"}.}
 

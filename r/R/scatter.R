@@ -31,7 +31,7 @@ scatter_fit_layers <- function(x, y) {
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param fit `"linear"` or `NULL`.
 #' @param order Group order.
-#' @param colors Named colours for this chart only, e.g. `c(Male = "#2474cf")`; they override the colour set
+#' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #' @return A ggplot with the hairline frame.
 #' @examples

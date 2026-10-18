@@ -72,7 +72,7 @@ hl.save(figure, "lactate")
 Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its
 colour in every chart. `hl.palettes()` lists the six palettes, the purpose sets (two groups, greyscale print,
 risk of bias) and the ramps for amounts; `hl.swatches()` draws them; `hl.use(palette="calm")` changes the
-default; `hl.use(colors={"Unit B": "#e8a628"})` pins a colour to a name; `hl.colormap("blues")` gives a ramp
+default; `hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name; `hl.colormap("blues")` gives a ramp
 to your own matplotlib plots. `help(hairline.palettes)` has the details.
 
 ## Files
@@ -85,7 +85,7 @@ description, and no timestamps: the same figure gives the same bytes again.
 
 - `hl.use(brand="_brand.yml")` applies an institution's colours, fonts and sizes from a
   [brand.yml](https://posit-dev.github.io/brand-yml/) file; several files layer from institution to document.
-- `hl.use(colors={"Unit B": "#e8a628"})` pins a colour to a name across every chart.
+- `hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name across every chart.
 - Palettes are checked for colour-vision separation and contrast; `hl.check_palette()` reports the numbers.
 - `hl.use(scheme="dark", accent="#0b6e4f")` draws on a dark surface with an accent for single series.
 

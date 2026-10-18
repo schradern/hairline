@@ -21,9 +21,9 @@ def plain_settings():
 
 def test_purpose_sets_are_palettes_by_name():
     assert hl.palette("pair") == ["#0a6ddd", "#de4642"]
-    assert hl.palette("pair-violet") == ["#5152c1", "#ef852e"]
+    assert hl.palette("pair-print") == ["#1649ae", "#e4a409"]
     assert hl.palette("ink", n=3) == ["#1b1e22", "#4a5057", "#767c84"]
-    assert hl.palette("judgement") == ["#009775", "#e8a628", "#b93780"]
+    assert hl.palette("judgement") == ["#019a98", "#e79d01", "#de4642"]
 
 
 def test_a_purpose_set_can_be_the_active_palette():
@@ -42,7 +42,7 @@ def test_a_ramp_is_not_a_palette():
 
 def test_unknown_names_list_palettes_and_purpose_sets():
     with pytest.raises(ValueError, match="available palettes: daylight, calm, deep, lagoon, citrus, bold, pair, "
-                                         "pair-teal, pair-violet, ink, judgement"):
+                                         "pair-teal, pair-print, ink, judgement"):
         hl.palette("sunset")
 
 
@@ -58,7 +58,7 @@ def test_the_catalogue_lists_every_colour_set_with_its_use():
 
 
 def test_the_catalogue_filters_by_kind():
-    assert list(hl.palettes("purpose")["name"]) == ["pair", "pair-teal", "pair-violet", "ink", "judgement"]
+    assert list(hl.palettes("purpose")["name"]) == ["pair", "pair-teal", "pair-print", "ink", "judgement"]
     with pytest.raises(ValueError, match="unknown kind 'warm'; use one of categorical, purpose, sequential, diverging"):
         hl.palettes("warm")
 
