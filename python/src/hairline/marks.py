@@ -64,10 +64,32 @@ def point_style(color: str, settings: Settings | None = None, count: int = 1) ->
 
 
 SECONDARY_ID = "hairline-secondary"
+FIXED_ID = "hairline-fixed"
+# Structural lines (references, medians, brackets) keep their width on every panel.
+FIXED_WIDTH_IDS = {"hairline-reference", "hairline-median", FIXED_ID}
+MM_PER_PT = 25.4 / 72
+
+
+def line_scale(width_pt: float) -> float:
+    """Data lines thin out on narrower panels: the step for a plot box `width_pt` wide."""
+    width_mm = width_pt * MM_PER_PT
+    for step in load_tokens()["lines"]["panel_steps"]:
+        if step["max_mm"] is None or width_mm <= step["max_mm"]:
+            return step["scale"]
+    raise ValueError("hairline: tokens lines.panel_steps needs a last step with max_mm null")
+
+
+def scale_panel_lines(axes, boxes, bases: dict[int, float]) -> None:
+    """Set every data line to its first width times its panel's step; repeat layouts start from that width."""
+    for ax, box in zip(axes, boxes, strict=True):
+        scale = line_scale(box.width)
+        for line in ax.lines:
+            if line.get_gid() not in FIXED_WIDTH_IDS:
+                line.set_linewidth(bases.setdefault(id(line), line.get_linewidth()) * scale)
 
 
 def treat_line(line, settings: Settings) -> None:
-    if line.get_gid() == SECONDARY_ID:
+    if line.get_gid() == SECONDARY_ID or line.get_gid() in FIXED_WIDTH_IDS:
         return
     color = to_hex(line.get_color())
     if is_light(color, settings):

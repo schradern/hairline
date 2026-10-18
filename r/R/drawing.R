@@ -44,7 +44,9 @@ shape_points <- function(shape) {
 drawing_shapes <- function(parts, layout) {
   if (is.null(parts$drawing)) return(list())
   box <- fitted_box(layout$panels[[1]], parts$aspect)
-  parts$drawing(box, measure_for(parts$settings), drawing_style(parts$settings))
+  style <- drawing_style(parts$settings)
+  style$data_width <- style$data_width * line_scale(box[3])
+  parts$drawing(box, measure_for(parts$settings), style)
 }
 
 drawing_grobs <- function(shapes, height, settings) lapply(shapes, shape_grob, height = height, settings = settings)

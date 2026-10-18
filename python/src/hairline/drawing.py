@@ -15,6 +15,7 @@ from hairline.layout.draw import add_text, pt_transform
 from hairline.layout.geometry import load_font_metrics
 from hairline.layout.measure import text_width
 from hairline.layout.styles import role_style
+from hairline.marks import line_scale
 from hairline.settings import Settings, role_size
 from hairline.tokens import load_tokens
 
@@ -68,7 +69,8 @@ def run_drawings(figure: HairlineFigure) -> list:
     """Shapes of every drawn panel, for the plot boxes of the current layout."""
     style, measure, shapes = drawing_style(figure.settings), measure_for(figure.settings), []
     for index, draw in sorted(figure.drawings.items()):
-        shapes += draw(figure.plot_boxes[index], measure, style)
+        box = figure.plot_boxes[index]
+        shapes += draw(box, measure, {**style, "data_width": style["data_width"] * line_scale(box.width)})
     figure.shapes = shapes
     return [render_shape(figure, shape) for shape in shapes]
 

@@ -46,6 +46,7 @@ class HairlineFigure:
     applied_limits: dict[tuple[int, str], tuple[float, float]] = field(default_factory=dict)
     light_slot_done: set[int] = field(default_factory=set)
     point_done: set[int] = field(default_factory=set)
+    line_widths: dict[int, float] = field(default_factory=dict)
     highlight_spec: dict | None = None
     focus_done: set[int] = field(default_factory=set)
     entity_done: set[int] = field(default_factory=set)

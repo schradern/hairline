@@ -20,7 +20,7 @@ from hairline.layout.panels import ComposedHeader, compose_header
 from hairline.layout.styles import header_gaps, header_styles, role_style
 from hairline.layout.table import draw_table, table_label_width, table_lines
 from hairline.layout.ticking import configure_all_ticks
-from hairline.marks import apply_light_slots
+from hairline.marks import apply_light_slots, line_scale, scale_panel_lines
 from hairline.settings import role_size
 from hairline.tokens import load_tokens
 
@@ -191,7 +191,9 @@ def draw_axis_titles(figure: HairlineFigure, layout: FrameLayout) -> list:
 
 
 def draw_frame(figure: HairlineFigure, layout: FrameLayout, measured: Measured, placed, composed) -> None:
-    spacing, lines = load_tokens()["spacing"], load_tokens()["lines"]
+    spacing, lines = load_tokens()["spacing"], dict(load_tokens()["lines"])
+    scale = line_scale(figure.plot_boxes[0].width) if figure.plot_boxes else 1.0
+    lines.update(data=lines["data"] * scale, secondary=lines["secondary"] * scale)
     artists = draw_lines(figure, layout.left, layout.title_baselines, measured.title, "title")
     artists += draw_lines(figure, layout.left, layout.subtitle_baselines, measured.subtitle, "subtitle")
     artists += draw_lines(figure, layout.left, layout.caption_baselines, measured.caption, "caption")
@@ -247,6 +249,7 @@ def apply_frame(figure: HairlineFigure) -> dict[int, list[str]]:
     measured = measure_texts(figure, size[0], configure_all_ticks(figure))
     layout, placed, composed = plan_layout(figure, measured, size)
     position_axes(figure, layout, size)
+    scale_panel_lines(figure.axes, figure.plot_boxes, figure.line_widths)
     place_reference_labels(figure)
     draw_frame(figure, layout, measured, placed, composed)
     figure.report = build_report(figure, layout, measured, placed, composed)

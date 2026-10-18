@@ -78,3 +78,37 @@ apply_light_slots <- function(built) {
   }
   built
 }
+
+# Data lines thin out on narrower panels: the step for a plot box `width_pt` wide.
+line_scale <- function(width_pt) {
+  width_mm <- width_pt * 25.4 / 72
+  steps <- hl_tokens()$lines$panel_steps
+  for (index in seq_len(nrow(steps))) {
+    if (is.na(steps$max_mm[index]) || width_mm <= steps$max_mm[index]) return(steps$scale[index])
+  }
+  stop("hairline: tokens lines.panel_steps needs a last step with max_mm null", call. = FALSE)
+}
+
+# Which layers draw data lines; structural ones (references, medians, brackets) keep their width.
+line_layers <- function(built) {
+  vapply(built@plot@layers, function(layer) {
+    class(layer$geom)[1] %in% c("GeomLine", "GeomPath", "GeomStep") && !isTRUE(layer$hairline_fixed)
+  }, logical(1))
+}
+
+scale_grob_lines <- function(grob, scale) {
+  if (!is.null(grob$gp$lwd)) grob$gp$lwd <- grob$gp$lwd * scale
+  if (inherits(grob, "gTree")) {
+    grob <- grid::setChildren(grob, do.call(grid::gList, lapply(grob$children, scale_grob_lines, scale = scale)))
+  }
+  grob
+}
+
+# A ggplot panel lists the grid, the background and then one grob per layer, in layer order.
+scale_layer_lines <- function(panel, layers, scale) {
+  first <- which(startsWith(names(panel$children), "grill"))[1] + 2
+  if (is.na(first) || first + length(layers) - 1 > length(panel$children) || scale == 1) return(panel)
+  children <- panel$children
+  for (index in which(layers)) children[[first + index - 1]] <- scale_grob_lines(children[[first + index - 1]], scale)
+  grid::setChildren(panel, children)
+}

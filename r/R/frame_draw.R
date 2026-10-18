@@ -12,14 +12,14 @@ baseline_grob <- function(box, bottom, settings) {
                                      lwd = hl_tokens()$lines$axis * settings$base_size / 0.75))
 }
 
-one_panel_grobs <- function(panel, box, height, settings, bare = FALSE) {
+one_panel_grobs <- function(panel, box, height, settings, bare = FALSE, layers = logical()) {
   y_pad <- hl_tokens()$spacing$y_labels_plot * settings$base_size
   x_pad <- hl_tokens()$spacing$x_tick_pad * role_size(settings, "label")
   bottom <- height - box[2] - box[4]
+  panel$grob <- scale_layer_lines(panel$grob, layers, line_scale(box[3]))
   plot <- grid::gTree(children = grid::gList(panel$grob), vp = viewport_pt(box[1], bottom, box[3], box[4], c(0, 0)))
   if (bare) return(list(plot))
-  list(grid::gTree(children = grid::gList(panel$grob), vp = viewport_pt(box[1], bottom, box[3], box[4], c(0, 0))),
-       baseline_grob(box, bottom, settings),
+  list(plot, baseline_grob(box, bottom, settings),
        grid::gTree(children = grid::gList(panel$axis_l),
                    vp = viewport_pt(box[1] - y_pad, bottom, grid::grobWidth(panel$axis_l), box[4], c(1, 0))),
        grid::gTree(children = grid::gList(panel$axis_b),
@@ -29,7 +29,7 @@ one_panel_grobs <- function(panel, box, height, settings, bare = FALSE) {
 panel_grobs <- function(parts, plan) {
   grobs <- lapply(seq_along(parts$panels), function(index) {
     box <- fitted_box(plan$layout$panels[[index]], parts$aspect)
-    one_panel_grobs(parts$panels[[index]], box, plan$size[2], parts$settings, parts$bare)
+    one_panel_grobs(parts$panels[[index]], box, plan$size[2], parts$settings, parts$bare, parts$line_layers)
   })
   unlist(grobs, recursive = FALSE)
 }
@@ -78,7 +78,8 @@ frame_children <- function(parts, plan) {
              line_grobs(plan$texts$caption, layout$caption_baselines, layout$left, role_style(settings, "caption"),
                         height),
              legend_grobs(plan$placed, layout$legend_row_centers, role_style(settings, "label"), settings$base_size,
-                          height, font_metrics()$cap_height),
+                          height, font_metrics()$cap_height,
+                          line_scale(fitted_box(layout$panels[[1]], parts$aspect)[3])),
              header_grobs(parts, plan), axis_title_grobs(parts, plan), table_grobs(parts, plan),
              reference_grobs(parts, plan),
              note_grobs(parts, plan))

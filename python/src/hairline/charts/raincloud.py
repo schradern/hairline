@@ -12,6 +12,7 @@ from hairline import entities
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import FIXED_ID
 from hairline.numbers import format_p
 from hairline.settings import current_settings, role_size
 from hairline.stats.density import density, jitter_offsets, quantiles
@@ -52,7 +53,7 @@ def draw_group(ax, values: pd.Series, position: int, color: str, rules: dict) ->
     ax.add_patch(Rectangle((position - half, low), 2 * half, high - low, facecolor=color, edgecolor="none",
                            linewidth=0))
     ax.plot([position - half, position + half], [middle, middle], color=surface, linewidth=width,
-            solid_capstyle="butt", label="_nolegend_", gid="hairline-secondary")
+            solid_capstyle="butt", label="_nolegend_", gid=FIXED_ID)
     xs = [position + rules["points_centre"] + offset * rules["points_spread"] for offset in jitter_offsets(len(values))]
     ax.scatter(xs, values, color=color, label="_nolegend_")
 
@@ -67,7 +68,7 @@ def draw_brackets(ax, comparisons: Sequence[tuple[str, str, str]], names: list[s
         y = top + spread * rules["bracket_step"] * (level + 1)
         tick = spread * rules["bracket_tick"]
         ax.plot([low, low, high, high], [y - tick, y, y, y - tick], color=color, linewidth=width,
-                label="_nolegend_", gid="hairline-secondary")
+                label="_nolegend_", gid=FIXED_ID)
         ax.annotate(label, xy=((low + high) / 2, y), xytext=(0, rules["label_pad"] * role_size(settings, "label")),
                     textcoords="offset points", ha="center", va="bottom", fontsize=role_size(settings, "label"),
                     color=color, fontfamily=settings.font, annotation_clip=False)

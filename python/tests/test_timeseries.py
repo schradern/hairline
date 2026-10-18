@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 import hairline as hl
+from hairline.marks import line_scale
 
 
 def occupancy() -> pd.DataFrame:
@@ -30,12 +31,13 @@ def test_one_panel_per_group_with_two_levels_of_detail():
     assert len(figure.axes) == 3 and [header.name for header in figure.headers.values()] == ["Unit A", "Unit B",
                                                                                               "Unit D"]
     raw, mean = data_lines(figure.axes[0])
-    assert raw.get_alpha() == pytest.approx(0.3) and raw.get_linewidth() == pytest.approx(0.055 * 9)
-    assert mean.get_linewidth() == pytest.approx(0.14 * 9)
+    scale = line_scale(figure.plot_boxes[0].width)
+    assert raw.get_alpha() == pytest.approx(0.3) and raw.get_linewidth() == pytest.approx(0.055 * 9 * scale)
+    assert mean.get_linewidth() == pytest.approx(0.14 * 9 * scale)
     assert mcolors.to_hex(mean.get_color()) == mcolors.to_hex(raw.get_color()) == hl.color("Unit A")
     second_raw, second_mean = data_lines(figure.axes[1])
-    assert second_raw.get_linewidth() == pytest.approx(0.055 * 9)
-    assert second_mean.get_linewidth() == pytest.approx(0.14 * 9)
+    assert second_raw.get_linewidth() == pytest.approx(0.055 * 9 * scale)
+    assert second_mean.get_linewidth() == pytest.approx(0.14 * 9 * scale)
     assert mcolors.to_hex(second_mean.get_color()) == hl.palette()[1]
 
 

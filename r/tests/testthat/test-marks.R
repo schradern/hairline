@@ -59,3 +59,28 @@ test_that("point legend swatches show the darker fill", {
   colours <- vapply(items, function(item) item$colour, character(1))
   expect_equal(unname(colours), c("#2474cf", point_fill("#e8a628", "#ffffff")))
 })
+
+test_that("line scale steps down with the panel width", {
+  points <- 72 / 25.4
+  expect_equal(line_scale(150 * points), 0.8)
+  expect_equal(line_scale(90 * points), 0.65)
+  expect_equal(line_scale(50 * points), 0.5)
+})
+
+test_that("data lines in a panel follow its width and reference lines keep theirs", {
+  hl_use(brand = FALSE)
+  data <- data.frame(x = 1:4, y = c(1, 3, 2, 4))
+  plot <- ggplot2::ggplot(data, ggplot2::aes(x, y)) + ggplot2::geom_line() + ggplot2::geom_hline(yintercept = 2) +
+    ggplot2::geom_point() + theme_hairline()
+  built <- ggplot2::ggplot_build(plot)
+  panel <- extract_panels(ggplot2::ggplotGrob(plot)$table %||% ggplot2::ggplotGrob(plot), built)[[1]]$grob
+  layers <- line_layers(built)
+  expect_equal(unname(layers), c(TRUE, FALSE, FALSE))
+  scaled <- scale_layer_lines(panel, layers, 0.5)
+  widths <- function(grob) vapply(grob$children, function(child) child$gp$lwd[1] %||% NA_real_, numeric(1))
+  before <- widths(panel)
+  after <- widths(scaled)
+  changed <- which(!is.na(before) & before != after)
+  expect_equal(length(changed), 1)
+  expect_equal(after[changed], before[changed] * 0.5)
+})

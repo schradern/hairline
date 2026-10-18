@@ -64,11 +64,9 @@ def test_figure_applies_light_slot_treatment_once():
     regular = figure.ax.plot([0, 1], [0, 1], color="#2474cf")[0]
     light = figure.ax.plot([0, 1], [1, 0], color="#e8a628")[0]
     points = figure.ax.scatter([0.5], [0.5], color="#e8a628")
-    base_width = regular.get_linewidth()
     for _ in range(2):
         figure.figure.canvas.draw()
-    assert light.get_linewidth() == pytest.approx(1.3 * base_width)
-    assert regular.get_linewidth() == pytest.approx(base_width)
+    assert light.get_linewidth() == pytest.approx(1.3 * regular.get_linewidth())
     assert mcolors.to_hex(points.get_facecolor()[0]) == point_fill("#e8a628", "#ffffff")
     assert points.get_linewidths()[0] == 0
 
@@ -108,3 +106,31 @@ def test_context_points_follow_the_count_without_darker_fill():
     figure.figure.canvas.draw()
     assert mcolors.to_hex(points.get_facecolor()[0]) == "#b3b8be"
     assert points.get_sizes()[0] == pytest.approx((2 * 0.14 * 9) ** 2)
+
+
+def test_line_scale_steps_down_with_panel_width():
+    from hairline.marks import line_scale
+    points = 72 / 25.4
+    assert line_scale(150 * points) == 0.8
+    assert line_scale(90 * points) == 0.65
+    assert line_scale(50 * points) == 0.5
+
+
+def test_data_lines_follow_the_panel_width_and_references_keep_theirs():
+    hl.use(brand=False)
+    base, lines = hl.current_settings().base_size, hl.load_tokens()["lines"]
+    wide = hl.figure("Wide", size="double")
+    wide.ax.plot([0, 1, 2], [1, 3, 2])
+    wide.reference(y=2)
+    grid = hl.figure("Grid", size="double", panels=6, columns=3)
+    for ax in grid.axes:
+        ax.plot([0, 1, 2], [1, 3, 2])
+    for figure in (wide, grid):
+        figure.figure.canvas.draw()
+    data_lines = [line for line in wide.ax.lines if line.get_gid() != "hairline-reference"]
+    assert data_lines[0].get_linewidth() == pytest.approx(lines["data"] * base * 0.8)
+    reference = [line for line in wide.ax.lines if line.get_gid() == "hairline-reference"]
+    assert reference[0].get_linewidth() == pytest.approx(hl.load_tokens()["reference"]["width"] * base)
+    assert grid.axes[0].lines[0].get_linewidth() == pytest.approx(lines["data"] * base * 0.5)
+    grid.figure.canvas.draw()
+    assert grid.axes[0].lines[0].get_linewidth() == pytest.approx(lines["data"] * base * 0.5)

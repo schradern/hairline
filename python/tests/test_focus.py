@@ -2,6 +2,7 @@ import matplotlib.colors as mcolors
 import pytest
 
 import hairline as hl
+from hairline.marks import line_scale
 
 STATS = [("Mean", "87.0%"), ("Median", "87.9%"), ("Days ≥ 90%", "42%")]
 
@@ -39,8 +40,9 @@ def test_highlight_series_keeps_colour_and_greys_the_rest():
     drawn(figure)
     assert mcolors.to_hex(focus.get_color()) == hl.palette()[0]
     assert mcolors.to_hex(other.get_color()) == "#b3b8be"
-    assert focus.get_linewidth() == pytest.approx(1.15 * base_width)
-    assert other.get_linewidth() == pytest.approx(0.85 * base_width)
+    scale = line_scale(figure.plot_boxes[0].width)
+    assert focus.get_linewidth() == pytest.approx(1.15 * base_width * scale)
+    assert other.get_linewidth() == pytest.approx(0.85 * base_width * scale)
 
 
 def test_highlight_panels_by_name_and_light_slots_skip_context():
@@ -52,7 +54,7 @@ def test_highlight_panels_by_name_and_light_slots_skip_context():
     drawn(figure)
     drawn(figure)
     assert [mcolors.to_hex(line.get_color()) for line in lines] == ["#b3b8be", hl.palette()[0], "#b3b8be"]
-    assert lines[0].get_linewidth() == pytest.approx(0.85 * 0.14 * 9)
+    assert lines[0].get_linewidth() == pytest.approx(0.85 * 0.14 * 9 * line_scale(figure.plot_boxes[0].width))
 
 
 def test_unknown_highlight_is_reported_at_draw():

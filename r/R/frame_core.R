@@ -86,7 +86,7 @@ frame_parts <- function(table, built) {
        notes = built@plot@meta$hairline_notes %||% list(),
        x_ranges = lapply(built@layout$panel_params, function(params) params$x$continuous_range),
        headers = built@plot@meta$hairline_headers %||% list(),
-       references = built@plot@meta$hairline_references %||% list(),
+       references = built@plot@meta$hairline_references %||% list(), line_layers = line_layers(built),
        y_ranges = lapply(built@layout$panel_params, function(params) params$y$continuous_range))
 }
 

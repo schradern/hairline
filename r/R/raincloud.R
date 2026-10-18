@@ -47,6 +47,7 @@ raincloud_bracket_layers <- function(comparisons, names, values, rules) {
                                ggplot2::aes(.data$x, .data$y), colour = colour, inherit.aes = FALSE,
                                linewidth = pt_to_linewidth(hl_tokens()$reference$width * settings$base_size))
     path$hairline_secondary <- TRUE
+    path$hairline_fixed <- TRUE
     label <- ggplot2::annotate("text", x = mean(span), y = y, label = comparisons[[index]][3], vjust = -0.35,
                                colour = colour, family = settings$font, size = role_size(settings, "label") /
                                  ggplot2::.pt)
