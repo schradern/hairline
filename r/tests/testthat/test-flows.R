@@ -47,3 +47,16 @@ test_that("drawn charts fit the figure height to their content", {
   texts <- report$drawing_texts
   expect_lt(abs(box[2] + box[4] - max(vapply(texts, `[`, numeric(1), 2))), 15)
 })
+
+test_that("chord specs and geometry match the shared fixture", {
+  hl_use(brand = FALSE)
+  fixture <- flows_fixture()
+  case <- fixture$chord
+  data <- as.data.frame(lapply(case$data, unlist), stringsAsFactors = FALSE)
+  spec <- chord_spec(data, "origin", "destination", "patients")
+  expect_equal(vapply(spec$links, function(link) link$value, numeric(1)),
+               vapply(case$spec$links, function(link) as.numeric(link$value), numeric(1)))
+  shapes <- chord_drawing(spec, as.numeric(unlist(fixture$box)), fake_width(fixture$style), fixture$style)
+  expect_equal(shape_texts(shapes), shape_texts(case$shapes))
+  expect_equal(flat_shapes(shapes), flat_shapes(case$shapes), tolerance = 1e-6)
+})

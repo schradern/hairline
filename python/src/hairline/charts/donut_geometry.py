@@ -96,9 +96,10 @@ def outside_width(ring: list[dict], measure: Measure, style: dict, rules: dict) 
     return (rules["leader_elbow"] + rules["leader_run"] + rules["label_gap"]) * style["base"] + widest
 
 
-def leader_entries(ring: list[dict], cx: float, cy: float, radius: float, style: dict, rules: dict) -> list[dict]:
+def leader_entries(ring: list[dict], cx: float, cy: float, radius: float, style: dict, rules: dict,
+                   spans: list[tuple[float, float]] | None = None) -> list[dict]:
     entries = []
-    for segment, (start, end) in zip(ring, ring_spans(ring), strict=True):
+    for segment, (start, end) in zip(ring, spans or ring_spans(ring), strict=True):
         middle = (start + end) / 2
         side = "right" if math.cos(math.radians(middle)) >= -1e-9 else "left"
         entries.append({"segment": segment, "side": side,
@@ -108,11 +109,11 @@ def leader_entries(ring: list[dict], cx: float, cy: float, radius: float, style:
 
 
 def outside_labels(ring: list[dict], cx: float, cy: float, radius: float, box: Box, measure: Measure,
-                   style: dict, rules: dict) -> list[dict]:
+                   style: dict, rules: dict, spans: list[tuple[float, float]] | None = None) -> list[dict]:
     line, base = line_height(style, "label"), style["base"]
     reach = radius + (rules["leader_elbow"] + rules["leader_run"]) * base
     primitives = []
-    entries = leader_entries(ring, cx, cy, radius, style, rules)
+    entries = leader_entries(ring, cx, cy, radius, style, rules, spans)
     for side, direction in (("left", -1), ("right", 1)):
         group = [entry for entry in entries if entry["side"] == side]
         ys = spread_labels([entry["knee"][1] for entry in group], line, box.y + line / 2,

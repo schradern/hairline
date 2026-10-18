@@ -2,6 +2,7 @@
 
 from hairline.charts.arcs import arcs
 from hairline.charts.bars import bars
+from hairline.charts.chord import chord
 from hairline.charts.correlation import correlation
 from hairline.charts.donut import donut
 from hairline.charts.dotplot import dotplot
@@ -27,8 +28,8 @@ from hairline.settings import Settings, current_settings, use
 from hairline.tokens import load_tokens
 
 __all__ = [
-    "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Settings", "arcs", "bars", "check_palette", "color",
-    "colors", "correlation", "current_settings", "donut", "dotplot", "figure", "forest", "format_interval",
+    "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Settings", "arcs", "bars", "check_palette", "chord",
+    "color", "colors", "correlation", "current_settings", "donut", "dotplot", "figure", "forest", "format_interval",
     "format_number", "format_percent", "frame", "funnel", "kaplan_meier", "load_tokens", "palette", "partition",
     "prisma", "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter", "timeseries", "use",
 ]

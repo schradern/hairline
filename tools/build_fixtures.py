@@ -18,6 +18,8 @@ import pandas as pd
 from hairline.brand import load_brand
 from hairline.charts.arcs import arcs_spec
 from hairline.charts.arcs_geometry import arcs_drawing
+from hairline.charts.chord import chord_spec
+from hairline.charts.chord_geometry import chord_drawing
 from hairline.charts.common import fold_other
 from hairline.charts.correlation import correlation_spec
 from hairline.charts.correlation_geometry import correlation_drawing
@@ -381,9 +383,15 @@ def flow_cases() -> dict:
     crowded = pd.DataFrame({"origin": [f"Department of medicine {index}" for index in range(8)],
                             "destination": [f"Department of medicine {(index + 3) % 8}" for index in range(8)]})
     arc_specs = [arcs_spec(transfers, "origin", "destination", None), arcs_spec(crowded, "origin", "destination", None)]
+    referrals = pd.DataFrame({"origin": ["ED", "ED", "Ward", "Ward", "ICU", "ED", "Theatre", "ICU"],
+                              "destination": ["ICU", "Ward", "ICU", "ED", "Ward", "ICU", "ICU", "Theatre"],
+                              "patients": [40, 25, 18, 6, 22, 10, 30, 12]})
+    chord = chord_spec(referrals, "origin", "destination", "patients")
     prisma = prisma_spec(PRISMA_COUNTS)
     return {"box": [box.x, box.y, box.width, box.height], "prisma": {"counts": PRISMA_COUNTS, "spec": prisma,
             "shapes": prisma_drawing(prisma, box, fake_measure, DRAWING_STYLE)},
+            "chord": {"data": referrals.to_dict(orient="list"), "spec": chord,
+                      "shapes": chord_drawing(chord, box, fake_measure, DRAWING_STYLE)},
             "arcs": [{"data": data.to_dict(orient="list"), "spec": spec,
                       "shapes": arcs_drawing(spec, box, fake_measure, DRAWING_STYLE)}
                      for data, spec in zip((transfers, crowded), arc_specs, strict=True)]}

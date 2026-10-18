@@ -22,8 +22,8 @@ outside_width <- function(ring, measure, style, rules) {
   (rules$leader_elbow + rules$leader_run + rules$label_gap) * style$base + max(c(0, widths))
 }
 
-leader_entries <- function(ring, cx, cy, radius, style, rules) {
-  spans <- ring_spans(ring)
+leader_entries <- function(ring, cx, cy, radius, style, rules, spans = NULL) {
+  spans <- spans %||% ring_spans(ring)
   lapply(seq_along(ring), function(index) {
     middle <- mean(spans[[index]])
     list(segment = ring[[index]], side = if (cos(middle * pi / 180) >= -1e-9) "right" else "left",
@@ -32,10 +32,10 @@ leader_entries <- function(ring, cx, cy, radius, style, rules) {
   })
 }
 
-outside_labels <- function(ring, cx, cy, radius, box, measure, style, rules) {
+outside_labels <- function(ring, cx, cy, radius, box, measure, style, rules, spans = NULL) {
   line <- line_height(style, "label")
   reach <- radius + (rules$leader_elbow + rules$leader_run) * style$base
-  entries <- leader_entries(ring, cx, cy, radius, style, rules)
+  entries <- leader_entries(ring, cx, cy, radius, style, rules, spans)
   shapes <- list()
   for (side in c("left", "right")) {
     direction <- if (side == "left") -1 else 1
