@@ -33,17 +33,18 @@ def number_formatter(values: np.ndarray, percent: bool, digits: int | None, extr
     return lambda value: format_number(round(float(value) * scale, SNAP_DIGITS), places) + suffix
 
 
-def stats_text(values: np.ndarray, stats: Sequence[str], numbers: tuple, mark: float | None,
-               mark_label: str | None) -> str:
+def stats_pairs(values: np.ndarray, stats: Sequence[str], numbers: tuple, mark: float | None,
+                mark_label: str | None) -> list[list[str]]:
+    """Key numbers as (label, value) pairs, drawn like a panel header's key numbers."""
     number, mean_number = numbers
     low, q1, middle, q3, high = quantiles(values, [0, 0.25, 0.5, 0.75, 1])
-    parts = {"median": f"Median {number(middle)}", "iqr": f"IQR {number(q1)}{DASH}{number(q3)}",
-             "mean": f"mean {mean_number(np.mean(values))}", "n": f"n = {format_number(len(values), 0)}",
-             "range": f"range {number(low)}{DASH}{number(high)}"}
-    texts = [parts[name] for name in stats]
+    parts = {"median": ["Median", number(middle)], "iqr": ["IQR", f"{number(q1)}{DASH}{number(q3)}"],
+             "mean": ["Mean", mean_number(np.mean(values))], "n": ["n", format_number(len(values), 0)],
+             "range": ["Range", f"{number(low)}{DASH}{number(high)}"]}
+    pairs = [parts[name] for name in stats]
     if mark is not None and mark_label:
-        texts.append(f"{mark_label} {number(mark)}")
-    return " · ".join(texts)
+        pairs.append([mark_label, number(mark)])
+    return pairs
 
 
 def spread_axis(lows: list[float], highs: list[float], percent: bool, zero: bool) -> dict:
@@ -79,7 +80,7 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
         mark = marks.get(name)
         rows.append({"name": name, "color": palette[name], "low": low, "q1": q1, "median": middle, "q3": q3,
                      "high": high, "mark": None if mark is None else float(mark),
-                     "text": stats_text(values, stats, numbers, mark, mark_label)})
+                     "pairs": stats_pairs(values, stats, numbers, mark, mark_label)})
     lows = [row["low"] for row in rows] + [row["mark"] for row in rows if row["mark"] is not None]
     highs = [row["high"] for row in rows] + [row["mark"] for row in rows if row["mark"] is not None]
     return {"rows": rows, "axis": spread_axis(lows, highs, percent, zero), "axis_title": axis_title}

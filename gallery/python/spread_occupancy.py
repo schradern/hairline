@@ -8,7 +8,7 @@ hl.use(brand=False)
 occupancy = data("occupancy")
 occupancy["occupied"] = (occupancy["share"] * occupancy["beds"]).round()
 capacity = occupancy.groupby("ward")["beds"].first().to_dict()
-figure = hl.spread(occupancy, "ward", "occupied", marks=capacity, mark_label="beds", zero=True,
+figure = hl.spread(occupancy, "ward", "occupied", marks=capacity, mark_label="Beds", zero=True,
                    axis_title="Occupied beds at 00:00", title="Occupied beds by unit",
                    subtitle="Every day, January 2025 to June 2026; ticks mark the capacity", caption="Synthetic data.",
                    size="double")

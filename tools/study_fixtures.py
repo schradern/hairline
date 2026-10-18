@@ -78,7 +78,7 @@ def spread_cases(style: dict, measure) -> dict:
               "share": [round(float(value), 3) for value in generator.beta(6, 2, 90)]}
     box = Box(20, 60, 440, 200)
     cases = []
-    for data, value, options in ((counts, "beds", {"marks": {"A": 16, "B": 12}, "mark_label": "beds"}),
+    for data, value, options in ((counts, "beds", {"marks": {"A": 16, "B": 12}, "mark_label": "Beds"}),
                                  (shares, "share", {"percent": True, "zero": True, "axis_title": "Share",
                                                     "stats": ["median", "iqr", "n"]})):
         spec = spread_spec(pd.DataFrame(data), "group", value, **options)

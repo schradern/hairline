@@ -16,8 +16,8 @@ test_that("spread specs and geometry match the shared fixture", {
     if (!is.null(options$marks)) options$marks <- unlist(options$marks)
     if (!is.null(options$stats)) options$stats <- unlist(options$stats)
     spec <- do.call(spread_spec, c(list(data = data, group = "group", value = case$value), options))
-    expect_equal(vapply(spec$rows, `[[`, character(1), "text"),
-                 vapply(case$spec$rows, `[[`, character(1), "text"))
+    expect_equal(lapply(spec$rows, function(row) lapply(row$pairs, as.list)),
+                 lapply(case$spec$rows, `[[`, "pairs"))
     expect_equal(spec$axis$labels, unlist(case$spec$axis$labels))
     shapes <- spread_drawing(spec, box, measure, fixture$style)
     expect_equal(spread_texts(shapes), spread_texts(case$shapes))

@@ -53,7 +53,8 @@ forest_drawing <- function(spec, box, measure, style) {
   reserve <- 2 * rules$axis_gap * base + (style$cap_height + style$descender) * size + favours
   pitch <- min(rules$row_pitch * line, (box[2] + box[4] - top - reserve) / count)
   bottom <- top + pitch * count
-  sides <- forest_sides(spec, rules, base)
+  sides <- if (identical(spec$marker, "dot")) rep(dot_size(style), length(spec$rows)) else
+    forest_sides(spec, rules, base)
   shapes <- c(forest_table_texts(spec, columns, heading, NULL, style),
               list(forest_rule(columns$study, columns$weight, top, style)))
   for (index in seq_along(spec$rows)) {

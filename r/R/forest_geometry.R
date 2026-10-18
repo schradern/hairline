@@ -96,6 +96,9 @@ forest_marks <- function(row, centre, scale, plot, side, spec, style) {
        forest_marker(scale(row$estimate), centre, side, spec$marker %||% "square", spec$color))
 }
 
+# Diameter of a dot mark: the same as a scatter point, in every chart.
+dot_size <- function(style) 2 * hl_tokens()$lines$point_radius * style$base
+
 forest_sides <- function(spec, rules, base) {
   weights <- lapply(spec$rows, `[[`, "weight")
   if (any(vapply(weights, is.null, logical(1)))) return(rep(rules$plain_square * base, length(weights)))

@@ -105,6 +105,11 @@ def interval_marks(row: dict, centre: float, scale, plot: tuple[float, float], s
     return [line, marker(scale(row["estimate"]), centre, side, spec.get("marker", "square"), spec["color"])]
 
 
+def dot_size(style: dict) -> float:
+    """Diameter of a dot mark: the same as a scatter point, in every chart."""
+    return 2 * load_tokens()["lines"]["point_radius"] * style["base"]
+
+
 def square_sides(spec: dict, rules: dict, base: float) -> list[float]:
     """Square area proportional to weight, the largest `max_square` wide; equal squares without weights."""
     weights = [row["weight"] for row in spec["rows"]]
@@ -165,7 +170,8 @@ def forest_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     centres, pooled_centre = row_centres(spec, top, pitch, rules)
     bottom = top + pitch * count
     shapes = table_texts(spec, columns, heading, None, style) + [rule(columns["study"], columns["weight"], top, style)]
-    for row, centre, side in zip(spec["rows"], centres, square_sides(spec, rules, base), strict=True):
+    sides = [dot_size(style)] * len(spec["rows"]) if spec.get("marker") == "dot" else square_sides(spec, rules, base)
+    for row, centre, side in zip(spec["rows"], centres, sides, strict=True):
         shapes += table_texts(spec, columns, baseline_for(centre, style, "label"), row, style)
         shapes += interval_marks(row, centre, scale, columns["plot"], side, spec, style)
     if spec["null"] is not None:

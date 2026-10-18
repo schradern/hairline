@@ -11,17 +11,17 @@ spread_formatter <- function(values, percent, digits, extra = 0) {
   function(value) paste0(hl_format_number(round(value * scale, spread_snap_digits), places), suffix)
 }
 
-spread_text <- function(values, stats, numbers, mark, mark_label) {
+# Key numbers as (label, value) pairs, drawn like a panel header's key numbers.
+spread_pairs <- function(values, stats, numbers, mark, mark_label) {
   limits <- density_quantiles(values, c(0, 0.25, 0.5, 0.75, 1))
   number <- numbers[[1]]
-  parts <- c(median = paste("Median", number(limits[3])),
-             iqr = paste0("IQR ", number(limits[2]), "–", number(limits[4])),
-             mean = paste("mean", numbers[[2]](mean(values))),
-             n = paste("n =", hl_format_number(length(values), 0)),
-             range = paste0("range ", number(limits[1]), "–", number(limits[5])))
-  texts <- unname(parts[stats])
-  if (!is.null(mark) && !is.null(mark_label)) texts <- c(texts, paste(mark_label, number(mark)))
-  paste(texts, collapse = " · ")
+  parts <- list(median = c("Median", number(limits[3])),
+                iqr = c("IQR", paste0(number(limits[2]), "\u2013", number(limits[4]))),
+                mean = c("Mean", numbers[[2]](mean(values))), n = c("n", hl_format_number(length(values), 0)),
+                range = c("Range", paste0(number(limits[1]), "\u2013", number(limits[5]))))
+  pairs <- unname(parts[stats])
+  if (!is.null(mark) && !is.null(mark_label)) pairs[[length(pairs) + 1]] <- c(mark_label, number(mark))
+  pairs
 }
 
 spread_axis <- function(lows, highs, percent, zero) {
@@ -61,7 +61,7 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
     mark <- if (names[index] %in% names(marks)) as.numeric(marks[[names[index]]]) else NULL
     list(name = names[index], color = palette[[names[index]]], low = limits[1], q1 = limits[2], median = limits[3],
          q3 = limits[4], high = limits[5], mark = mark,
-         text = spread_text(samples[[index]], stats, numbers, mark, mark_label))
+         pairs = spread_pairs(samples[[index]], stats, numbers, mark, mark_label))
   })
   marked <- unlist(lapply(rows, `[[`, "mark"))
   list(rows = rows, axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
@@ -76,14 +76,43 @@ spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
   shapes <- list(list(kind = "line", points = rbind(c(scale(row$low), centre), c(scale(row$high), centre)),
                       color = style$neutral$faint, width = style$leader_width, role = "range"),
                  list(kind = "polygon", points = band, fill = row$color, alpha = rules$band_opacity, role = "band"),
-                 forest_marker(scale(row$median), centre, rules$dot * style$base, "dot", row$color))
+                 forest_marker(scale(row$median), centre, dot_size(style), "dot", row$color))
   if (!is.null(row$mark)) {
-    tick <- rules$mark * pitch / 2
+    tick <- rules$mark * half
     x <- scale(row$mark)
     shapes[[length(shapes) + 1]] <- list(kind = "line", points = rbind(c(x, centre - tick), c(x, centre + tick)),
                                          color = style$neutral$ink, width = style$leader_width, role = "mark")
   }
   shapes
+}
+
+spread_pair_width <- function(pair, measure) {
+  measure(paste0(pair[1], " "), "label") + measure(pair[2], "label", hl_tokens()$type$value_weight)
+}
+
+# Left edges of the key-number columns, the block ending at `right`: one column per statistic, so labels line up
+# from row to row; columns are separated like a panel header's key numbers.
+spread_stat_columns <- function(spec, right, measure, style) {
+  gap <- hl_tokens()$spacing$stats_pair * style$base
+  count <- max(vapply(spec$rows, function(row) length(row$pairs), integer(1)))
+  widths <- vapply(seq_len(count), function(index) {
+    max(c(0, unlist(lapply(spec$rows, function(row) {
+      if (index <= length(row$pairs)) spread_pair_width(row$pairs[[index]], measure)
+    }))))
+  }, numeric(1))
+  start <- right - sum(widths) - gap * (count - 1)
+  start + c(0, cumsum(widths + gap))[seq_len(count)]
+}
+
+# Label in faint, value in muted at the value weight: the panel header's key-number style.
+spread_pair_texts <- function(pairs, lefts, baseline, measure, style) {
+  weight <- hl_tokens()$type$value_weight
+  unlist(lapply(seq_along(pairs), function(index) {
+    label <- paste0(pairs[[index]][1], " ")
+    list(shape_text(lefts[index], baseline, label, "label", style$neutral$faint),
+         shape_text(lefts[index] + measure(label, "label"), baseline, pairs[[index]][2], "label",
+                    style$neutral$muted, "left", weight))
+  }), recursive = FALSE)
 }
 
 spread_title_shape <- function(spec, right, axis_y, style, rules) {
@@ -99,8 +128,9 @@ spread_drawing <- function(spec, box, measure, style) {
   base <- style$base
   size <- style$sizes$label
   gap <- rules$column_gap * base
+  lefts <- spread_stat_columns(spec, box[1] + box[3], measure, style)
   left <- box[1] + max(vapply(spec$rows, function(row) measure(row$name, "label"), numeric(1))) + gap
-  right <- box[1] + box[3] - max(vapply(spec$rows, function(row) measure(row$text, "label"), numeric(1))) - gap
+  right <- lefts[1] - gap
   scale <- forest_scale(spec$axis, FALSE, left, right)
   reserve <- rules$axis_gap * base + (style$cap_height + style$descender) * size
   if (!is.null(spec$axis_title)) {
@@ -117,8 +147,8 @@ spread_drawing <- function(spec, box, measure, style) {
     centre <- box[2] + pitch * (index - 0.5)
     baseline <- baseline_for(centre, style, "label")
     shapes <- c(shapes, spread_row_shapes(row, centre, pitch, scale, style, rules),
-                list(shape_text(box[1], baseline, row$name, "label", style$neutral$muted),
-                     shape_text(box[1] + box[3], baseline, row$text, "label", style$neutral$muted, "right")))
+                list(shape_text(box[1], baseline, row$name, "label", style$neutral$ink)),
+                spread_pair_texts(row$pairs, lefts, baseline, measure, style))
   }
   axis <- list(axis = spec$axis, favours = NULL, null = NULL)
   c(shapes, forest_axis_shapes(axis, scale, c(left, right), bottom, style, rules),
