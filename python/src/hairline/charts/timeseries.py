@@ -11,7 +11,7 @@ from hairline.charts.common import check_columns, humanise
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
 from hairline.marks import SECONDARY_ID
-from hairline.numbers import format_number, format_percent
+from hairline.numbers import auto_digits, format_number, format_percent, is_whole
 from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
 
@@ -32,7 +32,9 @@ def formatter(percent: bool):
 
 def panel_stats(values: pd.Series, stats: Sequence[str], percent: bool, threshold: float | None,
                 share_label: str) -> list[tuple[str, str]]:
-    show = formatter(percent)
+    show, clean = formatter(percent), values.dropna().astype(float)
+    digits = auto_digits(clean * (100 if percent else 1))
+    extra = 1 if is_whole(clean) and not percent else 0
     pairs = []
     for stat in stats:
         if stat == "share_above":
@@ -40,9 +42,9 @@ def panel_stats(values: pd.Series, stats: Sequence[str], percent: bool, threshol
                 raise ValueError("hairline: stats 'share_above' needs threshold=")
             pairs.append((share_label, format_percent(float((values >= threshold).mean()), 0)))
         elif stat == "range":
-            pairs.append(("Range", f"{show(values.min(), 0)}–{show(values.max(), 0)}"))
+            pairs.append(("Range", f"{show(clean.min(), digits)}–{show(clean.max(), digits)}"))
         elif stat in STAT_LABELS:
-            pairs.append((STAT_LABELS[stat], show(getattr(values, stat)())))
+            pairs.append((STAT_LABELS[stat], show(getattr(clean, stat)(), digits + (extra if stat == "mean" else 0))))
         else:
             raise ValueError(f"hairline: unknown stat {stat!r}; use mean, median, range or share_above")
     return pairs

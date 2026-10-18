@@ -32,6 +32,13 @@ def three_arm_data() -> dict[str, list]:
                                                                            for mean in (2.0, 2.4, 3.1)]), 1)]}
 
 
+def daily_data() -> dict[str, list]:
+    generator = np.random.default_rng(14)
+    dates = pd.date_range("2025-01-01", periods=45).strftime("%Y-%m-%d").tolist()
+    return {"date": dates * 2, "unit": ["North"] * 45 + ["South"] * 45,
+            "occupied": [int(value) for value in generator.integers(4, 14, 90)]}
+
+
 def frame(data: dict[str, list]) -> pd.DataFrame:
     return pd.DataFrame({name: [np.nan if value is None else value for value in values]
                          for name, values in data.items()})
@@ -49,6 +56,7 @@ def study_cases() -> dict:
         cohort = study(frame(data), group="arm", time="months", event="died", id="id",
                        variables=["age", "sex", "sofa", "score"], units={"age": "years", "months": "months"})
         three = study(frame(three_arm_data()), group="arm", variables=["lactate"], units={"lactate": "mmol/l"})
+        daily = study(frame(daily_data()), group="unit", variables=["occupied"], units={"occupied": "beds"})
         broken = cohort_data()
         broken["died"] = [2] + broken["died"][1:]
         failing = study(frame(broken), group="arm", time="months", event="died", variables=["age"])
@@ -63,7 +71,8 @@ def study_cases() -> dict:
             "distribution": result_case(cohort.distribution("age", stats=("median_iqr", "mean_sd"))),
             "survival": result_case(cohort.survival()),
             "effects_table": effects.to_dict(orient="list"),
-            "effects": result_case(cohort.effects(effects, measure="OR"))}
+            "effects": result_case(cohort.effects(effects, measure="OR")),
+            "daily": daily_data(), "over_time": result_case(daily.over_time("date", "occupied"))}
 
 
 def spread_cases(style: dict, measure) -> dict:

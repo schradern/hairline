@@ -27,7 +27,7 @@ numeric_summary <- function(values, stat, digits, missing, whole = FALSE) {
   if (stat == "mean_sd") {
     places <- digits + if (whole) 1 else 0
     spread <- if (length(values) > 1) stats::sd(values) else 0
-    return(sprintf("%s (%s)", hl_format_number(round(mean(values), study_snap_digits), places),
+    return(sprintf("%s (%s)", study_mean_text(values, digits, whole),
                    hl_format_number(round(spread, study_snap_digits), places)))
   }
   paste0(number(min(values)), study_empty, number(max(values)))
@@ -40,4 +40,10 @@ count_share <- function(count, total) {
 
 listed_text <- function(items) {
   if (length(items) == 1) items else paste(paste(items[-length(items)], collapse = ", "), "and", items[length(items)])
+}
+
+# The mean, with one more decimal when the variable holds whole numbers.
+study_mean_text <- function(values, digits, whole) {
+  if (!length(values)) return(study_empty)
+  hl_format_number(round(mean(values), study_snap_digits), digits + if (whole) 1 else 0)
 }

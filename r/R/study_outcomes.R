@@ -14,44 +14,82 @@ study_follow_up_rows <- function(study) {
   data
 }
 
+survival_rows <- function(estimates) {
+  lapply(estimates, function(estimate) {
+    median <- km_median(estimate$table)
+    c(if (nzchar(estimate$name)) estimate$name else "Overall", hl_format_number(estimate$total, 0),
+      hl_format_number(sum(estimate$table$events), 0), if (is.null(median)) "not reached" else
+        hl_format_number(median, 1))
+  })
+}
+
+survival_estimates <- function(study, data, fit) {
+  if (is.null(fit)) {
+    names <- Filter(function(name) any(data[[study_group_column]] == name),
+                    if (length(study$groups)) study$groups else "Overall")
+    return(lapply(names, function(name) {
+      rows <- data[data[[study_group_column]] == name, , drop = FALSE]
+      list(name = name, total = nrow(rows), table = km_estimate(rows[[study$roles$time]], rows[[study$roles$event]]))
+    }))
+  }
+  if (!inherits(fit, "survfit")) stop("hairline: survival: fit must be a survival::survfit", call. = FALSE)
+  estimates <- km_from_fit(fit)
+  names <- vapply(estimates, `[[`, character(1), "name")
+  if (length(study$groups) && all(names %in% study$groups)) estimates <- estimates[order(match(names, study$groups))]
+  estimates
+}
+
+survival_text <- function(study, rows, grouped, test) {
+  time <- study$roles$time
+  measured <- if (is.null(time)) "survival time" else tolower(study_label(study, time))
+  unit <- if (is.null(time)) NULL else study_measure(study, time)
+  medians <- if (grouped) listed_text(vapply(rows, function(row) paste(row[1], row[4]), character(1))) else rows[[1]][4]
+  paste0("Median ", measured, if (!is.null(unit)) sprintf(" (%s)", unit), ": ", medians,
+         if (!is.null(test)) sprintf(" (log-rank %s).", test) else ".")
+}
+
 #' Survival by group
 #'
 #' Kaplan–Meier curves with the log-rank test; the table gives n, events and
-#' the median per group.
+#' the median per group. A fit already made (`survival::survfit`) can be
+#' passed as `fit`; it keeps its own intervals, and the log-rank test comes
+#' from the study's own time, event and group columns when they are set.
 #'
-#' @param study A study from [hl_study()] with time and event.
+#' @param study A study from [hl_study()].
+#' @param fit Optional `survival::survfit`.
 #' @return A `hairline_result`.
 #' @export
-hl_survival <- function(study) {
+hl_survival <- function(study, fit = NULL) {
   time <- study$roles$time
   event <- study$roles$event
-  if (is.null(time) || is.null(event)) {
-    stop("hairline: survival needs time and event; set time = and event = in hl_study()", call. = FALSE)
+  has_data <- !is.null(time) && !is.null(event)
+  if (is.null(fit) && !has_data) {
+    stop("hairline: survival needs time and event; set time = and event = in hl_study(), or pass fit =",
+         call. = FALSE)
   }
-  study_require(study, c(time, event, study$roles$group), "survival")
-  data <- study_follow_up_rows(study)
-  names <- Filter(function(name) any(data[[study_group_column]] == name),
-                  if (length(study$groups)) study$groups else "Overall")
-  rows <- lapply(names, function(name) {
-    subset <- data[data[[study_group_column]] == name, , drop = FALSE]
-    median <- km_median(km_estimate(subset[[time]], subset[[event]]))
-    c(name, hl_format_number(nrow(subset), 0), hl_format_number(sum(subset[[event]]), 0),
-      if (is.null(median)) "not reached" else hl_format_number(median, 1))
-  })
-  test <- if (length(names) > 1) format_p(logrank_test(data[[time]], data[[event]], data[[study_group_column]])$p)
+  if (has_data) study_require(study, c(time, event, study$roles$group), "survival")
+  data <- if (has_data) study_follow_up_rows(study) else NULL
+  estimates <- survival_estimates(study, data, fit)
+  rows <- survival_rows(estimates)
+  grouped <- length(estimates) > 1
+  test <- if (grouped && has_data && !is.null(study$roles$group)) {
+    format_p(logrank_test(data[[time]], data[[event]], data[[study_group_column]])$p)
+  }
+  names <- vapply(rows, `[[`, character(1), 1)
   values <- c(stats::setNames(lapply(rows, `[[`, 4), names), if (!is.null(test)) list(p = test))
-  grouped <- !is.null(study$roles$group)
-  title <- if (grouped) paste("Survival by", gsub("_", " ", study$roles$group)) else "Survival"
-  figure <- hl_kaplan_meier(data, time, event, by = if (grouped) study_group_column, order = names, title = title,
-                            x_title = study_label_unit(study, time))
-  medians <- if (grouped) listed_text(vapply(rows, function(row) paste(row[1], row[4]), character(1))) else rows[[1]][4]
-  unit <- study_measure(study, time)
-  measured <- paste0(tolower(study_label(study, time)), if (!is.null(unit)) sprintf(" (%s)", unit))
-  text <- paste0("Median ", measured, ": ", medians,
-                 if (!is.null(test)) sprintf(" (log-rank %s).", test) else ".")
+  title <- if (grouped && !is.null(study$roles$group)) paste("Survival by", gsub("_", " ", study$roles$group)) else
+    "Survival"
+  x_title <- if (is.null(time)) "Time" else study_label_unit(study, time)
+  key <- if (is.null(test)) character() else c(`Log-rank` = test)
+  figure <- if (is.null(fit)) {
+    hl_kaplan_meier(data, time, event, by = if (!is.null(study$roles$group)) study_group_column, order = names,
+                    title = title, x_title = x_title, test = FALSE, stats = key)
+  } else {
+    hl_kaplan_meier(fit, title = title, x_title = x_title, stats = key)
+  }
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "Events", "Median")
-  study_result(figure, table, values, text)
+  study_result(figure, table, values, survival_text(study, rows, grouped, test))
 }
 
 study_effect_rows <- function(model_or_table, study_column, estimate, low, high, exponentiate) {

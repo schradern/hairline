@@ -23,6 +23,13 @@ def digits_for(values: np.ndarray) -> int:
     return auto_digits(values)
 
 
+def mean_text(values: np.ndarray, digits: int, whole: bool) -> str:
+    """The mean, with one more decimal when the variable holds whole numbers."""
+    if not len(values):
+        return EMPTY
+    return format_number(round(float(np.mean(values)), SNAP_DIGITS), digits + (1 if whole else 0))
+
+
 def numeric_text(values: np.ndarray, stat: str, digits: int, missing: int, whole: bool = False) -> str:
     """One statistic as text; `whole` (the variable holds whole numbers) gives means one more decimal."""
     if stat == "n_missing":
@@ -37,10 +44,9 @@ def numeric_text(values: np.ndarray, stat: str, digits: int, missing: int, whole
         low, middle, high = quantiles(values, [0.25, 0.5, 0.75])
         return f"{number(middle)} ({number(low)}{EMPTY}{number(high)})"
     if stat == "mean_sd":
-        extra = 1 if whole else 0
         spread = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
-        mean_text = format_number(round(float(np.mean(values)), SNAP_DIGITS), digits + extra)
-        return f"{mean_text} ({format_number(round(spread, SNAP_DIGITS), digits + extra)})"
+        places = digits + (1 if whole else 0)
+        return f"{mean_text(values, digits, whole)} ({format_number(round(spread, SNAP_DIGITS), places)})"
     return f"{number(float(np.min(values)))}{EMPTY}{number(float(np.max(values)))}"
 
 

@@ -4,15 +4,19 @@
 \alias{hl_survival}
 \title{Survival by group}
 \usage{
-hl_survival(study)
+hl_survival(study, fit = NULL)
 }
 \arguments{
-\item{study}{A study from \code{\link[=hl_study]{hl_study()}} with time and event.}
+\item{study}{A study from \code{\link[=hl_study]{hl_study()}}.}
+
+\item{fit}{Optional \code{survival::survfit}.}
 }
 \value{
 A \code{hairline_result}.
 }
 \description{
 Kaplan–Meier curves with the log-rank test; the table gives n, events and
-the median per group.
+the median per group. A fit already made (\code{survival::survfit}) can be
+passed as \code{fit}; it keeps its own intervals, and the log-rank test comes
+from the study's own time, event and group columns when they are set.
 }

@@ -70,9 +70,13 @@ class Study:
         from hairline.study.compare import compare
         return compare(self, variable, size)
 
-    def survival(self, size: str = "double") -> Result:
+    def survival(self, fit=None, size: str = "double") -> Result:
         from hairline.study.outcomes import survival
-        return survival(self, size)
+        return survival(self, fit, size)
+
+    def over_time(self, date: str, value: str, window: int = 7, size: str = "double") -> Result:
+        from hairline.study.trends import over_time
+        return over_time(self, date, value, window, size)
 
     def effects(self, model_or_table, measure: str | None = None, size: str = "double", **options) -> Result:
         from hairline.study.outcomes import effects

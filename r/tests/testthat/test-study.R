@@ -52,3 +52,29 @@ test_that("study endpoints match the shared fixture", {
                                      units = c(lactate = "mmol/l")))
   expect_result(hl_compare(three, "lactate"), fixture$compare_three)
 })
+
+test_that("over_time matches the shared fixture and refuses dates it cannot read", {
+  hl_use(brand = FALSE)
+  fixture <- study_fixture()
+  daily <- suppressWarnings(hl_study(fixture_frame(fixture$daily), group = "unit", variables = "occupied",
+                                     units = c(occupied = "beds")))
+  expect_result(hl_over_time(daily, "date", "occupied"), fixture$over_time)
+  broken <- fixture_frame(fixture$daily)
+  broken$date <- "next week"
+  broken_study <- suppressWarnings(hl_study(broken, group = "unit", variables = "occupied"))
+  expect_error(hl_over_time(broken_study, "date", "occupied"), "not an ISO date")
+})
+
+test_that("a survfit gives the same survival result as the raw rows", {
+  skip_if_not_installed("survival")
+  hl_use(brand = FALSE)
+  fixture <- study_fixture()
+  study <- fixture_study(fixture)
+  data <- fixture_frame(fixture$cohort)
+  fit <- survival::survfit(survival::Surv(months, died) ~ arm, data = data)
+  from_fit <- hl_survival(study, fit)
+  from_rows <- hl_survival(study)
+  expect_equal(from_fit$table, from_rows$table)
+  expect_equal(from_fit$values, from_rows$values)
+  expect_equal(from_fit$text, from_rows$text)
+})

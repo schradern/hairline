@@ -11,16 +11,19 @@ value_formatter <- function(percent) {
 
 panel_stats <- function(values, stats, percent, threshold, share_label) {
   show <- value_formatter(percent)
+  values <- as.numeric(values[!is.na(values)])
+  digits <- auto_digits(values * if (percent) 100 else 1)
+  extra <- if (is_whole(values) && !percent) 1 else 0
   result <- character()
   for (stat in stats) {
     if (stat == "share_above") {
       if (is.null(threshold)) stop("hairline: stats 'share_above' needs threshold =", call. = FALSE)
       result[[share_label]] <- hl_format_percent(mean(values >= threshold), 0)
     } else if (stat == "range") {
-      result[["Range"]] <- paste0(show(min(values), 0), "–", show(max(values), 0))
+      result[["Range"]] <- paste0(show(min(values), digits), "–", show(max(values), digits))
     } else if (stat %in% c("mean", "median")) {
       value <- if (stat == "mean") mean(values) else stats::median(values)
-      result[[if (stat == "mean") "Mean" else "Median"]] <- show(value)
+      result[[if (stat == "mean") "Mean" else "Median"]] <- show(value, digits + if (stat == "mean") extra else 0)
     } else {
       stop(sprintf("hairline: unknown stat '%s'; use mean, median, range or share_above", stat), call. = FALSE)
     }

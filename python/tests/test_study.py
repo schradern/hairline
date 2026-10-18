@@ -92,3 +92,39 @@ def test_kruskal_and_chi_square_match_r():
     from hairline.stats.tests import chi_square, kruskal
     assert kruskal([[1, 2, 3, 4], [2, 5, 6, 7], [8, 9, 9, 10]]) == pytest.approx(0.01351253746, abs=1e-9)
     assert chi_square([[10, 20], [30, 25]]) == pytest.approx(0.06115089758, abs=1e-9)
+
+
+def daily():
+    generator = np.random.default_rng(5)
+    dates = pd.date_range("2025-01-01", periods=60).strftime("%Y-%m-%d").tolist()
+    return pd.DataFrame({"date": dates * 2, "unit": ["North"] * 60 + ["South"] * 60,
+                         "occupied": generator.integers(4, 14, 120)})
+
+
+def test_over_time_reads_iso_dates_and_reports_means_per_group():
+    study = quiet_study(daily(), group="unit", variables=["occupied"], units={"occupied": "beds"})
+    result = study.over_time("date", "occupied")
+    assert list(result.table.columns) == ["Group", "n", "mean (SD)", "median (IQR)"]
+    assert result.table.iloc[0, 1] == "60"
+    assert result.text.startswith("Occupied (beds), mean over the period: North ")
+    assert len(result.figure.axes) == 2
+    with pytest.raises(ValueError, match="not an ISO date"):
+        quiet_study(daily().assign(date="next week"), group="unit", variables=["occupied"]).over_time(
+            "date", "occupied")
+
+
+def test_survival_from_a_lifelines_fit_matches_the_raw_rows():
+    lifelines = pytest.importorskip("lifelines")
+    data = cohort()
+    study = quiet(group="arm", time="months", event="died", units={"months": "months"})
+    fits = {name: lifelines.KaplanMeierFitter().fit(rows["months"], rows["died"], label=name)
+            for name, rows in data.groupby("arm", sort=False)}
+    from_fit, from_rows = study.survival(fit=fits), study.survival()
+    assert from_fit.table.equals(from_rows.table)
+    assert from_fit.values == from_rows.values and from_fit.text == from_rows.text
+
+
+def quiet_study(data, **roles):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return hl.study(data, **roles)

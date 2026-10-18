@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from hairline.charts.forest import forest, model_table
-from hairline.charts.kaplan_meier import kaplan_meier
+from hairline.charts.kaplan_meier import estimates_from, kaplan_meier
 from hairline.numbers import format_interval, format_number, format_p
-from hairline.stats.survival import km_estimate, km_median
+from hairline.stats.survival import km_median
 from hairline.stats.tests import logrank
 from hairline.study.columns import is_missing, level_text
 from hairline.study.compare import GROUP, listed
@@ -32,28 +32,54 @@ def follow_up_rows(study: Study) -> pd.DataFrame:
     return data.assign(**{GROUP: data[study.group].map(level_text)})
 
 
-def survival(study: Study, size: str = "double") -> Result:
-    if "time" not in study.roles or "event" not in study.roles:
-        raise ValueError("hairline: survival needs time and event; set time= and event= in study()")
-    time, event = study.roles["time"], study.roles["event"]
-    study.require([time, event, study.group], "survival")
-    data = follow_up_rows(study)
-    names = [name for name in (study.groups or [OVERALL]) if (data[GROUP] == name).any()]
+def survival_rows(estimates: list) -> list[list[str]]:
     rows = []
-    for name in names:
-        subset = data[data[GROUP] == name]
-        median = km_median(km_estimate(subset[time], subset[event]))
-        rows.append([name, format_number(len(subset), 0), format_number(int(subset[event].sum()), 0),
+    for name, table, total in estimates:
+        median = km_median(table)
+        rows.append([name or OVERALL, format_number(total, 0), format_number(int(table["events"].sum()), 0),
                      NOT_REACHED if median is None else format_number(median, 1)])
-    test = format_p(logrank(data[time], data[event], data[GROUP])["p"]) if len(names) > 1 else None
+    return rows
+
+
+def survival(study: Study, fit=None, size: str = "double") -> Result:
+    """Kaplan–Meier by group from the study's time and event, or from a fit already made (a lifelines
+    KaplanMeierFitter or a mapping of group to one); the log-rank test needs the study's own columns."""
+    roles = study.roles
+    if fit is None and ("time" not in roles or "event" not in roles):
+        raise ValueError("hairline: survival needs time and event; set time= and event= in study(), or pass fit=")
+    has_data = "time" in roles and "event" in roles
+    if has_data:
+        study.require([roles["time"], roles["event"], study.group], "survival")
+    data = follow_up_rows(study) if has_data else None
+    if fit is None:
+        names = [name for name in (study.groups or [OVERALL]) if (data[GROUP] == name).any()]
+        estimates = estimates_from(data, roles["time"], roles["event"], GROUP, names)
+    else:
+        estimates = estimates_from(fit, None, None, None, None)
+        if study.groups and {name for name, _, _ in estimates} <= set(study.groups):
+            estimates.sort(key=lambda item: study.groups.index(item[0]))
+        names = [name or OVERALL for name, _, _ in estimates]
+    rows = survival_rows(estimates)
+    grouped = len(estimates) > 1
+    test = format_p(logrank(data[roles["time"]], data[roles["event"]], data[GROUP])["p"]) \
+        if grouped and has_data and study.group else None
     values = {**{row[0]: row[3] for row in rows}, **({"p": test} if test else {})}
-    figure = kaplan_meier(data, time, event, by=GROUP if study.group else None, order=names,
-                          title=f"Survival by {str(study.group).replace('_', ' ')}" if study.group else "Survival",
-                          x_title=study.label_unit(time), size=size)
-    medians = listed([f"{row[0]} {row[3]}" for row in rows]) if study.group else rows[0][3]
-    unit = f" ({study.measure(time)})" if study.measure(time) else ""
-    text = f"Median {study.label(time).lower()}{unit}: {medians}" + (f" (log-rank {test})." if test else ".")
-    return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "Events", "Median"]), values, text)
+    time_label = study.label_unit(roles["time"]) if "time" in roles else "Time"
+    figure = kaplan_meier(fit if fit is not None else data, roles.get("time"), roles.get("event"),
+                          by=GROUP if fit is None and study.group else None, order=names if fit is None else None,
+                          title=f"Survival by {str(study.group).replace('_', ' ')}" if grouped and study.group
+                          else "Survival", x_title=time_label, size=size, test=False,
+                          stats=[("Log-rank", test)] if test else ())
+    return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "Events", "Median"]), values,
+                  survival_text(study, rows, grouped, test))
+
+
+def survival_text(study: Study, rows: list, grouped: bool, test: str | None) -> str:
+    time = study.roles.get("time")
+    measured = study.label(time).lower() if time else "survival time"
+    unit = f" ({study.measure(time)})" if time and study.measure(time) else ""
+    medians = listed([f"{row[0]} {row[3]}" for row in rows]) if grouped else rows[0][3]
+    return f"Median {measured}{unit}: {medians}" + (f" (log-rank {test})." if test else ".")
 
 
 def effect_rows(model_or_table, options: dict) -> pd.DataFrame:
