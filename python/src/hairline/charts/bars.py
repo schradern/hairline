@@ -81,13 +81,16 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
     edge = {"edgecolor": current_settings().neutral["surface"], "linewidth": rules["gap_pt"] / 2} if stacked else \
         {"linewidth": 0}
     options = {**options, "largest": max_total(table, category, value, by, names, groups, options)}
+    ends = 0.0
     for index, group in enumerate(groups):
         heights = bar_values(table, category, value, by, names, group, options["percent"])
-        offset = 0.0 if stacked else (index - (len(groups) - 1) / 2) * single
+        step = (len(groups) - 1) / 2 - index if horizontal else index - (len(groups) - 1) / 2
+        offset = 0.0 if stacked else step * single
         color = entities.color(group) if by else current_settings().palette[0]
         where = [position + offset for position in positions]
         draw = ax.barh if horizontal else ax.bar
         draw(where, heights, single * 0.92, base, color=color, label=group if by else "_nolegend_", **edge)
+        ends = max([ends, *heights])
         if stacked and options["labels"]:
             stacked_labels(ax, where, base, heights, color, options)
         elif options["labels"]:
@@ -100,6 +103,9 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
         for spot, total in zip(positions, base, strict=True):
             value_label(ax, total, (total, spot) if horizontal else (spot, total), horizontal, False,
                         "hairline-total")
+    if options["labels"] and not (stacked and options["percent"]):
+        reach = (max(base) if stacked else ends) * (1 + rules["label_headroom"])
+        ax.update_datalim([(reach, positions[0])] if horizontal else [(positions[0], reach)])
 
 
 def max_total(table: pd.DataFrame, category: str, value: str, by: str | None, names: list[str], groups: list[str],
@@ -130,6 +136,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
                                                     "horizontal": horizontal, "stacked": stacked, "percent": percent,
                                                     "labels": labels})
     result.categories(0, list(reversed(names)) if horizontal else names, "y" if horizontal else "x")
+    pad = load_tokens()["bars"]["category_pad"]
+    (result.ax.set_ylim if horizontal else result.ax.set_xlim)(-pad, len(names) - 1 + pad)
     if percent:
         result.percent_axis(0, "x" if horizontal else "y")
     if by:

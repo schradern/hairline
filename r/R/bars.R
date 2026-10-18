@@ -67,24 +67,47 @@ stacked_text_layers <- function(frame, colours, horizontal, percent) {
   layers
 }
 
+# Groups side by side; horizontal bars run top-down in legend order.
+bar_dodge <- function(horizontal) ggplot2::position_dodge(width = hl_tokens()$bars$width, reverse = horizontal)
+
+# Room on the value axis for the labels at the bar ends.
+bar_headroom <- function(frame, horizontal, percent, stacked) {
+  if (stacked && percent) return(list())
+  largest <- if (stacked) max(tapply(frame$value, frame$category, sum), na.rm = TRUE) else max(frame$value)
+  reach <- data.frame(category = factor(levels(frame$category)[1], levels = levels(frame$category)),
+                      value = largest * (1 + hl_tokens()$bars$label_headroom))
+  mapping <- if (horizontal) ggplot2::aes(.data$value, .data$category) else ggplot2::aes(.data$category, .data$value)
+  list(ggplot2::geom_blank(mapping, data = reach, inherit.aes = FALSE))
+}
+
+# Space before the first and after the last category, as in Python.
+bar_category_scale <- function(horizontal) {
+  expand <- ggplot2::expansion(add = hl_tokens()$bars$category_pad)
+  if (horizontal) ggplot2::scale_y_discrete(expand = expand) else ggplot2::scale_x_discrete(expand = expand)
+}
+
 bar_layers <- function(frame, colours, horizontal, stacked, labels, percent) {
   rules <- hl_tokens()$bars
   settings <- hl_settings()
-  position <- if (stacked) ggplot2::position_stack(reverse = TRUE) else ggplot2::position_dodge(width = rules$width)
+  position <- if (stacked) ggplot2::position_stack(reverse = TRUE) else bar_dodge(horizontal)
   mapping <- if (horizontal) ggplot2::aes(.data$value, .data$category, fill = .data$group) else
     ggplot2::aes(.data$category, .data$value, fill = .data$group)
-  edge <- if (stacked) list(colour = settings$neutral$surface, linewidth = pt_to_mm(rules$gap_pt / 2)) else
+  edge <- if (stacked) list(colour = settings$neutral$surface, linewidth = pt_to_linewidth(rules$gap_pt / 2)) else
     list(colour = NA)
   layers <- list(do.call(ggplot2::geom_col, c(list(mapping, data = frame, position = position,
                                                    width = rules$width * 0.92,
                                                    orientation = if (horizontal) "y" else "x"), edge)),
                  ggplot2::scale_fill_manual(values = colours, guide = if (length(colours) > 1) "legend" else "none"))
   if (!labels) return(layers)
-  if (stacked) return(c(layers, stacked_text_layers(frame, colours, horizontal, percent)))
+  if (stacked) {
+    return(c(layers, stacked_text_layers(frame, colours, horizontal, percent),
+             bar_headroom(frame, horizontal, percent, TRUE)))
+  }
   gap <- rules$label_gap
-  c(layers, list(bar_text(bar_value_mapping(horizontal), frame, ggplot2::position_dodge(width = rules$width),
-                          settings$neutral$muted, settings, hjust = if (horizontal) -gap else 0.5,
-                          vjust = if (horizontal) 0.5 else -gap)))
+  c(layers, bar_headroom(frame, horizontal, percent, FALSE),
+    list(bar_text(bar_value_mapping(horizontal), frame, bar_dodge(horizontal),
+                  settings$neutral$muted, settings, hjust = if (horizontal) -gap else 0.5,
+                  vjust = if (horizontal) 0.5 else -gap)))
 }
 
 #' Bar chart
@@ -121,7 +144,8 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
   plot <- ggplot2::ggplot() +
     bar_layers(bar_frame(parts, category, by, horizontal, percent), colours, horizontal, stacked, labels, percent) +
     ggplot2::labs(title = title %||% paste(humanise(counted$value), "by", gsub("_", " ", category)),
-                  subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline()
+                  subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline() +
+    bar_category_scale(horizontal)
   if (percent) plot <- plot + if (horizontal) scale_x_hairline(percent = TRUE) else scale_y_hairline(percent = TRUE)
   plot
 }
