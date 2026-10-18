@@ -40,6 +40,15 @@ cd python && uv run python ../tools/parity.py
 `tools/parity.py` runs the gallery in both languages and compares the frame positions and the interactive
 targets of every figure. Install the R package first (`R CMD INSTALL r`).
 
+## Author
+
+Nikolas Schrader (<hi@nikolasschrader.com>).
+
+## How to cite
+
+`CITATION.cff` holds the reference (GitHub shows it as "Cite this repository"); in R, `citation("hairline")`
+prints it.
+
 ## Licence
 
 MIT. The bundled Hairline Sans font is a modified Public Sans (SIL Open Font License 1.1).

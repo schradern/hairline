@@ -81,6 +81,24 @@ description, and no timestamps: the same figure gives the same bytes again.
 - Palettes are checked for colour-vision separation and contrast; `hl.check_palette()` reports the numbers.
 - `hl.use(scheme="dark", accent="#0b6e4f")` draws on a dark surface with an accent for single series.
 
+## Author
+
+Nikolas Schrader (<hi@nikolasschrader.com>).
+
+## How to cite
+
+If hairline helped you make the figures in your work, please cite it:
+
+```bibtex
+@software{schrader2026hairline,
+  author  = {Schrader, Nikolas},
+  title   = {hairline: Clean, Predictable Figures for Medical and Data Science},
+  year    = {2026},
+  version = {0.1.0},
+  note    = {Python package}
+}
+```
+
 ## Licence
 
 MIT. The bundled Hairline Sans font is a modified Public Sans (SIL Open Font License 1.1).

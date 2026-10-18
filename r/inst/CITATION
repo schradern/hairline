@@ -1,0 +1,10 @@
+bibentry(
+  bibtype = "Manual",
+  header = "To cite hairline in publications, please use:",
+  title = "hairline: Clean, Predictable Figures for Medical and Data Science",
+  author = person("Nikolas", "Schrader"),
+  year = "2026",
+  note = paste("R package version", meta$Version),
+  textVersion = paste0("Schrader N (2026). hairline: Clean, Predictable Figures for Medical and Data Science. ",
+                       "R package version ", meta$Version, ".")
+)
