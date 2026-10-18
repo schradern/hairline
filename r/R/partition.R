@@ -98,7 +98,8 @@ hl_partition <- function(data, levels, value = NULL, title = NULL, subtitle = NU
     stop(sprintf("hairline: partition: %d levels but %d level name(s); give one name per level", length(levels),
                  length(names)), call. = FALSE)
   }
-  spec <- list(rings = donut_rings(data, NULL, value, levels, chart = "partition", colors = colors), levels = as.list(names))
+  rings <- donut_rings(data, NULL, value, levels, chart = "partition", colors = colors)
+  spec <- list(rings = rings, levels = as.list(names))
   items <- lapply(spec$rings[[1]], function(segment) {
     list(kind = "square", colour = segment$color, label = segment$name)
   })
