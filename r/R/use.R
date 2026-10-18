@@ -56,6 +56,14 @@ palette_fields <- function(palette) {
 #' @export
 hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, locale = NULL,
                    background = NULL, brand = NULL, colors = NULL, output = NULL) {
+  context <- host_context()
+  if (!is.null(context)) {
+    locale <- locale %||% context$locale
+    base_size <- base_size %||% context$base_size
+    if (is.null(brand) && !is.null(context$brand)) brand <- context$brand
+    output <- output %||% context$output
+    font <- font %||% context$design$font
+  }
   register_bundled_fonts()
   if (!is.null(locale)) locale_symbols(locale)
   explicit <- validated_entity_colors(colors)

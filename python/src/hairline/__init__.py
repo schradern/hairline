@@ -37,3 +37,13 @@ __all__ = [
     "study", "timeseries", "use", "venn",
 ]
 __version__ = "0.1.0"
+
+
+def _apply_host_context() -> None:
+    """Inside a host document (HAIRLINE_HOST_CONTEXT set), start from the document's context."""
+    from hairline.host import host_context
+    if host_context() is not None:
+        use()
+
+
+_apply_host_context()

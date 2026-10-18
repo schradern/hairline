@@ -46,6 +46,7 @@ class HairlineFigure:
     applied_limits: dict[tuple[int, str], tuple[float, float]] = field(default_factory=dict)
     light_slot_done: set[int] = field(default_factory=set)
     point_done: set[int] = field(default_factory=set)
+    handed_off: bool = False
     line_widths: dict[int, float] = field(default_factory=dict)
     highlight_spec: dict | None = None
     focus_done: set[int] = field(default_factory=set)
@@ -137,12 +138,26 @@ class HairlineFigure:
         return dict(self.report)
 
 
+class HostFigure(Figure):
+    """A matplotlib figure that, inside a host document, hands itself to the host after each save."""
+
+    def savefig(self, *args, **kwargs):
+        result = super().savefig(*args, **kwargs)
+        owner = getattr(self, "hairline_figure", None)
+        if owner is not None:
+            from hairline.host import hand_off
+            hand_off(owner)
+        return result
+
+
 def size_settings(size: str, width_mm: float | None, height_mm: float | None) -> tuple[float, float, Settings]:
     presets = load_tokens()["sizes"]
     if size not in presets:
         raise ValueError(f"hairline: unknown size {size!r}; use one of {', '.join(sorted(presets))}")
     preset, settings = presets[size], current_settings()
-    width = width_mm or preset["width_mm"]
+    from hairline.host import host_context
+    context = host_context()
+    width = width_mm or (context.width_mm if context else None) or preset["width_mm"]
     height = height_mm or preset.get("height_mm") or width * preset["aspect"]
     if not settings.base_size_explicit:
         settings = replace(settings, base_size=float(preset["base_size"]))
@@ -177,10 +192,11 @@ def figure(title: str, subtitle: str | None = None, caption: str | None = None, 
     columns, sharex, sharey = grid_shape(panels, layout, columns)
     width, height, settings = size_settings(size, width_mm, height_mm)
     matplotlib.rcParams.update(rcparams_for(settings))
-    fig = plt.figure(figsize=(width / MM_PER_INCH, height / MM_PER_INCH))
+    fig = plt.figure(figsize=(width / MM_PER_INCH, height / MM_PER_INCH), FigureClass=HostFigure)
     axes = create_axes(fig, panels, sharex, sharey)
     hairline_figure = HairlineFigure(fig, axes, settings, title, subtitle, caption, columns, sharex, sharey,
                                      panel_letters)
+    fig.hairline_figure = hairline_figure
     fig.set_layout_engine(HairlineLayout(hairline_figure))
     return hairline_figure
 

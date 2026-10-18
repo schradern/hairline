@@ -76,6 +76,7 @@ gtable_hairline_built <- function(data) {
   if (called_from_package("patchwork")) return(table)
   trace <- getOption("hairline.trace_frame")
   if (is.function(trace)) trace()
+  host_hand_off(data@plot)
   hl_gtable(table, data)
 }
 

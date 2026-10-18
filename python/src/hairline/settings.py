@@ -140,7 +140,13 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     a `_brand.yml` found from the working directory up to the project root; `brand=False` disables the lookup)
     > hairline's defaults. `output` ("screen", "pdf", "html", "docx") applies the brand's overrides for it.
     """
+    from hairline.host import host_context
     from hairline.style import rcparams_for
+    context = host_context()
+    if context is not None:
+        locale, base_size = locale or context.locale, base_size or context.base_size
+        brand = context.brand if brand is None and context.brand is not None else brand
+        output, font = output or context.output, font or context.design.get("font")
     register_fonts()
     check_locale(locale)
     explicit = validated_entity_colors(colors)

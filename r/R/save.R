@@ -24,7 +24,7 @@ figure_size_mm <- function(size, width_mm, height_mm) {
          call. = FALSE)
   }
   preset <- presets[[size]]
-  width <- width_mm %||% preset$width_mm
+  width <- width_mm %||% host_context()$width_mm %||% preset$width_mm
   c(width, height_mm %||% preset$height_mm %||% (width * preset$aspect))
 }
 
