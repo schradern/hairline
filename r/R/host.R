@@ -78,10 +78,9 @@ host_hand_off <- function(plot) {
   formats <- c(host_formats[[context$output]], if (isTRUE(context$interactive)) "html")
   paths <- hl_save(plot, file.path(context$figure_dir, figure_id), formats = formats, dpi = dpi)
   size <- fitted_size_mm(plot, figure_size_mm("onehalf", NULL, plot@meta$hairline_height_mm))
-  labels <- c(plot@labels$title, plot@labels$subtitle)
   files <- stats::setNames(as.list(paths), tools::file_ext(paths))
   entries[[length(entries) + 1]] <- list(id = figure_id, files = files, width_mm = round(size[1], 2),
-                                         height_mm = round(size[2], 2), alt = paste(labels, collapse = ". "))
+                                         height_mm = round(size[2], 2), alt = figure_alt(plot))
   jsonlite::write_json(entries, manifest_path, auto_unbox = TRUE, pretty = TRUE)
   hairline_state$handed_off <- c(hairline_state$handed_off, key)
   invisible(paths)

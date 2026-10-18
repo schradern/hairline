@@ -1,4 +1,5 @@
-"""save(): print-ready PDF, PNG, SVG and TIFF in one call, without timestamps or producer banners."""
+"""save(): print-ready PDF, PNG, SVG and TIFF in one call, named by the figure's title, without timestamps or
+producer banners."""
 
 from __future__ import annotations
 
@@ -31,6 +32,35 @@ def validated_formats(formats: Sequence[str]) -> list[str]:
     return requested
 
 
+def figure_alt(owner: HairlineFigure) -> str:
+    """The figure's alt text: title and subtitle, leaving out a missing or empty one."""
+    return ". ".join(part for part in (owner.title, owner.subtitle) if part)
+
+
+def figure_name(fig: Figure) -> tuple[str, str] | None:
+    """Title and description (the alt text that the HTML figure and the host manifest give too)."""
+    owner = getattr(fig, "hairline_figure", None)
+    if owner is None or not owner.title:
+        return None
+    return owner.title, figure_alt(owner)
+
+
+def named_metadata(name: str, naming: tuple[str, str] | None) -> dict | None:
+    """The format's metadata with the figure's name: PDF Title and Subject, PNG Title and Description."""
+    fields = {"pdf": ("Title", "Subject"), "png": ("Title", "Description")}.get(name)
+    if naming is None or fields is None:
+        return METADATA.get(name)
+    return {**METADATA[name], **dict(zip(fields, naming, strict=True))}
+
+
+def name_svg(path: Path, naming: tuple[str, str]) -> None:
+    """<title> and <desc> as the root element's first children, which viewers and screen readers read."""
+    text = path.read_text(encoding="utf-8")
+    title, description = (part.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") for part in naming)
+    end = text.index(">", text.index("<svg")) + 1
+    path.write_text(f"{text[:end]}<title>{title}</title><desc>{description}</desc>{text[end:]}", encoding="utf-8")
+
+
 def write_tiff(fig: Figure, path: Path, dpi: int, options: dict) -> None:
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png", dpi=dpi, metadata=METADATA["png"], **options)
@@ -48,8 +78,7 @@ def write_html(fig: Figure, path: Path, options: dict) -> None:
     buffer = io.StringIO()
     fig.savefig(buffer, format="svg", metadata=METADATA["svg"], **options)
     targets = figure_targets(owner)
-    alt = ". ".join(part for part in (owner.title, owner.subtitle) if part)
-    path.write_text(page(owner.title, figure_html(buffer.getvalue(), targets, owner.settings.font, alt),
+    path.write_text(page(owner.title, figure_html(buffer.getvalue(), targets, owner.settings.font, figure_alt(owner)),
                          targets["style"]["surface"]), encoding="utf-8")
 
 
@@ -59,8 +88,11 @@ def write_one(fig: Figure, path: Path, name: str, dpi: int, options: dict) -> No
     elif name == "tiff":
         write_tiff(fig, path, dpi, options)
     else:
+        naming = figure_name(fig)
         with path.open("wb") as handle:
-            fig.savefig(handle, format=name, dpi=dpi, metadata=METADATA.get(name), **options)
+            fig.savefig(handle, format=name, dpi=dpi, metadata=named_metadata(name, naming), **options)
+        if name == "svg" and naming:
+            name_svg(path, naming)
 
 
 def save(figure: HairlineFigure | Figure, name: str | os.PathLike, formats: Sequence[str] = ("pdf", "png"),

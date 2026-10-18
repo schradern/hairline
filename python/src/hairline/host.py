@@ -87,7 +87,7 @@ def hand_off(figure) -> None:
         return
     if getattr(figure, "handed_off", False) and (context.figure_dir / MANIFEST).is_file():
         return
-    from hairline.export import save
+    from hairline.export import figure_alt, save
     _state["handing_off"] = True
     try:
         context.figure_dir.mkdir(parents=True, exist_ok=True)
@@ -98,9 +98,8 @@ def hand_off(figure) -> None:
         formats = FORMATS[context.output] + (("html",) if context.interactive else ())
         paths = save(figure, context.figure_dir / figure_id, formats=formats, dpi=dpi)
         width, height = (value * 25.4 for value in figure.figure.get_size_inches())
-        alt = ". ".join(part for part in (figure.title, figure.subtitle) if part)
         entries.append({"id": figure_id, "files": {path.suffix[1:]: str(path) for path in paths},
-                        "width_mm": round(width, 2), "height_mm": round(height, 2), "alt": alt})
+                        "width_mm": round(width, 2), "height_mm": round(height, 2), "alt": figure_alt(figure)})
         manifest_path.write_text(json.dumps(entries, indent=1), encoding="utf-8")
         figure.handed_off = True
     finally:

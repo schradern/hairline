@@ -16,7 +16,7 @@ study_present_rows <- function(study, variable) {
 
 numeric_test <- function(samples) {
   if (length(samples) == 2) return(c("Wilcoxon rank-sum", format_p(rank_sum_p(samples[[1]], samples[[2]]))))
-  if (length(samples) > 2) return(c("Kruskal–Wallis", format_p(kruskal_p(samples))))
+  if (length(samples) > 2) return(c("Kruskal\u2013Wallis", format_p(kruskal_p(samples))))
   NULL
 }
 

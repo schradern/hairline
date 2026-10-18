@@ -45,8 +45,11 @@ def test_prisma_phases_are_rotated_labels():
 
 
 def test_prisma_warns_when_counts_do_not_add_up():
-    with pytest.warns(UserWarning, match="screened 970 is not identified 1,240 minus removed 260"):
+    with pytest.warns(UserWarning) as caught:
         prisma_spec({**COUNTS, "screened": 970})
+    messages = [str(warning.message) for warning in caught]
+    assert any("screened 970 is not identified 1,240 minus removed 260" in message for message in messages)
+    assert any("sought 120 is not screened 970 minus excluded 860" in message for message in messages)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         prisma_spec(COUNTS)

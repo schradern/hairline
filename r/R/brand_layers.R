@@ -52,9 +52,9 @@ entity_pair_failures <- function(colors) {
     normal <- delta_e(one, two)
     names <- paste(names(colors)[pair], collapse = " / ")
     if (vision < limits$cvd_floor) {
-      failures <- c(failures, sprintf("%s: colour-vision ΔE %.1f is below %s", names, vision, limits$cvd_floor))
+      failures <- c(failures, sprintf("%s: colour-vision \u0394E %.1f is below %s", names, vision, limits$cvd_floor))
     } else if (normal < limits$normal_floor) {
-      failures <- c(failures, sprintf("%s: normal-vision ΔE %.1f is below %s", names, normal, limits$normal_floor))
+      failures <- c(failures, sprintf("%s: normal-vision \u0394E %.1f is below %s", names, normal, limits$normal_floor))
     }
   }
   failures

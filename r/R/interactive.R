@@ -250,7 +250,7 @@ write_html <- function(plot, path, size, size_mm, background) {
   svg <- paste(readLines(svg_path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
   targets <- interactive_targets(plot, size, size_mm[1], size_mm[2])
   title <- plot@labels$title %||% ""
-  alt <- paste(c(plot@labels$title, plot@labels$subtitle), collapse = ". ")
+  alt <- figure_alt(plot)
   writeLines(html_page(title, figure_html(svg, targets, targets$style$font, alt), targets$style$surface), path,
              useBytes = TRUE)
 }

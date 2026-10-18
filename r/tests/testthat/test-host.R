@@ -23,8 +23,10 @@ test_that("the host width is the default and a printed plot is handed off once w
     ggplot2::labs(title = "Lactate by unit", subtitle = "Admissions 2025") + theme_hairline()
   path <- tempfile(fileext = ".png")
   ragg::agg_png(path, width = 8, height = 6, units = "in", res = 72)
-  print(plot)
-  print(plot)
+  without_pdf_font_warning({
+    print(plot)
+    print(plot)
+  })
   grDevices::dev.off()
   entries <- jsonlite::read_json(file.path(folder, "f", "hairline-figures.json"))
   expect_length(entries, 1)
@@ -63,7 +65,7 @@ test_that("a plot drawn again after the host empties its folder is handed off ag
     ggplot2::labs(title = "Lactate by unit") + theme_hairline()
   draw <- function() {
     ragg::agg_png(tempfile(fileext = ".png"), width = 8, height = 6, units = "in", res = 72)
-    print(plot)
+    without_pdf_font_warning(print(plot))
     grDevices::dev.off()
   }
   draw()

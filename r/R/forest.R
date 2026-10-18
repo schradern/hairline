@@ -85,7 +85,7 @@ forest_from_rma <- function(fit) {
                       high = back(fit$yi + spread), weight = stats::weights(fit))
   list(table = table, ratio = ratio,
        pooled = list(estimate = back(fit$b[1]), low = back(fit$ci.lb), high = back(fit$ci.ub), label = "Pooled"),
-       heterogeneity = sprintf("I² = %s %%, tau² = %s", hl_format_number(fit$I2, 0),
+       heterogeneity = sprintf("I\u00b2 = %s %%, tau\u00b2 = %s", hl_format_number(fit$I2, 0),
                                hl_format_number(fit$tau2, 2)))
 }
 

@@ -41,7 +41,7 @@ draw_to_device <- function(open_device, plot) {
   print(plot)
 }
 
-write_pdf <- function(plot, path, width_in, height_in, background) {
+write_pdf <- function(plot, path, width_in, height_in, background, naming = NULL) {
   route <- pdf_route()
   if (route == "none") {
     stop("hairline: PDF export needs a working cairo device or the 'rsvg' and 'svglite' packages", call. = FALSE)
@@ -58,6 +58,7 @@ write_pdf <- function(plot, path, width_in, height_in, background) {
     rsvg::rsvg_pdf(svg, path)
   }
   strip_pdf_metadata(path)
+  set_pdf_info(path, naming)
   warn_missing_pdf_font(path)
 }
 

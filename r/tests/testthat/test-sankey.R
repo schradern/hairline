@@ -46,6 +46,6 @@ test_that("sankey inputs are checked", {
   data <- budget()
   data$amount[2] <- -5
   expect_error(sankey_spec(data, c("source", "account", "category"), "amount"),
-               "Salary → Joint → Food has a negative value")
+               "Salary .+ Joint .+ Food has a negative value")
   expect_error(sankey_spec(budget(), "source", "amount"), "needs at least two columns")
 })

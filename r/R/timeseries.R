@@ -20,7 +20,7 @@ panel_stats <- function(values, stats, percent, threshold, share_label) {
       if (is.null(threshold)) stop("hairline: stats 'share_above' needs threshold =", call. = FALSE)
       result[[share_label]] <- hl_format_percent(mean(values >= threshold), 0)
     } else if (stat == "range") {
-      result[["Range"]] <- paste0(show(min(values), digits), "–", show(max(values), digits))
+      result[["Range"]] <- paste0(show(min(values), digits), "\u2013", show(max(values), digits))
     } else if (stat %in% c("mean", "median")) {
       value <- if (stat == "mean") mean(values) else stats::median(values)
       result[[if (stat == "mean") "Mean" else "Median"]] <- show(value, digits + if (stat == "mean") extra else 0)
@@ -155,7 +155,8 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   data <- prepared_series(data, x, y, by, order, window)
   colours <- if (is.null(by)) stats::setNames(lone_colour(), levels(data$.group)) else
     colours_for(levels(data$.group), colors)
-  share_label <- share_label %||% paste("≥", if (is.null(threshold)) "" else value_formatter(percent)(threshold, 0))
+  threshold_text <- if (is.null(threshold)) "" else value_formatter(percent)(threshold, 0)
+  share_label <- share_label %||% paste("\u2265", threshold_text)
   plot <- ggplot2::ggplot(data) + mark_layers(bands, events, data[[x]], levels(data$.group))
   if (period_mean) plot <- plot + period_mean_layer(data, y)
   plot <- plot + series_layers(data, x, y, raw, colours) + ggplot2::facet_wrap(~.group, ncol = 1) +

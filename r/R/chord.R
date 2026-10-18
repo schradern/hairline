@@ -13,7 +13,7 @@ chord_spec <- function(data, source, target, value = NULL, order = NULL, colors 
     first <- as.character(data[[source]][row])
     second <- as.character(data[[target]][row])
     amount <- data[[value]][row]
-    if (amount < 0) stop(sprintf("hairline: chord: %s – %s has a negative value (%s)", first, second, amount),
+    if (amount < 0) stop(sprintf("hairline: chord: %s \u2013 %s has a negative value (%s)", first, second, amount),
                          call. = FALSE)
     if (first == second) next
     pair <- if (match(first, names) <= match(second, names)) c(first, second) else c(second, first)

@@ -3,15 +3,16 @@
 
 km_check_inputs <- function(time, event) {
   if (length(time) == 0 || length(time) != length(event)) {
-    stop(sprintf("hairline: Kaplan–Meier needs as many times as events and at least one; got %d times and %d events",
-                 length(time), length(event)), call. = FALSE)
+    stop(sprintf(paste("hairline: Kaplan\u2013Meier needs as many times as events and at least one;",
+                       "got %d times and %d events"), length(time), length(event)), call. = FALSE)
   }
   unknown <- setdiff(sort(unique(event)), c(0, 1))
   if (length(unknown)) {
-    stop(sprintf("hairline: Kaplan–Meier event values must be 0 or 1; found %s", format(unknown[1])), call. = FALSE)
+    stop(sprintf("hairline: Kaplan\u2013Meier event values must be 0 or 1; found %s", format(unknown[1])),
+         call. = FALSE)
   }
   if (any(time < 0)) {
-    stop(sprintf("hairline: Kaplan–Meier time %s is negative; times count from 0", format(time[time < 0][1])),
+    stop(sprintf("hairline: Kaplan\u2013Meier time %s is negative; times count from 0", format(time[time < 0][1])),
          call. = FALSE)
   }
 }

@@ -1,7 +1,7 @@
 # Formatted summaries for study tables and values, mirroring the Python package.
 
 study_stat_labels <- c(median_iqr = "median (IQR)", mean_sd = "mean (SD)", range = "range", n_missing = "missing")
-study_empty <- "–"
+study_empty <- "\u2013"
 study_snap_digits <- 10
 
 check_study_stats <- function(stats) {

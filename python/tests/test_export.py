@@ -1,11 +1,18 @@
+import shutil
+import subprocess
+
 import pytest
 from PIL import Image
 
 import hairline as hl
+from hairline.export import figure_alt
+
+TITLE = "Survival after ICU discharge"
+DESCRIPTION = "Survival after ICU discharge. Kaplan–Meier estimate"
 
 
-def sample_figure():
-    figure = hl.figure("Survival after ICU discharge", subtitle="Kaplan–Meier estimate", caption="Synthetic data")
+def sample_figure(subtitle="Kaplan–Meier estimate"):
+    figure = hl.figure(TITLE, subtitle=subtitle, caption="Synthetic data")
     figure.ax.plot([0, 6, 12, 18], [1.0, 0.8, 0.65, 0.5], label="Standard care")
     figure.legend()
     return figure
@@ -59,3 +66,29 @@ def test_plain_matplotlib_figure_is_accepted(tmp_path):
     fig, ax = plt.subplots()
     ax.plot([1, 2], [3, 4])
     assert hl.save(fig, tmp_path / "plain", formats=["png"], dpi=72)[0].exists()
+
+
+def test_files_are_named_by_title_and_subtitle(tmp_path):
+    pdf, png, svg = hl.save(sample_figure(), tmp_path / "named", formats=["pdf", "png", "svg"])
+    assert f"/Title ({TITLE})".encode() in pdf.read_bytes()
+    with Image.open(png) as image:
+        assert (image.text["Title"], image.text["Description"]) == (TITLE, DESCRIPTION)
+    assert f"<title>{TITLE}</title><desc>{DESCRIPTION}</desc>" in svg.read_text(encoding="utf-8")
+
+
+def test_svg_name_is_escaped(tmp_path):
+    svg = hl.save(sample_figure("Dose < 5 & > 1"), tmp_path / "escaped", formats=["svg"])[0]
+    assert "<desc>Survival after ICU discharge. Dose &lt; 5 &amp; &gt; 1</desc>" in svg.read_text(encoding="utf-8")
+
+
+@pytest.mark.skipif(shutil.which("pdfinfo") is None, reason="poppler's pdfinfo is not installed")
+def test_pdf_readers_see_the_title_and_subject(tmp_path):
+    pdf = hl.save(sample_figure(), tmp_path / "read", formats=["pdf"])[0]
+    info = subprocess.run(["pdfinfo", str(pdf)], capture_output=True, text=True, check=True).stdout
+    assert f"Title:           {TITLE}" in info and "Subject:         " + DESCRIPTION in info
+    assert "Producer" not in info and "CreationDate" not in info
+
+
+def test_alt_text_leaves_out_an_empty_subtitle_as_in_r():
+    assert figure_alt(sample_figure("")) == TITLE
+    assert figure_alt(hl.figure("", subtitle="Weekly counts")) == "Weekly counts"

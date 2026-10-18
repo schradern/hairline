@@ -9,7 +9,7 @@ sankey_check <- function(data, columns, value) {
   for (index in seq_len(nrow(data))) {
     if (data[[value]][index] < 0) {
       path <- paste(vapply(columns, function(column) as.character(data[[column]][index]), character(1)),
-                    collapse = " → ")
+                    collapse = " \u2192 ")
       stop(sprintf("hairline: sankey: %s has a negative value (%s); flows need values of zero or more", path,
                    format(data[[value]][index])), call. = FALSE)
     }

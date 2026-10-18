@@ -5,7 +5,7 @@ venn_check_count <- function(names, proportional) {
   count <- length(names)
   listed <- paste(names, collapse = ", ")
   if (count > 3) {
-    stop(sprintf("hairline: venn: %d sets given (%s); at most 3 fit — show the intersections as bars instead",
+    stop(sprintf("hairline: venn: %d sets given (%s); at most 3 fit \u2014 show the intersections as bars instead",
                  count, listed), call. = FALSE)
   }
   if (count < 2) {

@@ -36,8 +36,10 @@ The written paths, invisibly.
 }
 \description{
 Writes \verb{name.<format>} for each format: PDF (vector), PNG and TIFF (600 dpi
-by default, TIFF LZW-compressed) and SVG (text kept as text). Output carries
-no timestamps or producer banners. PDF uses cairo where it is available
-(byte-identical across runs); otherwise svglite + rsvg, which is not
-byte-stable and needs \code{\link[=hl_install_font]{hl_install_font()}} to embed the bundled font.
+by default, TIFF LZW-compressed) and SVG (text kept as text). PDF, PNG and
+SVG files are named by the plot's title, with the title and subtitle as
+their description; none shows a timestamp or producer banner. PDF uses cairo
+where it is available (byte-identical across runs); otherwise svglite +
+rsvg, which is not byte-stable and needs \code{\link[=hl_install_font]{hl_install_font()}} to embed the
+bundled font.
 }

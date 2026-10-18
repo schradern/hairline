@@ -77,3 +77,50 @@ test_that("hl_install_font copies the bundled files into the user font folder", 
   expect_true(all(file.exists(paths)))
   expect_true(all(startsWith(paths, normalizePath(home))))
 })
+
+named_plot <- function(subtitle = "Kaplan–Meier estimate") sample_hairline_plot() + ggplot2::labs(subtitle = subtitle)
+named_title <- "Survival after ICU discharge"
+named_description <- "Survival after ICU discharge. Kaplan–Meier estimate"
+
+test_that("PNG and SVG files are named by title and subtitle", {
+  skip_if_not_installed("svglite")
+  skip_if_not_installed("png")
+  hl_use(brand = FALSE)
+  paths <- hl_save(named_plot(), file.path(withr::local_tempdir(), "named"), formats = c("png", "svg"))
+  text <- attr(png::readPNG(paths[1], info = TRUE), "info")$text
+  Encoding(text) <- "UTF-8"
+  expect_equal(unname(text[c("Title", "Description")]), c(named_title, named_description))
+  svg <- paste(readLines(paths[2], encoding = "UTF-8", warn = FALSE), collapse = "\n")
+  expect_true(grepl(paste0("<title>", named_title, "</title><desc>", named_description, "</desc>"), svg, fixed = TRUE))
+})
+
+test_that("the SVG name is escaped", {
+  skip_if_not_installed("svglite")
+  hl_use(brand = FALSE)
+  path <- hl_save(named_plot("Dose < 5 & > 1"), file.path(withr::local_tempdir(), "escaped"), formats = "svg")
+  svg <- paste(readLines(path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
+  expect_true(grepl("<desc>Survival after ICU discharge. Dose &lt; 5 &amp; &gt; 1</desc>", svg, fixed = TRUE))
+})
+
+test_that("PDF readers see the title and subject, and no producer or timestamp", {
+  skip_if(Sys.which("pdfinfo") == "", "poppler's pdfinfo is not installed")
+  hl_use(brand = FALSE)
+  path <- suppressWarnings(hl_save(named_plot(), file.path(withr::local_tempdir(), "read"), formats = "pdf"))
+  info <- system2("pdfinfo", shQuote(path), stdout = TRUE)
+  Encoding(info) <- "UTF-8"
+  expect_true(paste0("Title:           ", named_title) %in% info)
+  expect_true(paste0("Subject:         ", named_description) %in% info)
+  expect_false(any(grepl("^(Producer|CreationDate):", info)))
+})
+
+test_that("the description leaves out an empty subtitle, as in Python", {
+  plot <- sample_hairline_plot() + ggplot2::labs(subtitle = "")
+  expect_equal(figure_name(plot), c(named_title, named_title))
+  expect_null(figure_name(sample_hairline_plot() + ggplot2::labs(title = NA_character_)))
+})
+
+test_that("a subtitle alone is the alt text, as in Python", {
+  plot <- sample_hairline_plot() + ggplot2::labs(title = NULL, subtitle = "Weekly counts")
+  expect_equal(figure_alt(plot), "Weekly counts")
+  expect_null(figure_name(plot))
+})
