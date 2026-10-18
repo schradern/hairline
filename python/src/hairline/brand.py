@@ -259,10 +259,16 @@ def find_brand(start: str | os.PathLike | None = None) -> Path | None:
     return None
 
 
-def brand_report(brand: Brand) -> str:
-    """Plain-text table: slot, name, colour as given, as used, light slot, overall check."""
+def brand_report(brand: Brand | None = None) -> str:
+    """Plain-text table: slot, name, colour as given, as used, light slot, overall check; `None` reports the
+    brand the last `use()` applied."""
+    if brand is None:
+        from hairline.settings import active_brand
+        brand = active_brand()
+    if brand is None:
+        return "No brand is active."
     report = check_palette(brand.colors_used) if brand.colors_used else None
-    rows = [f"Brand '{brand.name}' from {brand.path} (adapt: {brand.adapt})",
+    rows = [f"Brand '{brand.name}' from {Path(brand.path).resolve()} (adapt: {brand.adapt})",
             "slot  name        given    used     light"]
     for slot, (name, given, used) in enumerate(zip(brand.names, brand.colors_given, brand.colors_used, strict=True),
                                                start=1):

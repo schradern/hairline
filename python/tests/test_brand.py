@@ -151,3 +151,13 @@ def test_use_takes_layers_and_an_output():
     assert settings.base_size == 10
     assert hl.color("Unit C") == load_brand(layered_paths()).entity_colors["Unit C"]
     hl.use(brand=False)
+
+
+def test_brand_report_reads_the_active_brand_as_in_r(example, monkeypatch):
+    hl.use(brand=False)
+    assert hl.brand_report() == "No brand is active."
+    monkeypatch.chdir(example.parent)
+    hl.use(brand="_brand.yml")
+    assert hl.brand_report().startswith("Brand 'Example University Hospital'")
+    assert f"from {example.resolve()} " in hl.brand_report()
+    hl.use(brand=False)

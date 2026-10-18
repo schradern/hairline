@@ -16,11 +16,13 @@ scale_colour_hairline_c(ramp = "blues", ...)
 scale_fill_hairline_c(ramp = "blues", ...)
 }
 \arguments{
-\item{palette}{Palette name, hex vector, or \code{NULL} for the active palette.}
+\item{palette}{Palette or purpose-set name (see \code{\link[=hl_palettes]{hl_palettes()}}), hex vector, or \code{NULL} for the active
+palette with entity colours.}
 
 \item{...}{Passed to the underlying ggplot2 scale.}
 
-\item{ramp}{Ramp name for continuous scales.}
+\item{ramp}{Ramp name for continuous scales: \code{"blues"}, \code{"teals"}, \code{"oranges"}, \code{"berries"}, \code{"greys"}, or a
+diverging \code{"blue-coral"} or \code{"teal-berry"} for values on both sides of a midpoint.}
 }
 \value{
 A ggplot2 scale.
@@ -29,9 +31,17 @@ A ggplot2 scale.
 Discrete scales give every level its entity colour (see \code{\link[=hl_color]{hl_color()}}) when
 \code{palette} is \code{NULL}, or the palette's slots in order otherwise, and refuse
 more categories than slots; continuous scales use a sequential or diverging ramp.
+Charts made with hairline's own functions pick their colours already; these
+scales are for plots built with ggplot2 directly.
 }
 \examples{
 ggplot2::ggplot(datasets::iris, ggplot2::aes(Sepal.Length, Petal.Length, colour = Species)) +
   ggplot2::geom_point() + ggplot2::labs(title = "Petal by sepal length") + theme_hairline() +
   scale_colour_hairline()
+ggplot2::ggplot(ggplot2::faithfuld, ggplot2::aes(waiting, eruptions, fill = density)) +
+  ggplot2::geom_raster() + ggplot2::labs(title = "Old Faithful eruptions") + theme_hairline() +
+  scale_fill_hairline_c("teals")
+}
+\seealso{
+\code{\link[=hl_palettes]{hl_palettes()}}, \code{\link[=hl_swatches]{hl_swatches()}}.
 }

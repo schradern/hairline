@@ -25,7 +25,8 @@ hl_use(
 
 \item{sizes}{Named list of role sizes in pt (\code{title}, \code{subtitle}, \code{panel}, \code{label}, \code{caption}).}
 
-\item{palette}{Palette name or vector of hex colours.}
+\item{palette}{Palette or purpose-set name (e.g. \code{"calm"}, \code{"pair"}; see \code{\link[=hl_palettes]{hl_palettes()}}), or a vector of
+hex colours.}
 
 \item{locale}{\code{"en"} or \code{"de"}.}
 

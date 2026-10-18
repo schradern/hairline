@@ -64,6 +64,14 @@ figure <- ggplot(mtcars, aes(wt, mpg)) + geom_point() +
 hl_save(figure, "fuel", size = "single")
 ```
 
+## Colours
+
+Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its
+colour in every chart. `hl_palettes()` lists the six palettes, the purpose sets (two groups, greyscale print,
+risk of bias) and the ramps for amounts; `hl_swatches()` draws them; `hl_use(palette = "calm")` changes the
+default; `hl_use(colors = c("Unit B" = "#e8a628"))` pins a colour to a name; `scale_fill_hairline_c("blues")`
+gives a ramp to your own ggplots. `?hairline_colours` has the details.
+
 ## Files
 
 `hl_save()` writes PDF, PNG and TIFF (600 dpi by default), SVG (text kept as text) and self-contained

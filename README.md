@@ -19,6 +19,10 @@ point.
 | `brands/example/` | an example brand file |
 | `tools/` | token sync, fixture builders, the font build and the parity check |
 
+## Guides
+
+- [Colours](docs/guide/colours.md): the colour sets, how to choose one, colours that follow names, brands.
+
 ## Working on it
 
 ```bash

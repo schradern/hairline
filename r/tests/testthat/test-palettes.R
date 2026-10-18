@@ -28,3 +28,8 @@ test_that("check and adapt fixtures match the Python reference", {
   for (name in names(cases$ramps)) expect_equal(hl_ramp(name), as_colors(cases$ramps[[name]]))
   expect_length(hl_ramp("blues", n = 4), 4)
 })
+
+test_that("palette check messages name Delta E as Python does", {
+  failures <- hl_check_palette(c("#2474cf", "#2b83c4", "#e8a628"), pairs = "all")$failures
+  expect_equal(failures[3], "normal vision: worst ΔE 4.9 is below 15")
+})

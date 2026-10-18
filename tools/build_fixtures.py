@@ -39,6 +39,8 @@ from hairline.charts.prisma_geometry import prisma_drawing
 from hairline.charts.raincloud import bracket_levels
 from hairline.charts.risk_of_bias import risk_of_bias_spec
 from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
+from hairline.charts.swatches_geometry import swatches_drawing
+from hairline.palettes import swatch_rows
 from hairline.charts.sankey import sankey_spec
 from hairline.charts.sankey_geometry import sankey_drawing
 from hairline.charts.venn import venn_spec
@@ -437,6 +439,17 @@ def chart_colour_cases() -> list[dict]:
             for fixed, remembered, override, names in inputs]
 
 
+
+def swatch_cases() -> dict:
+    """Colour sets as swatch rows: every set, and a pick across all four kinds in a narrower box."""
+    use(brand=False)
+    cases = []
+    for names, box in ((None, Box(20, 60, 440, 300)), (["calm", "ink", "greys", "teal-berry"], Box(10, 40, 260, 200))):
+        rows = swatch_rows(names)
+        cases.append({"names": names, "box": [box.x, box.y, box.width, box.height], "rows": rows,
+                      "shapes": swatches_drawing({"rows": rows}, box, fake_measure, DRAWING_STYLE)})
+    return {"style": DRAWING_STYLE, "cases": cases}
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -466,6 +479,7 @@ def main() -> int:
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     write("study.json", study_cases())
     write("spread.json", spread_cases(DRAWING_STYLE, fake_measure))
+    write("swatches.json", swatch_cases())
     return 0
 
 

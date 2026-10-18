@@ -38,11 +38,11 @@ band_failures <- function(colors, limits) {
 
 grade_separation <- function(value, label, limits) {
   if (value < limits$cvd_floor) {
-    return(list(failure = sprintf("%s: worst colour-vision dE %.1f is below %s", label, value, limits$cvd_floor)))
+    return(list(failure = sprintf("%s: worst colour-vision \u0394E %.1f is below %s", label, value, limits$cvd_floor)))
   }
   if (value < limits$cvd_target) {
-    return(list(warning = sprintf("%s: worst colour-vision dE %.1f is below %s; use labels or gaps as a second cue",
-                                  label, value, limits$cvd_target)))
+    return(list(warning = sprintf(paste("%s: worst colour-vision \u0394E %.1f is below %s;",
+                                        "use labels or gaps as a second cue"), label, value, limits$cvd_target)))
   }
   list()
 }
@@ -73,7 +73,7 @@ hl_check_palette <- function(colors, surface = "#ffffff", pairs = c("adjacent", 
               grade_separation(head, sprintf("first %d slots", limits$head_slots), limits))
   failures <- c(band_failures(colors, limits), unlist(graded[names(graded) == "failure"], use.names = FALSE))
   if (normal < limits$normal_floor) {
-    failures <- c(failures, sprintf("normal vision: worst dE %.1f is below %s", normal, limits$normal_floor))
+    failures <- c(failures, sprintf("normal vision: worst \u0394E %.1f is below %s", normal, limits$normal_floor))
   }
   light <- which(vapply(colors, contrast_ratio, numeric(1), second = surface) < limits$contrast_light_slot)
   list(passed = length(failures) == 0, worst_cvd = cvd, worst_normal = normal, head_all_pairs = head,

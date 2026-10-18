@@ -67,6 +67,14 @@ figure.y_title("mmol/l")
 hl.save(figure, "lactate")
 ```
 
+## Colours
+
+Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its
+colour in every chart. `hl.palettes()` lists the six palettes, the purpose sets (two groups, greyscale print,
+risk of bias) and the ramps for amounts; `hl.swatches()` draws them; `hl.use(palette="calm")` changes the
+default; `hl.use(colors={"Unit B": "#e8a628"})` pins a colour to a name; `hl.colormap("blues")` gives a ramp
+to your own matplotlib plots. `help(hairline.palettes)` has the details.
+
 ## Files
 
 `save()` writes PDF (fonts embedded), PNG and TIFF (600 dpi by default), SVG (text kept as text) and

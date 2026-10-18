@@ -28,7 +28,8 @@ CHARTS = [("bars_admissions", "Bar chart"), ("bars_stacked", "Stacked bars"), ("
           ("chord_transfers", "Chord diagram"), ("venn_comorbidities", "Venn diagram"),
           ("study_describe", "Study: cohort overview"),
           ("occupancy_rows", "Time series, two levels of detail"), ("grid_panels", "Small multiples"),
-          ("theme_scatter", "Scatter with the theme"), ("brand_example", "Brand file")]
+          ("theme_scatter", "Scatter with the theme"), ("brand_example", "Brand file"),
+          ("colour_sets", "Colour sets")]
 LANGUAGES = {"python": "Python", "r": "R"}
 SHEET_WIDTH_MM = 420
 OVERVIEW_DPI = 200

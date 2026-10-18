@@ -7,7 +7,7 @@
 hl_palette(name = NULL, n = NULL)
 }
 \arguments{
-\item{name}{Palette name, a vector of hex colours, or \code{NULL} for the active palette.}
+\item{name}{Palette or purpose-set name, a vector of hex colours, or \code{NULL} for the active palette.}
 
 \item{n}{Number of categories; raises an error rather than repeating colours.}
 }
@@ -15,9 +15,22 @@ hl_palette(name = NULL, n = NULL)
 Character vector of hex colours.
 }
 \description{
-Palette colours in slot order
+Colours for groups, in the order hairline assigns them: two groups take
+slots 1-2, three groups slots 1-3, and a group keeps its colour when more
+are shown. There are six categorical palettes of eight slots (\code{"daylight"},
+the default, \code{"bloom"}, \code{"citrus"}, \code{"lagoon"}, \code{"calm"} and \code{"deep"}) and
+purpose sets for common cases: \code{"pair"}, \code{"pair-teal"} and \code{"pair-violet"}
+for two groups, \code{"ink"} for greyscale print and \code{"judgement"} for low, some
+concerns and high. \code{\link[=hl_palettes]{hl_palettes()}} lists them all with their uses and
+\code{\link[=hl_swatches]{hl_swatches()}} draws them; make one the default with \code{hl_use(palette = )}.
+For amounts, use a ramp (\code{\link[=hl_ramp]{hl_ramp()}}) instead.
 }
 \examples{
 hl_palette()
 hl_palette(n = 3)
+hl_palette("pair")
+hl_palette("calm", n = 4)
+}
+\seealso{
+\code{\link[=hl_palettes]{hl_palettes()}}, \code{\link[=hl_swatches]{hl_swatches()}}, \code{\link[=hl_check_palette]{hl_check_palette()}}, \code{\link[=hl_use]{hl_use()}}.
 }

@@ -15,9 +15,17 @@ hl_ramp(name, n = NULL)
 Character vector of hex colours.
 }
 \description{
-Sequential or diverging ramp
+Colours for amounts. Sequential ramps run light to dark in one hue
+(\code{"blues"}, \code{"teals"}, \code{"oranges"}, \code{"berries"}, \code{"greys"}); diverging
+ramps run from one pole through a neutral midpoint to the other
+(\code{"blue-coral"}, \code{"teal-berry"}), for values below and above a reference.
+\code{\link[=scale_colour_hairline_c]{scale_colour_hairline_c()}} and \code{\link[=scale_fill_hairline_c]{scale_fill_hairline_c()}} use them in a plot.
 }
 \examples{
 hl_ramp("blues")
 hl_ramp("blues", n = 3)
+hl_ramp("blue-coral", n = 5)
+}
+\seealso{
+\code{\link[=hl_palettes]{hl_palettes()}}, \code{\link[=hl_swatches]{hl_swatches()}}.
 }

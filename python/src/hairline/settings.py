@@ -46,6 +46,11 @@ def default_settings() -> Settings:
                     locale=tokens["default_locale"], neutral=dict(tokens["neutral"]))
 
 
+def active_brand() -> Brand | None:
+    """The brand the last `use()` applied, if any."""
+    return _state.get("brand")
+
+
 def current_settings() -> Settings:
     """The settings set by the last `use()`, or hairline's defaults."""
     return _state["current"] or default_settings()
@@ -56,7 +61,7 @@ def current_locale() -> str:
 
 
 def reset() -> None:
-    _state["current"] = None
+    _state["current"], _state["brand"] = None, None
     entities.configure({})
 
 
@@ -163,7 +168,9 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     Precedence: these arguments > the brand (`brand=` path or a list of layers from institution to document, or
     a `_brand.yml` found from the working directory up to the project root; `brand=False` disables the lookup)
     > hairline's defaults. `output` ("screen", "pdf", "html", "docx") applies the brand's overrides for it.
-    `accent` colours a lone series (charts without groups); `scheme="dark"` uses the dark neutral tokens.
+    `palette` is a palette or purpose-set name ("calm", "pair"; see `palettes()`) or a list of hex colours;
+    `colors` pins colours to names ({"Unit B": "#e8a628"}) across every chart. `accent` colours a lone series
+    (charts without groups); `scheme="dark"` uses the dark neutral tokens.
     """
     from hairline.host import host_context
     from hairline.style import rcparams_for
@@ -191,7 +198,7 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     changes |= {"locale": locale or layered.locale, "background": background or layered.background}
     changes |= scheme_fields(scheme, background, accent)
     settings = Settings(**{**layered.__dict__, **changes})
-    _state["current"] = settings
+    _state["current"], _state["brand"] = settings, resolved_brand
     entities.configure({**(resolved_brand.entity_colors if resolved_brand else {}), **explicit})
     matplotlib.rcParams.update(rcparams_for(settings))
     return settings

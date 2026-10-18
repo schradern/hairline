@@ -62,7 +62,8 @@ palette_fields <- function(palette) {
 #' @param font Font family; falls back to the bundled 'Hairline Sans' with a warning when missing.
 #' @param base_size Body text size in pt; every other size derives from it.
 #' @param sizes Named list of role sizes in pt (`title`, `subtitle`, `panel`, `label`, `caption`).
-#' @param palette Palette name or vector of hex colours.
+#' @param palette Palette or purpose-set name (e.g. `"calm"`, `"pair"`; see [hl_palettes()]), or a vector of
+#'   hex colours.
 #' @param locale `"en"` or `"de"`.
 #' @param background `"#ffffff"`-style colour or `"transparent"`.
 #' @param brand Path to a `_brand.yml`, several paths as layers (institution first), `NULL` to look one up,
