@@ -51,8 +51,9 @@ format_device <- function(format, path, size_mm, dpi, background) {
          svg = function() svglite::svglite(path, inches[1], inches[2], bg = background, fix_text_size = FALSE))
 }
 
-write_format <- function(plot, path, format, size_mm, dpi, background) {
+write_format <- function(plot, path, format, size_mm, dpi, background, size = "onehalf") {
   if (format == "pdf") return(write_pdf(plot, path, size_mm[1] / 25.4, size_mm[2] / 25.4, background))
+  if (format == "html") return(write_html(plot, path, size, size_mm, background))
   draw_to_device(format_device(format, path, size_mm, dpi, background), plot)
 }
 
@@ -66,7 +67,8 @@ write_format <- function(plot, path, format, size_mm, dpi, background) {
 #'
 #' @param plot A ggplot, ideally with [theme_hairline()].
 #' @param name Output path without extension; parent folders are created.
-#' @param formats Any of `"pdf"`, `"png"`, `"svg"`, `"tiff"`.
+#' @param formats Any of `"pdf"`, `"png"`, `"svg"`, `"tiff"`, `"html"` (the SVG with tooltips and series
+#'   highlighting, self-contained).
 #' @param size Size preset: `"single"` (85 mm), `"onehalf"` (120), `"double"` (174), `"a4"` (160), `"slide"`.
 #' @param width_mm,height_mm Explicit size in mm; overrides the preset.
 #' @param dpi Resolution for PNG and TIFF.
@@ -88,7 +90,7 @@ hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", wid
   for (index in seq_along(formats)) {
     partial <- file.path(dirname(paths[index]), paste0(".", basename(paths[index]), ".partial"))
     tryCatch({
-      write_format(plot, partial, formats[index], size_mm, dpi, surface)
+      write_format(plot, partial, formats[index], size_mm, dpi, surface, size)
       file.rename(partial, paths[index])
     }, error = function(error) {
       unlink(c(partial, paths[seq_len(index - 1)]))

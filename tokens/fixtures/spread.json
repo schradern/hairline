@@ -426,7 +426,8 @@
      ],
      "color": "#6f757d",
      "width": 0.54,
-     "role": "range"
+     "role": "range",
+     "series": "A"
     },
     {
      "kind": "polygon",
@@ -450,7 +451,13 @@
      ],
      "fill": "#2474cf",
      "alpha": 0.35,
-     "role": "band"
+     "role": "band",
+     "tip": "A: Median 12, IQR 10–15, Mean 12.7, Beds 16",
+     "tip_at": [
+      164.1909090909091,
+      64.959
+     ],
+     "series": "A"
     },
     {
      "kind": "polygon",
@@ -553,7 +560,8 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "dot"
+     "role": "dot",
+     "series": "A"
     },
     {
      "kind": "line",
@@ -569,7 +577,8 @@
      ],
      "color": "#1b1e22",
      "width": 0.54,
-     "role": "mark"
+     "role": "mark",
+     "series": "A"
     },
     {
      "kind": "text",
@@ -675,7 +684,8 @@
      ],
      "color": "#6f757d",
      "width": 0.54,
-     "role": "range"
+     "role": "range",
+     "series": "B"
     },
     {
      "kind": "polygon",
@@ -699,7 +709,13 @@
      ],
      "fill": "#ef675a",
      "alpha": 0.35,
-     "role": "band"
+     "role": "band",
+     "tip": "B: Median 9, IQR 7–10, Mean 9.0, Beds 12",
+     "tip_at": [
+      132.41818181818184,
+      82.05900000000001
+     ],
+     "series": "B"
     },
     {
      "kind": "polygon",
@@ -802,7 +818,8 @@
       ]
      ],
      "fill": "#ef675a",
-     "role": "dot"
+     "role": "dot",
+     "series": "B"
     },
     {
      "kind": "line",
@@ -818,7 +835,8 @@
      ],
      "color": "#1b1e22",
      "width": 0.54,
-     "role": "mark"
+     "role": "mark",
+     "series": "B"
     },
     {
      "kind": "text",
@@ -924,7 +942,8 @@
      ],
      "color": "#6f757d",
      "width": 0.54,
-     "role": "range"
+     "role": "range",
+     "series": "C"
     },
     {
      "kind": "polygon",
@@ -948,7 +967,13 @@
      ],
      "fill": "#b93780",
      "alpha": 0.35,
-     "role": "band"
+     "role": "band",
+     "tip": "C: Median 6, IQR 5–7, Mean 6.5",
+     "tip_at": [
+      100.64545454545456,
+      99.159
+     ],
+     "series": "C"
     },
     {
      "kind": "polygon",
@@ -1051,7 +1076,8 @@
       ]
      ],
      "fill": "#b93780",
-     "role": "dot"
+     "role": "dot",
+     "series": "C"
     },
     {
      "kind": "text",
@@ -1583,7 +1609,8 @@
      ],
      "color": "#6f757d",
      "width": 0.54,
-     "role": "range"
+     "role": "range",
+     "series": "A"
     },
     {
      "kind": "polygon",
@@ -1607,7 +1634,13 @@
      ],
      "fill": "#2474cf",
      "alpha": 0.35,
-     "role": "band"
+     "role": "band",
+     "tip": "A: Median 76%, IQR 71%–83%, n 30",
+     "tip_at": [
+      251.91719999999998,
+      64.959
+     ],
+     "series": "A"
     },
     {
      "kind": "polygon",
@@ -1710,7 +1743,8 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "dot"
+     "role": "dot",
+     "series": "A"
     },
     {
      "kind": "text",
@@ -1796,7 +1830,8 @@
      ],
      "color": "#6f757d",
      "width": 0.54,
-     "role": "range"
+     "role": "range",
+     "series": "B"
     },
     {
      "kind": "polygon",
@@ -1820,7 +1855,13 @@
      ],
      "fill": "#ef675a",
      "alpha": 0.35,
-     "role": "band"
+     "role": "band",
+     "tip": "B: Median 74%, IQR 66%–86%, n 30",
+     "tip_at": [
+      246.95769999999996,
+      82.05900000000001
+     ],
+     "series": "B"
     },
     {
      "kind": "polygon",
@@ -1923,7 +1964,8 @@
       ]
      ],
      "fill": "#ef675a",
-     "role": "dot"
+     "role": "dot",
+     "series": "B"
     },
     {
      "kind": "text",
@@ -2009,7 +2051,8 @@
      ],
      "color": "#6f757d",
      "width": 0.54,
-     "role": "range"
+     "role": "range",
+     "series": "C"
     },
     {
      "kind": "polygon",
@@ -2033,7 +2076,13 @@
      ],
      "fill": "#b93780",
      "alpha": 0.35,
-     "role": "band"
+     "role": "band",
+     "tip": "C: Median 76%, IQR 68%–87%, n 30",
+     "tip_at": [
+      253.19249999999997,
+      99.159
+     ],
+     "series": "C"
     },
     {
      "kind": "polygon",
@@ -2136,7 +2185,8 @@
       ]
      ],
      "fill": "#b93780",
-     "role": "dot"
+     "role": "dot",
+     "series": "C"
     },
     {
      "kind": "text",

@@ -101,8 +101,11 @@ def interval_marks(row: dict, centre: float, scale, plot: tuple[float, float], s
     """Interval line clipped to the plot, and the marker centred on the estimate."""
     left, right = max(plot[0], scale(row["low"])), min(plot[1], scale(row["high"]))
     line = {"kind": "line", "points": [[left, centre], [right, centre]], "color": spec["color"],
-            "width": style["data_width"]}
-    return [line, marker(scale(row["estimate"]), centre, side, spec.get("marker", "square"), spec["color"])]
+            "width": style["data_width"], "series": row["study"]}
+    tip = {"series": row["study"], "tip": f"{row['study']}: {row['effect_text']}",
+           "tip_at": [scale(row["estimate"]), centre - side / 2]}
+    return [line, {**marker(scale(row["estimate"]), centre, side, spec.get("marker", "square"), spec["color"]),
+                   **tip}]
 
 
 def dot_size(style: dict) -> float:

@@ -47,6 +47,7 @@ class HairlineFigure:
     light_slot_done: set[int] = field(default_factory=set)
     point_done: set[int] = field(default_factory=set)
     handed_off: bool = False
+    legend_placed: list = field(default_factory=list)
     line_widths: dict[int, float] = field(default_factory=dict)
     highlight_spec: dict | None = None
     focus_done: set[int] = field(default_factory=set)

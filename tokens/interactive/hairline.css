@@ -1,0 +1,12 @@
+.hairline-figure { position: relative; display: block; max-width: 100%; margin: 0; }
+.hairline-figure > svg { display: block; width: 100%; height: auto; }
+.hairline-figure > svg.hairline-overlay { position: absolute; inset: 0; height: 100%; overflow: visible; }
+.hairline-figure .hairline-hit { cursor: default; outline: none; }
+.hairline-figure .hairline-veil { pointer-events: none; display: none; }
+.hairline-figure .hairline-tip {
+  position: absolute; display: none; pointer-events: none; white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 0.6em)); padding: 0.25em 0.5em;
+  background: var(--hl-surface); color: var(--hl-ink); border: 1px solid var(--hl-axis);
+  font-family: var(--hl-font), sans-serif; line-height: 1.25;
+}
+@media (forced-colors: active) { .hairline-figure .hairline-tip { border-color: CanvasText; } }

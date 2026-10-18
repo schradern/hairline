@@ -388,7 +388,8 @@
       "pdf",
       "png",
       "svg",
-      "tiff"
+      "tiff",
+      "html"
     ],
     "dpi": 600
   },
@@ -650,5 +651,10 @@
     "mark": 1.0,
     "column_gap": 1.5,
     "axis_gap": 0.3
+  },
+  "interactive": {
+    "veil": 0.75,
+    "hit_pt": 8,
+    "fonts": ["HairlineSans-Regular.ttf", "HairlineSans-Medium.ttf", "HairlineSans-SemiBold.ttf"]
   }
 }

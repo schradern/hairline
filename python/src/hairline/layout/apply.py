@@ -262,4 +262,5 @@ def apply_frame(figure: HairlineFigure) -> dict[int, list[str]]:
     place_reference_labels(figure)
     draw_frame(figure, layout, measured, placed, composed)
     figure.report = build_report(figure, layout, measured, placed, composed)
+    figure.legend_placed = list(placed)
     return {index: header.dropped for index, header in composed.items() if header.dropped}

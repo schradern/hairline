@@ -12,6 +12,7 @@ from hairline import entities
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import STATIC_ID
 from hairline.numbers import format_number
 from hairline.settings import current_settings
 from hairline.stats.tests import fit_band, linear_fit, pearson
@@ -31,7 +32,8 @@ def draw_fit(ax, x: pd.Series, y: pd.Series) -> None:
     centre, low, high = fit_band(linear_fit(x, y), xs)
     ink = settings.neutral["ink"]
     ax.fill_between(xs, low, high, color=ink, alpha=rules["band_opacity"], linewidth=0, label="_nolegend_")
-    ax.plot(xs, centre, color=ink, linewidth=load_tokens()["lines"]["data"] * settings.base_size, label="_nolegend_")
+    ax.plot(xs, centre, color=ink, linewidth=load_tokens()["lines"]["data"] * settings.base_size, label="_nolegend_",
+            gid=STATIC_ID)
 
 
 def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title: str | None = None,

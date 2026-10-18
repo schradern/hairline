@@ -111,7 +111,7 @@ study_overview <- function(study, parts) {
   plot <- ggplot2::ggplot(rows) + range +
     ggplot2::geom_rect(ggplot2::aes(xmin = .data$q1, xmax = .data$q3, ymin = .data$y - half, ymax = .data$y + half,
                                     fill = .data$group), alpha = spread_rules$band_opacity, colour = NA) +
-    ggplot2::geom_point(ggplot2::aes(.data$middle, .data$y, colour = .data$group)) +
+    static_layer(ggplot2::geom_point(ggplot2::aes(.data$middle, .data$y, colour = .data$group))) +
     ggplot2::facet_wrap(~variable, ncol = columns, scales = "free_x") +
     ggplot2::scale_y_continuous(breaks = rev(seq_along(names) - 1), labels = names,
                                 limits = c(-0.6, length(names) - 0.4), expand = c(0, 0)) +

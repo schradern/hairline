@@ -95,7 +95,8 @@ def hand_off(figure) -> None:
         entries = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else []
         figure_id = f"figure-{len(entries) + 1}"
         dpi = context.dpi if context.output == "screen" and context.dpi else None
-        paths = save(figure, context.figure_dir / figure_id, formats=FORMATS[context.output], dpi=dpi)
+        formats = FORMATS[context.output] + (("html",) if context.interactive else ())
+        paths = save(figure, context.figure_dir / figure_id, formats=formats, dpi=dpi)
         width, height = (value * 25.4 for value in figure.figure.get_size_inches())
         alt = ". ".join(part for part in (figure.title, figure.subtitle) if part)
         entries.append({"id": figure_id, "files": {path.suffix[1:]: str(path) for path in paths},

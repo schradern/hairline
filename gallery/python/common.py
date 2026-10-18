@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
 
 import hairline as hl
+from hairline.interactive import figure_targets
 
 GALLERY = Path(__file__).resolve().parents[1]
 OUT = GALLERY / "out" / "python"
@@ -23,6 +25,8 @@ def data(name: str) -> pd.DataFrame:
 
 def finish(figure: hl.HairlineFigure, name: str) -> None:
     """Save PDF + PNG and the frame report used by the parity check."""
-    hl.save(figure, OUT / name)
+    formats = ("pdf", "png", "html") if os.environ.get("HAIRLINE_GALLERY_HTML") else ("pdf", "png")
+    hl.save(figure, OUT / name, formats=formats)
+    (OUT / f"{name}.targets.json").write_text(json.dumps(figure_targets(figure), indent=1, ensure_ascii=False))
     report = figure.layout_report()
     (OUT / f"{name}.layout.json").write_text(json.dumps({key: report.get(key) for key in FRAME_KEYS}, indent=1))

@@ -1,0 +1,242 @@
+"""Interactive HTML: the static SVG plus targets for tooltips and series highlighting, drawn
+by a script shared with the R package. Targets are in pt from the figure's top-left corner."""
+
+from __future__ import annotations
+
+import base64
+import json
+from importlib import resources
+from typing import TYPE_CHECKING
+
+import numpy as np
+from matplotlib.collections import PathCollection
+from matplotlib.colors import to_hex
+from matplotlib.container import BarContainer
+
+from hairline.marks import FIXED_WIDTH_IDS, SECONDARY_ID, STATIC_ID
+from hairline.numbers import auto_digits, format_number, format_percent
+from hairline.settings import role_size
+from hairline.tokens import load_tokens
+
+if TYPE_CHECKING:
+    from hairline.figure import HairlineFigure
+
+SNAP_DIGITS = 10
+
+
+def number_texts(values, percent: bool) -> list[str]:
+    """Values formatted with the shared digits rule (percentages for share axes)."""
+    array = np.asarray(values, dtype=float)
+    if percent:
+        digits = auto_digits(array * 100)
+        return [format_percent(round(float(value), SNAP_DIGITS), digits) for value in array]
+    digits = auto_digits(array)
+    return [format_number(round(float(value), SNAP_DIGITS), digits) for value in array]
+
+
+def is_date_axis(axis) -> bool:
+    converter = axis.get_converter() if hasattr(axis, "get_converter") else axis.converter
+    return converter is not None and type(converter).__module__ == "matplotlib.dates"
+
+
+def x_texts(figure: HairlineFigure, index: int, ax, values) -> list[str]:
+    """X values as text: ISO dates on a date axis, category names on a category axis, else numbers."""
+    import matplotlib.dates as dates
+    categories = figure.category_axes.get((index, "x"))
+    if categories:
+        return [categories[int(round(value))] if 0 <= round(value) < len(categories) else "" for value in values]
+    if is_date_axis(ax.xaxis):
+        return [dates.num2date(float(value)).strftime("%Y-%m-%d") for value in values]
+    return number_texts(values, (index, "x") in figure.percent_axes)
+
+
+def series_name(label: str, figure: HairlineFigure, index: int) -> str:
+    if label and not label.startswith("_"):
+        return label
+    header = figure.headers.get(index)
+    return header.name if header else figure.title
+
+
+def steps(xy: np.ndarray) -> np.ndarray:
+    """A steps-post path: horizontal to the next x, then vertical."""
+    if len(xy) < 2:
+        return xy
+    points = [xy[0]]
+    for previous, current in zip(xy[:-1], xy[1:], strict=True):
+        points += [[current[0], previous[1]], current]
+    return np.asarray(points)
+
+
+def line_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
+    found = []
+    for line in ax.lines:
+        if line.get_gid() in FIXED_WIDTH_IDS or line.get_gid() in (SECONDARY_ID, STATIC_ID):
+            continue
+        if line.get_linestyle() in ("None", "none", "", " "):
+            continue
+        xy = np.asarray(line.get_xydata(), dtype=float)
+        path = steps(xy) if line.get_drawstyle() == "steps-post" else xy
+        name = series_name(line.get_label(), figure, index)
+        xs, ys = x_texts(figure, index, ax, xy[:, 0]), number_texts(xy[:, 1], (index, "y") in figure.percent_axes)
+        found.append({"name": name, "color": to_hex(line.get_color()),
+                      "marks": [{"line": [to_pt(ax, point) for point in path], "width": line.get_linewidth()}],
+                      "tips": [{"at": to_pt(ax, point), "text": f"{name}: {x}, {y}"}
+                               for point, x, y in zip(xy, xs, ys, strict=True)]})
+    return found
+
+
+def point_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
+    found = []
+    for collection in ax.collections:
+        offsets = np.asarray(collection.get_offsets(), dtype=float)
+        if not isinstance(collection, PathCollection) or collection.get_gid() == STATIC_ID or not len(offsets) \
+                or not len(collection.get_facecolor()):
+            continue
+        name = series_name(collection.get_label(), figure, index)
+        radius = float(np.sqrt(collection.get_sizes()[0]) / 2) if len(collection.get_sizes()) else 2.0
+        xs = x_texts(figure, index, ax, offsets[:, 0])
+        ys = number_texts(offsets[:, 1], (index, "y") in figure.percent_axes)
+        found.append({"name": name, "color": to_hex(collection.get_facecolor()[0]),
+                      "marks": [{"dot": to_pt(ax, point), "r": radius} for point in offsets],
+                      "tips": [{"at": to_pt(ax, point), "text": f"{name}: {x}, {y}"}
+                               for point, x, y in zip(offsets, xs, ys, strict=True)]})
+    return found
+
+
+def bar_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
+    found = []
+    for container in ax.containers:
+        if not isinstance(container, BarContainer):
+            continue
+        horizontal = getattr(container, "orientation", "vertical") == "horizontal"
+        name = series_name(container.get_label(), figure, index)
+        marks, tips, values = [], [], []
+        for patch in container.patches:
+            low, high = to_pt(ax, (patch.get_x(), patch.get_y() + patch.get_height())), to_pt(
+                ax, (patch.get_x() + patch.get_width(), patch.get_y()))
+            marks.append({"rect": [low[0], low[1], high[0] - low[0], high[1] - low[1]]})
+            values.append(patch.get_width() if horizontal else patch.get_height())
+        axis = "x" if horizontal else "y"
+        texts = number_texts(values, (index, axis) in figure.percent_axes)
+        centres = [patch.get_y() + patch.get_height() / 2 if horizontal else patch.get_x() + patch.get_width() / 2
+                   for patch in container.patches]
+        labels = category_texts(figure, index, "y" if horizontal else "x", centres)
+        for mark, label, value in zip(marks, labels, texts, strict=True):
+            x, y, width, height = mark["rect"]
+            tips.append({"at": [x + width / 2, y], "text": f"{name}: {label}, {value}"})
+        found.append({"name": name, "color": to_hex(container.patches[0].get_facecolor()) if marks else "#000000",
+                      "marks": marks, "tips": tips})
+    return found
+
+
+def category_texts(figure: HairlineFigure, index: int, axis: str, positions) -> list[str]:
+    labels = figure.category_axes.get((index, axis)) or []
+    return [labels[int(round(value))] if 0 <= round(value) < len(labels) else "" for value in positions]
+
+
+def drawn_targets(figure: HairlineFigure) -> list[dict]:
+    """Drawn charts mark their shapes with `series` (and one `tip` per series) while drawing."""
+    found: dict[str, dict] = {}
+    for shape in figure.shapes:
+        if "series" not in shape:
+            continue
+        entry = found.setdefault(shape["series"], {"name": shape["series"], "color": shape.get("fill") or
+                                                   shape.get("color"), "marks": [], "tips": []})
+        if shape["kind"] == "polygon":
+            entry["marks"].append({"polygon": shape["points"], "alpha": shape.get("alpha", 1.0)})
+        elif shape["kind"] == "line":
+            entry["marks"].append({"line": shape["points"], "width": shape["width"]})
+        if "tip" in shape:
+            entry["tips"].append({"at": shape["tip_at"], "text": shape["tip"]})
+    return list(found.values())
+
+
+def merged(series: list[dict]) -> list[dict]:
+    """One entry per name: a group's line, points and bars highlight together."""
+    by_name: dict[str, dict] = {}
+    for entry in series:
+        if entry["name"] in by_name:
+            by_name[entry["name"]]["marks"] += entry["marks"]
+            by_name[entry["name"]]["tips"] += entry["tips"]
+        else:
+            by_name[entry["name"]] = entry
+    return list(by_name.values())
+
+
+def legend_targets(figure: HairlineFigure) -> list[dict]:
+    centers = figure.report.get("legend_row_centers", []) if figure.report else []
+    line = role_size(figure.settings, "label") * (1 + load_tokens()["type"]["line_gap"])
+    return [{"name": entry.item.label, "box": [entry.x, centers[entry.row] - line / 2, entry.right - entry.x, line]}
+            for entry in figure.legend_placed if entry.row < len(centers)]
+
+
+def rounded(value):
+    if isinstance(value, float):
+        return round(value, 2)
+    if isinstance(value, (list, tuple)):
+        return [rounded(item) for item in value]
+    if isinstance(value, dict):
+        return {key: rounded(item) for key, item in value.items()}
+    return value
+
+
+def figure_targets(figure: HairlineFigure) -> dict:
+    """Everything the shared script needs: size, style, plot boxes, series with marks and tips, legend boxes."""
+    fig = figure.figure
+    fig.canvas.draw()
+    width, height = (float(value) * 72 for value in fig.get_size_inches())
+    scale = 72 / fig.dpi
+
+    def to_pt(ax, point) -> list[float]:
+        x, y = ax.transData.transform(point)
+        return [float(x) * scale, height - float(y) * scale]
+    series: list[dict] = []
+    for index, ax in enumerate(figure.axes):
+        if index not in figure.drawings:
+            series += line_targets(figure, index, ax, to_pt) + point_targets(figure, index, ax, to_pt)
+            series += bar_targets(figure, index, ax, to_pt)
+    series += drawn_targets(figure)
+    neutral, rules = figure.settings.neutral, load_tokens()["interactive"]
+    style = {"ink": neutral["ink"], "surface": neutral["surface"], "axis": neutral["axis"],
+             "font": figure.settings.font, "size": role_size(figure.settings, "label"), "veil": rules["veil"],
+             "hit": rules["hit_pt"]}
+    return rounded({"version": 1, "width": width, "height": height, "style": style,
+                    "panels": [[box.x, box.y, box.width, box.height] for box in figure.plot_boxes],
+                    "series": merged(series), "legend": legend_targets(figure)})
+
+
+def asset(name: str) -> str:
+    return (resources.files("hairline") / "data" / "interactive" / name).read_text(encoding="utf-8")
+
+
+def font_faces(family: str) -> str:
+    """The bundled font as data URIs, so the page renders the same without installed fonts."""
+    weights = {"Regular": 400, "Medium": 500, "SemiBold": 600}
+    faces = []
+    for file in load_tokens()["interactive"]["fonts"]:
+        data = (resources.files("hairline") / "data" / "fonts" / file).read_bytes()
+        weight = weights[file.split("-")[1].split(".")[0]]
+        faces.append(f"@font-face{{font-family:'{family}';font-weight:{weight};"
+                     f"src:url(data:font/ttf;base64,{base64.b64encode(data).decode()}) format('truetype')}}")
+    return "".join(faces)
+
+
+def figure_html(svg: str, targets: dict, family: str) -> str:
+    """One self-contained <figure>: static SVG, overlay, tooltip box, targets and script (embeddable as is)."""
+    body = svg[svg.index("<svg"):]
+    style = targets["style"]
+    variables = f"--hl-ink:{style['ink']};--hl-surface:{style['surface']};--hl-axis:{style['axis']};" \
+                f"--hl-font:'{style['font']}'"
+    data = json.dumps(targets, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    return (f'<figure class="hairline-figure" style="{variables}"><style>{font_faces(family)}{asset("hairline.css")}'
+            f'</style>{body}<svg class="hairline-overlay" viewBox="0 0 {targets["width"]} {targets["height"]}" '
+            f'xmlns="http://www.w3.org/2000/svg"></svg><div class="hairline-tip"></div>'
+            f'<script type="application/json" class="hairline-targets">{data}</script>'
+            f'<script>{asset("hairline.js")}</script></figure>')
+
+
+def page(title: str, fragment: str) -> str:
+    safe = title.replace("&", "&amp;").replace("<", "&lt;")
+    return (f'<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
+            f'<meta name="viewport" content="width=device-width, initial-scale=1"><title>{safe}</title>'
+            f'<style>body{{margin:0;padding:16px;background:#ffffff}}</style></head><body>{fragment}</body></html>\n')

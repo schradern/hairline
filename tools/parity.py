@@ -54,12 +54,40 @@ def compare(name: str) -> list[tuple[str, str, str, str]]:
     return problems
 
 
+def tip_key(tip: dict) -> tuple:
+    return tip["text"], tip["at"]
+
+
+def compare_targets(name: str) -> list[tuple[str, str, str, str]]:
+    """Interactive targets: the same series and legend entries, the same tooltip texts, positions within 1 pt."""
+    python = json.loads((GALLERY / "out" / "python" / f"{name}.targets.json").read_text())
+    r = json.loads((GALLERY / "out" / "r" / f"{name}.targets.json").read_text())
+    left, right = {s["name"]: s for s in python["series"]}, {s["name"]: s for s in r["series"]}
+    problems = []
+    if sorted(left) != sorted(right):
+        problems.append((name, "target series", str(sorted(left)), str(sorted(right))))
+    legends = [[entry["name"] for entry in targets["legend"]] for targets in (python, r)]
+    if legends[0] != legends[1]:
+        problems.append((name, "target legend", str(legends[0]), str(legends[1])))
+    for key in sorted(set(left) & set(right)):
+        ours, theirs = sorted(left[key]["tips"], key=tip_key), sorted(right[key]["tips"], key=tip_key)
+        if [tip["text"] for tip in ours] != [tip["text"] for tip in theirs]:
+            problems.append((name, f"tips of {key}", str([t["text"] for t in ours][:3]),
+                             str([t["text"] for t in theirs][:3])))
+            continue
+        worst = max((abs(a - b) for one, two in zip(ours, theirs, strict=True)
+                     for a, b in zip(one["at"], two["at"], strict=True)), default=0.0)
+        if worst > TOLERANCE_PT:
+            problems.append((name, f"tip positions of {key}", f"worst {worst:.2f} pt", ""))
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--no-run", action="store_true", help="compare existing reports without re-running")
     if not parser.parse_args().no_run:
         run_gallery()
-    problems = [problem for name in FIGURES for problem in compare(name)]
+    problems = [problem for name in FIGURES for problem in compare(name) + compare_targets(name)]
     for figure, key, python, r in problems:
         sys.stderr.write(f"{figure:<16} {key:<24} python {python}\n{'':<41} r      {r}\n")
     return 1 if problems else 0

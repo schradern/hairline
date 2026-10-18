@@ -76,7 +76,7 @@ frame_parts <- function(table, built) {
   settings <- built@plot@meta$hairline_settings %||% hl_settings()
   panels <- extract_panels(table, built)
   flipped <- inherits(built@layout$coord, "CoordFlip")
-  list(settings = settings, panels = panels, bare = isTRUE(built@plot@meta$hairline_bare),
+  list(settings = settings, panels = panels, bare = isTRUE(built@plot@meta$hairline_bare), built = built,
        drawing = built@plot@meta$hairline_drawing, table = built@plot@meta$hairline_table,
        aspect = panel_aspect(built), rows = max(vapply(panels, `[[`, numeric(1), "row")),
        columns = max(vapply(panels, `[[`, numeric(1), "col")), title = plot_label(built, "title"),

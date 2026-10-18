@@ -10,22 +10,25 @@
 #' @return A named list.
 #' @export
 hl_layout_report <- function(plot, width_mm = NULL, height_mm = NULL, size = "onehalf") {
+  framed <- frame_plan(plot, size, width_mm, height_mm, "hl_layout_report()")
+  report_from_plan(framed$parts, framed$plan)
+}
+
+# The extracted parts and the planned frame of a plot at its saved size.
+frame_plan <- function(plot, size, width_mm = NULL, height_mm = NULL, caller = "hairline") {
   plot <- plot_for_size(plot, size)
   size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm %||% plot@meta$hairline_height_mm))
-  width_mm <- size_mm[1]
-  height_mm <- size_mm[2]
   path <- tempfile(fileext = ".png")
-  ragg::agg_png(path, width = width_mm, height = height_mm, units = "mm", res = 72)
+  ragg::agg_png(path, width = size_mm[1], height = size_mm[2], units = "mm", res = 72)
   on.exit({
     grDevices::dev.off()
     unlink(path)
   })
   frame <- ggplot2::ggplotGrob(plot)
   if (!inherits(frame, "hairline_frame")) {
-    stop("hairline: hl_layout_report() needs a plot with + theme_hairline()", call. = FALSE)
+    stop(sprintf("hairline: %s needs a plot with + theme_hairline()", caller), call. = FALSE)
   }
-  plan <- plan_frame(frame$parts, c(width_mm, height_mm) / 25.4 * 72)
-  report_from_plan(frame$parts, plan)
+  list(parts = frame$parts, plan = plan_frame(frame$parts, size_mm / 25.4 * 72))
 }
 
 report_from_plan <- function(parts, plan) {

@@ -303,7 +303,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Adams 2019"
     },
     {
      "kind": "polygon",
@@ -326,7 +327,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "square"
+     "role": "square",
+     "series": "Adams 2019",
+     "tip": "Adams 2019: 0.62 [0.41; 0.94]",
+     "tip_at": [
+      229.61237217579293,
+      76.19999999999999
+     ]
     },
     {
      "kind": "text",
@@ -381,7 +388,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Baker 2020"
     },
     {
      "kind": "polygon",
@@ -404,7 +412,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "square"
+     "role": "square",
+     "series": "Baker 2020",
+     "tip": "Baker 2020: 0.81 [0.55; 1.19]",
+     "tip_at": [
+      261.7005684165344,
+      93.63038019997596
+     ]
     },
     {
      "kind": "text",
@@ -459,7 +473,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Chen 2021"
     },
     {
      "kind": "polygon",
@@ -482,7 +497,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "square"
+     "role": "square",
+     "series": "Chen 2021",
+     "tip": "Chen 2021: 0.47 [0.25; 0.88]",
+     "tip_at": [
+      196.36315713190788,
+      112.27025346665063
+     ]
     },
     {
      "kind": "text",
@@ -537,7 +558,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Diaz 2022"
     },
     {
      "kind": "polygon",
@@ -560,7 +582,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "square"
+     "role": "square",
+     "series": "Diaz 2022",
+     "tip": "Diaz 2022: 1.05 [0.70; 1.58]",
+     "tip_at": [
+      292.85203146140645,
+      127.58049316930413
+     ]
     },
     {
      "kind": "line",
@@ -886,7 +914,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Adams 2019"
     },
     {
      "kind": "polygon",
@@ -909,7 +938,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "square"
+     "role": "square",
+     "series": "Adams 2019",
+     "tip": "Adams 2019: −2.10 [−3.90; −0.30]",
+     "tip_at": [
+      245.0,
+      78.675
+     ]
     },
     {
      "kind": "text",
@@ -944,7 +979,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Baker 2020"
     },
     {
      "kind": "polygon",
@@ -967,7 +1003,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "square"
+     "role": "square",
+     "series": "Baker 2020",
+     "tip": "Baker 2020: −0.80 [−2.40; 0.80]",
+     "tip_at": [
+      287.25,
+      95.775
+     ]
     },
     {
      "kind": "text",
@@ -1002,7 +1044,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Chen 2021"
     },
     {
      "kind": "polygon",
@@ -1025,7 +1068,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "square"
+     "role": "square",
+     "series": "Chen 2021",
+     "tip": "Chen 2021: −3.50 [−6.80; −0.20]",
+     "tip_at": [
+      199.5,
+      112.875
+     ]
     },
     {
      "kind": "text",
@@ -1060,7 +1109,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Diaz 2022"
     },
     {
      "kind": "polygon",
@@ -1083,7 +1133,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "square"
+     "role": "square",
+     "series": "Diaz 2022",
+     "tip": "Diaz 2022: 0.60 [−1.10; 2.30]",
+     "tip_at": [
+      332.75,
+      129.975
+     ]
     },
     {
      "kind": "line",
@@ -1321,7 +1377,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Adams 2019"
     },
     {
      "kind": "polygon",
@@ -1424,7 +1481,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "dot"
+     "role": "dot",
+     "series": "Adams 2019",
+     "tip": "Adams 2019: 0.62",
+     "tip_at": [
+      162.83499999999998,
+      79.35
+     ]
     },
     {
      "kind": "text",
@@ -1459,7 +1522,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Baker 2020"
     },
     {
      "kind": "polygon",
@@ -1562,7 +1626,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "dot"
+     "role": "dot",
+     "series": "Baker 2020",
+     "tip": "Baker 2020: 0.81",
+     "tip_at": [
+      243.44250000000002,
+      96.45
+     ]
     },
     {
      "kind": "text",
@@ -1597,7 +1667,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Chen 2021"
     },
     {
      "kind": "polygon",
@@ -1700,7 +1771,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "dot"
+     "role": "dot",
+     "series": "Chen 2021",
+     "tip": "Chen 2021: 0.47",
+     "tip_at": [
+      99.19749999999998,
+      113.55
+     ]
     },
     {
      "kind": "text",
@@ -1735,7 +1812,8 @@
       ]
      ],
      "color": "#2474cf",
-     "width": 1.26
+     "width": 1.26,
+     "series": "Diaz 2022"
     },
     {
      "kind": "polygon",
@@ -1838,7 +1916,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "role": "dot"
+     "role": "dot",
+     "series": "Diaz 2022",
+     "tip": "Diaz 2022: 1.05",
+     "tip_at": [
+      345.26250000000005,
+      130.64999999999998
+     ]
     },
     {
      "kind": "line",

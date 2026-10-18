@@ -12,7 +12,7 @@ from hairline import entities
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
-from hairline.marks import FIXED_ID
+from hairline.marks import FIXED_ID, STATIC_ID
 from hairline.numbers import format_p
 from hairline.settings import current_settings, role_size
 from hairline.stats.density import density, jitter_offsets, quantiles
@@ -55,7 +55,7 @@ def draw_group(ax, values: pd.Series, position: int, color: str, rules: dict) ->
     ax.plot([position - half, position + half], [middle, middle], color=surface, linewidth=width,
             solid_capstyle="butt", label="_nolegend_", gid=FIXED_ID)
     xs = [position + rules["points_centre"] + offset * rules["points_spread"] for offset in jitter_offsets(len(values))]
-    ax.scatter(xs, values, color=color, label="_nolegend_")
+    ax.scatter(xs, values, color=color, label="_nolegend_", gid=STATIC_ID)
 
 
 def draw_brackets(ax, comparisons: Sequence[tuple[str, str, str]], names: list[str], values: pd.Series,

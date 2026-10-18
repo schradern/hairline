@@ -15,8 +15,8 @@ scatter_fit_layers <- function(x, y) {
   ink <- settings$neutral$ink
   list(ggplot2::geom_ribbon(data = frame, ggplot2::aes(.data$x, ymin = .data$low, ymax = .data$high), fill = ink,
                             alpha = rules$band_opacity, inherit.aes = FALSE),
-       ggplot2::geom_line(data = frame, ggplot2::aes(.data$x, .data$y), colour = ink, inherit.aes = FALSE,
-                          linewidth = pt_to_linewidth(hl_tokens()$lines$data * settings$base_size)))
+       static_layer(ggplot2::geom_line(data = frame, ggplot2::aes(.data$x, .data$y), colour = ink, inherit.aes = FALSE,
+                                       linewidth = pt_to_linewidth(hl_tokens()$lines$data * settings$base_size))))
 }
 
 #' Scatter plot with fit

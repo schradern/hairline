@@ -10,7 +10,7 @@ from matplotlib.patches import Rectangle
 
 from hairline import entities
 from hairline.figure import HairlineFigure, figure
-from hairline.marks import FIXED_ID
+from hairline.marks import FIXED_ID, STATIC_ID
 from hairline.numbers import format_number, is_whole
 from hairline.stats.density import quantiles
 from hairline.study.columns import is_missing, level_text, levels, numbers
@@ -89,7 +89,7 @@ def overview_row(ax, values, y: float, color: str, style: dict) -> None:
             solid_capstyle="butt", label="_nolegend_")
     ax.add_patch(Rectangle((q1, y - rules["band"] / 2), q3 - q1, rules["band"], facecolor=color, edgecolor="none",
                            alpha=rules["band_opacity"], linewidth=0))
-    ax.scatter([middle], [y], color=color, zorder=3)
+    ax.scatter([middle], [y], color=color, zorder=3, gid=STATIC_ID)
 
 
 def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:

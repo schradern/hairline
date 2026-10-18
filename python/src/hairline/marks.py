@@ -65,6 +65,8 @@ def point_style(color: str, settings: Settings | None = None, count: int = 1) ->
 
 SECONDARY_ID = "hairline-secondary"
 FIXED_ID = "hairline-fixed"
+# Data artists that stay out of interactive HTML targets (fit lines, density outlines, jittered points).
+STATIC_ID = "hairline-static"
 # Structural lines (references, medians, brackets) keep their width on every panel.
 FIXED_WIDTH_IDS = {"hairline-reference", "hairline-median", FIXED_ID}
 MM_PER_PT = 25.4 / 72

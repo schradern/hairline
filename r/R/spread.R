@@ -75,7 +75,10 @@ spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
                 c(scale(row$q1), centre + half))
   shapes <- list(list(kind = "line", points = rbind(c(scale(row$low), centre), c(scale(row$high), centre)),
                       color = style$neutral$faint, width = style$leader_width, role = "range"),
-                 list(kind = "polygon", points = band, fill = row$color, alpha = rules$band_opacity, role = "band"),
+                 list(kind = "polygon", points = band, fill = row$color, alpha = rules$band_opacity, role = "band",
+                      tip = paste0(row$name, ": ", paste(vapply(row$pairs, paste, character(1), collapse = " "),
+                                                         collapse = ", ")),
+                      tip_at = c(scale(row$median), centre - half)),
                  forest_marker(scale(row$median), centre, dot_size(style), "dot", row$color))
   if (!is.null(row$mark)) {
     tick <- rules$mark * half
@@ -83,7 +86,7 @@ spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
     shapes[[length(shapes) + 1]] <- list(kind = "line", points = rbind(c(x, centre - tick), c(x, centre + tick)),
                                          color = style$neutral$ink, width = style$leader_width, role = "mark")
   }
-  shapes
+  lapply(shapes, function(shape) c(shape, series = row$name))
 }
 
 spread_pair_width <- function(pair, measure) {

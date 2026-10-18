@@ -26,8 +26,8 @@ raincloud_group_layers <- function(values, position, colour, rules) {
                                                              ymin = .data$ymin, ymax = .data$ymax),
                                     fill = colour, colour = NA, inherit.aes = FALSE),
                  median,
-                 ggplot2::geom_point(data = points, ggplot2::aes(.data$x, .data$y), colour = colour,
-                                     inherit.aes = FALSE)))
+                 static_layer(ggplot2::geom_point(data = points, ggplot2::aes(.data$x, .data$y), colour = colour,
+                                                  inherit.aes = FALSE))))
 }
 
 raincloud_bracket_layers <- function(comparisons, names, values, rules) {

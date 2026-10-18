@@ -12,6 +12,7 @@ from hairline import entities
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import STATIC_ID
 from hairline.settings import current_settings
 from hairline.stats.density import density, quantiles
 from hairline.tokens import load_tokens
@@ -31,7 +32,7 @@ def draw_ridge(ax, curve: tuple[list[float], list[float]], base: float, scale: f
                          linewidth=0, zorder=layer + 0.001, gid=RIDGE_ID))
     xs, ys = zip(*outline, strict=True)
     ax.plot(xs, ys, color=color, linewidth=load_tokens()["lines"]["data"] * settings.base_size, zorder=layer + 0.002,
-            label="_nolegend_")
+            label="_nolegend_", gid=STATIC_ID)
 
 
 def draw_median(ax, values: pd.Series, curve: tuple[list[float], list[float]], base: float, scale: float,

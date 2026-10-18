@@ -49,16 +49,17 @@ def row_shapes(row: dict, centre: float, pitch: float, scale, style: dict, rules
     half = rules["band"] * pitch / 2
     band = [[scale(row["q1"]), centre - half], [scale(row["q3"]), centre - half], [scale(row["q3"]), centre + half],
             [scale(row["q1"]), centre + half]]
+    tip = f"{row['name']}: " + ", ".join(f"{label} {value}" for label, value in row["pairs"])
     shapes = [{"kind": "line", "points": [[scale(row["low"]), centre], [scale(row["high"]), centre]],
                "color": style["neutral"]["faint"], "width": style["leader_width"], "role": "range"},
               {"kind": "polygon", "points": band, "fill": row["color"], "alpha": rules["band_opacity"],
-               "role": "band"},
+               "role": "band", "tip": tip, "tip_at": [scale(row["median"]), centre - half]},
               marker(scale(row["median"]), centre, dot_size(style), "dot", row["color"])]
     if row["mark"] is not None:
         tick, x = rules["mark"] * half, scale(row["mark"])
         shapes.append({"kind": "line", "points": [[x, centre - tick], [x, centre + tick]],
                        "color": style["neutral"]["ink"], "width": style["leader_width"], "role": "mark"})
-    return shapes
+    return [{**shape, "series": row["name"]} for shape in shapes]
 
 
 def axis_title_shape(spec: dict, right: float, axis_y: float, style: dict, rules: dict) -> list[dict]:

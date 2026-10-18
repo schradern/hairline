@@ -11,9 +11,10 @@ ridge_layers <- function(curve, values, base, scale, colour, medians) {
                                        colour = NA, inherit.aes = FALSE),
                  ggplot2::geom_polygon(data = corners, ggplot2::aes(.data$x, .data$y), fill = colour,
                                        alpha = rules$fill_opacity, colour = NA, inherit.aes = FALSE),
-                 ggplot2::geom_path(data = outline, ggplot2::aes(.data$x, .data$y), colour = colour,
-                                    linewidth = pt_to_linewidth(hl_tokens()$lines$data * settings$base_size),
-                                    inherit.aes = FALSE))
+                 static_layer(ggplot2::geom_path(data = outline, ggplot2::aes(.data$x, .data$y), colour = colour,
+                                                 linewidth = pt_to_linewidth(hl_tokens()$lines$data *
+                                                                               settings$base_size),
+                                                 inherit.aes = FALSE)))
   if (medians) {
     middle <- density_quantiles(values, 0.5)
     top <- base + stats::approx(curve$grid, curve$height, middle)$y * scale

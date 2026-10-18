@@ -39,8 +39,23 @@ def write_tiff(fig: Figure, path: Path, dpi: int, options: dict) -> None:
         image.save(path, format="TIFF", compression="tiff_lzw", dpi=(dpi, dpi))
 
 
+def write_html(fig: Figure, path: Path, options: dict) -> None:
+    """The static SVG with tooltips and series highlighting."""
+    from hairline.interactive import figure_html, figure_targets, page
+    owner = getattr(fig, "hairline_figure", None)
+    if owner is None:
+        raise ValueError("hairline: html export needs a figure made with hairline.figure() or a chart function")
+    buffer = io.StringIO()
+    fig.savefig(buffer, format="svg", metadata=METADATA["svg"], **options)
+    targets = figure_targets(owner)
+    path.write_text(page(owner.title, figure_html(buffer.getvalue(), targets, owner.settings.font)),
+                    encoding="utf-8")
+
+
 def write_one(fig: Figure, path: Path, name: str, dpi: int, options: dict) -> None:
-    if name == "tiff":
+    if name == "html":
+        write_html(fig, path, options)
+    elif name == "tiff":
         write_tiff(fig, path, dpi, options)
     else:
         with path.open("wb") as handle:

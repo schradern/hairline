@@ -19,6 +19,8 @@ TARGETS = [
 TREES = [
     (TOKENS / "fonts", REPO / "python/src/hairline/data/fonts"),
     (TOKENS / "fonts", REPO / "r/inst/fonts"),
+    (TOKENS / "interactive", REPO / "python/src/hairline/data/interactive"),
+    (TOKENS / "interactive", REPO / "r/inst/interactive"),
     (TOKENS / "fixtures", REPO / "python/tests/fixtures"),
     (TOKENS / "fixtures", REPO / "r/tests/testthat/fixtures"),
 ]

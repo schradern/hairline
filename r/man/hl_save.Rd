@@ -20,7 +20,8 @@ hl_save(
 
 \item{name}{Output path without extension; parent folders are created.}
 
-\item{formats}{Any of \code{"pdf"}, \code{"png"}, \code{"svg"}, \code{"tiff"}.}
+\item{formats}{Any of \code{"pdf"}, \code{"png"}, \code{"svg"}, \code{"tiff"}, \code{"html"} (the SVG with tooltips and series
+highlighting, self-contained).}
 
 \item{size}{Size preset: \code{"single"} (85 mm), \code{"onehalf"} (120), \code{"double"} (174), \code{"a4"} (160), \code{"slide"}.}
 
