@@ -1,10 +1,12 @@
 import io
 import json
+from pathlib import Path
 
 import pytest
 
 import hairline as hl
 from hairline import host
+from hairline.settings import current_settings
 
 
 @pytest.fixture
@@ -53,3 +55,30 @@ def test_html_output_writes_svg_and_explicit_arguments_win(context):
     assert settings.locale == "en"
     assert hl.use(brand=False).locale == "de"
     assert host.FORMATS[host.host_context().output] == ("svg", "png")
+
+
+def test_a_figure_shown_again_after_the_host_empties_its_folder_is_handed_off_again(context, tmp_path):
+    context()
+    hl.use(brand=False)
+    figure = hl.figure("Lactate by unit")
+    figure.ax.plot([0, 1], [0, 1])
+    figure.figure.savefig(io.BytesIO(), format="png")
+    for item in (tmp_path / "f").iterdir():
+        item.unlink()
+    figure.figure.savefig(io.BytesIO(), format="png")
+    entries = json.loads((tmp_path / "f" / host.MANIFEST).read_text())
+    assert [entry["id"] for entry in entries] == ["figure-1"]
+    assert all(Path(path).is_file() for path in entries[0]["files"].values())
+
+
+def test_a_new_context_reapplies_the_style_and_keeps_explicit_arguments(context):
+    context(locale="de")
+    hl.use(brand=False)
+    assert current_settings().locale == "de"
+    context(locale="en")
+    host.host_context()
+    assert current_settings().locale == "en"
+    hl.use(brand=False, base_size=11)
+    context(base_size=8, locale="de")
+    host.host_context()
+    assert current_settings().base_size == 11 and current_settings().locale == "de"

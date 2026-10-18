@@ -32,7 +32,7 @@ class Settings:
     base_size_explicit: bool = False
 
 
-_state: dict[str, object] = {"current": None, "announced": set()}
+_state: dict[str, object] = {"current": None, "announced": set(), "arguments": {}}
 LOGGER = logging.getLogger("hairline")
 
 
@@ -115,6 +115,13 @@ def brand_layer(base: Settings, brand: Brand | None) -> Settings:
     return Settings(**{**base.__dict__, **changes})
 
 
+def reapply() -> None:
+    """Apply the last `use()` call again (its own arguments, the current host context under them) — what a new
+    host context calls. A session that never called `use()` has nothing to re-apply."""
+    if _state["current"] is not None:
+        use(**_state["arguments"])
+
+
 def check_locale(locale: str | None) -> None:
     locales = load_tokens()["locales"]
     if locale is not None and locale not in locales:
@@ -142,6 +149,9 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     """
     from hairline.host import host_context
     from hairline.style import rcparams_for
+    _state["arguments"] = {"font": font, "base_size": base_size, "sizes": sizes, "palette": palette,
+                           "locale": locale, "background": background, "brand": brand, "colors": colors,
+                           "output": output}
     context = host_context()
     if context is not None:
         locale, base_size = locale or context.locale, base_size or context.base_size

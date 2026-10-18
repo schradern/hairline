@@ -33,12 +33,16 @@ parse_host_context <- function(path) {
        dpi = content$dpi)
 }
 
+# The current context, re-read when the variable points to another file. A new context re-applies the session's
+# style (keeping the arguments passed to hl_use()), so a host that switches output, font or brand between runs of
+# one long-lived session gets plots in the new style.
 host_context <- function() {
   path <- Sys.getenv(host_environment)
   if (!nzchar(path)) return(NULL)
   if (!identical(path, hairline_state$host_path)) {
     hairline_state$host_path <- path
     hairline_state$host_context <- parse_host_context(path)
+    if (!is.null(hairline_state$host_context)) hl_reapply()
   }
   hairline_state$host_context
 }
@@ -52,10 +56,12 @@ host_plot_key <- function(plot) {
 }
 
 # Write a displayed plot to the host's folder in the formats its output needs and list it in the manifest; the
-# current device stays the current device.
+# current device stays the current device. Once per distinct plot and figure folder: a host that empties the
+# folder between runs (the manifest is gone) gets a plot drawn again handed off again.
 host_hand_off <- function(plot) {
   context <- host_context()
   if (is.null(context) || is.null(context$figure_dir) || isTRUE(hairline_state$handing_off)) return(invisible())
+  if (!file.exists(file.path(context$figure_dir, host_manifest))) hairline_state$handed_off <- NULL
   key <- host_plot_key(plot)
   if (key %in% hairline_state$handed_off) return(invisible())
   hairline_state$handing_off <- TRUE
