@@ -21,8 +21,9 @@ hundred small layout decisions, the same way every time.
 - **Results, not only plots.** `study()` checks a data set once and returns a cohort description, group
   comparisons, effects, survival and change over time, each as a figure, a table, the key values and a
   sentence for the text.
-- **Colours that hold.** Palettes checked for colour-blind readers, a group keeps its colour in every chart, and
-  an institution's brand file sets colours, fonts and sizes.
+- **Colours that hold.** Palettes checked for colour-blind readers, and a group keeps its colour in every chart.
+- **Your institution's design.** One `_brand.yml` sets colours, fonts, text sizes and number format, in layers
+  from institution to document and per export type.
 - **Files ready to use.** PDF with embedded fonts, PNG and TIFF at 600 dpi, SVG with text as text, and
   interactive HTML with tooltips; files carry the figure's title and no timestamps.
 
@@ -122,6 +123,74 @@ brand file can pin a colour to every unit or arm. The [colour guide](docs/guide/
 to use for which job.
 
 <a href="docs/guide/colours.md"><img src="docs/guide/images/colour-sets.png" width="420" alt="Every colour set"></a>
+
+## Brands
+
+An institution's look lives in one `_brand.yml` file, in the [brand.yml](https://posit-dev.github.io/brand-yml/)
+format. hairline takes its colours, fonts, text sizes and number format from
+it and keeps its own layout rules, so a branded figure is still a clean hairline figure.
+
+![The same scatter plot without a brand and with the example brand file](docs/images/brand.png)
+
+```yaml
+meta:
+  name: Example University Hospital
+color:
+  palette:
+    harbor: "#0b3d6e"
+    poppy: "#f2545b"
+    glacier: "#8cc8ff"
+    fern: "#7fd8a0"
+  foreground: harbor
+  background: "#ffffff"
+  primary: harbor
+typography:
+  fonts:
+    - family: Hairline Sans
+      source: system
+  base:
+    family: Hairline Sans
+  headings:
+    family: Hairline Sans
+    weight: 600
+defaults:
+  hairline:
+    categorical: [harbor, poppy, glacier, fern]
+    adapt: readable
+    base_size: 9
+    sizes:
+      title: 14
+    locale: de
+```
+
+```python
+hl.use(brand="brands/example/_brand.yml")              # or let hairline find _brand.yml itself
+hl.use(brand=["brands/example/_brand.yml", "brands/example/units.yml"], output="docx")
+print(hl.brand_report())                               # colours as given and as used, light slots, checks
+```
+
+```r
+hl_use(brand = "brands/example/_brand.yml")
+hl_use(brand = c("brands/example/_brand.yml", "brands/example/units.yml"), output = "docx")
+cat(hl_brand_report())
+```
+
+- **Found on its own.** Without `brand=`, hairline looks for `_brand.yml` in the working directory and its
+  parents up to the project root and says once which brand it uses; `brand=False` turns the
+  lookup off.
+- **Colours.** `categorical` orders the palette's colours for groups. `adapt: readable` keeps each hue and
+  nudges its lightness until the colours pass the colour-vision and contrast checks; `adapt: exact` uses them
+  as given and warns. `colors:` pins a colour to a unit or arm, `groups:` gives a section's units tints of the
+  section's colour.
+- **Fonts and text.** A font from the system or from a file next to the brand (`source: file`); a Google font
+  needs installing first. `base_size` and `sizes` set the type scale, `locale: de` writes decimal commas, and
+  `muted`, `faint`, `grid`, `axis` and `band` set the neutral greys.
+- **Layers.** Files stack from institution to project to document, each overriding only the keys it sets, as
+  [`brands/example/units.yml`](brands/example/units.yml) does over the institution's file.
+- **Per export type.** `outputs:` holds overrides for `screen`, `pdf`, `html` or `docx`, such as a larger
+  text size for Word; `use(output="docx")` or the document editor picks the one that applies.
+- **In a document.** A document editor that runs code can pass the document's brand layers, export type
+  and page width to hairline, so every figure in a Word, PDF or HTML export follows the same design.
 
 ## Documentation
 

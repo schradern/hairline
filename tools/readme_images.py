@@ -21,6 +21,7 @@ HERO, HERO_WIDTH, THUMB_WIDTH = "occupancy_rows", 1600, 760
 LEFT_OUT = {"colour_sets", "theme_scatter"}
 PARITY = [("km_trial", "Kaplan–Meier"), ("forest_meta", "Forest plot")]
 PARITY_WIDTH_MM, PARITY_HEIGHT_MM, PARITY_DPI = 260, 168, 160
+BRAND_HEIGHT_MM = 100
 
 
 def downscaled(source: Path, target: Path, width: int) -> None:
@@ -33,7 +34,20 @@ def parity_sheet(target: Path) -> None:
     tiles = [(OUT / language / f"{name}.png", f"{title} · {label}") for name, title in PARITY
              for language, label in (("python", "Python"), ("r", "R"))]
     figure = hl.figure("The same figure in Python and R", subtitle="One gallery script per language, side by side",
-                       width_mm=PARITY_WIDTH_MM, height_mm=PARITY_HEIGHT_MM, panels=len(tiles), layout="compose", columns=2)
+                       width_mm=PARITY_WIDTH_MM, height_mm=PARITY_HEIGHT_MM, panels=len(tiles), layout="compose",
+                       columns=2)
+    for index, (path, label) in enumerate(tiles):
+        tile(figure, index, path, label)
+    hl.save(figure, target, formats=("png",), dpi=PARITY_DPI)
+
+
+def brand_sheet(target: Path) -> None:
+    """The same scatter plot from the gallery, without a brand and with the example brand file."""
+    tiles = [(OUT / "python" / "theme_scatter.png", "Without a brand"),
+             (OUT / "python" / "brand_example.png", "With brands/example/_brand.yml")]
+    figure = hl.figure("One brand file, every figure",
+                       subtitle="Colours, fonts, sizes and number format from _brand.yml",
+                       width_mm=PARITY_WIDTH_MM, height_mm=BRAND_HEIGHT_MM, panels=2, layout="compose", columns=2)
     for index, (path, label) in enumerate(tiles):
         tile(figure, index, path, label)
     hl.save(figure, target, formats=("png",), dpi=PARITY_DPI)
@@ -51,6 +65,7 @@ def main() -> int:
         if name not in LEFT_OUT:
             downscaled(OUT / "python" / f"{name}.png", IMAGES / "gallery" / f"{name}.png", THUMB_WIDTH)
     parity_sheet(IMAGES / "parity")
+    brand_sheet(IMAGES / "brand")
     return 0
 
 
