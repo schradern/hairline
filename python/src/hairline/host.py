@@ -64,24 +64,33 @@ def parse_context(path: str) -> HostContext | None:
 
 
 def host_context() -> HostContext | None:
-    """The current context, re-read when the variable points to another file."""
+    """The current context, re-read when the variable points to another file. A new context re-applies the
+    session's style (keeping the arguments passed to `use()`), so a host that switches output, font or brand
+    between runs of one long-lived session gets figures in the new style."""
     path = os.environ.get(ENVIRONMENT)
     if not path:
         return None
     if path != _state["path"]:
         _state["path"], _state["context"] = path, parse_context(path)
+        if _state["context"] is not None:
+            from hairline.settings import reapply
+            reapply()
     return _state["context"]
 
 
 def hand_off(figure) -> None:
     """Write a displayed figure to the host's folder in the formats its output needs, and list it in the
-    manifest (id, files, size, alt text). Runs once per figure, after the host's own save."""
+    manifest (id, files, size, alt text). Runs once per figure and figure folder, after the host's own save: a
+    host that empties the folder between runs (the manifest is gone) gets a figure shown again handed off again."""
     context = host_context()
-    if context is None or context.figure_dir is None or _state["handing_off"] or getattr(figure, "handed_off", False):
+    if context is None or context.figure_dir is None or _state["handing_off"]:
+        return
+    if getattr(figure, "handed_off", False) and (context.figure_dir / MANIFEST).is_file():
         return
     from hairline.export import save
     _state["handing_off"] = True
     try:
+        context.figure_dir.mkdir(parents=True, exist_ok=True)
         manifest_path = context.figure_dir / MANIFEST
         entries = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else []
         figure_id = f"figure-{len(entries) + 1}"

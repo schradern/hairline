@@ -54,3 +54,38 @@ test_that("explicit arguments win over the host context", {
   expect_equal(host_formats[[host_context()$output]], c("svg", "png"))
   hl_use(brand = FALSE, locale = "en")
 })
+
+test_that("a plot drawn again after the host empties its folder is handed off again", {
+  folder <- withr::local_tempdir()
+  local_host_context(folder)
+  hl_use(brand = FALSE)
+  plot <- ggplot2::ggplot(data.frame(x = 1:3, y = c(1, 3, 2)), ggplot2::aes(x, y)) + ggplot2::geom_line() +
+    ggplot2::labs(title = "Lactate by unit") + theme_hairline()
+  draw <- function() {
+    ragg::agg_png(tempfile(fileext = ".png"), width = 8, height = 6, units = "in", res = 72)
+    print(plot)
+    grDevices::dev.off()
+  }
+  draw()
+  unlink(list.files(file.path(folder, "f"), full.names = TRUE))
+  draw()
+  entries <- jsonlite::read_json(file.path(folder, "f", "hairline-figures.json"))
+  expect_length(entries, 1)
+  expect_true(all(file.exists(unlist(entries[[1]]$files))))
+})
+
+test_that("a new host context re-applies the style and keeps explicit arguments", {
+  folder <- withr::local_tempdir()
+  local_host_context(folder, locale = "de")
+  hl_use(brand = FALSE)
+  expect_equal(hairline_state$settings$locale, "de")
+  local_host_context(folder, locale = "en")
+  host_context()
+  expect_equal(hairline_state$settings$locale, "en")
+  hl_use(brand = FALSE, base_size = 11)
+  local_host_context(folder, base_size = 8, locale = "de")
+  host_context()
+  expect_equal(hairline_state$settings$base_size, 11)
+  expect_equal(hairline_state$settings$locale, "de")
+  hl_use(brand = FALSE, locale = "en")
+})

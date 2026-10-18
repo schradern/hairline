@@ -56,6 +56,9 @@ palette_fields <- function(palette) {
 #' @export
 hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, locale = NULL,
                    background = NULL, brand = NULL, colors = NULL, output = NULL) {
+  hairline_state$use_arguments <- list(font = font, base_size = base_size, sizes = sizes, palette = palette,
+                                       locale = locale, background = background, brand = brand, colors = colors,
+                                       output = output)
   context <- host_context()
   if (!is.null(context)) {
     locale <- locale %||% context$locale
@@ -80,4 +83,11 @@ hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, 
   configure_entities(c(brand_colors[setdiff(names(brand_colors), names(explicit))], explicit))
   ggplot2::theme_set(theme_hairline_elements(settings))
   invisible(settings)
+}
+
+# Apply the last hl_use() call again (its own arguments, the current host context under them): what a new host
+# context calls. A session that never called hl_use() has nothing to re-apply.
+hl_reapply <- function() {
+  if (is.null(hairline_state$settings)) return(invisible())
+  do.call(hl_use, hairline_state$use_arguments %||% list())
 }
