@@ -21,6 +21,12 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.urls]
+Homepage = "https://github.com/schradern/hairline"
+Repository = "https://github.com/schradern/hairline"
+Issues = "https://github.com/schradern/hairline/issues"
+Documentation = "https://github.com/schradern/hairline#readme"
+
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "fonttools>=4.50", "opentype-feature-freezer>=1.32", "pillow>=10"]
 

@@ -11,6 +11,8 @@ pip install hairline
 Python 3.11 or later, matplotlib 3.11 or later: from 3.11 matplotlib kerns text as R does, so both packages
 place every label alike. The bundled font, Hairline Sans, needs no installation.
 
+![ICU bed occupancy in small multiples, drawn with hairline](https://raw.githubusercontent.com/schradern/hairline/main/docs/images/hero.png)
+
 ## From data to a result
 
 Most studies need the same few results: a cohort description, a comparison between groups, effects, events
@@ -88,6 +90,12 @@ description, and no timestamps: the same figure gives the same bytes again.
 - `hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name across every chart.
 - Palettes are checked for colour-vision separation and contrast; `hl.check_palette()` reports the numbers.
 - `hl.use(scheme="dark", accent="#0b6e4f")` draws on a dark surface with an accent for single series.
+
+## Gallery
+
+More figures, Python and R side by side, and the colour guide: [https://github.com/schradern/hairline](https://github.com/schradern/hairline).
+
+![The same figure in Python and R](https://raw.githubusercontent.com/schradern/hairline/main/docs/images/parity.png)
 
 ## Author
 

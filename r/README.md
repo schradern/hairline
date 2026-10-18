@@ -12,6 +12,8 @@ install.packages("hairline")
 R 4.3 or later with 'ggplot2' 4.0 or later. The bundled font, Hairline Sans, needs no installation for PNG,
 SVG and HTML; for PDF on macOS without XQuartz, run `hl_install_font()` once.
 
+![ICU bed occupancy in small multiples, drawn with hairline](https://raw.githubusercontent.com/schradern/hairline/main/docs/images/hero.png)
+
 ## From data to a result
 
 Most studies need the same few results: a cohort description, a comparison between groups, effects, events
@@ -85,6 +87,12 @@ timestamps.
 - `hl_use(colors = c("Unit B" = "#e79d01"))` pins a colour to a name across every chart.
 - Palettes are checked for colour-vision separation and contrast; `hl_check_palette()` reports the numbers.
 - `hl_use(scheme = "dark", accent = "#0b6e4f")` draws on a dark surface with an accent for single series.
+
+## Gallery
+
+More figures, Python and R side by side, and the colour guide: [https://github.com/schradern/hairline](https://github.com/schradern/hairline).
+
+![The same figure in Python and R](https://raw.githubusercontent.com/schradern/hairline/main/docs/images/parity.png)
 
 ## Author
 

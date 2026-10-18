@@ -11,6 +11,7 @@ authors:
     given-names: Nikolas
     email: hi@nikolasschrader.com
     orcid: "https://orcid.org/0009-0001-4616-3804"
+repository-code: "https://github.com/schradern/hairline"
 version: 0.1.0
 date-released: 2026-10-18
 license: MIT
