@@ -43,7 +43,9 @@ segment_shapes <- function(rings, cx, cy, radii, rules) {
     for (index in seq_along(ring)) {
       points <- segment_polygon(cx, cy, radii[[ring_index]][1], radii[[ring_index]][2], spans[[index]], rules)
       if (is.null(points)) next
-      shapes[[length(shapes) + 1]] <- list(kind = "polygon", points = points, fill = ring[[index]]$color)
+      segment <- ring[[index]]
+      shapes[[length(shapes) + 1]] <- tagged_shape(list(kind = "polygon", points = points, fill = segment$color),
+                                                   segment$name, paste0(segment$name, ": ", segment$share_text))
     }
   }
   shapes

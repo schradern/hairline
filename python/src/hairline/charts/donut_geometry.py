@@ -8,6 +8,7 @@ import math
 from collections.abc import Callable
 
 from hairline.charts.labels import spread_labels
+from hairline.charts.tips import tagged
 from hairline.color.vision import contrast
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -58,7 +59,8 @@ def segment_shapes(rings: list[list[dict]], cx: float, cy: float, radii: list[tu
         for segment, span in zip(ring, ring_spans(ring), strict=True):
             points = segment_polygon(cx, cy, inner, outer, span, rules)
             if points:
-                shapes.append({"kind": "polygon", "points": points, "fill": segment["color"]})
+                shapes.append(tagged({"kind": "polygon", "points": points, "fill": segment["color"]},
+                                     segment["name"], f"{segment['name']}: {segment['share_text']}"))
     return shapes
 
 

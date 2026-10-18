@@ -103,18 +103,20 @@ chord_drawing <- function(spec, box, measure, style) {
     link <- spec$links[[position]]
     first <- match(link$source, names)
     second <- match(link$target, names)
-    shapes[[length(shapes) + 1]] <- list(kind = "polygon", role = "ribbon", fill = spec$nodes[[first]]$color,
-                                         alpha = rules$ribbon_opacity,
-                                         points = chord_ribbon(ends[[paste(position, first)]],
-                                                               ends[[paste(position, second)]], cx, cy,
-                                                               inner - rules$ribbon_gap, rules$arc_step))
+    pair <- paste(link$source, "\u2013", link$target)
+    ribbon <- list(kind = "polygon", role = "ribbon", fill = spec$nodes[[first]]$color, alpha = rules$ribbon_opacity,
+                   points = chord_ribbon(ends[[paste(position, first)]], ends[[paste(position, second)]], cx, cy,
+                                         inner - rules$ribbon_gap, rules$arc_step))
+    shapes[[length(shapes) + 1]] <- tagged_shape(ribbon, pair, paste0(pair, ": ", amount_text(link$value)))
   }
   for (index in seq_along(spec$nodes)) {
     span <- spans[[index]]
-    shapes[[length(shapes) + 1]] <- list(kind = "polygon", role = "node", name = names[index],
-                                         span = span[1] - span[2], fill = spec$nodes[[index]]$color,
-                                         points = rbind(donut_arc(cx, cy, radius, span[1], span[2], rules$arc_step),
-                                                        donut_arc(cx, cy, inner, span[2], span[1], rules$arc_step)))
+    node <- list(kind = "polygon", role = "node", name = names[index], span = span[1] - span[2],
+                 fill = spec$nodes[[index]]$color,
+                 points = rbind(donut_arc(cx, cy, radius, span[1], span[2], rules$arc_step),
+                                donut_arc(cx, cy, inner, span[2], span[1], rules$arc_step)))
+    shapes[[length(shapes) + 1]] <- tagged_shape(node, names[index],
+                                                 paste0(names[index], ": ", spec$nodes[[index]]$value_text))
   }
   c(shapes, outside_labels(segments, cx, cy, radius, box, measure, style, donut, spans))
 }

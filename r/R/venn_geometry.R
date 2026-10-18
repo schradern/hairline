@@ -79,8 +79,9 @@ venn_shapes <- function(spec, circles, scale, origin, measure, style, rules) {
     circle <- circles[[index]]
     points <- donut_arc(origin[1] + circle[1] * scale, origin[2] - circle[2] * scale, circle[3] * scale, 90, -270,
                         rules$arc_step)
-    fills[[index]] <- list(kind = "polygon", role = "set", name = entry$name, points = points, fill = entry$color,
-                           alpha = rules$fill_opacity)
+    fills[[index]] <- tagged_shape(list(kind = "polygon", role = "set", name = entry$name, points = points,
+                                        fill = entry$color, alpha = rules$fill_opacity),
+                                   entry$name, paste0(entry$name, ": ", entry$value_text))
     outlines[[index]] <- list(kind = "line", points = points, width = style$data_width,
                               color = point_fill(entry$color, style$neutral$surface))
   }

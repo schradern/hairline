@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
+from hairline.charts.tips import amount_text, tagged
 from hairline.layout.axes_style import edge_alignment
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -69,7 +70,8 @@ def funnel_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     radius = rules["point_radius"] * base
     for estimate, error in spec["points"]:
         centre = (x(estimate), y(error))
-        shapes.append({"kind": "polygon", "role": "study", "fill": spec["color"], "alpha": rules["point_opacity"],
-                       "points": [[centre[0] + radius * math.cos(2 * math.pi * step / 24),
-                                   centre[1] + radius * math.sin(2 * math.pi * step / 24)] for step in range(24)]})
+        point = {"kind": "polygon", "role": "study", "fill": spec["color"], "alpha": rules["point_opacity"],
+                 "points": [[centre[0] + radius * math.cos(2 * math.pi * step / 24),
+                             centre[1] + radius * math.sin(2 * math.pi * step / 24)] for step in range(24)]}
+        shapes.append(tagged(point, "Studies", f"Estimate {amount_text(estimate)}, SE {amount_text(error)}"))
     return shapes

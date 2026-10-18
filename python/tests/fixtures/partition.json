@@ -157,7 +157,13 @@
        105.45
       ]
      ],
-     "fill": "#2474cf"
+     "fill": "#2474cf",
+     "series": "Home",
+     "tip": "Home: 56%",
+     "tip_at": [
+      143.49452804377566,
+      91.05000000000001
+     ]
     },
     {
      "kind": "polygon",
@@ -179,7 +185,13 @@
        105.45
       ]
      ],
-     "fill": "#ef675a"
+     "fill": "#ef675a",
+     "series": "Rehabilitation",
+     "tip": "Rehabilitation: 23%",
+     "tip_at": [
+      318.5499316005472,
+      91.05000000000001
+     ]
     },
     {
      "kind": "polygon",
@@ -201,7 +213,13 @@
        105.45
       ]
      ],
-     "fill": "#b93780"
+     "fill": "#b93780",
+     "series": "Other ward",
+     "tip": "Other ward: 13%",
+     "tip_at": [
+      398.30369357045146,
+      91.05000000000001
+     ]
     },
     {
      "kind": "polygon",
@@ -223,7 +241,13 @@
        105.45
       ]
      ],
-     "fill": "#53b0de"
+     "fill": "#53b0de",
+     "series": "Care home",
+     "tip": "Care home: 7%",
+     "tip_at": [
+      444.24829001367993,
+      91.05000000000001
+     ]
     },
     {
      "kind": "polygon",
@@ -245,7 +269,13 @@
        162.15
       ]
      ],
-     "fill": "#3f8dea"
+     "fill": "#3f8dea",
+     "series": "Alone",
+     "tip": "Alone: 34%",
+     "tip_at": [
+      94.73939808481532,
+      147.75
+     ]
     },
     {
      "kind": "polygon",
@@ -267,7 +297,13 @@
        162.15
       ]
      ],
-     "fill": "#60a7ff"
+     "fill": "#60a7ff",
+     "series": "With support",
+     "tip": "With support: 22%",
+     "tip_at": [
+      219.23392612859098,
+      147.75
+     ]
     },
     {
      "kind": "polygon",
@@ -289,7 +325,13 @@
        162.15
       ]
      ],
-     "fill": "#ff8b7d"
+     "fill": "#ff8b7d",
+     "series": "Inpatient",
+     "tip": "Inpatient: 16%",
+     "tip_at": [
+      304.10396716826267,
+      147.75
+     ]
     },
     {
      "kind": "polygon",
@@ -311,7 +353,13 @@
        162.15
       ]
      ],
-     "fill": "#ffb5ab"
+     "fill": "#ffb5ab",
+     "series": "Outpatient",
+     "tip": "Outpatient: 7%",
+     "tip_at": [
+      354.66484268125856,
+      147.75
+     ]
     },
     {
      "kind": "polygon",
@@ -333,7 +381,13 @@
        162.15
       ]
      ],
-     "fill": "#d55198"
+     "fill": "#d55198",
+     "series": "Other ward",
+     "tip": "Other ward: 13%",
+     "tip_at": [
+      398.30369357045146,
+      147.75
+     ]
     },
     {
      "kind": "polygon",
@@ -355,7 +409,13 @@
        162.15
       ]
      ],
-     "fill": "#6ecaf9"
+     "fill": "#6ecaf9",
+     "series": "Care home",
+     "tip": "Care home: 7%",
+     "tip_at": [
+      444.24829001367993,
+      147.75
+     ]
     },
     {
      "kind": "text",
@@ -572,7 +632,13 @@
        45.45
       ]
      ],
-     "fill": "#2474cf"
+     "fill": "#2474cf",
+     "series": "Home",
+     "tip": "Home: 56%",
+     "tip_at": [
+      44.5889192886457,
+      31.05
+     ]
     },
     {
      "kind": "polygon",
@@ -594,7 +660,13 @@
        45.45
       ]
      ],
-     "fill": "#ef675a"
+     "fill": "#ef675a",
+     "series": "Rehabilitation",
+     "tip": "Rehabilitation: 23%",
+     "tip_at": [
+      108.56361149110808,
+      31.05
+     ]
     },
     {
      "kind": "polygon",
@@ -616,7 +688,13 @@
        45.45
       ]
      ],
-     "fill": "#b93780"
+     "fill": "#b93780",
+     "series": "Other ward",
+     "tip": "Other ward: 13%",
+     "tip_at": [
+      137.56497948016417,
+      31.05
+     ]
     },
     {
      "kind": "polygon",
@@ -638,7 +716,13 @@
        45.45
       ]
      ],
-     "fill": "#53b0de"
+     "fill": "#53b0de",
+     "series": "Care home",
+     "tip": "Care home: 7%",
+     "tip_at": [
+      154.5902872777018,
+      31.05
+     ]
     },
     {
      "kind": "text",

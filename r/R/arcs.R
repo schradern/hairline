@@ -91,12 +91,11 @@ arcs_drawing <- function(spec, box, measure, style) {
     link <- spec$links[[index]]
     start <- position[[link$source]]
     end <- position[[link$target]]
-    shapes[[length(shapes) + 1]] <- list(kind = "line", points = arc_points(start, end, ground,
-                                                                            abs(end - start) / 2 * squeeze,
-                                                                            rules$points),
-                                         color = spec$color, width = arc_stroke(values[index], largest, style, rules),
-                                         alpha = rules$opacity, role = "arc", source = link$source,
-                                         target = link$target)
+    pair <- paste(link$source, "\u2192", link$target)
+    arc <- list(kind = "line", points = arc_points(start, end, ground, abs(end - start) / 2 * squeeze, rules$points),
+                color = spec$color, width = arc_stroke(values[index], largest, style, rules), alpha = rules$opacity,
+                role = "arc", source = link$source, target = link$target)
+    shapes[[length(shapes) + 1]] <- tagged_shape(arc, pair, paste0(pair, ": ", link$value_text))
   }
   radius <- rules$node_radius * base
   angles <- 2 * pi * (0:23) / 24

@@ -4,6 +4,7 @@ each pair with the pair's value at both ends, labels outside with leader lines (
 from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, arc, line_height, outside_labels, outside_width
+from hairline.charts.tips import amount_text, tagged
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -70,14 +71,17 @@ def chord_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[d
     shapes = []
     for position, link in enumerate(spec["links"]):
         first, second = names.index(link["source"]), names.index(link["target"])
-        shapes.append({"kind": "polygon", "role": "ribbon", "fill": spec["nodes"][first]["color"],
-                       "alpha": rules["ribbon_opacity"],
-                       "points": ribbon(ends[(position, first)], ends[(position, second)], cx, cy,
-                                        inner - rules["ribbon_gap"], rules["arc_step"])})
+        pair = f"{link['source']} \u2013 {link['target']}"
+        shapes.append(tagged({"kind": "polygon", "role": "ribbon", "fill": spec["nodes"][first]["color"],
+                              "alpha": rules["ribbon_opacity"],
+                              "points": ribbon(ends[(position, first)], ends[(position, second)], cx, cy,
+                                               inner - rules["ribbon_gap"], rules["arc_step"])},
+                             pair, f"{pair}: {amount_text(link['value'])}"))
     for node, (start, end) in zip(spec["nodes"], spans, strict=True):
         outline = arc(cx, cy, radius, start, end, rules["arc_step"]) + arc(cx, cy, inner, end, start,
                                                                           rules["arc_step"])
-        shapes.append({"kind": "polygon", "role": "node", "name": node["name"], "span": start - end,
-                       "fill": node["color"], "points": outline})
+        shapes.append(tagged({"kind": "polygon", "role": "node", "name": node["name"], "span": start - end,
+                              "fill": node["color"], "points": outline},
+                             node["name"], f"{node['name']}: {node['value_text']}"))
     return shapes + outside_labels(segments, cx, cy, radius, box, measure, style, donut, spans)
 

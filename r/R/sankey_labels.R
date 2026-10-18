@@ -6,9 +6,11 @@ sankey_node_shapes <- function(ordered, positions, xs, width) {
     for (node in ordered[[index]]) {
       span <- positions[[index]][[node$name]]
       x <- xs[index]
-      shapes[[length(shapes) + 1]] <- list(kind = "polygon", fill = node$color, role = "node", name = node$name,
-                                           points = rbind(c(x, span[1]), c(x + width, span[1]),
-                                                          c(x + width, span[2]), c(x, span[2])))
+      shapes[[length(shapes) + 1]] <- tagged_shape(list(kind = "polygon", fill = node$color, role = "node",
+                                                        name = node$name,
+                                                        points = rbind(c(x, span[1]), c(x + width, span[1]),
+                                                                       c(x + width, span[2]), c(x, span[2]))),
+                                                   node$name, paste0(node$name, ": ", node$value_text))
     }
   }
   shapes

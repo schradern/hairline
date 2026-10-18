@@ -4,6 +4,7 @@ diagonal (one label serves its row and its column), values printed in the cells.
 from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, baseline_for, text
+from hairline.charts.tips import tagged
 from hairline.color.vision import contrast
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -30,9 +31,12 @@ def correlation_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> 
         top = box.y + row * side
         for column in range(row):
             left, fill = box.x + column * side, spec["colors"][row][column]
-            cells.append({"kind": "polygon", "role": "cell", "fill": fill,
-                          "points": [[left + inset, top + inset], [left + side - inset, top + inset],
-                                     [left + side - inset, top + side - inset], [left + inset, top + side - inset]]})
+            pair = f"{name} \u00d7 {spec['names'][column]}"
+            cells.append(tagged({"kind": "polygon", "role": "cell", "fill": fill,
+                                 "points": [[left + inset, top + inset], [left + side - inset, top + inset],
+                                            [left + side - inset, top + side - inset],
+                                            [left + inset, top + side - inset]]},
+                                pair, f"{pair}: {spec['texts'][row][column]}"))
             values.append({**text(left + side / 2, baseline_for(top + side / 2, style, "label"),
                                   spec["texts"][row][column], "label", text_color(fill, style), "center"),
                            "part": "value"})

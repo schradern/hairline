@@ -40,7 +40,7 @@ risk_of_bias_spec <- function(data, study, domain = NULL, judgement = NULL, doma
        colors = as.list(stats::setNames(unlist(hl_tokens()$sets$judgement[judgement_levels]), judgement_levels)))
 }
 
-risk_segments <- function(counts, left, right, top, height, colours, measure, style, gap) {
+risk_segments <- function(counts, left, right, top, height, colours, measure, style, gap, domain = "") {
   total <- sum(counts)
   shapes <- list()
   start <- left
@@ -50,9 +50,12 @@ risk_segments <- function(counts, left, right, top, height, colours, measure, st
     inner_left <- start + if (start > left) gap / 2 else 0
     inner_right <- end - if (end < right - 1e-9) gap / 2 else 0
     fill <- colours[[judgement_levels[index]]]
-    shapes[[length(shapes) + 1]] <- list(kind = "polygon", role = judgement_levels[index], fill = fill,
-                                         points = rbind(c(inner_left, top), c(inner_right, top),
-                                                        c(inner_right, top + height), c(inner_left, top + height)))
+    label <- hl_tokens()$risk_of_bias$labels[[judgement_levels[index]]]
+    segment <- list(kind = "polygon", role = judgement_levels[index], fill = fill,
+                    points = rbind(c(inner_left, top), c(inner_right, top), c(inner_right, top + height),
+                                   c(inner_left, top + height)))
+    shapes[[length(shapes) + 1]] <- tagged_shape(segment, label, sprintf("%s, %s: %d", domain, label,
+                                                                         as.integer(counts[index])))
     if (measure(as.character(counts[index]), "label") <= inner_right - inner_left - gap) {
       shapes[[length(shapes) + 1]] <- shape_text((inner_left + inner_right) / 2,
                                                  baseline_for(top + height / 2, style, "label"),
@@ -85,7 +88,7 @@ risk_of_bias_drawing <- function(spec, box, measure, style) {
     shapes[[length(shapes) + 1]] <- shape_text(box[1], baseline_for(top + height / 2, style, "label"), names[index],
                                                "label", style$neutral$ink, "left", if (index == overall) 600 else NULL)
     shapes <- c(shapes, risk_segments(as.numeric(unlist(spec$counts[[index]])), box[1] + labels, box[1] + box[3], top,
-                                      height, spec$colors, measure, style, rules$gap_pt))
+                                      height, spec$colors, measure, style, rules$gap_pt, spec$domains[[index]]))
     top <- top + height + rules$row_gap * base
   }
   shapes

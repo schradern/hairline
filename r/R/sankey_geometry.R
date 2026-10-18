@@ -74,9 +74,12 @@ sankey_link_shapes <- function(spec, positions, xs, width, scale, rules) {
       outline <- rbind(sankey_bezier(c(start_x, tops[item]), c(end_x, ends[item]), rules$curve_points),
                        sankey_bezier(c(end_x, ends[item] + thickness), c(start_x, tops[item] + thickness),
                                      rules$curve_points))
-      shapes[[length(shapes) + 1]] <- list(kind = "polygon", points = outline, fill = link$color,
-                                           alpha = rules$link_opacity, role = "link", column = index - 1,
-                                           source = link$source, target = link$target)
+      pair <- paste(link$source, "\u2192", link$target)
+      shapes[[length(shapes) + 1]] <- tagged_shape(list(kind = "polygon", points = outline, fill = link$color,
+                                                        alpha = rules$link_opacity, role = "link",
+                                                        column = index - 1, source = link$source,
+                                                        target = link$target),
+                                                   pair, paste0(pair, ": ", amount_text(link$value)))
     }
   }
   shapes

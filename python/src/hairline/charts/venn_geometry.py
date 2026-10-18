@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 
 from hairline.charts.donut_geometry import Measure, arc, baseline_for, text
+from hairline.charts.tips import tagged
 from hairline.layout.geometry import Box
 from hairline.marks import point_fill
 from hairline.tokens import load_tokens
@@ -91,8 +92,9 @@ def venn_shapes(spec: dict, circles: list, scale: float, origin: tuple, measure:
     fills, outlines, labels = [], [], []
     for entry, (x, y, radius) in zip(spec["sets"], circles, strict=True):
         points = arc(origin[0] + x * scale, origin[1] - y * scale, radius * scale, 90.0, -270.0, rules["arc_step"])
-        fills.append({"kind": "polygon", "role": "set", "name": entry["name"], "points": points,
-                      "fill": entry["color"], "alpha": rules["fill_opacity"]})
+        fills.append(tagged({"kind": "polygon", "role": "set", "name": entry["name"], "points": points,
+                             "fill": entry["color"], "alpha": rules["fill_opacity"]},
+                            entry["name"], f"{entry['name']}: {entry['value_text']}"))
         outlines.append({"kind": "line", "points": points, "width": style["data_width"],
                          "color": point_fill(entry["color"], style["neutral"]["surface"])})
     for region in spec["regions"]:

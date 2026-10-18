@@ -5,6 +5,7 @@ nodes on a surface halo. Pure, like the donut geometry."""
 from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, baseline_for, label_pair, line_height, text
+from hairline.charts.tips import amount_text, tagged
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -78,8 +79,11 @@ def link_shapes(spec: dict, positions: list[dict], xs: list[float], width: float
             thickness, top, end = link["value"] * scale, tops[id(link)], ends[id(link)]
             outline = bezier([start_x, top], [end_x, end], rules["curve_points"]) + bezier(
                 [end_x, end + thickness], [start_x, top + thickness], rules["curve_points"])
-            shapes.append({"kind": "polygon", "points": outline, "fill": link["color"], "alpha": rules["link_opacity"],
-                           "role": "link", "column": index, "source": link["source"], "target": link["target"]})
+            pair = f"{link['source']} \u2192 {link['target']}"
+            shapes.append(tagged({"kind": "polygon", "points": outline, "fill": link["color"],
+                                  "alpha": rules["link_opacity"], "role": "link", "column": index,
+                                  "source": link["source"], "target": link["target"]},
+                                 pair, f"{pair}: {amount_text(link['value'])}"))
     return shapes
 
 
@@ -88,8 +92,10 @@ def node_shapes(ordered: list[list[dict]], positions: list[dict], xs: list[float
     for nodes, places, x in zip(ordered, positions, xs, strict=True):
         for node in nodes:
             top, bottom = places[node["name"]]
-            shapes.append({"kind": "polygon", "points": [[x, top], [x + width, top], [x + width, bottom], [x, bottom]],
-                           "fill": node["color"], "role": "node", "name": node["name"]})
+            shapes.append(tagged({"kind": "polygon", "points": [[x, top], [x + width, top], [x + width, bottom],
+                                                                 [x, bottom]],
+                                  "fill": node["color"], "role": "node", "name": node["name"]},
+                                 node["name"], f"{node['name']}: {node['value_text']}"))
     return shapes
 
 

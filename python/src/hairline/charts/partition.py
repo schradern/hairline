@@ -9,6 +9,7 @@ import pandas as pd
 from hairline.charts.common import humanise, joined, with_counts
 from hairline.charts.donut import donut_rings
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
+from hairline.charts.tips import tagged
 from hairline.color.vision import contrast
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -50,7 +51,8 @@ def row_shapes(ring: list[dict], box: Box, top: float, height: float, measure: M
         if right <= left:
             continue
         corners = [[left, top], [right, top], [right, top + height], [left, top + height]]
-        bars.append({"kind": "polygon", "points": corners, "fill": segment["color"]})
+        bars.append(tagged({"kind": "polygon", "points": corners, "fill": segment["color"]}, segment["name"],
+                           f"{segment['name']}: {segment['share_text']}"))
         labels += inside_label(segment, left, right, top, height, measure, style, rules)
     return bars, labels
 

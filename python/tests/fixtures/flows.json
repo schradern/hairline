@@ -1332,6 +1332,12 @@
       241.92746826187707,
       121.76003113056821
      ]
+    ],
+    "series": "ED – ICU",
+    "tip": "ED – ICU: 50",
+    "tip_at": [
+     242.0269381663109,
+     261.0325032140947
     ]
    },
    {
@@ -1604,6 +1610,12 @@
       352.92772909733895,
       180.47619606692044
      ]
+    ],
+    "series": "ED – Ward",
+    "tip": "ED – Ward: 31",
+    "tip_at": [
+     240.0,
+     260.0
     ]
    },
    {
@@ -1916,6 +1928,12 @@
       378.1671313231785,
       260.70381654459084
      ]
+    ],
+    "series": "ICU – Ward",
+    "tip": "ICU – Ward: 40",
+    "tip_at": [
+     239.1823085361259,
+     262.12403876377357
     ]
    },
    {
@@ -2236,6 +2254,12 @@
       340.29865450308506,
       355.07539323247244
      ]
+    ],
+    "series": "ICU – Theatre",
+    "tip": "ICU – Theatre: 42",
+    "tip_at": [
+     240.0,
+     260.0
     ]
    },
    {
@@ -2605,6 +2629,12 @@
       242.77026235956546,
       101.29177571335765
      ]
+    ],
+    "series": "ED",
+    "tip": "ED: 81",
+    "tip_at": [
+     344.5023249743702,
+     154.50831911834194
     ]
    },
    {
@@ -3198,6 +3228,12 @@
       398.72728158723066,
       261.27471160972857
      ]
+    ],
+    "series": "ICU",
+    "tip": "ICU: 132",
+    "tip_at": [
+     279.0113897918432,
+     378.1249914093968
     ]
    },
    {
@@ -3527,6 +3563,12 @@
       109.99353042385414,
       351.07300740673196
      ]
+    ],
+    "series": "Ward",
+    "tip": "Ward: 71",
+    "tip_at": [
+     88.16500441132446,
+     251.19468154517259
     ]
    },
    {
@@ -3728,6 +3770,12 @@
       125.14661897074474,
       150.4341491343735
      ]
+    ],
+    "series": "Theatre",
+    "tip": "Theatre: 42",
+    "tip_at": [
+     175.72355680884914,
+     113.39934341106941
     ]
    },
    {
@@ -4722,7 +4770,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "alpha": 0.14
+     "alpha": 0.14,
+     "series": "Diabetes",
+     "tip": "Diabetes: 5",
+     "tip_at": [
+      168.54726687971515,
+      201.33425655855825
+     ]
     },
     {
      "kind": "polygon",
@@ -5455,7 +5509,13 @@
       ]
      ],
      "fill": "#ef675a",
-     "alpha": 0.14
+     "alpha": 0.14,
+     "series": "Hypertension",
+     "tip": "Hypertension: 4",
+     "tip_at": [
+      297.05273312028487,
+      201.33425655855825
+     ]
     },
     {
      "kind": "polygon",
@@ -6188,7 +6248,13 @@
       ]
      ],
      "fill": "#b93780",
-     "alpha": 0.14
+     "alpha": 0.14,
+     "series": "Obesity",
+     "tip": "Obesity: 3",
+     "tip_at": [
+      232.8,
+      307.99379353823105
+     ]
     },
     {
      "kind": "line",
@@ -9332,7 +9398,13 @@
       ]
      ],
      "fill": "#2474cf",
-     "alpha": 0.14
+     "alpha": 0.14,
+     "series": "Screened",
+     "tip": "Screened: 24",
+     "tip_at": [
+      189.39544662436867,
+      259.1799892338244
+     ]
     },
     {
      "kind": "polygon",
@@ -10065,7 +10137,13 @@
       ]
      ],
      "fill": "#ef675a",
-     "alpha": 0.14
+     "alpha": 0.14,
+     "series": "Confirmed",
+     "tip": "Confirmed: 12",
+     "tip_at": [
+      324.6522211872515,
+      259.42016482659125
+     ]
     },
     {
      "kind": "line",
@@ -11896,7 +11974,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "ED",
-     "target": "ICU"
+     "target": "ICU",
+     "series": "ED → ICU",
+     "tip": "ED → ICU: 2",
+     "tip_at": [
+      76.57499999999999,
+      393.525
+     ]
     },
     {
      "kind": "line",
@@ -12103,7 +12187,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "ED",
-     "target": "Ward"
+     "target": "Ward",
+     "series": "ED → Ward",
+     "tip": "ED → Ward: 1",
+     "tip_at": [
+      129.54999999999998,
+      340.55
+     ]
     },
     {
      "kind": "line",
@@ -12310,7 +12400,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Ward",
-     "target": "ICU"
+     "target": "ICU",
+     "series": "Ward → ICU",
+     "tip": "Ward → ICU: 1",
+     "tip_at": [
+      182.52499999999998,
+      393.525
+     ]
     },
     {
      "kind": "line",
@@ -12517,7 +12613,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "ICU",
-     "target": "Ward"
+     "target": "Ward",
+     "series": "ICU → Ward",
+     "tip": "ICU → Ward: 1",
+     "tip_at": [
+      182.52499999999998,
+      393.525
+     ]
     },
     {
      "kind": "line",
@@ -12724,7 +12826,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "ICU",
-     "target": "Home"
+     "target": "Home",
+     "series": "ICU → Home",
+     "tip": "ICU → Home: 1",
+     "tip_at": [
+      235.5,
+      340.55
+     ]
     },
     {
      "kind": "line",
@@ -12931,7 +13039,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Ward",
-     "target": "Home"
+     "target": "Home",
+     "series": "Ward → Home",
+     "tip": "Ward → Home: 1",
+     "tip_at": [
+      288.47499999999997,
+      393.525
+     ]
     },
     {
      "kind": "line",
@@ -13138,7 +13252,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Theatre",
-     "target": "ICU"
+     "target": "ICU",
+     "series": "Theatre → ICU",
+     "tip": "Theatre → ICU: 1",
+     "tip_at": [
+      288.47499999999997,
+      287.575
+     ]
     },
     {
      "kind": "polygon",
@@ -14070,7 +14190,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Department of medicine 0",
-     "target": "Department of medicine 3"
+     "target": "Department of medicine 3",
+     "series": "Department of medicine 0 → Department of medicine 3",
+     "tip": "Department of medicine 0 → Department of medicine 3: 1",
+     "tip_at": [
+      88.45714285714286,
+      343.84285714285716
+     ]
     },
     {
      "kind": "line",
@@ -14277,7 +14403,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Department of medicine 1",
-     "target": "Department of medicine 4"
+     "target": "Department of medicine 4",
+     "series": "Department of medicine 1 → Department of medicine 4",
+     "tip": "Department of medicine 1 → Department of medicine 4: 1",
+     "tip_at": [
+      189.48571428571432,
+      343.84285714285716
+     ]
     },
     {
      "kind": "line",
@@ -14484,7 +14616,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Department of medicine 2",
-     "target": "Department of medicine 5"
+     "target": "Department of medicine 5",
+     "series": "Department of medicine 2 → Department of medicine 5",
+     "tip": "Department of medicine 2 → Department of medicine 5: 1",
+     "tip_at": [
+      290.51428571428573,
+      343.84285714285716
+     ]
     },
     {
      "kind": "line",
@@ -14691,7 +14829,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Department of medicine 3",
-     "target": "Department of medicine 6"
+     "target": "Department of medicine 6",
+     "series": "Department of medicine 3 → Department of medicine 6",
+     "tip": "Department of medicine 3 → Department of medicine 6: 1",
+     "tip_at": [
+      240.00000000000003,
+      242.81428571428572
+     ]
     },
     {
      "kind": "line",
@@ -14898,7 +15042,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Department of medicine 4",
-     "target": "Department of medicine 7"
+     "target": "Department of medicine 7",
+     "series": "Department of medicine 4 → Department of medicine 7",
+     "tip": "Department of medicine 4 → Department of medicine 7: 1",
+     "tip_at": [
+      315.7714285714286,
+      268.0714285714286
+     ]
     },
     {
      "kind": "line",
@@ -15105,7 +15255,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Department of medicine 5",
-     "target": "Department of medicine 0"
+     "target": "Department of medicine 0",
+     "series": "Department of medicine 5 → Department of medicine 0",
+     "tip": "Department of medicine 5 → Department of medicine 0: 1",
+     "tip_at": [
+      189.4857142857143,
+      242.81428571428572
+     ]
     },
     {
      "kind": "line",
@@ -15312,7 +15468,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Department of medicine 6",
-     "target": "Department of medicine 1"
+     "target": "Department of medicine 1",
+     "series": "Department of medicine 6 → Department of medicine 1",
+     "tip": "Department of medicine 6 → Department of medicine 1: 1",
+     "tip_at": [
+      265.25714285714287,
+      268.07142857142856
+     ]
     },
     {
      "kind": "line",
@@ -15519,7 +15681,13 @@
      "alpha": 0.55,
      "role": "arc",
      "source": "Department of medicine 7",
-     "target": "Department of medicine 2"
+     "target": "Department of medicine 2",
+     "series": "Department of medicine 7 → Department of medicine 2",
+     "tip": "Department of medicine 7 → Department of medicine 2: 1",
+     "tip_at": [
+      341.02857142857147,
+      293.3285714285714
+     ]
     },
     {
      "kind": "polygon",

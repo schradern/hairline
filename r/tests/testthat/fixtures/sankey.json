@@ -409,7 +409,13 @@
      "role": "link",
      "column": 0,
      "source": "Salary",
-     "target": "Joint"
+     "target": "Joint",
+     "series": "Salary → Joint",
+     "tip": "Salary → Joint: 1,200",
+     "tip_at": [
+      159.7725,
+      131.9468181818182
+     ]
     },
     {
      "kind": "polygon",
@@ -620,7 +626,13 @@
      "role": "link",
      "column": 0,
      "source": "Salary",
-     "target": "Joint"
+     "target": "Joint",
+     "series": "Salary → Joint",
+     "tip": "Salary → Joint: 450",
+     "tip_at": [
+      159.7725,
+      184.7768181818182
+     ]
     },
     {
      "kind": "polygon",
@@ -831,7 +843,13 @@
      "role": "link",
      "column": 0,
      "source": "Salary",
-     "target": "Savings"
+     "target": "Savings",
+     "series": "Salary → Savings",
+     "tip": "Salary → Savings: 400",
+     "tip_at": [
+      159.7725,
+      245.95772727272728
+     ]
     },
     {
      "kind": "polygon",
@@ -1042,7 +1060,13 @@
      "role": "link",
      "column": 0,
      "source": "Salary",
-     "target": "Joint"
+     "target": "Joint",
+     "series": "Salary → Joint",
+     "tip": "Salary → Joint: 250",
+     "tip_at": [
+      159.7725,
+      207.18954545454545
+     ]
     },
     {
      "kind": "polygon",
@@ -1253,7 +1277,13 @@
      "role": "link",
      "column": 0,
      "source": "Benefits",
-     "target": "Joint"
+     "target": "Joint",
+     "series": "Benefits → Joint",
+     "tip": "Benefits → Joint: 150",
+     "tip_at": [
+      159.7725,
+      239.55409090909092
+     ]
     },
     {
      "kind": "polygon",
@@ -1464,7 +1494,13 @@
      "role": "link",
      "column": 0,
      "source": "Benefits",
-     "target": "Savings"
+     "target": "Savings",
+     "series": "Benefits → Savings",
+     "tip": "Benefits → Savings: 100",
+     "tip_at": [
+      159.7725,
+      273.5195454545455
+     ]
     },
     {
      "kind": "polygon",
@@ -1675,7 +1711,13 @@
      "role": "link",
      "column": 0,
      "source": "Side job",
-     "target": "Joint"
+     "target": "Joint",
+     "series": "Side job → Joint",
+     "tip": "Side job → Joint: 200",
+     "tip_at": [
+      159.7725,
+      260.7122727272727
+     ]
     },
     {
      "kind": "polygon",
@@ -1886,7 +1928,13 @@
      "role": "link",
      "column": 1,
      "source": "Joint",
-     "target": "Rent"
+     "target": "Rent",
+     "series": "Joint → Rent",
+     "tip": "Joint → Rent: 1,200",
+     "tip_at": [
+      343.8275,
+      128.5718181818182
+     ]
     },
     {
      "kind": "polygon",
@@ -2097,7 +2145,13 @@
      "role": "link",
      "column": 1,
      "source": "Joint",
-     "target": "Food"
+     "target": "Food",
+     "series": "Joint → Food",
+     "tip": "Joint → Food: 600",
+     "tip_at": [
+      343.8275,
+      192.95454545454544
+     ]
     },
     {
      "kind": "polygon",
@@ -2308,7 +2362,13 @@
      "role": "link",
      "column": 1,
      "source": "Savings",
-     "target": "Reserve"
+     "target": "Reserve",
+     "series": "Savings → Reserve",
+     "tip": "Savings → Reserve: 500",
+     "tip_at": [
+      343.8275,
+      277.2409090909091
+     ]
     },
     {
      "kind": "polygon",
@@ -2519,7 +2579,13 @@
      "role": "link",
      "column": 1,
      "source": "Joint",
-     "target": "Leisure"
+     "target": "Leisure",
+     "series": "Joint → Leisure",
+     "tip": "Joint → Leisure: 450",
+     "tip_at": [
+      343.8275,
+      233.32363636363635
+     ]
     },
     {
      "kind": "polygon",
@@ -2543,7 +2609,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Salary"
+     "name": "Salary",
+     "series": "Salary",
+     "tip": "Salary: 2,300",
+     "tip_at": [
+      67.745,
+      163.7918181818182
+     ]
     },
     {
      "kind": "polygon",
@@ -2567,7 +2639,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Benefits"
+     "name": "Benefits",
+     "series": "Benefits",
+     "tip": "Benefits: 250",
+     "tip_at": [
+      67.745,
+      258.9381818181818
+     ]
     },
     {
      "kind": "polygon",
@@ -2591,7 +2669,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Side job"
+     "name": "Side job",
+     "series": "Side job",
+     "tip": "Side job: 200",
+     "tip_at": [
+      67.745,
+      286.84636363636366
+     ]
     },
     {
      "kind": "polygon",
@@ -2615,7 +2699,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Joint"
+     "name": "Joint",
+     "series": "Joint",
+     "tip": "Joint: 2,250",
+     "tip_at": [
+      251.8,
+      168.94090909090912
+     ]
     },
     {
      "kind": "polygon",
@@ -2639,7 +2729,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Savings"
+     "name": "Savings",
+     "series": "Savings",
+     "tip": "Savings: 500",
+     "tip_at": [
+      251.8,
+      270.4909090909091
+     ]
     },
     {
      "kind": "polygon",
@@ -2663,7 +2759,13 @@
      ],
      "fill": "#2474cf",
      "role": "node",
-     "name": "Rent"
+     "name": "Rent",
+     "series": "Rent",
+     "tip": "Rent: 1,200",
+     "tip_at": [
+      435.855,
+      121.8218181818182
+     ]
     },
     {
      "kind": "polygon",
@@ -2687,7 +2789,13 @@
      ],
      "fill": "#ef675a",
      "role": "node",
-     "name": "Food"
+     "name": "Food",
+     "series": "Food",
+     "tip": "Food: 600",
+     "tip_at": [
+      435.855,
+      192.95454545454544
+     ]
     },
     {
      "kind": "polygon",
@@ -2711,7 +2819,13 @@
      ],
      "fill": "#53b0de",
      "role": "node",
-     "name": "Leisure"
+     "name": "Leisure",
+     "series": "Leisure",
+     "tip": "Leisure: 450",
+     "tip_at": [
+      435.855,
+      240.07363636363635
+     ]
     },
     {
      "kind": "polygon",
@@ -2735,7 +2849,13 @@
      ],
      "fill": "#b93780",
      "role": "node",
-     "name": "Reserve"
+     "name": "Reserve",
+     "series": "Reserve",
+     "tip": "Reserve: 500",
+     "tip_at": [
+      435.855,
+      283.9909090909091
+     ]
     },
     {
      "kind": "text",
@@ -3327,7 +3447,13 @@
      "role": "link",
      "column": 0,
      "source": "Salary",
-     "target": "Rent"
+     "target": "Rent",
+     "series": "Salary → Rent",
+     "tip": "Salary → Rent: 1,200",
+     "tip_at": [
+      251.8,
+      118.16045454545456
+     ]
     },
     {
      "kind": "polygon",
@@ -3538,7 +3664,13 @@
      "role": "link",
      "column": 0,
      "source": "Salary",
-     "target": "Food"
+     "target": "Food",
+     "series": "Salary → Food",
+     "tip": "Salary → Food: 450",
+     "tip_at": [
+      251.8,
+      217.47954545454547
+     ]
     },
     {
      "kind": "polygon",
@@ -3749,7 +3881,13 @@
      "role": "link",
      "column": 0,
      "source": "Salary",
-     "target": "Reserve"
+     "target": "Reserve",
+     "series": "Salary → Reserve",
+     "tip": "Salary → Reserve: 400",
+     "tip_at": [
+      251.8,
+      178.75772727272727
+     ]
     },
     {
      "kind": "polygon",
@@ -3960,7 +4098,13 @@
      "role": "link",
      "column": 0,
      "source": "Salary",
-     "target": "Leisure"
+     "target": "Leisure",
+     "series": "Salary → Leisure",
+     "tip": "Salary → Leisure: 250",
+     "tip_at": [
+      251.8,
+      252.83590909090913
+     ]
     },
     {
      "kind": "polygon",
@@ -4171,7 +4315,13 @@
      "role": "link",
      "column": 0,
      "source": "Benefits",
-     "target": "Food"
+     "target": "Food",
+     "series": "Benefits → Food",
+     "tip": "Benefits → Food: 150",
+     "tip_at": [
+      251.8,
+      256.2013636363636
+     ]
     },
     {
      "kind": "polygon",
@@ -4382,7 +4532,13 @@
      "role": "link",
      "column": 0,
      "source": "Benefits",
-     "target": "Reserve"
+     "target": "Reserve",
+     "series": "Benefits → Reserve",
+     "tip": "Benefits → Reserve: 100",
+     "tip_at": [
+      251.8,
+      225.89318181818183
+     ]
     },
     {
      "kind": "polygon",
@@ -4593,7 +4749,13 @@
      "role": "link",
      "column": 0,
      "source": "Side job",
-     "target": "Leisure"
+     "target": "Leisure",
+     "series": "Side job → Leisure",
+     "tip": "Side job → Leisure: 200",
+     "tip_at": [
+      251.8,
+      289.8940909090909
+     ]
     },
     {
      "kind": "polygon",
@@ -4617,7 +4779,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Salary"
+     "name": "Salary",
+     "series": "Salary",
+     "tip": "Salary: 2,300",
+     "tip_at": [
+      67.745,
+      158.55545454545455
+     ]
     },
     {
      "kind": "polygon",
@@ -4641,7 +4809,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Benefits"
+     "name": "Benefits",
+     "series": "Benefits",
+     "tip": "Benefits: 250",
+     "tip_at": [
+      67.745,
+      257.87454545454545
+     ]
     },
     {
      "kind": "polygon",
@@ -4665,7 +4839,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Side job"
+     "name": "Side job",
+     "series": "Side job",
+     "tip": "Side job: 200",
+     "tip_at": [
+      67.745,
+      286.5190909090909
+     ]
     },
     {
      "kind": "polygon",
@@ -4689,7 +4869,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Rent"
+     "name": "Rent",
+     "series": "Rent",
+     "tip": "Rent: 1,200",
+     "tip_at": [
+      435.855,
+      114.78545454545457
+     ]
     },
     {
      "kind": "polygon",
@@ -4713,7 +4899,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Reserve"
+     "name": "Reserve",
+     "series": "Reserve",
+     "tip": "Reserve: 500",
+     "tip_at": [
+      435.855,
+      185.49818181818182
+     ]
     },
     {
      "kind": "polygon",
@@ -4737,7 +4929,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Food"
+     "name": "Food",
+     "series": "Food",
+     "tip": "Food: 600",
+     "tip_at": [
+      435.855,
+      236.01818181818186
+     ]
     },
     {
      "kind": "polygon",
@@ -4761,7 +4959,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Leisure"
+     "name": "Leisure",
+     "series": "Leisure",
+     "tip": "Leisure: 450",
+     "tip_at": [
+      435.855,
+      284.85545454545456
+     ]
     },
     {
      "kind": "text",
@@ -5314,7 +5518,13 @@
      "role": "link",
      "column": 0,
      "source": "Joint",
-     "target": "Salary"
+     "target": "Salary",
+     "series": "Joint → Salary",
+     "tip": "Joint → Salary: 1,900",
+     "tip_at": [
+      157.0725,
+      173.9168181818182
+     ]
     },
     {
      "kind": "polygon",
@@ -5525,7 +5735,13 @@
      "role": "link",
      "column": 0,
      "source": "Savings",
-     "target": "Salary"
+     "target": "Salary",
+     "series": "Savings → Salary",
+     "tip": "Savings → Salary: 400",
+     "tip_at": [
+      157.0725,
+      259.11136363636365
+     ]
     },
     {
      "kind": "polygon",
@@ -5736,7 +5952,13 @@
      "role": "link",
      "column": 0,
      "source": "Joint",
-     "target": "Benefits"
+     "target": "Benefits",
+     "series": "Joint → Benefits",
+     "tip": "Joint → Benefits: 150",
+     "tip_at": [
+      157.0725,
+      259.11136363636365
+     ]
     },
     {
      "kind": "polygon",
@@ -5947,7 +6169,13 @@
      "role": "link",
      "column": 0,
      "source": "Savings",
-     "target": "Benefits"
+     "target": "Benefits",
+     "series": "Savings → Benefits",
+     "tip": "Savings → Benefits: 100",
+     "tip_at": [
+      157.0725,
+      286.67318181818183
+     ]
     },
     {
      "kind": "polygon",
@@ -6158,7 +6386,13 @@
      "role": "link",
      "column": 0,
      "source": "Joint",
-     "target": "Side job"
+     "target": "Side job",
+     "series": "Joint → Side job",
+     "tip": "Joint → Side job: 200",
+     "tip_at": [
+      157.0725,
+      99.92863636363637
+     ]
     },
     {
      "kind": "polygon",
@@ -6369,7 +6603,13 @@
      "role": "link",
      "column": 1,
      "source": "Salary",
-     "target": "Rent"
+     "target": "Rent",
+     "series": "Salary → Rent",
+     "tip": "Salary → Rent: 1,200",
+     "tip_at": [
+      342.9275,
+      167.51318181818183
+     ]
     },
     {
      "kind": "polygon",
@@ -6580,7 +6820,13 @@
      "role": "link",
      "column": 1,
      "source": "Salary",
-     "target": "Food"
+     "target": "Food",
+     "series": "Salary → Food",
+     "tip": "Salary → Food: 450",
+     "tip_at": [
+      342.9275,
+      262.6595454545454
+     ]
     },
     {
      "kind": "polygon",
@@ -6791,7 +7037,13 @@
      "role": "link",
      "column": 1,
      "source": "Salary",
-     "target": "Reserve"
+     "target": "Reserve",
+     "series": "Salary → Reserve",
+     "tip": "Salary → Reserve: 400",
+     "tip_at": [
+      342.9275,
+      225.49227272727273
+     ]
     },
     {
      "kind": "polygon",
@@ -7002,7 +7254,13 @@
      "role": "link",
      "column": 1,
      "source": "Salary",
-     "target": "Leisure"
+     "target": "Leisure",
+     "series": "Salary → Leisure",
+     "tip": "Salary → Leisure: 250",
+     "tip_at": [
+      342.9275,
+      114.33681818181817
+     ]
     },
     {
      "kind": "polygon",
@@ -7213,7 +7471,13 @@
      "role": "link",
      "column": 1,
      "source": "Benefits",
-     "target": "Food"
+     "target": "Food",
+     "series": "Benefits → Food",
+     "tip": "Benefits → Food: 150",
+     "tip_at": [
+      342.9275,
+      291.8222727272727
+     ]
     },
     {
      "kind": "polygon",
@@ -7424,7 +7688,13 @@
      "role": "link",
      "column": 1,
      "source": "Benefits",
-     "target": "Reserve"
+     "target": "Reserve",
+     "series": "Benefits → Reserve",
+     "tip": "Benefits → Reserve: 100",
+     "tip_at": [
+      342.9275,
+      262.6595454545455
+     ]
     },
     {
      "kind": "polygon",
@@ -7635,7 +7905,13 @@
      "role": "link",
      "column": 1,
      "source": "Side job",
-     "target": "Leisure"
+     "target": "Leisure",
+     "series": "Side job → Leisure",
+     "tip": "Side job → Leisure: 200",
+     "tip_at": [
+      342.9275,
+      93.17863636363637
+     ]
     },
     {
      "kind": "polygon",
@@ -7659,7 +7935,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Joint"
+     "name": "Joint",
+     "series": "Joint",
+     "tip": "Joint: 2,250",
+     "tip_at": [
+      64.145,
+      168.94090909090912
+     ]
     },
     {
      "kind": "polygon",
@@ -7683,7 +7965,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Savings"
+     "name": "Savings",
+     "series": "Savings",
+     "tip": "Savings: 500",
+     "tip_at": [
+      64.145,
+      270.4909090909091
+     ]
     },
     {
      "kind": "polygon",
@@ -7707,7 +7995,13 @@
      ],
      "fill": "#b93780",
      "role": "node",
-     "name": "Side job"
+     "name": "Side job",
+     "series": "Side job",
+     "tip": "Side job: 200",
+     "tip_at": [
+      250.0,
+      96.55363636363637
+     ]
     },
     {
      "kind": "polygon",
@@ -7731,7 +8025,13 @@
      ],
      "fill": "#2474cf",
      "role": "node",
-     "name": "Salary"
+     "name": "Salary",
+     "series": "Salary",
+     "tip": "Salary: 2,300",
+     "tip_at": [
+      250.0,
+      190.09909090909093
+     ]
     },
     {
      "kind": "polygon",
@@ -7755,7 +8055,13 @@
      ],
      "fill": "#ef675a",
      "role": "node",
-     "name": "Benefits"
+     "name": "Benefits",
+     "series": "Benefits",
+     "tip": "Benefits: 250",
+     "tip_at": [
+      250.0,
+      285.24545454545455
+     ]
     },
     {
      "kind": "polygon",
@@ -7779,7 +8085,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Leisure"
+     "name": "Leisure",
+     "series": "Leisure",
+     "tip": "Leisure: 450",
+     "tip_at": [
+      435.855,
+      97.80818181818184
+     ]
     },
     {
      "kind": "polygon",
@@ -7803,7 +8115,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Rent"
+     "name": "Rent",
+     "series": "Rent",
+     "tip": "Rent: 1,200",
+     "tip_at": [
+      435.855,
+      164.13818181818183
+     ]
     },
     {
      "kind": "polygon",
@@ -7827,7 +8145,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Reserve"
+     "name": "Reserve",
+     "series": "Reserve",
+     "tip": "Reserve: 500",
+     "tip_at": [
+      435.855,
+      232.0690909090909
+     ]
     },
     {
      "kind": "polygon",
@@ -7851,7 +8175,13 @@
      ],
      "fill": "#5b6168",
      "role": "node",
-     "name": "Food"
+     "name": "Food",
+     "series": "Food",
+     "tip": "Food: 600",
+     "tip_at": [
+      435.855,
+      280.7890909090909
+     ]
     },
     {
      "kind": "text",

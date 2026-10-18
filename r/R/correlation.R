@@ -38,7 +38,9 @@ correlation_drawing <- function(spec, box, measure, style) {
       fill <- spec$colors[[row, column]]
       corners <- rbind(c(left + inset, top + inset), c(left + side - inset, top + inset),
                        c(left + side - inset, top + side - inset), c(left + inset, top + side - inset))
-      cells[[length(cells) + 1]] <- list(kind = "polygon", role = "cell", fill = fill, points = corners)
+      pair <- paste(names[row], "\u00d7", names[column])
+      cells[[length(cells) + 1]] <- tagged_shape(list(kind = "polygon", role = "cell", fill = fill, points = corners),
+                                                 pair, paste0(pair, ": ", spec$texts[[row, column]]))
       values[[length(values) + 1]] <- c(shape_text(left + side / 2, baseline_for(top + side / 2, style, "label"),
                                                    spec$texts[[row, column]], "label", contrast_text(fill, style),
                                                    "center"), part = "value")

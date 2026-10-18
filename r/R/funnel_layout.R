@@ -58,10 +58,10 @@ funnel_drawing <- function(spec, box, measure, style) {
   angles <- 2 * pi * (0:23) / 24
   for (point in spec$points) {
     point <- as.numeric(unlist(point))
-    shapes[[length(shapes) + 1]] <- list(kind = "polygon", role = "study", fill = spec$color,
-                                         alpha = rules$point_opacity,
-                                         points = cbind(scale$x(point[1]) + radius * cos(angles),
-                                                        scale$y(point[2]) + radius * sin(angles)))
+    study <- list(kind = "polygon", role = "study", fill = spec$color, alpha = rules$point_opacity,
+                  points = cbind(scale$x(point[1]) + radius * cos(angles), scale$y(point[2]) + radius * sin(angles)))
+    shapes[[length(shapes) + 1]] <- tagged_shape(study, "Studies", paste0("Estimate ", amount_text(point[1]), ", SE ",
+                                                                          amount_text(point[2])))
   }
   shapes
 }

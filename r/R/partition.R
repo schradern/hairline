@@ -39,9 +39,10 @@ partition_row <- function(ring, box, top, height, measure, style, rules) {
     left <- box[1] + box[3] * start + if (start > 1e-9) gap / 2 else 0
     right <- box[1] + box[3] * end - if (end < 1 - 1e-9) gap / 2 else 0
     if (right <= left) next
-    bars[[length(bars) + 1]] <- list(kind = "polygon", fill = segment$color,
-                                     points = rbind(c(left, top), c(right, top), c(right, top + height),
-                                                    c(left, top + height)))
+    bars[[length(bars) + 1]] <- tagged_shape(list(kind = "polygon", fill = segment$color,
+                                                  points = rbind(c(left, top), c(right, top), c(right, top + height),
+                                                                 c(left, top + height))),
+                                             segment$name, paste0(segment$name, ": ", segment$share_text))
     labels <- c(labels, partition_label(segment, left, right, top, height, measure, style, rules))
   }
   list(bars = bars, labels = labels)

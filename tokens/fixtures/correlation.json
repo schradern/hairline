@@ -393,6 +393,12 @@
        21.0,
        131.0
       ]
+     ],
+     "series": "Lactate × Sofa",
+     "tip": "Lactate × Sofa: 0.82",
+     "tip_at": [
+      38.0,
+      114.0
      ]
     },
     {
@@ -416,6 +422,12 @@
        21.0,
        167.0
       ]
+     ],
+     "series": "Age × Sofa",
+     "tip": "Age × Sofa: 0.29",
+     "tip_at": [
+      38.0,
+      150.0
      ]
     },
     {
@@ -439,6 +451,12 @@
        57.0,
        167.0
       ]
+     ],
+     "series": "Age × Lactate",
+     "tip": "Age × Lactate: 0.25",
+     "tip_at": [
+      74.0,
+      150.0
      ]
     },
     {
@@ -462,6 +480,12 @@
        21.0,
        203.0
       ]
+     ],
+     "series": "Length of stay × Sofa",
+     "tip": "Length of stay × Sofa: 0.71",
+     "tip_at": [
+      38.0,
+      186.0
      ]
     },
     {
@@ -485,6 +509,12 @@
        57.0,
        203.0
       ]
+     ],
+     "series": "Length of stay × Lactate",
+     "tip": "Length of stay × Lactate: 0.66",
+     "tip_at": [
+      74.0,
+      186.0
      ]
     },
     {
@@ -508,6 +538,12 @@
        93.0,
        203.0
       ]
+     ],
+     "series": "Length of stay × Age",
+     "tip": "Length of stay × Age: 0.30",
+     "tip_at": [
+      110.0,
+      186.0
      ]
     },
     {
@@ -988,6 +1024,12 @@
        21.0,
        131.0
       ]
+     ],
+     "series": "Lactate × Sofa",
+     "tip": "Lactate × Sofa: 0.81",
+     "tip_at": [
+      38.0,
+      114.0
      ]
     },
     {
@@ -1011,6 +1053,12 @@
        21.0,
        167.0
       ]
+     ],
+     "series": "Age × Sofa",
+     "tip": "Age × Sofa: 0.31",
+     "tip_at": [
+      38.0,
+      150.0
      ]
     },
     {
@@ -1034,6 +1082,12 @@
        57.0,
        167.0
       ]
+     ],
+     "series": "Age × Lactate",
+     "tip": "Age × Lactate: 0.26",
+     "tip_at": [
+      74.0,
+      150.0
      ]
     },
     {
@@ -1057,6 +1111,12 @@
        21.0,
        203.0
       ]
+     ],
+     "series": "Length of stay × Sofa",
+     "tip": "Length of stay × Sofa: 0.72",
+     "tip_at": [
+      38.0,
+      186.0
      ]
     },
     {
@@ -1080,6 +1140,12 @@
        57.0,
        203.0
       ]
+     ],
+     "series": "Length of stay × Lactate",
+     "tip": "Length of stay × Lactate: 0.64",
+     "tip_at": [
+      74.0,
+      186.0
      ]
     },
     {
@@ -1103,6 +1169,12 @@
        93.0,
        203.0
       ]
+     ],
+     "series": "Length of stay × Age",
+     "tip": "Length of stay × Age: 0.25",
+     "tip_at": [
+      110.0,
+      186.0
      ]
     },
     {

@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
+from hairline.charts.tips import tagged
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -74,10 +75,13 @@ def arcs_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[di
     shapes = []
     for link in sorted(spec["links"], key=lambda item: -item["value"]):
         start, end = position[link["source"]], position[link["target"]]
-        shapes.append({"kind": "line", "points": arc_points(start, end, ground, abs(end - start) / 2 * squeeze,
-                                                            rules["points"]),
-                       "color": spec["color"], "width": stroke(link["value"], largest, style, rules),
-                       "alpha": rules["opacity"], "role": "arc", "source": link["source"], "target": link["target"]})
+        pair = f"{link['source']} \u2192 {link['target']}"
+        shapes.append(tagged({"kind": "line", "points": arc_points(start, end, ground,
+                                                                   abs(end - start) / 2 * squeeze, rules["points"]),
+                              "color": spec["color"], "width": stroke(link["value"], largest, style, rules),
+                              "alpha": rules["opacity"], "role": "arc", "source": link["source"],
+                              "target": link["target"]},
+                             pair, f"{pair}: {link['value_text']}"))
     radius = rules["node_radius"] * base
     for x in xs:
         shapes.append({"kind": "polygon", "role": "node_dot", "fill": style["neutral"]["ink"],
