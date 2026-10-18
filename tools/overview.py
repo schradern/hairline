@@ -16,12 +16,15 @@ import matplotlib.image as mpimg
 import hairline as hl
 
 REPO = Path(__file__).resolve().parents[1]
-CHARTS = [("bars_admissions", "Bar chart"), ("dotplot_rates", "Dot plot with intervals"),
+CHARTS = [("bars_admissions", "Bar chart"), ("bars_stacked", "Stacked bars"), ("bars_percent", "100 % stacked bars"),
+          ("dotplot_rates", "Dot plot with intervals"),
           ("scatter_fit", "Scatter with fit"), ("correlation_patients", "Correlation heatmap"),
-          ("raincloud_stay", "Raincloud"), ("km_trial", "Kaplan–Meier"), ("forest_meta", "Forest plot"),
+          ("raincloud_stay", "Raincloud"), ("ridgeline_ages", "Ridgeline"), ("km_trial", "Kaplan–Meier"),
+          ("forest_meta", "Forest plot"),
           ("funnel_trials", "Funnel plot"), ("risk_of_bias_trials", "Risk of bias"), ("prisma_review", "PRISMA flow"),
           ("donut_discharge", "Donut"), ("donut_nested", "Nested donut"), ("partition_discharge", "Partition bars"),
           ("sankey_budget", "Sankey"), ("arcs_pathways", "Arc diagram"),
+          ("chord_transfers", "Chord diagram"), ("venn_comorbidities", "Venn diagram"),
           ("occupancy_rows", "Time series, two levels of detail"), ("grid_panels", "Small multiples"),
           ("theme_scatter", "Scatter with the theme"), ("brand_example", "Brand file")]
 LANGUAGES = {"python": "Python", "r": "R"}

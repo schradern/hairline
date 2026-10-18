@@ -162,6 +162,58 @@ def pathway_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+AGE_BY_DIAGNOSIS = [("Trauma", 42, 17), ("Pancreatitis", 55, 13), ("Pneumonia", 66, 14), ("Sepsis", 69, 12),
+                    ("Cardiac arrest", 71, 11), ("Stroke", 74, 10)]
+
+
+def age_rows(rng: np.random.Generator) -> list[dict]:
+    """Age at admission per diagnosis: young trauma patients, older stroke patients."""
+    rows = []
+    for diagnosis, mean, spread in AGE_BY_DIAGNOSIS:
+        ages = np.clip(rng.normal(mean, spread, 90), 18, 98)
+        rows += [{"diagnosis": diagnosis, "age": int(round(float(age)))} for age in ages]
+    return rows
+
+
+DESTINATIONS = ["Home", "Rehabilitation", "Ward", "Care home", "Died"]
+DESTINATION_SHARES = [("Surgical", [0.48, 0.18, 0.24, 0.04, 0.06]), ("Medical", [0.36, 0.12, 0.30, 0.08, 0.14]),
+                      ("Neurological", [0.22, 0.38, 0.20, 0.10, 0.10]), ("Cardiac", [0.44, 0.22, 0.20, 0.04, 0.10])]
+
+
+def destination_rows(rng: np.random.Generator) -> list[dict]:
+    """Where patients went after the ICU, per unit."""
+    rows = []
+    for unit, shares in DESTINATION_SHARES:
+        rows += [{"unit": unit, "destination": str(place)} for place in rng.choice(DESTINATIONS, 160, p=shares)]
+    return rows
+
+
+TRANSFER_UNITS = ["Emergency", "ICU", "Step-down", "Ward", "Theatre", "Cardiology"]
+TRANSFER_WEIGHTS = [[0, 30, 6, 40, 14, 10], [4, 0, 34, 18, 10, 4], [2, 10, 0, 44, 2, 4], [8, 12, 6, 0, 16, 6],
+                    [2, 26, 10, 22, 0, 2], [4, 10, 8, 14, 4, 0]]
+
+
+def transfer_rows(rng: np.random.Generator) -> list[dict]:
+    """Patient transfers between hospital units, one row per transfer."""
+    rows = []
+    for _ in range(500):
+        origin = int(rng.integers(0, len(TRANSFER_UNITS)))
+        weights = np.array(TRANSFER_WEIGHTS[origin], dtype=float)
+        target = int(rng.choice(len(TRANSFER_UNITS), p=weights / weights.sum()))
+        rows.append({"origin": TRANSFER_UNITS[origin], "destination": TRANSFER_UNITS[target]})
+    return rows
+
+
+def comorbidity_rows(rng: np.random.Generator) -> list[dict]:
+    """Diabetes, hypertension and obesity per patient (1 = present), sharing one underlying risk."""
+    rows = []
+    for risk in rng.random(600):
+        rows.append({"diabetes": int(rng.random() < 0.12 + 0.35 * risk),
+                     "hypertension": int(rng.random() < 0.2 + 0.4 * risk),
+                     "obesity": int(rng.random() < 0.15 + 0.35 * risk)})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -184,6 +236,10 @@ def main() -> None:
     write("funnel.csv", funnel_rows(rng))
     write("bias.csv", bias_rows())
     write("pathways.csv", pathway_rows(rng))
+    write("ages.csv", age_rows(rng))
+    write("destinations.csv", destination_rows(rng))
+    write("transfers.csv", transfer_rows(rng))
+    write("comorbidities.csv", comorbidity_rows(rng))
 
 
 if __name__ == "__main__":

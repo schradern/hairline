@@ -1,0 +1,541 @@
+diagnosis,age
+Trauma,59
+Trauma,34
+Trauma,45
+Trauma,50
+Trauma,62
+Trauma,24
+Trauma,66
+Trauma,32
+Trauma,32
+Trauma,51
+Trauma,58
+Trauma,34
+Trauma,60
+Trauma,30
+Trauma,58
+Trauma,58
+Trauma,82
+Trauma,50
+Trauma,59
+Trauma,45
+Trauma,18
+Trauma,37
+Trauma,57
+Trauma,58
+Trauma,71
+Trauma,39
+Trauma,18
+Trauma,18
+Trauma,60
+Trauma,48
+Trauma,33
+Trauma,67
+Trauma,73
+Trauma,28
+Trauma,22
+Trauma,31
+Trauma,21
+Trauma,57
+Trauma,73
+Trauma,25
+Trauma,52
+Trauma,18
+Trauma,55
+Trauma,55
+Trauma,39
+Trauma,22
+Trauma,36
+Trauma,34
+Trauma,48
+Trauma,18
+Trauma,58
+Trauma,54
+Trauma,55
+Trauma,33
+Trauma,82
+Trauma,29
+Trauma,19
+Trauma,72
+Trauma,43
+Trauma,53
+Trauma,33
+Trauma,53
+Trauma,23
+Trauma,36
+Trauma,36
+Trauma,49
+Trauma,44
+Trauma,44
+Trauma,42
+Trauma,38
+Trauma,18
+Trauma,43
+Trauma,42
+Trauma,48
+Trauma,25
+Trauma,56
+Trauma,30
+Trauma,26
+Trauma,45
+Trauma,45
+Trauma,58
+Trauma,23
+Trauma,41
+Trauma,18
+Trauma,23
+Trauma,48
+Trauma,28
+Trauma,46
+Trauma,45
+Trauma,75
+Pancreatitis,65
+Pancreatitis,43
+Pancreatitis,78
+Pancreatitis,60
+Pancreatitis,40
+Pancreatitis,56
+Pancreatitis,49
+Pancreatitis,49
+Pancreatitis,41
+Pancreatitis,74
+Pancreatitis,56
+Pancreatitis,53
+Pancreatitis,53
+Pancreatitis,57
+Pancreatitis,76
+Pancreatitis,38
+Pancreatitis,37
+Pancreatitis,44
+Pancreatitis,63
+Pancreatitis,49
+Pancreatitis,63
+Pancreatitis,65
+Pancreatitis,92
+Pancreatitis,82
+Pancreatitis,53
+Pancreatitis,67
+Pancreatitis,50
+Pancreatitis,72
+Pancreatitis,38
+Pancreatitis,56
+Pancreatitis,61
+Pancreatitis,40
+Pancreatitis,71
+Pancreatitis,44
+Pancreatitis,66
+Pancreatitis,65
+Pancreatitis,43
+Pancreatitis,45
+Pancreatitis,60
+Pancreatitis,70
+Pancreatitis,38
+Pancreatitis,69
+Pancreatitis,52
+Pancreatitis,65
+Pancreatitis,60
+Pancreatitis,54
+Pancreatitis,61
+Pancreatitis,51
+Pancreatitis,79
+Pancreatitis,53
+Pancreatitis,61
+Pancreatitis,44
+Pancreatitis,78
+Pancreatitis,91
+Pancreatitis,46
+Pancreatitis,44
+Pancreatitis,46
+Pancreatitis,41
+Pancreatitis,54
+Pancreatitis,61
+Pancreatitis,64
+Pancreatitis,67
+Pancreatitis,53
+Pancreatitis,57
+Pancreatitis,50
+Pancreatitis,60
+Pancreatitis,64
+Pancreatitis,48
+Pancreatitis,47
+Pancreatitis,39
+Pancreatitis,58
+Pancreatitis,46
+Pancreatitis,63
+Pancreatitis,48
+Pancreatitis,54
+Pancreatitis,57
+Pancreatitis,52
+Pancreatitis,41
+Pancreatitis,49
+Pancreatitis,55
+Pancreatitis,62
+Pancreatitis,62
+Pancreatitis,42
+Pancreatitis,59
+Pancreatitis,30
+Pancreatitis,57
+Pancreatitis,65
+Pancreatitis,54
+Pancreatitis,61
+Pancreatitis,59
+Pneumonia,70
+Pneumonia,75
+Pneumonia,58
+Pneumonia,93
+Pneumonia,65
+Pneumonia,75
+Pneumonia,81
+Pneumonia,58
+Pneumonia,66
+Pneumonia,79
+Pneumonia,58
+Pneumonia,58
+Pneumonia,52
+Pneumonia,56
+Pneumonia,55
+Pneumonia,45
+Pneumonia,70
+Pneumonia,97
+Pneumonia,88
+Pneumonia,70
+Pneumonia,53
+Pneumonia,61
+Pneumonia,53
+Pneumonia,44
+Pneumonia,66
+Pneumonia,51
+Pneumonia,70
+Pneumonia,60
+Pneumonia,60
+Pneumonia,63
+Pneumonia,65
+Pneumonia,72
+Pneumonia,81
+Pneumonia,70
+Pneumonia,73
+Pneumonia,65
+Pneumonia,64
+Pneumonia,59
+Pneumonia,58
+Pneumonia,75
+Pneumonia,62
+Pneumonia,82
+Pneumonia,70
+Pneumonia,92
+Pneumonia,55
+Pneumonia,56
+Pneumonia,82
+Pneumonia,59
+Pneumonia,98
+Pneumonia,80
+Pneumonia,78
+Pneumonia,71
+Pneumonia,79
+Pneumonia,65
+Pneumonia,82
+Pneumonia,47
+Pneumonia,74
+Pneumonia,69
+Pneumonia,84
+Pneumonia,76
+Pneumonia,66
+Pneumonia,62
+Pneumonia,54
+Pneumonia,46
+Pneumonia,38
+Pneumonia,69
+Pneumonia,71
+Pneumonia,57
+Pneumonia,82
+Pneumonia,81
+Pneumonia,77
+Pneumonia,77
+Pneumonia,45
+Pneumonia,65
+Pneumonia,61
+Pneumonia,58
+Pneumonia,60
+Pneumonia,45
+Pneumonia,55
+Pneumonia,50
+Pneumonia,93
+Pneumonia,95
+Pneumonia,50
+Pneumonia,73
+Pneumonia,77
+Pneumonia,78
+Pneumonia,76
+Pneumonia,57
+Pneumonia,67
+Pneumonia,55
+Sepsis,70
+Sepsis,58
+Sepsis,55
+Sepsis,84
+Sepsis,69
+Sepsis,75
+Sepsis,82
+Sepsis,69
+Sepsis,56
+Sepsis,71
+Sepsis,54
+Sepsis,57
+Sepsis,64
+Sepsis,54
+Sepsis,66
+Sepsis,62
+Sepsis,66
+Sepsis,63
+Sepsis,77
+Sepsis,71
+Sepsis,91
+Sepsis,74
+Sepsis,53
+Sepsis,69
+Sepsis,53
+Sepsis,46
+Sepsis,72
+Sepsis,74
+Sepsis,84
+Sepsis,75
+Sepsis,69
+Sepsis,71
+Sepsis,65
+Sepsis,71
+Sepsis,72
+Sepsis,61
+Sepsis,50
+Sepsis,75
+Sepsis,65
+Sepsis,59
+Sepsis,54
+Sepsis,65
+Sepsis,67
+Sepsis,63
+Sepsis,65
+Sepsis,66
+Sepsis,79
+Sepsis,65
+Sepsis,92
+Sepsis,66
+Sepsis,58
+Sepsis,77
+Sepsis,59
+Sepsis,59
+Sepsis,51
+Sepsis,81
+Sepsis,68
+Sepsis,67
+Sepsis,71
+Sepsis,70
+Sepsis,91
+Sepsis,80
+Sepsis,60
+Sepsis,86
+Sepsis,74
+Sepsis,67
+Sepsis,78
+Sepsis,61
+Sepsis,78
+Sepsis,48
+Sepsis,63
+Sepsis,63
+Sepsis,52
+Sepsis,45
+Sepsis,58
+Sepsis,59
+Sepsis,67
+Sepsis,86
+Sepsis,87
+Sepsis,51
+Sepsis,78
+Sepsis,43
+Sepsis,80
+Sepsis,44
+Sepsis,50
+Sepsis,75
+Sepsis,50
+Sepsis,88
+Sepsis,58
+Sepsis,66
+Cardiac arrest,64
+Cardiac arrest,73
+Cardiac arrest,66
+Cardiac arrest,66
+Cardiac arrest,61
+Cardiac arrest,63
+Cardiac arrest,65
+Cardiac arrest,80
+Cardiac arrest,58
+Cardiac arrest,80
+Cardiac arrest,67
+Cardiac arrest,79
+Cardiac arrest,60
+Cardiac arrest,62
+Cardiac arrest,66
+Cardiac arrest,68
+Cardiac arrest,74
+Cardiac arrest,73
+Cardiac arrest,79
+Cardiac arrest,45
+Cardiac arrest,72
+Cardiac arrest,52
+Cardiac arrest,70
+Cardiac arrest,46
+Cardiac arrest,65
+Cardiac arrest,59
+Cardiac arrest,68
+Cardiac arrest,67
+Cardiac arrest,61
+Cardiac arrest,58
+Cardiac arrest,60
+Cardiac arrest,73
+Cardiac arrest,68
+Cardiac arrest,75
+Cardiac arrest,85
+Cardiac arrest,74
+Cardiac arrest,79
+Cardiac arrest,88
+Cardiac arrest,52
+Cardiac arrest,77
+Cardiac arrest,72
+Cardiac arrest,68
+Cardiac arrest,81
+Cardiac arrest,70
+Cardiac arrest,89
+Cardiac arrest,67
+Cardiac arrest,77
+Cardiac arrest,66
+Cardiac arrest,81
+Cardiac arrest,75
+Cardiac arrest,52
+Cardiac arrest,75
+Cardiac arrest,82
+Cardiac arrest,69
+Cardiac arrest,79
+Cardiac arrest,81
+Cardiac arrest,64
+Cardiac arrest,76
+Cardiac arrest,86
+Cardiac arrest,80
+Cardiac arrest,78
+Cardiac arrest,71
+Cardiac arrest,66
+Cardiac arrest,58
+Cardiac arrest,94
+Cardiac arrest,62
+Cardiac arrest,75
+Cardiac arrest,73
+Cardiac arrest,74
+Cardiac arrest,84
+Cardiac arrest,47
+Cardiac arrest,56
+Cardiac arrest,67
+Cardiac arrest,65
+Cardiac arrest,75
+Cardiac arrest,74
+Cardiac arrest,81
+Cardiac arrest,76
+Cardiac arrest,94
+Cardiac arrest,81
+Cardiac arrest,54
+Cardiac arrest,66
+Cardiac arrest,71
+Cardiac arrest,45
+Cardiac arrest,58
+Cardiac arrest,55
+Cardiac arrest,63
+Cardiac arrest,71
+Cardiac arrest,80
+Cardiac arrest,73
+Stroke,75
+Stroke,97
+Stroke,77
+Stroke,90
+Stroke,71
+Stroke,62
+Stroke,80
+Stroke,98
+Stroke,80
+Stroke,80
+Stroke,75
+Stroke,90
+Stroke,83
+Stroke,58
+Stroke,64
+Stroke,78
+Stroke,81
+Stroke,70
+Stroke,82
+Stroke,86
+Stroke,66
+Stroke,76
+Stroke,73
+Stroke,68
+Stroke,81
+Stroke,61
+Stroke,83
+Stroke,67
+Stroke,63
+Stroke,91
+Stroke,76
+Stroke,88
+Stroke,60
+Stroke,70
+Stroke,66
+Stroke,52
+Stroke,81
+Stroke,59
+Stroke,66
+Stroke,81
+Stroke,88
+Stroke,75
+Stroke,65
+Stroke,95
+Stroke,66
+Stroke,73
+Stroke,71
+Stroke,89
+Stroke,92
+Stroke,82
+Stroke,74
+Stroke,70
+Stroke,76
+Stroke,92
+Stroke,79
+Stroke,83
+Stroke,73
+Stroke,71
+Stroke,72
+Stroke,75
+Stroke,68
+Stroke,81
+Stroke,89
+Stroke,89
+Stroke,94
+Stroke,63
+Stroke,67
+Stroke,73
+Stroke,96
+Stroke,56
+Stroke,69
+Stroke,84
+Stroke,68
+Stroke,77
+Stroke,73
+Stroke,71
+Stroke,77
+Stroke,58
+Stroke,81
+Stroke,65
+Stroke,85
+Stroke,68
+Stroke,84
+Stroke,84
+Stroke,83
+Stroke,87
+Stroke,68
+Stroke,78
+Stroke,98
+Stroke,78

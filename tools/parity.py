@@ -21,7 +21,8 @@ FIGURES = ["theme_scatter", "occupancy_rows", "grid_panels", "brand_example", "d
            "bars_admissions", "dotplot_rates", "scatter_fit",
            "correlation_patients", "funnel_trials",
            "risk_of_bias_trials", "prisma_review",
-           "arcs_pathways"]
+           "arcs_pathways", "ridgeline_ages", "bars_stacked", "bars_percent", "chord_transfers",
+           "venn_comorbidities"]
 TOLERANCE_PT = 1.0
 
 
