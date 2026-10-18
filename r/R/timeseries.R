@@ -153,7 +153,7 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   check_columns(data, c(x, y, by))
   title <- title %||% if (is.null(by)) paste(humanise(y), "over time") else paste(humanise(y), "by", gsub("_", " ", by))
   data <- prepared_series(data, x, y, by, order, window)
-  colours <- if (is.null(by)) stats::setNames(hl_settings()$palette[1], levels(data$.group)) else
+  colours <- if (is.null(by)) stats::setNames(lone_colour(), levels(data$.group)) else
     colours_for(levels(data$.group), colors)
   share_label <- share_label %||% paste("≥", if (is.null(threshold)) "" else value_formatter(percent)(threshold, 0))
   plot <- ggplot2::ggplot(data) + mark_layers(bands, events, data[[x]], levels(data$.group))

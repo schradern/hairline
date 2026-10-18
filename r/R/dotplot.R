@@ -28,7 +28,7 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
     high <- ".high"
   }
   heading <- if (interval) paste(humanise(estimate), "[95 % CI]") else humanise(estimate)
-  spec <- forest_spec(data, label, estimate, low, high, ratio = ratio, colour = hl_settings()$palette[1],
+  spec <- forest_spec(data, label, estimate, low, high, ratio = ratio, colour = lone_colour(),
                       study_heading = humanise(label), effect_heading = heading, digits = digits, marker = "dot",
                       interval = interval, null = reference)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +

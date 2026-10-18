@@ -10,7 +10,7 @@ from matplotlib.patches import Rectangle
 
 from hairline import entities
 from hairline.figure import HairlineFigure, figure
-from hairline.marks import FIXED_ID, STATIC_ID
+from hairline.marks import FIXED_ID, STATIC_ID, lone_color
 from hairline.numbers import format_number, is_whole
 from hairline.stats.density import quantiles
 from hairline.study.columns import is_missing, level_text, levels, numbers
@@ -109,7 +109,7 @@ def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:
     style = {"faint": result.settings.neutral["faint"],
              "leader": load_tokens()["reference"]["width"] * result.settings.base_size}
     with entities.chart(names if study.group else [], None):
-        colors = entities.colors_for(names, None) if study.group else {names[0]: result.settings.palette[0]}
+        colors = entities.colors_for(names, None) if study.group else {names[0]: lone_color(result.settings)}
         for index, name in enumerate(numeric):
             ax = result.axes[index]
             for position, (label, subset) in enumerate(shown):

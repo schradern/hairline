@@ -10,6 +10,7 @@ from hairline import entities
 from hairline.charts.common import check_columns, humanise, with_counts
 from hairline.charts.correlation_geometry import text_color
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import lone_color
 from hairline.numbers import format_number, format_percent
 from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
@@ -86,7 +87,7 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
         heights = bar_values(table, category, value, by, names, group, options["percent"])
         step = (len(groups) - 1) / 2 - index if horizontal else index - (len(groups) - 1) / 2
         offset = 0.0 if stacked else step * single
-        color = entities.color(group) if by else current_settings().palette[0]
+        color = entities.color(group) if by else lone_color()
         where = [position + offset for position in positions]
         draw = ax.barh if horizontal else ax.bar
         draw(where, heights, single * 0.92, base, color=color, label=group if by else "_nolegend_", **edge)

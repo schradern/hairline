@@ -230,11 +230,11 @@ figure_html <- function(svg, targets, family) {
          "</script><script>", interactive_asset("hairline.js"), "</script></figure>")
 }
 
-html_page <- function(title, fragment) {
+html_page <- function(title, fragment, surface = "#ffffff") {
   safe <- gsub("<", "&lt;", gsub("&", "&amp;", title %||% "", fixed = TRUE), fixed = TRUE)
   paste0('<!doctype html>\n<html lang="en"><head><meta charset="utf-8">',
          '<meta name="viewport" content="width=device-width, initial-scale=1"><title>', safe,
-         "</title><style>body{margin:0;padding:16px;background:#ffffff}</style></head><body>", fragment,
+         "</title><style>body{margin:0;padding:16px;background:", surface, "}</style></head><body>", fragment,
          "</body></html>\n")
 }
 
@@ -248,5 +248,6 @@ write_html <- function(plot, path, size, size_mm, background) {
   svg <- paste(readLines(svg_path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
   targets <- interactive_targets(plot, size, size_mm[1], size_mm[2])
   title <- plot@labels$title %||% ""
-  writeLines(html_page(title, figure_html(svg, targets, targets$style$font)), path, useBytes = TRUE)
+  writeLines(html_page(title, figure_html(svg, targets, targets$style$font), targets$style$surface), path,
+             useBytes = TRUE)
 }

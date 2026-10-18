@@ -83,7 +83,8 @@ hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", wid
   }
   plot <- plot_for_size(plot, size)
   size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm %||% plot@meta$hairline_height_mm))
-  surface <- if (identical(background, "transparent")) "transparent" else "white"
+  surface <- if (identical(background, "transparent")) "transparent" else
+    background %||% saved_settings(plot, size)$neutral$surface
   name <- strip_known_extension(name)
   dir.create(dirname(name), recursive = TRUE, showWarnings = FALSE)
   paths <- paste0(name, ".", formats)

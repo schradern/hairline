@@ -30,14 +30,28 @@ def is_light(color: str, settings: Settings) -> bool:
 
 
 def point_fill(color: str, surface: str) -> str:
-    """The colour itself, or for a light slot a darker shade of its hue that reaches 3:1 against the surface."""
+    """The colour itself, or a shade of its hue that reaches 3:1 against the surface: darker on a light
+    surface, lighter on a dark one."""
     limit, step = load_tokens()["checks"]["contrast_light_slot"], load_tokens()["points"]["fill_lightness_step"]
     lightness, chroma, hue = hex_to_oklch(color)
+    direction = -1 if hex_to_oklch(surface)[0] >= 0.5 else 1
     fill = color
-    while contrast(fill, surface) < limit and lightness > 0:
-        lightness = max(0.0, lightness - step)
+    while contrast(fill, surface) < limit and 0 < lightness < 1:
+        lightness = min(1.0, max(0.0, lightness + direction * step))
         fill = oklch_to_hex(lightness, chroma, hue)
     return fill
+
+
+def lone_color(settings: Settings | None = None) -> str:
+    """Colour of a lone series (a chart without groups): the accent, made readable on the surface, else slot 1."""
+    settings = settings or current_settings()
+    return point_fill(settings.accent, surface_of(settings)) if settings.accent else settings.palette[0]
+
+
+def context_color(settings: Settings | None = None) -> str:
+    """Grey for series that recede (highlight), lighter than ink on light surfaces, darker on dark ones."""
+    settings = settings or current_settings()
+    return load_tokens()["focus"]["context_dark" if settings.scheme == "dark" else "context"]
 
 
 def point_step(count: int) -> tuple[float, float]:

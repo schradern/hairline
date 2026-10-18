@@ -235,8 +235,8 @@ def figure_html(svg: str, targets: dict, family: str) -> str:
             f'<script>{asset("hairline.js")}</script></figure>')
 
 
-def page(title: str, fragment: str) -> str:
+def page(title: str, fragment: str, surface: str = "#ffffff") -> str:
     safe = title.replace("&", "&amp;").replace("<", "&lt;")
     return (f'<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width, initial-scale=1"><title>{safe}</title>'
-            f'<style>body{{margin:0;padding:16px;background:#ffffff}}</style></head><body>{fragment}</body></html>\n')
+            f'<style>body{{margin:0;padding:16px;background:{surface}}}</style></head><body>{fragment}</body></html>\n')

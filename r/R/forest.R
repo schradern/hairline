@@ -133,7 +133,7 @@ hl_forest <- function(data, study = "study", estimate = "estimate", low = "low",
     heterogeneity <- heterogeneity %||% converted$heterogeneity
   }
   spec <- forest_spec(data, study, estimate, low, high, weight, columns, pooled, ratio, favours,
-                      colour = hl_settings()$palette[1], ...)
+                      colour = lone_colour(), ...)
   parts <- c(heterogeneity, caption)
   note <- if (length(parts)) paste0(paste(sub("\\.$", "", parts), collapse = ". "), ".") else NULL
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +

@@ -76,7 +76,8 @@ frame_palette_elements <- function(settings) {
   ggplot2::theme(
     palette.colour.discrete = function(n) hl_palette(n = n), palette.fill.discrete = function(n) hl_palette(n = n),
     palette.colour.continuous = hl_ramp("blues"), palette.fill.continuous = hl_ramp("blues"),
-    geom = ggplot2::element_geom(ink = settings$neutral$ink, accent = settings$palette[1], paper = "#ffffff",
+    geom = ggplot2::element_geom(ink = settings$neutral$ink, accent = lone_colour(settings),
+                                 paper = surface_colour(settings),
                                  linewidth = pt_to_linewidth(lines$data * settings$base_size),
                                  pointsize = pt_to_mm(2 * lines$point_radius * settings$base_size / 0.75),
                                  family = settings$font)

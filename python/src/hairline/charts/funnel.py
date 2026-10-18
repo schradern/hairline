@@ -12,6 +12,7 @@ from hairline.charts.forest import decimals
 from hairline.charts.forest_geometry import log_breaks
 from hairline.charts.funnel_geometry import funnel_drawing
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import lone_color
 from hairline.numbers import format_number, format_p
 from hairline.settings import current_settings
 from hairline.stats.tests import egger
@@ -49,7 +50,7 @@ def funnel_spec(data: pd.DataFrame, estimate: str, se: str, *, ratio: bool = Tru
     x_axis, y_axis = funnel_axes(effects, errors, centre, ratio, current_settings().locale)
     return {"points": list(zip(effects.tolist(), errors.tolist(), strict=True)), "pooled": centre, "ratio": ratio,
             "null": 0.0, "x_axis": x_axis, "y_axis": y_axis, "x_title": x_title or humanise(estimate),
-            "y_title": "Standard error", "color": current_settings().palette[0],
+            "y_title": "Standard error", "color": lone_color(),
             "egger": egger(effects, errors)}
 
 

@@ -42,7 +42,7 @@ legend_items <- function(built) {
     kind <- legend_kind(built, aesthetic)
     if (kind == "dot") colours <- point_fills(colours)
     highlighted <- built@plot@meta$hairline_highlight$series
-    if (!is.null(highlighted)) colours[!labels %in% highlighted] <- hl_tokens()$focus$context
+    if (!is.null(highlighted)) colours[!labels %in% highlighted] <- context_colour()
     for (index in seq_along(breaks)) {
       if (is.na(labels[index]) || labels[index] %in% seen) next
       seen <- c(seen, labels[index])

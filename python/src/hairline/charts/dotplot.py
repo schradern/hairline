@@ -9,7 +9,7 @@ from hairline.charts.forest import forest_spec
 from hairline.charts.forest_geometry import forest_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
-from hairline.settings import current_settings
+from hairline.marks import lone_color
 
 
 def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = None, high: str | None = None, *,
@@ -25,7 +25,7 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
         rows = rows.assign(_low=rows[estimate], _high=rows[estimate])
         low, high = "_low", "_high"
     heading = f"{humanise(estimate)} [95 % CI]" if interval else humanise(estimate)
-    spec = forest_spec(rows, label, estimate, low, high, ratio=ratio, color=current_settings().palette[0],
+    spec = forest_spec(rows, label, estimate, low, high, ratio=ratio, color=lone_color(),
                        study_heading=humanise(label), effect_heading=heading, digits=digits, marker="dot",
                        interval=interval, null=reference)
     result = figure(title or f"{humanise(estimate)} by {str(label).replace('_', ' ')}", subtitle=subtitle,

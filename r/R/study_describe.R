@@ -98,7 +98,7 @@ study_overview <- function(study, parts) {
   rows$variable <- factor(rows$variable, levels = vapply(numeric, study_label, character(1), study = study))
   rows$group <- factor(rows$group, levels = names)
   ranges <- rbind(cbind(rows, x = rows$low), cbind(rows, x = rows$high))
-  colours <- if (is.null(study$roles$group)) stats::setNames(hl_settings()$palette[1], names) else
+  colours <- if (is.null(study$roles$group)) stats::setNames(lone_colour(), names) else
     colours_for(names, NULL)
   title <- if (is.null(study$roles$group)) "Characteristics" else
     paste("Characteristics by", gsub("_", " ", study$roles$group))

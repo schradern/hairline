@@ -12,6 +12,7 @@ from hairline import entities
 from hairline.charts.common import check_columns
 from hairline.charts.timeseries import groups_of, reference_style
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import lone_color
 from hairline.numbers import format_number, format_p
 from hairline.settings import current_settings
 from hairline.stats.survival import km_estimate, km_median
@@ -106,7 +107,7 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
     palette = entities.colors_for([name for name, _, _ in estimates], colors) if grouped else {}
     rows = []
     for name, table, total in estimates:
-        color = palette.get(name, current_settings().palette[0])
+        color = palette.get(name, lone_color())
         draw_curve(result.ax, table, color, name or endpoint)
         rows.append((name or endpoint, color, [(moment, format_number(count, 0)) for moment, count in
                                                zip(moments, at_risk_from(table, total, moments), strict=True)]))

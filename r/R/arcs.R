@@ -19,7 +19,7 @@ arcs_spec <- function(data, source, target, value = NULL, order = NULL) {
   values <- vapply(links, `[[`, numeric(1), "value")
   # round() halves to even in R, as Python's round() does
   key <- sort(unique(c(max(values), round(max(values) / 2), min(values))))
-  list(nodes = as.list(names), links = links, color = hl_settings()$palette[1],
+  list(nodes = as.list(names), links = links, color = lone_colour(),
        key = lapply(key, function(amount) list(value = amount, text = hl_format_number(amount, 0))))
 }
 

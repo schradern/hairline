@@ -31,7 +31,7 @@ funnel_spec <- function(data, estimate, se, ratio = TRUE, pooled = NULL, x_title
   axes <- funnel_axes(effects, errors, centre, ratio)
   list(points = lapply(seq_along(effects), function(index) c(effects[index], errors[index])), pooled = centre,
        ratio = ratio, null = 0, x_axis = axes$x, y_axis = axes$y, x_title = x_title %||% humanise(estimate),
-       y_title = "Standard error", color = hl_settings()$palette[1], egger = egger_p(effects, errors))
+       y_title = "Standard error", color = lone_colour(), egger = egger_p(effects, errors))
 }
 
 funnel_area <- function(spec, box, measure, style) {

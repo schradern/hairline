@@ -139,7 +139,7 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
   parts <- bar_table(counted$data, category, counted$value, by, order,
                      sort %||% if (is.null(by) || stacked) "value" else "given")
   horizontal <- horizontal %||% bars_horizontal(parts$names)
-  colours <- if (is.null(by)) stats::setNames(hl_settings()$palette[1], "") else
+  colours <- if (is.null(by)) stats::setNames(lone_colour(), "") else
     colours_for(parts$groups, colors)
   plot <- ggplot2::ggplot() +
     bar_layers(bar_frame(parts, category, by, horizontal, percent), colours, horizontal, stacked, labels, percent) +

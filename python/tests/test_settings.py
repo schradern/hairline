@@ -85,3 +85,21 @@ def test_supporting_elements_recede():
     assert styles["key_value"]["color"] == settings.neutral["ink"] and styles["key_value"]["weight"] == 600
     assert settings.neutral["grid"] == "#eef0f2"
     assert matplotlib.rcParams["grid.linewidth"] == pytest.approx(0.05 * 9)
+
+
+def test_accent_colours_a_lone_series_and_dark_swaps_the_neutrals():
+    import pandas as pd
+
+    from hairline.marks import lone_color
+    settings = hl.use(brand=False, scheme="dark", accent="#2D1B69")
+    assert settings.neutral == hl.load_tokens()["neutral_dark"] and settings.background == settings.neutral["surface"]
+    assert settings.accent == "#2d1b69" and lone_color() != "#2d1b69"
+    data = pd.DataFrame({"diagnosis": ["Sepsis", "Trauma", "Sepsis"]})
+    figure = hl.bars(data, "diagnosis")
+    from matplotlib.colors import to_hex
+    assert to_hex(figure.ax.patches[0].get_facecolor()) == lone_color()
+    grouped = hl.bars(data.assign(sex=["F", "M", "F"]), "diagnosis", by="sex")
+    assert to_hex(grouped.ax.patches[0].get_facecolor()) == hl.palette()[0]
+    with pytest.raises(ValueError, match="scheme 'dim' must be 'light' or 'dark'"):
+        hl.use(brand=False, scheme="dim")
+    hl.use(brand=False)

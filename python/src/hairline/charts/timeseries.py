@@ -10,7 +10,7 @@ from hairline import entities
 from hairline.charts.common import check_columns, humanise
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
-from hairline.marks import SECONDARY_ID
+from hairline.marks import SECONDARY_ID, lone_color
 from hairline.numbers import auto_digits, format_number, format_percent, is_whole
 from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
@@ -124,7 +124,7 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     palette = entities.colors_for([name for name, _ in groups], colors) if by else {}
     for index, (name, rows) in enumerate(groups):
         ax = result.axes[index]
-        draw_series(ax, rows, x, y, palette.get(name, current_settings().palette[0]), window, raw)
+        draw_series(ax, rows, x, y, palette.get(name, lone_color()), window, raw)
         if period_mean:
             ax.axhline(rows[y].mean(), **{**reference_style(), "color": current_settings().neutral["muted"],
                                           "linestyle": (0, (3, 2.5))})

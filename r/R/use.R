@@ -6,7 +6,22 @@ default_settings <- function() {
   list(font = tokens$font$family, base_size = tokens$type$base_size, sizes = list(),
        palette = unname(tokens$palettes[[name]]), palette_name = name, palette_label = sprintf("palette '%s'", name),
        locale = tokens$default_locale, background = "#ffffff", neutral = tokens$neutral, brand_name = NULL,
-       base_size_explicit = FALSE)
+       base_size_explicit = FALSE, accent = NULL, scheme = "light")
+}
+
+# The dark scheme swaps every neutral token (a brand's light neutrals do not carry over); the accent is checked as a
+# hex colour.
+scheme_settings <- function(settings, scheme, background, accent) {
+  if (!is.null(scheme) && !scheme %in% c("light", "dark")) {
+    stop(sprintf("hairline: scheme '%s' must be 'light' or 'dark'", scheme), call. = FALSE)
+  }
+  settings$scheme <- scheme %||% "light"
+  if (!is.null(accent)) settings$accent <- validated_entity_colors(c(accent = accent))[["accent"]]
+  if (identical(scheme, "dark")) {
+    settings$neutral <- hl_tokens()$neutral_dark
+    settings$background <- background %||% settings$neutral$surface
+  }
+  settings
 }
 
 #' Active hairline settings
@@ -52,13 +67,15 @@ palette_fields <- function(palette) {
 #'   or `FALSE`.
 #' @param colors Named vector of entity colours, e.g. `c("Unit B" = "#e8a628")`; see [hl_color()].
 #' @param output Export type whose brand overrides apply: `"screen"`, `"pdf"`, `"html"` or `"docx"`.
+#' @param accent Colour of a lone series (charts without groups), made readable against the background.
+#' @param scheme `"light"` (default) or `"dark"`: the dark neutral tokens (a brand's light neutrals do not carry over).
 #' @return The active settings, invisibly.
 #' @export
 hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, locale = NULL,
-                   background = NULL, brand = NULL, colors = NULL, output = NULL) {
+                   background = NULL, brand = NULL, colors = NULL, output = NULL, accent = NULL, scheme = NULL) {
   hairline_state$use_arguments <- list(font = font, base_size = base_size, sizes = sizes, palette = palette,
                                        locale = locale, background = background, brand = brand, colors = colors,
-                                       output = output)
+                                       output = output, accent = accent, scheme = scheme)
   context <- host_context()
   if (!is.null(context)) {
     locale <- locale %||% context$locale
@@ -66,6 +83,8 @@ hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, 
     if (is.null(brand) && !is.null(context$brand)) brand <- context$brand
     output <- output %||% context$output
     font <- font %||% context$design$font
+    accent <- accent %||% context$design$accent
+    scheme <- scheme %||% context$design$scheme
   }
   register_bundled_fonts()
   if (!is.null(locale)) locale_symbols(locale)
@@ -78,6 +97,7 @@ hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, 
   if (!is.null(base_size)) settings[c("base_size", "base_size_explicit")] <- list(as.numeric(base_size), TRUE)
   if (!is.null(locale)) settings$locale <- locale
   if (!is.null(background)) settings$background <- background
+  settings <- scheme_settings(settings, scheme, background, accent)
   hairline_state$settings <- settings
   brand_colors <- resolved_brand$entity_colors %||% character()
   configure_entities(c(brand_colors[setdiff(names(brand_colors), names(explicit))], explicit))

@@ -82,3 +82,10 @@ def test_a_new_context_reapplies_the_style_and_keeps_explicit_arguments(context)
     context(base_size=8, locale="de")
     host.host_context()
     assert current_settings().base_size == 11 and current_settings().locale == "de"
+
+
+def test_host_design_sets_accent_and_scheme(context):
+    context(design={"font": "Hairline Sans", "accent": "#7a2e8c", "scheme": "dark"})
+    settings = hl.use(brand=False)
+    assert settings.scheme == "dark" and settings.accent == "#7a2e8c"
+    assert hl.use(brand=False, scheme="light").scheme == "light"

@@ -195,7 +195,10 @@ POINT_COUNTS = [1, 200, 201, 1000, 1001, 5000, 5001, 100000]
 def point_cases() -> dict[str, list[dict]]:
     palettes = load_tokens()["palettes"]
     colors = list(dict.fromkeys(SAMPLE_COLORS + [color for slots in palettes.values() for color in slots]))
-    return {"fills": [{"hex": color, "surface": "#ffffff", "fill": point_fill(color, "#ffffff")} for color in colors],
+    dark = load_tokens()["neutral_dark"]["surface"]
+    fills = [{"hex": color, "surface": surface, "fill": point_fill(color, surface)}
+             for surface in ("#ffffff", dark) for color in colors + ["#2d1b69", "#0b3d6e"]]
+    return {"fills": fills,
             "steps": [{"count": count, "radius": point_step(count)[0], "opacity": point_step(count)[1]}
                       for count in POINT_COUNTS]}
 

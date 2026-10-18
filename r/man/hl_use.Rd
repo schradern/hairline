@@ -13,7 +13,9 @@ hl_use(
   background = NULL,
   brand = NULL,
   colors = NULL,
-  output = NULL
+  output = NULL,
+  accent = NULL,
+  scheme = NULL
 )
 }
 \arguments{
@@ -35,6 +37,10 @@ or \code{FALSE}.}
 \item{colors}{Named vector of entity colours, e.g. \code{c("Unit B" = "#e8a628")}; see \code{\link[=hl_color]{hl_color()}}.}
 
 \item{output}{Export type whose brand overrides apply: \code{"screen"}, \code{"pdf"}, \code{"html"} or \code{"docx"}.}
+
+\item{accent}{Colour of a lone series (charts without groups), made readable against the background.}
+
+\item{scheme}{\code{"light"} (default) or \code{"dark"}: the dark neutral tokens (a brand's light neutrals do not carry over).}
 }
 \value{
 The active settings, invisibly.

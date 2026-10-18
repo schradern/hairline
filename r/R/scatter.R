@@ -43,7 +43,7 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
   }
   rows <- data[stats::complete.cases(data[, c(x, y)]), , drop = FALSE]
   groups <- if (is.null(by)) "" else order %||% unique(as.character(rows[[by]]))
-  colours <- if (is.null(by)) stats::setNames(hl_settings()$palette[1], "") else
+  colours <- if (is.null(by)) stats::setNames(lone_colour(), "") else
     colours_for(groups, colors)
   plot <- ggplot2::ggplot()
   for (name in groups) {

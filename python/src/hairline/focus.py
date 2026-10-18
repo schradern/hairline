@@ -10,6 +10,7 @@ from matplotlib.colors import to_hex
 
 from hairline.errors import HairlineLayoutError
 from hairline.layout.legend import LegendItem
+from hairline.marks import context_color
 from hairline.settings import role_size
 from hairline.tokens import load_tokens
 
@@ -51,14 +52,14 @@ def check_series(figure: HairlineFigure, series: Sequence[str]) -> None:
                                       f"{', '.join(labels) or 'none'}")
 
 
-def restyle(artist, keep: bool, rules: dict) -> None:
+def restyle(artist, keep: bool, rules: dict, context: str) -> None:
     if isinstance(artist, PathCollection):
         if not keep:
-            artist.set_color(rules["context"])
+            artist.set_color(context)
         return
     artist.set_linewidth(artist.get_linewidth() * (rules["highlight_width"] if keep else rules["context_width"]))
     if not keep:
-        artist.set_color(rules["context"])
+        artist.set_color(context)
 
 
 def artist_color(artist) -> str:
@@ -96,7 +97,7 @@ def apply_highlight(figure: HairlineFigure) -> None:
                 continue
             figure.focus_done.add(id(artist))
             keep = index in panels and (not spec["series"] or artist.get_label() in spec["series"])
-            restyle(artist, keep, rules)
+            restyle(artist, keep, rules, context_color(figure.settings))
             if not keep:
                 figure.light_slot_done.add(id(artist))
 
@@ -154,7 +155,7 @@ def focus_legend_items(figure: HairlineFigure, items: list[LegendItem]) -> list[
     """Legend swatches show a series' highlighted colour, not the context grey of its other panels."""
     if not figure.highlight_spec:
         return items
-    context = load_tokens()["focus"]["context"]
+    context = context_color(figure.settings)
     colours = {}
     for ax in figure.axes:
         for artist in data_artists(ax):

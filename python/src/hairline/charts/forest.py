@@ -11,6 +11,7 @@ from hairline.charts.common import check_columns, humanise
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import lone_color
 from hairline.numbers import format_interval, format_number, format_percent
 from hairline.settings import current_settings
 from hairline.ticks import axis_limits, nice_breaks
@@ -106,7 +107,7 @@ def forest(data, study: str = "study", estimate: str = "estimate", low: str = "l
         raise ValueError(f"hairline: forest needs the study, estimate, low and high columns ({study}, {estimate}, "
                          f"{low}, {high}); columns: {', '.join(map(str, getattr(data, 'columns', [])))}")
     title = title or f"Effects by {humanise(study).lower()}"
-    spec = forest_spec(data, study, estimate, low, high, color=current_settings().palette[0], **options)
+    spec = forest_spec(data, study, estimate, low, high, color=lone_color(), **options)
     note = ". ".join(part.rstrip(".") for part in (heterogeneity, caption) if part)
     result = figure(title, subtitle=subtitle, caption=note + "." if note else None, size=size)
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))

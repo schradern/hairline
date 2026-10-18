@@ -115,7 +115,7 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
   grouped <- !is.null(by) || length(estimates) > 1
   names <- vapply(estimates, function(estimate) if (nzchar(estimate$name)) estimate$name else endpoint, character(1))
   for (index in seq_along(estimates)) estimates[[index]]$name <- names[index]
-  colours <- if (grouped) colours_for(names, colors) else stats::setNames(hl_settings()$palette[1], names)
+  colours <- if (grouped) colours_for(names, colors) else stats::setNames(lone_colour(), names)
   max_time <- max(vapply(estimates, function(estimate) max(estimate$table$time), numeric(1)))
   moments <- times %||% nice_breaks(0, max_time)
   medians <- paste(vapply(estimates, function(estimate) {

@@ -89,3 +89,13 @@ test_that("a new host context re-applies the style and keeps explicit arguments"
   expect_equal(hairline_state$settings$locale, "de")
   hl_use(brand = FALSE, locale = "en")
 })
+
+test_that("the host design sets accent and scheme", {
+  folder <- withr::local_tempdir()
+  local_host_context(folder, design = list(font = "Hairline Sans", accent = "#7a2e8c", scheme = "dark"))
+  settings <- hl_use(brand = FALSE)
+  expect_equal(settings$scheme, "dark")
+  expect_equal(settings$accent, "#7a2e8c")
+  expect_equal(hl_use(brand = FALSE, scheme = "light")$scheme, "light")
+  hl_use(brand = FALSE)
+})

@@ -15,16 +15,29 @@ surface_colour <- function(settings) {
   if (identical(settings$background, "transparent")) "#ffffff" else settings$neutral$surface
 }
 
+# The colour itself, or a shade of its hue that reaches 3:1 against the surface: darker on a light surface, lighter
+# on a dark one.
 point_fill <- function(colour, surface) {
   limit <- hl_tokens()$checks$contrast_light_slot
   step <- hl_tokens()$points$fill_lightness_step
   values <- hex_to_oklch(colour)
+  direction <- if (hex_to_oklch(surface)[1] >= 0.5) -1 else 1
   fill <- colour
-  while (contrast_ratio(fill, surface) < limit && values[1] > 0) {
-    values[1] <- max(0, values[1] - step)
+  while (contrast_ratio(fill, surface) < limit && values[1] > 0 && values[1] < 1) {
+    values[1] <- min(1, max(0, values[1] + direction * step))
     fill <- oklch_to_hex(values[1], values[2], values[3])
   }
   fill
+}
+
+# Colour of a lone series (a chart without groups): the accent, made readable on the surface, else slot 1.
+lone_colour <- function(settings = hl_settings()) {
+  if (is.null(settings$accent)) settings$palette[1] else point_fill(settings$accent, surface_colour(settings))
+}
+
+# Grey for series that recede (highlight), lighter than ink on light surfaces, darker on dark ones.
+context_colour <- function(settings = hl_settings()) {
+  hl_tokens()$focus[[if (identical(settings$scheme, "dark")) "context_dark" else "context"]]
 }
 
 point_step <- function(count) {

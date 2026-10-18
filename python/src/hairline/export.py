@@ -48,8 +48,8 @@ def write_html(fig: Figure, path: Path, options: dict) -> None:
     buffer = io.StringIO()
     fig.savefig(buffer, format="svg", metadata=METADATA["svg"], **options)
     targets = figure_targets(owner)
-    path.write_text(page(owner.title, figure_html(buffer.getvalue(), targets, owner.settings.font)),
-                    encoding="utf-8")
+    path.write_text(page(owner.title, figure_html(buffer.getvalue(), targets, owner.settings.font),
+                         targets["style"]["surface"]), encoding="utf-8")
 
 
 def write_one(fig: Figure, path: Path, name: str, dpi: int, options: dict) -> None:

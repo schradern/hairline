@@ -10,6 +10,7 @@ from hairline.charts.arcs_geometry import arcs_drawing
 from hairline.charts.common import check_columns, humanise, with_counts
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import lone_color
 from hairline.numbers import format_number
 from hairline.settings import current_settings
 
@@ -29,7 +30,7 @@ def arcs_spec(data: pd.DataFrame, source: str, target: str, value: str | None,
     links = [{"source": first, "target": second, "value": amount, "value_text": format_number(amount, 0, locale)}
              for (first, second), amount in totals.items() if first != second and amount > 0]
     largest = max(link["value"] for link in links)
-    return {"nodes": names, "links": links, "color": current_settings().palette[0],
+    return {"nodes": names, "links": links, "color": lone_color(),
             "key": [{"value": amount, "text": format_number(amount, 0, locale)}
                     for amount in sorted({largest, round(largest / 2), min(link["value"] for link in links)})]}
 

@@ -30,6 +30,8 @@ class Settings:
     neutral: dict[str, str] = field(default_factory=dict)
     brand_name: str | None = None
     base_size_explicit: bool = False
+    accent: str | None = None
+    scheme: str = "light"
 
 
 _state: dict[str, object] = {"current": None, "announced": set(), "arguments": {}}
@@ -122,6 +124,20 @@ def reapply() -> None:
         use(**_state["arguments"])
 
 
+def scheme_fields(scheme: str | None, background: str | None, accent: str | None) -> dict[str, object]:
+    """The dark scheme swaps every neutral token (a brand's light neutrals do not carry over); the accent is
+    checked as a hex colour."""
+    if scheme not in (None, "light", "dark"):
+        raise ValueError(f"hairline: scheme {scheme!r} must be 'light' or 'dark'")
+    fields: dict[str, object] = {"scheme": scheme or "light"}
+    if accent is not None:
+        fields["accent"] = validated_entity_colors({"accent": accent})["accent"]
+    if scheme == "dark":
+        neutral = dict(load_tokens()["neutral_dark"])
+        fields |= {"neutral": neutral, "background": background or neutral["surface"]}
+    return fields
+
+
 def check_locale(locale: str | None) -> None:
     locales = load_tokens()["locales"]
     if locale is not None and locale not in locales:
@@ -140,23 +156,26 @@ def validated_entity_colors(colors: Mapping[str, str] | None) -> dict[str, str]:
 
 def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[str, float] | None = None,
         palette: str | Sequence[str] | None = None, locale: str | None = None, background: str | None = None,
-        brand: object = None, colors: Mapping[str, str] | None = None, output: str | None = None) -> Settings:
+        brand: object = None, colors: Mapping[str, str] | None = None, output: str | None = None,
+        accent: str | None = None, scheme: str | None = None) -> Settings:
     """Set hairline's style for this session and return the active settings.
 
     Precedence: these arguments > the brand (`brand=` path or a list of layers from institution to document, or
     a `_brand.yml` found from the working directory up to the project root; `brand=False` disables the lookup)
     > hairline's defaults. `output` ("screen", "pdf", "html", "docx") applies the brand's overrides for it.
+    `accent` colours a lone series (charts without groups); `scheme="dark"` uses the dark neutral tokens.
     """
     from hairline.host import host_context
     from hairline.style import rcparams_for
     _state["arguments"] = {"font": font, "base_size": base_size, "sizes": sizes, "palette": palette,
                            "locale": locale, "background": background, "brand": brand, "colors": colors,
-                           "output": output}
+                           "output": output, "accent": accent, "scheme": scheme}
     context = host_context()
     if context is not None:
         locale, base_size = locale or context.locale, base_size or context.base_size
         brand = context.brand if brand is None and context.brand is not None else brand
         output, font = output or context.output, font or context.design.get("font")
+        accent, scheme = accent or context.design.get("accent"), scheme or context.design.get("scheme")
     register_fonts()
     check_locale(locale)
     explicit = validated_entity_colors(colors)
@@ -170,6 +189,7 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     if base_size is not None:
         changes |= {"base_size": float(base_size), "base_size_explicit": True}
     changes |= {"locale": locale or layered.locale, "background": background or layered.background}
+    changes |= scheme_fields(scheme, background, accent)
     settings = Settings(**{**layered.__dict__, **changes})
     _state["current"] = settings
     entities.configure({**(resolved_brand.entity_colors if resolved_brand else {}), **explicit})

@@ -12,7 +12,7 @@ from hairline import entities
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
-from hairline.marks import STATIC_ID
+from hairline.marks import STATIC_ID, lone_color
 from hairline.numbers import format_number
 from hairline.settings import current_settings
 from hairline.stats.tests import fit_band, linear_fit, pearson
@@ -50,7 +50,7 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
     groups = groups_of(rows, by, order)
     with entities.chart([name for name, _ in groups] if by else [], colors):
         for name, group in groups:
-            color = entities.color(name) if by else current_settings().palette[0]
+            color = entities.color(name) if by else lone_color()
             result.ax.scatter(group[x], group[y], color=color, label=name if by else "_nolegend_")
     if fit:
         draw_fit(result.ax, rows[x], rows[y])

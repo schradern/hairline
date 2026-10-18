@@ -85,7 +85,7 @@ highlight_panels <- function(built, panels) {
 }
 
 restyle_layer <- function(data, keep, geom, rules) {
-  context <- rules$context
+  context <- context_colour()
   if ("colour" %in% names(data)) data$colour[!keep] <- context
   if ("fill" %in% names(data) && geom != "GeomPoint") data$fill[!keep] <- context
   if (geom %in% c("GeomLine", "GeomPath", "GeomStep") && "linewidth" %in% names(data)) {
