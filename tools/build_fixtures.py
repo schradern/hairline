@@ -38,6 +38,8 @@ from hairline.charts.risk_of_bias import risk_of_bias_spec
 from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
 from hairline.charts.sankey import sankey_spec
 from hairline.charts.sankey_geometry import sankey_drawing
+from hairline.charts.venn import venn_spec
+from hairline.charts.venn_geometry import venn_drawing
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklch
@@ -387,11 +389,18 @@ def flow_cases() -> dict:
                               "destination": ["ICU", "Ward", "ICU", "ED", "Ward", "ICU", "ICU", "Theatre"],
                               "patients": [40, 25, 18, 6, 22, 10, 30, 12]})
     chord = chord_spec(referrals, "origin", "destination", "patients")
+    conditions = {"Diabetes": ["a", "b", "c", "d", "e"], "Hypertension": ["c", "d", "e", "f"],
+                  "Obesity": ["e", "f", "g"]}
+    screening = {"Screened": list(range(24)), "Confirmed": list(range(18, 30))}
+    venns = [venn_spec(conditions), venn_spec(screening, proportional=True)]
     prisma = prisma_spec(PRISMA_COUNTS)
     return {"box": [box.x, box.y, box.width, box.height], "prisma": {"counts": PRISMA_COUNTS, "spec": prisma,
             "shapes": prisma_drawing(prisma, box, fake_measure, DRAWING_STYLE)},
             "chord": {"data": referrals.to_dict(orient="list"), "spec": chord,
                       "shapes": chord_drawing(chord, box, fake_measure, DRAWING_STYLE)},
+            "venn": [{"sets": sets, "proportional": spec["proportional"], "spec": spec,
+                      "shapes": venn_drawing(spec, box, fake_measure, DRAWING_STYLE)}
+                     for sets, spec in zip([conditions, screening], venns, strict=True)],
             "arcs": [{"data": data.to_dict(orient="list"), "spec": spec,
                       "shapes": arcs_drawing(spec, box, fake_measure, DRAWING_STYLE)}
                      for data, spec in zip((transfers, crowded), arc_specs, strict=True)]}

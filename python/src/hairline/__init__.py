@@ -17,6 +17,7 @@ from hairline.charts.risk_of_bias import risk_of_bias
 from hairline.charts.sankey import sankey
 from hairline.charts.scatter import scatter
 from hairline.charts.timeseries import timeseries
+from hairline.charts.venn import venn
 from hairline.color.check import PaletteReport, check_palette
 from hairline.entities import color, colors
 from hairline.errors import HairlineLayoutError
@@ -32,5 +33,6 @@ __all__ = [
     "color", "colors", "correlation", "current_settings", "donut", "dotplot", "figure", "forest", "format_interval",
     "format_number", "format_percent", "frame", "funnel", "kaplan_meier", "load_tokens", "palette", "partition",
     "prisma", "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter", "timeseries", "use",
+    "venn",
 ]
 __version__ = "0.1.0"
