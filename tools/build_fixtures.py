@@ -10,6 +10,7 @@ import itertools
 import json
 import math
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +18,7 @@ import pandas as pd
 from study_fixtures import study_cases
 
 from hairline.brand import load_brand
+from hairline.brand_entities import checked_entities
 from hairline.charts.arcs import arcs_spec
 from hairline.charts.arcs_geometry import arcs_drawing
 from hairline.charts.chord import chord_spec
@@ -154,7 +156,18 @@ def brand_cases() -> dict:
     brand = load_brand(REPO / "brands" / "example" / "_brand.yml")
     return {"name": brand.name, "names": brand.names, "colors_given": brand.colors_given,
             "readable": brand.colors_used, "neutral": brand.neutral, "sizes": brand.sizes, "locale": brand.locale,
-            "base_size": brand.base_size}
+            "base_size": brand.base_size, "layered": layered_brand_case()}
+
+
+def layered_brand_case() -> dict:
+    paths = [REPO / "brands" / "example" / "_brand.yml", REPO / "brands" / "example" / "units.yml"]
+    brand, docx = load_brand(paths), load_brand(paths, output="docx")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        exact = checked_entities({"Unit A": "#0b3d6e", "Unit B": "#1d4f86"}, "exact", "test")
+    return {"name": brand.name, "entity_colors": brand.entity_colors, "entity_failures": brand.entity_failures,
+            "docx_base_size": docx.base_size, "html_grid": load_brand(paths, output="html").neutral["grid"],
+            "exact_failures": exact[1]}
 
 
 def entity_cases() -> list[dict]:

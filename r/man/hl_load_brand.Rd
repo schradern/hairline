@@ -4,14 +4,18 @@
 \alias{hl_load_brand}
 \title{Read a brand file}
 \usage{
-hl_load_brand(path)
+hl_load_brand(path, output = NULL)
 }
 \arguments{
-\item{path}{Path to \verb{_brand.yml}.}
+\item{path}{Path to \verb{_brand.yml}, or several paths: layers from institution to document, later layers
+overriding earlier ones.}
+
+\item{output}{Export type whose overrides apply: \code{"screen"}, \code{"pdf"}, \code{"html"} or \code{"docx"}.}
 }
 \value{
 A list with \code{name}, \code{path}, \code{names}, \code{colors_given}, \code{colors_used}, \code{adapt}, \code{font},
-\code{heading_font}, \code{heading_weight}, \code{neutral}, \code{base_size}, \code{sizes}, \code{locale}.
+\code{heading_font}, \code{heading_weight}, \code{neutral}, \code{base_size}, \code{sizes}, \code{locale}, \code{entity_colors},
+\code{entity_failures}, \code{output}.
 }
 \description{
 Parses a \verb{_brand.yml} file in the brand.yml format. Errors name the file,

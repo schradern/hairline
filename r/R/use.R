@@ -48,16 +48,18 @@ palette_fields <- function(palette) {
 #' @param palette Palette name or vector of hex colours.
 #' @param locale `"en"` or `"de"`.
 #' @param background `"#ffffff"`-style colour or `"transparent"`.
-#' @param brand Path to a `_brand.yml`, `NULL` to look one up, or `FALSE`.
+#' @param brand Path to a `_brand.yml`, several paths as layers (institution first), `NULL` to look one up,
+#'   or `FALSE`.
 #' @param colors Named vector of entity colours, e.g. `c("Unit B" = "#e8a628")`; see [hl_color()].
+#' @param output Export type whose brand overrides apply: `"screen"`, `"pdf"`, `"html"` or `"docx"`.
 #' @return The active settings, invisibly.
 #' @export
 hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, locale = NULL,
-                   background = NULL, brand = NULL, colors = NULL) {
+                   background = NULL, brand = NULL, colors = NULL, output = NULL) {
   register_bundled_fonts()
   if (!is.null(locale)) locale_symbols(locale)
   explicit <- validated_entity_colors(colors)
-  resolved_brand <- resolve_brand(brand)
+  resolved_brand <- resolve_brand(brand, output)
   settings <- brand_layer(default_settings(), resolved_brand)
   settings <- utils::modifyList(settings, palette_fields(palette))
   if (!is.null(font)) settings$font <- resolve_family(font)

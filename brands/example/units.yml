@@ -1,0 +1,17 @@
+# A project layer over the example brand: colours pinned to units, one section whose units share its hue,
+# and overrides for two export types. Load it after _brand.yml: use(brand=["_brand.yml", "units.yml"]).
+meta:
+  name: Example University Hospital, ICU project
+defaults:
+  hairline:
+    colors:
+      Unit A: harbor
+      Unit B: "#1d4f86"
+      Surgery: poppy
+    groups:
+      Surgery: [Unit C, Unit D]
+    outputs:
+      docx:
+        base_size: 10
+      html:
+        grid: "#e6e8eb"

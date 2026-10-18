@@ -14,6 +14,7 @@ TARGETS = [
     (TOKENS / "hairline.json", REPO / "python/src/hairline/data/tokens.json"),
     (TOKENS / "hairline.json", REPO / "r/inst/tokens/hairline.json"),
     (REPO / "brands/example/_brand.yml", REPO / "r/tests/testthat/fixtures/example_brand.yml"),
+    (REPO / "brands/example/units.yml", REPO / "r/tests/testthat/fixtures/example_units.yml"),
 ]
 TREES = [
     (TOKENS / "fonts", REPO / "python/src/hairline/data/fonts"),

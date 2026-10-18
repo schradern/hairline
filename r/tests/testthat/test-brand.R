@@ -66,3 +66,18 @@ test_that("brand slot guard and report", {
   expect_match(report, "checks: passed")
   hl_use(brand = FALSE)
 })
+
+test_that("brand layers, export overrides and entity checks match the Python reference", {
+  expected <- read_fixture("brand.json")$layered
+  paths <- c(example_brand(), testthat::test_path("fixtures", "example_units.yml"))
+  brand <- hl_load_brand(paths)
+  expect_equal(brand$name, expected$name)
+  expect_equal(as.list(brand$entity_colors), expected$entity_colors)
+  expect_equal(brand$entity_failures, as.character(unlist(expected$entity_failures)))
+  expect_equal(hl_load_brand(paths, output = "docx")$base_size, expected$docx_base_size)
+  expect_equal(hl_load_brand(paths, output = "html")$neutral$grid, expected$html_grid)
+  expect_warning(exact <- checked_entities(c("Unit A" = "#0b3d6e", "Unit B" = "#1d4f86"), "exact", "test"),
+                 "hard to tell apart")
+  expect_equal(exact$failures, as.character(unlist(expected$exact_failures)))
+  expect_error(hl_load_brand(paths, output = "slides"), "output 'slides' must be one of screen, pdf, html, docx")
+})

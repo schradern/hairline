@@ -88,14 +88,14 @@ warn_exact_brand <- function(name, labels, colors) {
   }
 }
 
-register_brand_fonts <- function(content, path) {
+register_brand_fonts <- function(content, path, font_dir = dirname(path)) {
   fonts <- brand_get(content, "typography.fonts") %||% list()
   for (index in seq_along(fonts)) {
     entry <- fonts[[index]]
     source <- entry$source %||% "system"
     if (identical(source, "file")) {
       files <- vapply(entry$files, function(file) if (is.list(file)) file$path else file, character(1))
-      paths <- normalizePath(file.path(dirname(path), files), mustWork = FALSE)
+      paths <- normalizePath(file.path(font_dir, files), mustWork = FALSE)
       missing <- paths[!file.exists(paths)]
       if (length(missing)) brand_fail(path, sprintf("typography.fonts[%d].files", index - 1),
                                       sprintf("font file %s not found", missing[1]))
@@ -129,12 +129,17 @@ brand_entities <- function(content, palette, categorical, used, path) {
 #' Parses a `_brand.yml` file in the brand.yml format. Errors name the file,
 #' the key path and the offending value.
 #'
-#' @param path Path to `_brand.yml`.
+#' @param path Path to `_brand.yml`, or several paths: layers from institution to document, later layers
+#'   overriding earlier ones.
+#' @param output Export type whose overrides apply: `"screen"`, `"pdf"`, `"html"` or `"docx"`.
 #' @return A list with `name`, `path`, `names`, `colors_given`, `colors_used`, `adapt`, `font`,
-#'   `heading_font`, `heading_weight`, `neutral`, `base_size`, `sizes`, `locale`.
+#'   `heading_font`, `heading_weight`, `neutral`, `base_size`, `sizes`, `locale`, `entity_colors`,
+#'   `entity_failures`, `output`.
 #' @export
-hl_load_brand <- function(path) {
-  content <- read_brand_yaml(path)
+hl_load_brand <- function(path, output = NULL) {
+  source <- read_brand_layers(path, output)
+  content <- source$content
+  path <- source$label
   palette <- brand_palette(content, path)
   categorical <- brand_categorical(content, palette, path)
   adapt <- brand_get(content, "defaults.hairline.adapt") %||% "readable"
@@ -143,7 +148,7 @@ hl_load_brand <- function(path) {
   }
   name <- brand_get(content, "meta.name")
   if (adapt == "exact" && length(categorical$colors)) warn_exact_brand(name, categorical$names, categorical$colors)
-  register_brand_fonts(content, path)
+  register_brand_fonts(content, path, source$font_dir)
   locale <- brand_get(content, "defaults.hairline.locale")
   if (!is.null(locale) && !locale %in% names(hl_tokens()$locales)) {
     known <- paste(names(hl_tokens()$locales), collapse = ", ")
@@ -151,13 +156,15 @@ hl_load_brand <- function(path) {
   }
   used <- if (adapt == "readable" && length(categorical$colors)) adapt_readable(categorical$colors) else
     categorical$colors
-  list(name = name, path = normalizePath(path), names = categorical$names, colors_given = categorical$colors,
+  entities <- checked_entities(brand_entities(content, palette, categorical$names, used, path), adapt, path)
+  entity_colors <- grouped_entities(entities$colors, brand_get(content, "defaults.hairline.groups") %||% list(), path)
+  list(name = name, path = normalizePath(source$path), names = categorical$names, colors_given = categorical$colors,
        colors_used = used, adapt = adapt, font = brand_get(content, "typography.base.family"),
        heading_font = brand_get(content, "typography.headings.family"),
        heading_weight = brand_get(content, "typography.headings.weight"),
        neutral = brand_neutral(content, palette, path), base_size = brand_get(content, "defaults.hairline.base_size"),
        sizes = brand_get(content, "defaults.hairline.sizes") %||% list(), locale = locale,
-       entity_colors = brand_entities(content, palette, categorical$names, used, path))
+       entity_colors = entity_colors, entity_failures = entities$failures, output = output)
 }
 
 #' Find a brand file
@@ -198,15 +205,18 @@ hl_brand_report <- function(brand = NULL) {
   }
   checks <- if (is.null(report)) "checks: no colours" else if (report$passed) "checks: passed" else
     paste("checks:", paste(report$failures, collapse = "; "))
-  paste(c(rows, checks), collapse = "\n")
+  entities <- brand$entity_colors %||% character()
+  entity_rows <- c(sprintf("entity %s: %s", names(entities), unlist(entities)),
+                   sprintf("entity check: %s", brand$entity_failures %||% character()))
+  paste(c(rows, checks, if (length(entities)) entity_rows), collapse = "\n")
 }
 
-resolve_brand <- function(brand) {
+resolve_brand <- function(brand, output = NULL) {
   if (isFALSE(brand)) return(NULL)
   if (is.list(brand)) return(brand)
   path <- if (is.null(brand)) hl_find_brand() else brand
   if (is.null(path)) return(NULL)
-  loaded <- hl_load_brand(path)
+  loaded <- hl_load_brand(path, output)
   if (is.null(brand) && !normalizePath(path) %in% hairline_state$announced) {
     hairline_state$announced <- c(hairline_state$announced, normalizePath(path))
     message(sprintf("Using brand '%s' from %s", loaded$name, path))

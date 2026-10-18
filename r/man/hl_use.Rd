@@ -12,7 +12,8 @@ hl_use(
   locale = NULL,
   background = NULL,
   brand = NULL,
-  colors = NULL
+  colors = NULL,
+  output = NULL
 )
 }
 \arguments{
@@ -28,9 +29,12 @@ hl_use(
 
 \item{background}{\code{"#ffffff"}-style colour or \code{"transparent"}.}
 
-\item{brand}{Path to a \verb{_brand.yml}, \code{NULL} to look one up, or \code{FALSE}.}
+\item{brand}{Path to a \verb{_brand.yml}, several paths as layers (institution first), \code{NULL} to look one up,
+or \code{FALSE}.}
 
 \item{colors}{Named vector of entity colours, e.g. \code{c("Unit B" = "#e8a628")}; see \code{\link[=hl_color]{hl_color()}}.}
+
+\item{output}{Export type whose brand overrides apply: \code{"screen"}, \code{"pdf"}, \code{"html"} or \code{"docx"}.}
 }
 \value{
 The active settings, invisibly.

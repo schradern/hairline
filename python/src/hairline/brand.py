@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 from matplotlib import font_manager
 
+from hairline.brand_entities import checked_entities, grouped_entities
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.space import HEX_PATTERN, hex_to_oklch
@@ -18,6 +19,7 @@ from hairline.tokens import load_tokens
 
 ROOT_MARKERS = (".git", "_quarto.yml", "pyproject.toml", "DESCRIPTION")
 NEUTRAL_KEYS = ("muted", "faint", "grid", "axis", "band")
+OUTPUTS = ("screen", "pdf", "html", "docx")
 
 
 @dataclass(frozen=True)
@@ -38,24 +40,61 @@ class Brand:
     sequential_hue: float | None = None
     diverging_hues: tuple[float, float] | None = None
     entity_colors: dict[str, str] = field(default_factory=dict)
+    entity_failures: list[str] = field(default_factory=list)
+    output: str | None = None
+
+
+def merged(base: dict, layer: dict) -> dict:
+    """`layer` over `base`: mappings merge key by key, everything else (lists included) is replaced."""
+    result = dict(base)
+    for key, value in layer.items():
+        result[key] = merged(result[key], value) if isinstance(value, dict) and isinstance(result.get(key), dict) \
+            else value
+    return result
+
+
+def read_layer(path: Path) -> dict:
+    try:
+        content = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except FileNotFoundError as error:
+        raise ValueError(f"hairline: brand file {path} does not exist") from error
+    except yaml.YAMLError as error:
+        mark = getattr(error, "problem_mark", None)
+        where = f"line {mark.line + 1}" if mark else "unknown position"
+        raise ValueError(f"hairline: {path.name}: {where}: {getattr(error, 'problem', error)}") from error
+    if not isinstance(content, dict):
+        raise ValueError(f"hairline: {path.name}: the top level must be a mapping of sections")
+    return content
 
 
 class BrandFile:
-    """Parsed YAML with error messages that name the file and the key path."""
+    """One brand file, or layers from institution to document merged in order; error messages name the file
+    (the layers, joined by '+') and the key path."""
 
-    def __init__(self, path: Path):
-        self.path = path
-        try:
-            content = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        except FileNotFoundError as error:
-            raise ValueError(f"hairline: brand file {path} does not exist") from error
-        except yaml.YAMLError as error:
-            mark = getattr(error, "problem_mark", None)
-            where = f"line {mark.line + 1}" if mark else "unknown position"
-            raise ValueError(f"hairline: {path.name}: {where}: {getattr(error, 'problem', error)}") from error
-        if not isinstance(content, dict):
-            raise ValueError(f"hairline: {path.name}: the top level must be a mapping of sections")
-        self.content = content
+    def __init__(self, paths: Path | list[Path], output: str | None = None):
+        self.paths = [paths] if isinstance(paths, Path) else list(paths)
+        self.path = self.paths[-1]
+        self.label = " + ".join(path.name for path in self.paths)
+        layers = [read_layer(path) for path in self.paths]
+        self.font_dir = next((path.parent for path, layer in zip(reversed(self.paths), reversed(layers),
+                                                                strict=True)
+                              if isinstance(layer.get("typography"), dict) and "fonts" in layer["typography"]),
+                             self.path.parent)
+        content: dict = {}
+        for layer in layers:
+            content = merged(content, layer)
+        self.content = self.for_output(content, output)
+
+    def for_output(self, content: dict, output: str | None) -> dict:
+        """Apply `defaults.hairline.outputs.<output>` after all layers."""
+        hairline = (content.get("defaults") or {}).get("hairline") or {}
+        outputs = hairline.get("outputs") or {}
+        for name in outputs:
+            if name not in OUTPUTS:
+                raise self.fail(f"defaults.hairline.outputs.{name}", f"must be one of {', '.join(OUTPUTS)}")
+        if output is None or output not in outputs:
+            return content
+        return merged(content, {"defaults": {"hairline": outputs[output]}})
 
     def get(self, dotted: str, default: Any = None) -> Any:
         value: Any = self.content
@@ -66,7 +105,7 @@ class BrandFile:
         return value
 
     def fail(self, key: str, message: str) -> ValueError:
-        return ValueError(f"hairline: {self.path.name}: {key}: {message}")
+        return ValueError(f"hairline: {self.label}: {key}: {message}")
 
 
 def palette_section(source: BrandFile) -> dict[str, str]:
@@ -137,12 +176,12 @@ def register_brand_fonts(source: BrandFile) -> None:
         if kind == "file":
             for file_index, file_entry in enumerate(entry.get("files", []) or []):
                 file_path = file_entry.get("path") if isinstance(file_entry, dict) else file_entry
-                path = (source.path.parent / str(file_path)).resolve()
+                path = (source.font_dir / str(file_path)).resolve()
                 if not path.is_file():
                     raise source.fail(f"typography.fonts[{index}].files[{file_index}]", f"font file {path} not found")
                 font_manager.fontManager.addfont(str(path))
         elif kind == "google":
-            warnings.warn(f"hairline: {source.path.name}: typography.fonts[{index}]: Google font download is not "
+            warnings.warn(f"hairline: {source.label}: typography.fonts[{index}]: Google font download is not "
                           "supported; install the font or use source: file", UserWarning, stacklevel=3)
 
 
@@ -173,9 +212,19 @@ def entity_section(source: BrandFile, palette: dict[str, str], names: list[str],
     return resolved
 
 
-def load_brand(path: str | os.PathLike) -> Brand:
-    """Parse a `_brand.yml` file; raises ValueError naming the file, key and value on problems."""
-    source = BrandFile(Path(path))
+def brand_paths(path: str | os.PathLike | list) -> list[Path]:
+    paths = [Path(os.fspath(item)) for item in path] if isinstance(path, (list, tuple)) else [Path(os.fspath(path))]
+    if not paths:
+        raise ValueError("hairline: brand needs at least one file")
+    return paths
+
+
+def load_brand(path: str | os.PathLike | list, output: str | None = None) -> Brand:
+    """Parse a `_brand.yml` file, or layers from institution to document (later layers override earlier ones);
+    `output` applies that export type's overrides. Raises ValueError naming the file, key and value."""
+    if output is not None and output not in OUTPUTS:
+        raise ValueError(f"hairline: output {output!r} must be one of {', '.join(OUTPUTS)}")
+    source = BrandFile(brand_paths(path), output)
     palette = palette_section(source)
     names, given = categorical_section(source, palette)
     mode, name = adapt_mode(source), source.get("meta.name")
@@ -188,8 +237,10 @@ def load_brand(path: str | os.PathLike) -> Brand:
         raise source.fail("defaults.hairline.locale", f"{locale!r} must be one of {known}")
     hue, pair = ramp_hues(source, palette)
     used = adapt_readable(given) if mode == "readable" and given else list(given)
-    return Brand(name=name, path=source.path, names=names, colors_given=given,
-                 colors_used=used, adapt=mode, entity_colors=entity_section(source, palette, names, used),
+    entities, failures = checked_entities(entity_section(source, palette, names, used), mode, source.label)
+    entities = grouped_entities(entities, source.get("defaults.hairline.groups", {}), source.fail)
+    return Brand(name=name, path=source.path, names=names, colors_given=given, output=output,
+                 colors_used=used, adapt=mode, entity_colors=entities, entity_failures=failures,
                  font=source.get("typography.base.family"), heading_font=source.get("typography.headings.family"),
                  heading_weight=source.get("typography.headings.weight"), neutral=neutral_section(source, palette),
                  base_size=source.get("defaults.hairline.base_size"),
@@ -221,4 +272,6 @@ def brand_report(brand: Brand) -> str:
         rows.append("checks: no colours")
     else:
         rows.append("checks: passed" if report.passed else f"checks: {'; '.join(report.failures)}")
+    rows += [f"entity {name}: {color}" for name, color in brand.entity_colors.items()]
+    rows += [f"entity check: {failure}" for failure in brand.entity_failures]
     return "\n".join(rows)

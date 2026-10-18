@@ -80,15 +80,17 @@ def palette_fields(palette: str | Sequence[str] | None) -> dict[str, object]:
     return {"palette": colors, "palette_name": name, "palette_label": label}
 
 
-def resolve_brand(brand: object) -> Brand | None:
+def resolve_brand(brand: object, output: str | None = None) -> Brand | None:
     if brand is False:
         return None
     if isinstance(brand, Brand):
         return brand
+    if isinstance(brand, (list, tuple)):
+        return load_brand(list(brand), output)
     path = find_brand() if brand is None else Path(os.fspath(brand))
     if path is None:
         return None
-    loaded = load_brand(path)
+    loaded = load_brand(path, output)
     if brand is None and str(path) not in _state["announced"]:
         _state["announced"].add(str(path))
         LOGGER.info("Using brand '%s' from %s", loaded.name, path)
@@ -131,17 +133,18 @@ def validated_entity_colors(colors: Mapping[str, str] | None) -> dict[str, str]:
 
 def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[str, float] | None = None,
         palette: str | Sequence[str] | None = None, locale: str | None = None, background: str | None = None,
-        brand: object = None, colors: Mapping[str, str] | None = None) -> Settings:
+        brand: object = None, colors: Mapping[str, str] | None = None, output: str | None = None) -> Settings:
     """Set hairline's style for this session and return the active settings.
 
-    Precedence: these arguments > the brand (`brand=` path, or a `_brand.yml` found from the working directory
-    up to the project root; `brand=False` disables the lookup) > hairline's defaults.
+    Precedence: these arguments > the brand (`brand=` path or a list of layers from institution to document, or
+    a `_brand.yml` found from the working directory up to the project root; `brand=False` disables the lookup)
+    > hairline's defaults. `output` ("screen", "pdf", "html", "docx") applies the brand's overrides for it.
     """
     from hairline.style import rcparams_for
     register_fonts()
     check_locale(locale)
     explicit = validated_entity_colors(colors)
-    resolved_brand = resolve_brand(brand)
+    resolved_brand = resolve_brand(brand, output)
     layered = brand_layer(default_settings(), resolved_brand)
     changes: dict[str, object] = {**palette_fields(palette)}
     if font is not None:

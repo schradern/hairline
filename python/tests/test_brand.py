@@ -108,3 +108,46 @@ def test_brand_slot_guard(example):
 def test_brand_report_lists_slots(example):
     report = brand_report(load_brand(example))
     assert "harbor" in report and "#0b3d6e" in report and "passed" in report
+
+
+
+
+def layered_paths():
+    from pathlib import Path
+    folder = Path(__file__).resolve().parents[2] / "brands" / "example"
+    return [folder / "_brand.yml", folder / "units.yml"]
+
+
+def test_layers_merge_in_order_and_outputs_override_last():
+    brand = load_brand(layered_paths(), output="docx")
+    assert brand.name == "Example University Hospital, ICU project"
+    assert brand.colors_given == load_brand(layered_paths()[0]).colors_given
+    assert brand.base_size == 10
+    assert load_brand(layered_paths(), output="html").neutral["grid"] == "#e6e8eb"
+    assert load_brand(layered_paths()).base_size == 9
+
+
+def test_pinned_colours_are_checked_and_groups_take_tints():
+    import warnings
+    brand = load_brand(layered_paths())
+    assert set(brand.entity_colors) == {"Unit A", "Unit B", "Surgery", "Unit C", "Unit D"}
+    assert brand.entity_colors["Unit C"] != brand.entity_colors["Unit D"]
+    assert brand.entity_failures == []
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        from hairline.brand_entities import checked_entities
+        kept, failures = checked_entities({"Unit A": "#0b3d6e", "Unit B": "#1d4f86"}, "exact", "test")
+    assert kept["Unit B"] == "#1d4f86" and failures and "Unit A / Unit B" in failures[0]
+    assert any("hard to tell apart" in str(item.message) for item in caught)
+
+
+def test_unknown_output_is_named():
+    with pytest.raises(ValueError, match="output 'slides' must be one of screen, pdf, html, docx"):
+        load_brand(layered_paths(), output="slides")
+
+
+def test_use_takes_layers_and_an_output():
+    settings = hl.use(brand=layered_paths(), output="docx")
+    assert settings.base_size == 10
+    assert hl.color("Unit C") == load_brand(layered_paths()).entity_colors["Unit C"]
+    hl.use(brand=False)

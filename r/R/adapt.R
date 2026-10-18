@@ -6,14 +6,20 @@ snap_into_band <- function(color, limits) {
     max(values[2], limits$adapt_chroma), values[3])
 }
 
-weakest_pair <- function(colors) {
-  candidates <- c(pair_indices(length(colors), "adjacent"), pair_indices(min(3, length(colors)), "all"))
+# The pair to separate next: lowest colour-vision dE (then normal dE); across all pairs, the pair furthest below
+# either floor, so a normal-vision failure is fixed too.
+weakest_pair <- function(colors, pairs = "adjacent") {
+  limits <- hl_tokens()$checks
+  candidates <- c(pair_indices(length(colors), pairs), pair_indices(min(3, length(colors)), "all"))
   best <- NULL
   best_key <- NULL
   for (pair in candidates) {
     a <- colors[pair[1]]
     b <- colors[pair[2]]
-    key <- c(min(delta_e(a, b, "protan"), delta_e(a, b, "deutan")), delta_e(a, b))
+    vision <- min(delta_e(a, b, "protan"), delta_e(a, b, "deutan"))
+    normal <- delta_e(a, b)
+    key <- if (pairs == "all") c(min(vision / limits$cvd_floor, normal / limits$normal_floor), vision) else
+      c(vision, normal)
     if (is.null(best_key) || key[1] < best_key[1] || (key[1] == best_key[1] && key[2] < best_key[2])) {
       best <- pair
       best_key <- key
@@ -37,17 +43,17 @@ nudge_slots <- function(slots, pair, limits) {
 
 slots_to_hex <- function(slots) vapply(slots, function(slot) oklch_to_hex(slot[1], slot[2], slot[3]), character(1))
 
-adapt_readable <- function(colors) {
-  if (hl_check_palette(colors)$passed) return(colors)
+adapt_readable <- function(colors, pairs = "adjacent") {
+  if (hl_check_palette(colors, pairs = pairs)$passed) return(colors)
   limits <- hl_tokens()$checks
   slots <- lapply(colors, snap_into_band, limits = limits)
   for (iteration in seq_len(limits$adapt_iterations)) {
     adapted <- slots_to_hex(slots)
-    if (hl_check_palette(adapted)$passed) return(adapted)
-    slots <- nudge_slots(slots, weakest_pair(adapted), limits)
+    if (hl_check_palette(adapted, pairs = pairs)$passed) return(adapted)
+    slots <- nudge_slots(slots, weakest_pair(adapted, pairs), limits)
   }
   adapted <- slots_to_hex(slots)
-  remaining <- hl_check_palette(adapted)$failures
+  remaining <- hl_check_palette(adapted, pairs = pairs)$failures
   if (length(remaining) > 0) {
     warning(sprintf("hairline: colours could not be made fully readable: %s", paste(remaining, collapse = "; ")),
             call. = FALSE)

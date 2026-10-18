@@ -26,5 +26,21 @@
   "title": 14
  },
  "locale": "de",
- "base_size": 9
+ "base_size": 9,
+ "layered": {
+  "name": "Example University Hospital, ICU project",
+  "entity_colors": {
+   "Unit A": "#588cc7",
+   "Unit B": "#25578e",
+   "Surgery": "#f2545b",
+   "Unit C": "#ff7e7e",
+   "Unit D": "#ffaba8"
+  },
+  "entity_failures": [],
+  "docx_base_size": 10,
+  "html_grid": "#e6e8eb",
+  "exact_failures": [
+   "Unit A / Unit B: normal-vision ΔE 6.7 is below 15"
+  ]
+ }
 }
