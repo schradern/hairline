@@ -32,3 +32,41 @@ test_that("the html figure is named by its title and subtitle", {
   html <- paste(readLines(path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
   expect_true(grepl('aria-label="Two series. Weekly &lt;counts>"', html, fixed = TRUE))
 })
+
+power_curve <- function(...) {
+  hl_use(brand = FALSE)
+  data <- data.frame(n = c(40, 80, 120, 160), power = c(0.05, 0.42, 0.896, 1))
+  ggplot2::ggplot(data, ggplot2::aes(n, power)) + ggplot2::geom_line() +
+    ggplot2::labs(title = "Power") + theme_hairline() + scale_y_hairline(percent = TRUE, ...)
+}
+
+tip_texts <- function(plot) vapply(interactive_targets(plot)$series[[1]]$tips, `[[`, character(1), "text")
+
+test_that("scale digits reach the tooltips", {
+  expect_equal(tip_texts(power_curve(digits = 1)), c("Power: 40, 5.0%", "Power: 80, 42.0%", "Power: 120, 89.6%",
+                                                   "Power: 160, 100.0%"))
+})
+
+test_that("tooltip digits default to the shared rule", {
+  expect_equal(tip_texts(power_curve())[3], "Power: 120, 90%")
+})
+
+test_that("scale digits leave the axis labels alone", {
+  labels <- function(plot) ggplot2::ggplot_build(plot)@layout$panel_params[[1]]$y$get_labels()
+  expect_equal(labels(power_curve(digits = 1)), labels(power_curve()))
+})
+
+test_that("scale digits apply to plain numbers on either axis", {
+  hl_use(brand = FALSE)
+  data <- data.frame(dose = c(0.5, 1.25, 2), response = c(1.5, 2.25, 3.125))
+  plot <- ggplot2::ggplot(data, ggplot2::aes(dose, response)) + ggplot2::geom_line() +
+    ggplot2::labs(title = "Response") + theme_hairline() + scale_y_hairline(digits = 2) +
+    scale_x_hairline(digits = 0)
+  expect_equal(tip_texts(plot), c("Response: 1, 1.50", "Response: 1, 2.25", "Response: 2, 3.13"))
+})
+
+test_that("scale digits must be a whole number from zero", {
+  for (digits in list(-1, 1.5, "1", TRUE, NA_real_)) {
+    expect_error(scale_y_hairline(digits = digits), "digits must be a whole number from 0 to 10")
+  }
+})

@@ -1,3 +1,9 @@
+# hairline (development version)
+
+* `scale_y_hairline()` and `scale_x_hairline()` take `digits`, the decimals of the values a reader looks up in
+  interactive output. A power of 89.6 % no longer shows as 90 % beside a 90 % target. Without `digits`
+  tooltips follow the shared digits rule as before; axis labels are unchanged.
+
 # hairline 0.1.0
 
 * First release.

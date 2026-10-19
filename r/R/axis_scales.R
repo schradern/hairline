@@ -21,7 +21,19 @@ axis_labels <- function(percent) {
   }
 }
 
-hairline_position_scale <- function(aesthetic, percent, target, ...) {
+max_axis_digits <- 10
+
+check_axis_digits <- function(digits) {
+  is_whole <- is.numeric(digits) && length(digits) == 1 && !is.na(digits) && digits == round(digits)
+  if (!is.null(digits) && !(is_whole && digits >= 0 && digits <= max_axis_digits)) {
+    stop(sprintf("hairline: digits must be a whole number from 0 to %d, got %s", max_axis_digits,
+                 paste(deparse(digits), collapse = "")), call. = FALSE)
+  }
+  digits
+}
+
+hairline_position_scale <- function(aesthetic, percent, target, digits, ...) {
+  check_axis_digits(digits)
   constructor <- if (aesthetic == "y") ggplot2::scale_y_continuous else ggplot2::scale_x_continuous
   resolved <- target %||% 5
   usable <- function(limits) length(limits) == 2 && all(is.finite(limits))
@@ -29,7 +41,8 @@ hairline_position_scale <- function(aesthetic, percent, target, ...) {
   limits <- function(limits) if (usable(limits)) axis_limits(limits[1], limits[2], breaks(limits)) else limits
   scale <- constructor(breaks = breaks, limits = limits, labels = axis_labels(percent),
                        expand = ggplot2::expansion(0, 0), ...)
-  scale$hairline <- list(percent = percent, target_given = !is.null(target), arguments = list(...))
+  scale$hairline <- list(percent = percent, digits = digits, target_given = !is.null(target),
+                         arguments = list(...))
   scale
 }
 
@@ -43,6 +56,9 @@ row_target <- function(rows) if (rows == 1) 5 else if (rows == 2) 4 else 3
 #'
 #' @param percent Treat values as shares and label them as percentages (unit on the top label only).
 #' @param target Preferred number of breaks; `NULL` follows the panel rows (5, 4, then 3).
+#' @param digits Decimals of the values a reader looks up (tooltips of interactive output), so that 89.6 %
+#'   never reads as 90 % next to a 90 % target; `NULL` follows the shared digits rule. Axis labels keep their own
+#'   decimals, set by the step between breaks.
 #' @param ... Passed to [ggplot2::scale_y_continuous()] or [ggplot2::scale_x_continuous()].
 #' @return A ggplot2 scale.
 #' @examples
@@ -51,11 +67,15 @@ row_target <- function(rows) if (rows == 1) 5 else if (rows == 2) 4 else 3
 #'   ggplot2::labs(title = "Share of beds occupied") + theme_hairline() +
 #'   scale_y_hairline(percent = TRUE)
 #' @export
-scale_y_hairline <- function(percent = FALSE, target = NULL, ...) hairline_position_scale("y", percent, target, ...)
+scale_y_hairline <- function(percent = FALSE, target = NULL, digits = NULL, ...) {
+  hairline_position_scale("y", percent, target, digits, ...)
+}
 
 #' @rdname scale_y_hairline
 #' @export
-scale_x_hairline <- function(percent = FALSE, target = NULL, ...) hairline_position_scale("x", percent, target, ...)
+scale_x_hairline <- function(percent = FALSE, target = NULL, digits = NULL, ...) {
+  hairline_position_scale("x", percent, target, digits, ...)
+}
 
 is_date_scale <- function(scale) inherits(scale, "ScaleContinuousDate") && !is.null(scale$range$range)
 
@@ -72,7 +92,8 @@ is_plain_continuous <- function(scale) {
 auto_target_scale <- function(plot, built, rows) {
   scale <- plot@scales$get_scales("y")
   if (is.null(scale$hairline) || scale$hairline$target_given || row_target(rows) == 5) return(NULL)
-  do.call(hairline_position_scale, c(list("y", scale$hairline$percent, row_target(rows)), scale$hairline$arguments))
+  do.call(hairline_position_scale, c(list("y", scale$hairline$percent, row_target(rows), scale$hairline$digits),
+                                     scale$hairline$arguments))
 }
 
 default_position_scales <- function(plot, built) {

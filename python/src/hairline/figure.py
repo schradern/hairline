@@ -22,6 +22,7 @@ from hairline.tokens import load_tokens
 
 LAYOUTS = ("compose", "grid", "pair", "rows")
 MM_PER_INCH = 25.4
+MAX_AXIS_DIGITS = 10
 
 
 @dataclass
@@ -42,6 +43,7 @@ class HairlineFigure:
     legend_items: list[LegendItem] | None = None
     collect_legend: bool = False
     percent_axes: set[tuple[int, str]] = field(default_factory=set)
+    axis_digits: dict[tuple[int, str], int] = field(default_factory=dict)
     auto_limits: dict[tuple[int, str], bool] = field(default_factory=dict)
     applied_limits: dict[tuple[int, str], tuple[float, float]] = field(default_factory=dict)
     light_slot_done: set[int] = field(default_factory=set)
@@ -132,9 +134,31 @@ class HairlineFigure:
         self.collect_legend = items is None
         self.legend_items = None if items is None else validate_items(items)
 
-    def percent_axis(self, index: int, which: str = "y") -> None:
-        """Treat panel `index`'s values on axis `which` ("y" or "x") as shares and label them as percentages."""
+    def percent_axis(self, index: int, which: str = "y", digits: int | None = None) -> None:
+        """Treat panel `index`'s values on axis `which` ("y" or "x") as shares and label them as percentages.
+
+        `digits` fixes the decimals of the values a reader looks up (tooltips of interactive output), so that
+        89.6 % never reads as 90 % next to a 90 % target. By default they follow the shared digits rule. Ticks keep
+        their own decimals, set by the step between them."""
         self.percent_axes.add((index, which))
+        self.set_axis_digits(index, which, digits)
+
+    def number_axis(self, index: int, which: str = "y", digits: int | None = None) -> None:
+        """Label panel `index`'s values on axis `which` ("y" or "x") as plain numbers (undoing `percent_axis`).
+
+        `digits` fixes the decimals of the values a reader looks up (tooltips of interactive output); by default
+        they follow the shared digits rule. Ticks keep their own decimals, set by the step between them."""
+        self.percent_axes.discard((index, which))
+        self.set_axis_digits(index, which, digits)
+
+    def set_axis_digits(self, index: int, which: str, digits: int | None) -> None:
+        if digits is None:
+            self.axis_digits.pop((index, which), None)
+            return
+        if isinstance(digits, bool) or not isinstance(digits, int) or not 0 <= digits <= MAX_AXIS_DIGITS:
+            raise ValueError(f"hairline: digits must be a whole number from 0 to {MAX_AXIS_DIGITS}, "
+                             f"got {digits!r} for panel {index}, axis {which!r}")
+        self.axis_digits[(index, which)] = digits
 
     def layout_report(self) -> dict:
         """Frame positions in pt from the top-left corner, as of the last draw."""

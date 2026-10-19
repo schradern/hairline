@@ -24,14 +24,20 @@ if TYPE_CHECKING:
 SNAP_DIGITS = 10
 
 
-def number_texts(values, percent: bool) -> list[str]:
-    """Values formatted with the shared digits rule (percentages for share axes)."""
+def number_texts(values, percent: bool, digits: int | None = None) -> list[str]:
+    """Values formatted with `digits` decimals, or the shared digits rule (percentages for share axes)."""
     array = np.asarray(values, dtype=float)
     if percent:
-        digits = auto_digits(array * 100)
+        digits = auto_digits(array * 100) if digits is None else digits
         return [format_percent(round(float(value), SNAP_DIGITS), digits) for value in array]
-    digits = auto_digits(array)
+    digits = auto_digits(array) if digits is None else digits
     return [format_number(round(float(value), SNAP_DIGITS), digits) for value in array]
+
+
+def axis_number_texts(figure: HairlineFigure, index: int, which: str, values) -> list[str]:
+    """Values on panel `index`'s axis `which`, as that axis labels them (percent or number, its digits)."""
+    key = (index, which)
+    return number_texts(values, key in figure.percent_axes, figure.axis_digits.get(key))
 
 
 def is_date_axis(axis) -> bool:
@@ -47,7 +53,7 @@ def x_texts(figure: HairlineFigure, index: int, ax, values) -> list[str]:
         return [categories[int(round(value))] if 0 <= round(value) < len(categories) else "" for value in values]
     if is_date_axis(ax.xaxis):
         return [dates.num2date(float(value)).strftime("%Y-%m-%d") for value in values]
-    return number_texts(values, (index, "x") in figure.percent_axes)
+    return axis_number_texts(figure, index, "x", values)
 
 
 def series_name(label: str, figure: HairlineFigure, index: int) -> str:
@@ -77,7 +83,7 @@ def line_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         xy = np.asarray(line.get_xydata(), dtype=float)
         path = steps(xy) if line.get_drawstyle() == "steps-post" else xy
         name = series_name(line.get_label(), figure, index)
-        xs, ys = x_texts(figure, index, ax, xy[:, 0]), number_texts(xy[:, 1], (index, "y") in figure.percent_axes)
+        xs, ys = x_texts(figure, index, ax, xy[:, 0]), axis_number_texts(figure, index, "y", xy[:, 1])
         found.append({"name": name, "color": to_hex(line.get_color()),
                       "marks": [{"line": [to_pt(ax, point) for point in path], "width": line.get_linewidth()}],
                       "tips": [{"at": to_pt(ax, point), "text": f"{name}: {x}, {y}"}
@@ -95,7 +101,7 @@ def point_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         name = series_name(collection.get_label(), figure, index)
         radius = float(np.sqrt(collection.get_sizes()[0]) / 2) if len(collection.get_sizes()) else 2.0
         xs = x_texts(figure, index, ax, offsets[:, 0])
-        ys = number_texts(offsets[:, 1], (index, "y") in figure.percent_axes)
+        ys = axis_number_texts(figure, index, "y", offsets[:, 1])
         found.append({"name": name, "color": to_hex(collection.get_facecolor()[0]),
                       "marks": [{"dot": to_pt(ax, point), "r": radius} for point in offsets],
                       "tips": [{"at": to_pt(ax, point), "text": f"{name}: {x}, {y}"}
@@ -117,7 +123,7 @@ def bar_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
             marks.append({"rect": [low[0], low[1], high[0] - low[0], high[1] - low[1]]})
             values.append(patch.get_width() if horizontal else patch.get_height())
         axis = "x" if horizontal else "y"
-        texts = number_texts(values, (index, axis) in figure.percent_axes)
+        texts = axis_number_texts(figure, index, axis, values)
         centres = [patch.get_y() + patch.get_height() / 2 if horizontal else patch.get_x() + patch.get_width() / 2
                    for patch in container.patches]
         labels = category_texts(figure, index, "y" if horizontal else "x", centres)

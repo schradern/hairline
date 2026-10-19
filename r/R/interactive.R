@@ -7,16 +7,19 @@ static_layer <- function(layer) {
   layer
 }
 
-interactive_numbers <- function(values, percent) {
+interactive_numbers <- function(values, percent, digits = NULL) {
   if (percent) {
-    digits <- auto_digits(values * 100)
+    digits <- digits %||% auto_digits(values * 100)
     return(vapply(values, function(value) hl_format_percent(round(value, 10), digits), character(1)))
   }
-  digits <- auto_digits(values)
+  digits <- digits %||% auto_digits(values)
   vapply(values, function(value) hl_format_number(round(value, 10), digits), character(1))
 }
 
 is_percent_scale <- function(scale) isTRUE(scale$hairline$percent)
+
+# Values as their scale labels them: percentages on a share scale, with the scale's digits or the shared rule.
+scale_numbers <- function(scale, values) interactive_numbers(values, is_percent_scale(scale), scale$hairline$digits)
 
 # X (or y) values as text: ISO dates on a date scale, category names on a discrete scale, else numbers.
 axis_texts <- function(params, scale, values) {
@@ -27,7 +30,7 @@ axis_texts <- function(params, scale, values) {
     }, character(1)))
   }
   if (inherits(scale, "ScaleContinuousDate")) return(format(as.Date(values, origin = "1970-01-01"), "%Y-%m-%d"))
-  interactive_numbers(values, is_percent_scale(scale))
+  scale_numbers(scale, values)
 }
 
 colour_hex <- function(colour) tolower(substr(grDevices::rgb(t(grDevices::col2rgb(colour)), maxColorValue = 255), 1, 7))
@@ -78,7 +81,7 @@ line_targets <- function(data, geom, parts, plan, scaled) {
     path <- if (geom == "GeomStep") step_points(rows$x, rows$y) else cbind(rows$x, rows$y)
     name <- series_named(rows$colour[1], parts, context$index)
     xs <- axis_texts(context$params$x, context$x_scale, rows$x)
-    ys <- interactive_numbers(rows$y, is_percent_scale(context$y_scale))
+    ys <- scale_numbers(context$y_scale, rows$y)
     at <- context$to_pt(rows$x, rows$y)
     width <- rows$linewidth[1] * ggplot2::.pt * 0.75 * if (scaled) line_scale(context$box[3]) else 1
     list(name = name, color = colour_hex(rows$colour[1]),
@@ -97,7 +100,7 @@ point_targets <- function(data, parts, plan) {
     name <- series_named(rows$colour[1], parts, context$index)
     at <- context$to_pt(rows$x, rows$y)
     xs <- axis_texts(context$params$x, context$x_scale, rows$x)
-    ys <- interactive_numbers(rows$y, is_percent_scale(context$y_scale))
+    ys <- scale_numbers(context$y_scale, rows$y)
     radius <- rows$size[1] * ggplot2::.pt * 0.75 / 2
     list(name = name, color = colour_hex(rows$colour[1]),
          marks = lapply(seq_len(nrow(rows)), function(index) list(dot = at[index, ], r = radius)),
@@ -115,7 +118,7 @@ bar_targets <- function(data, parts, plan) {
     top_left <- context$to_pt(rows$xmin, rows$ymax)
     bottom_right <- context$to_pt(rows$xmax, rows$ymin)
     values <- if (horizontal) rows$xmax - rows$xmin else rows$ymax - rows$ymin
-    texts <- interactive_numbers(values, is_percent_scale(if (horizontal) context$x_scale else context$y_scale))
+    texts <- scale_numbers(if (horizontal) context$x_scale else context$y_scale, values)
     categories <- if (horizontal) axis_texts(context$params$y, context$y_scale, (rows$ymin + rows$ymax) / 2) else
       axis_texts(context$params$x, context$x_scale, (rows$xmin + rows$xmax) / 2)
     widths <- bottom_right[, 1] - top_left[, 1]

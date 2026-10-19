@@ -5,14 +5,18 @@
 \alias{scale_x_hairline}
 \title{Position scales with nice breaks}
 \usage{
-scale_y_hairline(percent = FALSE, target = NULL, ...)
+scale_y_hairline(percent = FALSE, target = NULL, digits = NULL, ...)
 
-scale_x_hairline(percent = FALSE, target = NULL, ...)
+scale_x_hairline(percent = FALSE, target = NULL, digits = NULL, ...)
 }
 \arguments{
 \item{percent}{Treat values as shares and label them as percentages (unit on the top label only).}
 
 \item{target}{Preferred number of breaks; \code{NULL} follows the panel rows (5, 4, then 3).}
+
+\item{digits}{Decimals of the values a reader looks up (tooltips of interactive output), so that 89.6 \%
+never reads as 90 \% next to a 90 \% target; \code{NULL} follows the shared digits rule. Axis labels keep their own
+decimals, set by the step between breaks.}
 
 \item{...}{Passed to \code{\link[ggplot2:scale_y_continuous]{ggplot2::scale_y_continuous()}} or \code{\link[ggplot2:scale_x_continuous]{ggplot2::scale_x_continuous()}}.}
 }

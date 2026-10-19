@@ -19,13 +19,16 @@ hairline picks colours for you; these functions show and change them.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
-import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 
 from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklab, linear_to_hex, oklab_to_linear, parse_hex
 from hairline.tokens import load_tokens
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 PURPOSE_SETS = ("pair", "pair-teal", "pair-print", "ink", "judgement")
 JUDGEMENT_ORDER = ("low", "some", "high")
@@ -170,6 +173,7 @@ def palettes(kind: str | None = None) -> pd.DataFrame:
         rows.insert(0, {"name": active.palette_name, "kind": "categorical", "slots": len(active.palette),
                         "active": True, "use": f"the active {active.palette_label}",
                         "colors": " ".join(active.palette)})
+    import pandas as pd
     table = pd.DataFrame(rows, columns=["name", "kind", "slots", "active", "use", "colors"])
     return table if kind is None else table[table["kind"] == kind].reset_index(drop=True)
 
