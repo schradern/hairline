@@ -99,7 +99,7 @@ register_brand_fonts <- function(content, path, font_dir = dirname(path)) {
       missing <- paths[!file.exists(paths)]
       if (length(missing)) brand_fail(path, sprintf("typography.fonts[%d].files", index - 1),
                                       sprintf("font file %s not found", missing[1]))
-      systemfonts::register_font(entry$family, plain = paths[1])
+      register_font_family(entry$family, plain = paths[1])
     } else if (identical(source, "google")) {
       family <- entry$family %||% ""
       warning(sprintf(paste0("hairline: %s: typography.fonts[%d]: '%s' comes from Google Fonts, which hairline does ",

@@ -1,4 +1,4 @@
-# PDF output: cairo_pdf with fontconfig pointed at the bundled font, or svglite + rsvg where cairo is missing.
+# PDF output: cairo_pdf, which sees the bundled font through fontconfig, or svglite + rsvg where cairo is missing.
 
 cairo_works <- function() {
   if (is.null(hairline_state$cairo_works)) {
@@ -21,18 +21,36 @@ pdf_route <- function() {
 
 font_installed_for_pdf <- function() hl_tokens()$font$family %in% systemfonts::system_fonts()$family
 
-fontconfig_file <- function() {
-  path <- file.path(tempdir(), "hairline-fonts.conf")
-  if (!file.exists(path)) {
-    writeLines(c("<?xml version=\"1.0\"?>", "<!DOCTYPE fontconfig SYSTEM \"fonts.dtd\">", "<fontconfig>",
-                 "<include ignore_missing=\"yes\">/etc/fonts/fonts.conf</include>",
-                 "<include ignore_missing=\"yes\">/opt/homebrew/etc/fonts/fonts.conf</include>",
-                 "<include ignore_missing=\"yes\">/usr/local/etc/fonts/fonts.conf</include>",
-                 sprintf("<dir>%s</dir>", system.file("fonts", package = "hairline")),
-                 sprintf("<cachedir>%s</cachedir>", file.path(tempdir(), "hairline-fontcache")), "</fontconfig>"),
-               path)
-  }
+# A fontconfig file that adds the bundled font folder to `base`, or to the usual default configurations.
+fontconfig_file <- function(base, path = file.path(tempdir(), "hairline-fonts.conf")) {
+  defaults <- c("/etc/fonts/fonts.conf", "/opt/homebrew/etc/fonts/fonts.conf", "/usr/local/etc/fonts/fonts.conf")
+  includes <- if (is.na(base)) defaults else base
+  writeLines(c("<?xml version=\"1.0\"?>", "<!DOCTYPE fontconfig SYSTEM \"fonts.dtd\">", "<fontconfig>",
+               sprintf("<include ignore_missing=\"yes\">%s</include>", includes),
+               sprintf("<dir>%s</dir>", system.file("fonts", package = "hairline")),
+               sprintf("<cachedir>%s</cachedir>", file.path(tempdir(), "hairline-fontcache")), "</fontconfig>"),
+             path)
   path
+}
+
+# cairo finds fonts through fontconfig, which reads its configuration once per session, often before the first PDF
+# (systemfonts asks it for fonts on Linux). So the bundled font is added when the package loads. On Windows R's cairo
+# keeps its own configuration, which is left alone.
+point_fontconfig_at_bundled_font <- function() {
+  if (.Platform$OS.type == "windows") return(invisible(FALSE))
+  previous <- Sys.getenv("FONTCONFIG_FILE", unset = NA)
+  hairline_state$previous_fontconfig_file <- previous
+  path <- file.path(tempdir(), "hairline-fonts.conf")
+  Sys.setenv(FONTCONFIG_FILE = fontconfig_file(if (identical(previous, path)) NA else previous, path))
+  invisible(TRUE)
+}
+
+restore_fontconfig <- function() {
+  if (!exists("previous_fontconfig_file", envir = hairline_state)) return(invisible(FALSE))
+  previous <- hairline_state$previous_fontconfig_file
+  if (is.na(previous)) Sys.unsetenv("FONTCONFIG_FILE") else Sys.setenv(FONTCONFIG_FILE = previous)
+  rm("previous_fontconfig_file", envir = hairline_state)
+  invisible(TRUE)
 }
 
 draw_to_device <- function(open_device, plot) {
@@ -47,9 +65,6 @@ write_pdf <- function(plot, path, width_in, height_in, background, naming = NULL
     stop("hairline: PDF export needs a working cairo device or the 'rsvg' and 'svglite' packages", call. = FALSE)
   }
   if (route == "cairo") {
-    previous <- Sys.getenv("FONTCONFIG_FILE", unset = NA)
-    Sys.setenv(FONTCONFIG_FILE = fontconfig_file())
-    on.exit(if (is.na(previous)) Sys.unsetenv("FONTCONFIG_FILE") else Sys.setenv(FONTCONFIG_FILE = previous))
     draw_to_device(function() grDevices::cairo_pdf(path, width_in, height_in, bg = background), plot)
   } else {
     svg <- tempfile(fileext = ".svg")

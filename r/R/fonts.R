@@ -11,11 +11,19 @@ font_file <- function(key) {
 register_bundled_fonts <- function() {
   if (isTRUE(hairline_state$fonts_registered)) return(invisible(TRUE))
   family <- hl_tokens()$font$family
-  systemfonts::register_font(family, plain = font_file("400"), bold = font_file("600"),
-                             italic = font_file("400i"), bolditalic = font_file("600i"))
-  systemfonts::register_font(paste(family, "Medium"), plain = font_file("500"), bold = font_file("600"),
-                             italic = font_file("500i"), bolditalic = font_file("600i"))
+  register_font_family(family, plain = font_file("400"), bold = font_file("600"),
+                       italic = font_file("400i"), bolditalic = font_file("600i"))
+  register_font_family(paste(family, "Medium"), plain = font_file("500"), bold = font_file("600"),
+                       italic = font_file("500i"), bolditalic = font_file("600i"))
   hairline_state$fonts_registered <- TRUE
+  invisible(TRUE)
+}
+
+# systemfonts refuses to register a family that is already a system font (installed, or seen through the bundled
+# fontconfig on Linux); such a family is used as it is. Returns whether the family was registered.
+register_font_family <- function(family, ...) {
+  if (family %in% systemfonts::system_fonts()$family) return(invisible(FALSE))
+  systemfonts::register_font(family, ...)
   invisible(TRUE)
 }
 
