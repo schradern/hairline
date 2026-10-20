@@ -10,7 +10,7 @@ import pandas as pd
 from hairline.charts.bars import bars
 from hairline.charts.spread import spread
 from hairline.numbers import format_number, format_p, is_whole
-from hairline.stats.tests import chi_square_test, kruskal_test, rank_sum_test
+from hairline.stats.tests import contingency_test, kruskal_test, rank_sum_test
 from hairline.study.columns import is_missing, level_text, levels, numbers
 from hairline.study.describe import counted_rows, group_role, level_numbers, subsets
 from hairline.study.result import Result
@@ -62,7 +62,7 @@ def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iq
     study.require([study.group, variable], "distribution")
     if kind != "numeric":
         raise ValueError(f"hairline: distribution: '{variable}' is categorical; use compare() for its shares")
-    study.require_one_row([variable], "distribution")
+    study.require_one_row("distribution")
     digits, label = digits_for(numbers(study.data[variable])), study.label_unit(variable)
     whole = is_whole(numbers(study.data[variable]))
     found = {name: summary_numbers(numbers(subset[variable]), stats, int(is_missing(subset[variable]).sum()))
@@ -70,7 +70,7 @@ def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iq
     rows = [[name, format_number(summary["n"], 0), *[summary_text(summary, stat, digits, whole) for stat in stats]]
             for name, summary in found.items()]
     table = pd.DataFrame(rows, columns=["Group", "n", *[STAT_LABELS[stat] for stat in stats]])
-    values = {row[0]: row[2] for row in rows}
+    values = {"groups": {row[0]: row[2] for row in rows}}
     data = present_rows(study, variable).assign(**{variable: lambda frame: frame[variable].astype(float)})
     names = list(found)[:-1] if study.group else [study.overall]
     name = study.label(variable)
@@ -91,7 +91,7 @@ def compare(study: Study, variable: str, size: str = "double") -> Result:
     if kind == "date":
         raise ValueError(f"hairline: compare: '{variable}' holds dates; follow a measure over it with over_time()")
     study.require([study.group, variable], "compare")
-    study.require_one_row([variable], "compare")
+    study.require_one_row("compare")
     if kind == "numeric":
         return compare_numeric(study, variable, size)
     return compare_categorical(study, variable, size)
@@ -106,10 +106,11 @@ def compare_numeric(study: Study, variable: str, size: str) -> Result:
     names = [name for name in study.groups if found[name]["n"]]
     require_values(names, variable, "compare")
     test = numeric_test([numbers(subset[variable]) for name, subset in parts if name in names])
-    summaries = [summary_text(found[name], "median_iqr", digits) for name in names]
+    whole = is_whole(numbers(data[variable]))
+    summaries = [summary_text(found[name], "median_iqr", digits, whole) for name in names]
     rows = [[name, format_number(found[name]["n"], 0), summary] for name, summary in zip(names, summaries, strict=True)]
     rows += [["Test", "", test_text(test)]] if test else []
-    values = {**dict(zip(names, summaries, strict=True)),
+    values = {"groups": dict(zip(names, summaries, strict=True)),
               **({"test": test["method"], "p": format_p(test["p"])} if test else {})}
     figure = spread(data.assign(**{variable: data[variable].astype(float)}), study.group_key, variable, order=names,
                     title=f"{study.label(variable)} by {str(study.group).replace('_', ' ')}",
@@ -125,15 +126,18 @@ def compare_numeric(study: Study, variable: str, size: str) -> Result:
 def compare_categorical(study: Study, variable: str, size: str) -> Result:
     data, label = present_rows(study, variable), study.label(variable)
     data = data.assign(**{variable: data[variable].map(level_text)})
-    kinds = levels(data[variable])
+    # Categories of the compared groups only: one seen only in a group left out of the study's order is no row.
+    kinds = levels(data[data[study.group_key].isin(study.groups)][variable])
     found = {name: level_numbers(subset[variable], kinds) for name, subset in subsets(study)[:-1]}
     names = [name for name in study.groups if found[name]["n"]]
     require_values(names, variable, "compare")
+    kinds = [kind for kind in kinds if any(found[name]["counts"][kind] for name in names)]
     counts = [[found[name]["counts"][kind] for name in names] for kind in kinds]
     rows = [[kind, *[count_share(found[name]["counts"][kind], found[name]["n"]) for name in names]] for kind in kinds]
-    test = {"method": "Chi-squared", **chi_square_test(counts)} if len(names) > 1 and len(kinds) > 1 else None
+    test = contingency_test(counts) if len(names) > 1 and len(kinds) > 1 else None
     rows += [["Test", test_text(test), *[""] * (len(names) - 1)]] if test else []
-    values: dict = {name: {row[0]: row[1 + index] for row in rows[:len(kinds)]} for index, name in enumerate(names)}
+    values: dict = {"groups": {name: {row[0]: row[1 + index] for row in rows[:len(kinds)]}
+                               for index, name in enumerate(names)}}
     values.update({"test": test["method"], "p": format_p(test["p"])} if test else {})
     figure = bars(data, study.group_key, by=variable, stacked=True, percent=True, horizontal=True, order=names,
                   title=f"{label} by {str(study.group).replace('_', ' ')}", size=size)

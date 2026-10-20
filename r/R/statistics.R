@@ -1,11 +1,19 @@
 # Tests and fits the charts compute from raw data; base R where it has them, and a log-rank test that matches
 # survival::survdiff without depending on it. The Python package computes the same values.
 
-# NA when every value ties, which leaves the test undefined; checked here rather than left to wilcox.test(), whose
-# result for that case differs between R versions (NaN in R 4.5, 1 in R-devel).
+# Two-sided Wilcoxon rank-sum p by the normal approximation with tie and continuity correction, as
+# wilcox.test(exact = FALSE, correct = TRUE) defines it, with both tails from pnorm(-|z|): wilcox.test() itself returns
+# 0 for a far tail in one order of the samples and not the other. NA when every value ties (the test is undefined).
 rank_sum_p <- function(first, second) {
   if (length(unique(c(first, second))) < 2) return(NA_real_)
-  suppressWarnings(stats::wilcox.test(first, second, exact = FALSE, correct = TRUE)$p.value)
+  count_x <- length(first)
+  count_y <- length(second)
+  total <- count_x + count_y
+  ranks <- rank(c(first, second))
+  ties <- as.numeric(table(ranks))
+  sigma <- sqrt(count_x * count_y / 12 * ((total + 1) - sum(ties^3 - ties) / (total * (total - 1))))
+  shift <- sum(ranks[seq_len(count_x)]) - count_x * (count_x + 1) / 2 - count_x * count_y / 2
+  min(1, 2 * stats::pnorm(-abs((shift - sign(shift) * 0.5) / sigma)))
 }
 
 # W as wilcox.test() reports it (the first sample's rank sum less its minimum) and the rank-sum p.
@@ -103,6 +111,23 @@ kruskal_test <- function(samples) {
 }
 
 chi_square_p <- function(counts) suppressWarnings(stats::chisq.test(counts, correct = FALSE)$p.value)
+
+sparse_expected <- 5
+
+# The test for a table of counts, after dropping categories and groups without any count: Fisher's exact test for a
+# 2 x 2 table with an expected count below 5, where chi-squared is unreliable, Pearson's chi-squared otherwise. NULL
+# when fewer than two categories or groups remain.
+contingency_test <- function(counts) {
+  counts <- as.matrix(counts)
+  counts <- counts[rowSums(counts) > 0, colSums(counts) > 0, drop = FALSE]
+  if (min(dim(counts)) < 2) return(NULL)
+  expected <- outer(rowSums(counts), colSums(counts)) / sum(counts)
+  if (all(dim(counts) == 2) && any(expected < sparse_expected)) {
+    return(list(method = "Fisher's exact test", statistic = NA_real_, df = NA_integer_,
+                p = stats::fisher.test(counts)$p.value))
+  }
+  c(list(method = "Chi-squared"), chi_square_test(counts))
+}
 
 chi_square_test <- function(counts) {
   test <- suppressWarnings(stats::chisq.test(counts, correct = FALSE))

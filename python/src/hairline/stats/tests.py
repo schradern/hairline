@@ -7,7 +7,7 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from hairline.stats.distributions import chi2_sf, normal_cdf, t_cdf, t_quantile
+from hairline.stats.distributions import chi2_sf, t_cdf, t_quantile
 
 
 def ranks(values: Sequence[float]) -> np.ndarray:
@@ -38,7 +38,8 @@ def rank_sum_test(first: Sequence[float], second: Sequence[float]) -> dict:
         return {"statistic": statistic, "p": math.nan}
     shift = statistic - count_x * count_y / 2
     z = (shift - math.copysign(0.5, shift) if shift else 0.0) / sigma
-    return {"statistic": statistic, "p": 2 * min(normal_cdf(z), 1 - normal_cdf(z))}
+    # The two tails as one complementary error function: 1 - cdf would lose a far tail to rounding.
+    return {"statistic": statistic, "p": min(1.0, math.erfc(abs(z) / math.sqrt(2)))}
 
 
 def rank_sum(first: Sequence[float], second: Sequence[float]) -> float:
@@ -158,6 +159,40 @@ def chi_square_test(counts: Sequence[Sequence[float]]) -> dict:
     statistic = float(((observed[used] - expected[used]) ** 2 / expected[used]).sum())
     df = (observed.shape[0] - 1) * (observed.shape[1] - 1)
     return {"statistic": statistic, "df": df, "p": chi2_sf(statistic, df)}
+
+
+FISHER_TOLERANCE = 1 + 1e-7  # as R's fisher.test: tables as likely as the observed one, within float noise
+SPARSE_EXPECTED = 5
+
+
+def fisher_exact(table: np.ndarray) -> float:
+    """Two-sided Fisher's exact p for a 2 × 2 table: the probability of every table with the same margins that is
+    no more likely than the observed one (as R's fisher.test)."""
+    (first, second), (third, _) = table.astype(int)
+    row, column, total = first + second, first + third, int(table.sum())
+
+    def chance(count: int) -> float:
+        return math.exp(math.lgamma(row + 1) + math.lgamma(total - row + 1) + math.lgamma(column + 1)
+                        + math.lgamma(total - column + 1) - math.lgamma(total + 1) - math.lgamma(count + 1)
+                        - math.lgamma(row - count + 1) - math.lgamma(column - count + 1)
+                        - math.lgamma(total - row - column + count + 1))
+    observed = chance(first)
+    tables = range(max(0, column - (total - row)), min(row, column) + 1)
+    return min(1.0, sum(chance(count) for count in tables if chance(count) <= observed * FISHER_TOLERANCE))
+
+
+def contingency_test(counts: Sequence[Sequence[float]]) -> dict | None:
+    """The test for a table of counts, after dropping categories and groups without any count: Fisher's exact test
+    for a 2 × 2 table with an expected count below 5, where χ² is unreliable, Pearson's χ² otherwise. None when
+    fewer than two categories or groups remain."""
+    observed = np.asarray(counts, dtype=float)
+    observed = observed[observed.sum(axis=1) > 0][:, observed.sum(axis=0) > 0] if observed.size else observed
+    if observed.ndim != 2 or min(observed.shape) < 2:
+        return None
+    expected = np.outer(observed.sum(axis=1), observed.sum(axis=0)) / observed.sum()
+    if observed.shape == (2, 2) and (expected < SPARSE_EXPECTED).any():
+        return {"method": "Fisher's exact test", "statistic": math.nan, "df": None, "p": fisher_exact(observed)}
+    return {"method": "Chi-squared", **chi_square_test(observed)}
 
 
 def chi_square(counts: Sequence[Sequence[float]]) -> float:

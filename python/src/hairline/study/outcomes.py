@@ -67,6 +67,7 @@ def survival(study: Study, fit=None, size: str = "double") -> Result:
     has_data = "time" in roles and "event" in roles
     if has_data:
         study.require([roles["time"], roles["event"], study.group], "survival")
+        study.require_one_row("survival")
     data = follow_up_rows(study) if has_data else None
     estimates, names = survival_estimates(study, data, fit)
     rows, groups = survival_rows(estimates, study.overall)
@@ -74,7 +75,7 @@ def survival(study: Study, fit=None, size: str = "double") -> Result:
     shown = data[data[study.group_key].isin(names)] if fit is None and has_data else data
     test = logrank_test(shown, roles, study.group_key) if grouped and has_data and study.group else None
     p = None if test is None or math.isnan(test["p"]) else format_p(test["p"])
-    values = {**{row[0]: row[3] for row in rows}, **({"p": p} if p else {})}
+    values = {"groups": {row[0]: row[3] for row in rows}, **({"test": "Log-rank", "p": p} if p else {})}
     time_label = study.label_unit(roles["time"]) if "time" in roles else "Time"
     by = study.group_key if fit is None and study.group else None
     figure = kaplan_meier(fit if fit is not None else data, roles.get("time"), roles.get("event"),

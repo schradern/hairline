@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from hairline.charts.timeseries import timeseries
+from hairline.charts.timeseries import iso_datetimes, timeseries
 from hairline.numbers import format_number, is_whole
 from hairline.study.columns import is_missing, is_text, numbers
 from hairline.study.compare import present_rows, require_values
@@ -26,7 +26,7 @@ def dated_rows(study: Study, date: str, value: str) -> pd.DataFrame:
     data = present_rows(study, value)
     data = data[~is_missing(data[date])]
     if is_text(data[date]):
-        parsed = pd.to_datetime(data[date], format="ISO8601", errors="coerce")
+        parsed = iso_datetimes(data[date])
         if parsed.isna().any():
             bad = data[date][parsed.isna()].iloc[0]
             raise ValueError(f"hairline: over_time: '{date}' has {bad!r}, which is not an ISO date (2025-01-31)")

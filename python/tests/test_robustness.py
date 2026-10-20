@@ -526,16 +526,18 @@ def visits() -> pd.DataFrame:
 def test_repeated_rows_of_one_id_are_not_counted_as_patients():
     study = quiet_study(visits(), group="arm", id="patient", variables=["lactate"], units={"lactate": "mmol/l"})
     for endpoint in (study.describe, lambda: study.compare("lactate"), lambda: study.distribution("lactate")):
-        with pytest.raises(ValueError, match=r"'lactate' has up to 3 rows per id in 'patient'.*one row per id first"):
+        with pytest.raises(ValueError, match=r"id 1 has 3 rows in 'patient'.*one row per id first"):
             endpoint()
     assert study.over_time("day", "lactate").numbers["rows"]["analysed"] == 6
 
 
-def test_an_id_repeated_only_where_the_value_is_missing_is_one_patient():
+def test_an_id_repeated_where_the_value_is_missing_is_still_refused():
+    # Counts take every row: four patients in five rows would read "5 patients: 3 in A and 2 in B".
     data = pd.DataFrame({"id": [1, 1, 2, 3, 4], "arm": ["A", "A", "A", "B", "B"], "age": [60.0, None, 72, 65, 58]})
-    result = quiet_study(data, group="arm", id="id", variables=["age"]).compare("age")
-    group = result.numbers["groups"]["A"]
-    assert (group["n"], group["missing"], group["median"]) == (2, 1, 66.0)
+    study = quiet_study(data, group="arm", id="id", variables=["age"], unit="patients")
+    for endpoint in (study.describe, lambda: study.compare("age")):
+        with pytest.raises(ValueError, match="id 1 has 2 rows in 'id'"):
+            endpoint()
 
 
 def test_results_say_how_many_rows_were_left_out():
@@ -558,9 +560,9 @@ def test_survival_counts_rows_without_a_group():
 
 
 def test_numbers_keep_what_the_text_rounds():
-    data = pd.DataFrame({"arm": ["A"] * 3 + ["B"] * 3, "score": [1.0, 2.0, 2.0, 2.0, 2.0, 2.0]})
+    data = pd.DataFrame({"arm": ["A"] * 3 + ["B"] * 3, "score": [11.0, 12.0, 12.0, 12.0, 12.0, 12.0]})
     result = quiet_study(data, group="arm", variables=["score"], types={"score": "numeric"}).compare("score")
-    assert result.numbers["groups"]["A"]["q1"] == 1.5 and result.values["A"] == "2 (2–2)"
+    assert result.numbers["groups"]["A"]["q1"] == 11.5 and result.values["groups"]["A"] == "12 (12–12)"
     test = result.numbers["test"]
     assert (test["method"], test["statistic"]) == ("Wilcoxon rank-sum", 3.0) and 0 < test["p"] < 1
     tied = quiet_study(data.assign(score=2.0), group="arm", variables=["score"], types={"score": "numeric"})
@@ -645,3 +647,54 @@ def test_rows_in_groups_left_out_of_order_are_counted():
     assert result.text.endswith(" 5 of 7 participants; 2 in groups not named in order were left out.")
     assert study.describe().numbers["rows"]["missing"] == {"group": 0}
     assert study.describe().text.endswith(" 2 in groups not named in order are counted in Overall only.")
+
+
+# Fourth review
+
+def test_a_group_left_out_of_order_leaves_no_rows_in_the_test():
+    counts = {"A": {"Low": 8, "High": 2}, "B": {"Low": 2, "High": 8}, "C": {"OnlyC": 1, "OtherC": 1}}
+    rows = [(group, outcome) for group, kinds in counts.items() for outcome, count in kinds.items()
+            for _ in range(count)]
+    data = pd.DataFrame(rows, columns=["arm", "outcome"])
+    result = quiet_study(data, group="arm", variables=["outcome"], order=["A", "B"]).compare("outcome")
+    assert (result.numbers["test"]["df"], round(result.numbers["test"]["p"], 8)) == (1, 0.00729036)
+    assert list(result.table.iloc[:-1, 0]) == ["High", "Low"]
+
+
+def test_sparse_two_by_two_tables_use_fishers_exact_test():
+    data = pd.DataFrame({"arm": ["A", "A", "B", "B"], "response": ["yes", "yes", "no", "no"]})
+    result = quiet_study(data, group="arm", variables=["response"]).compare("response")
+    assert result.numbers["test"]["method"] == "Fisher's exact test"
+    assert result.numbers["test"]["p"] == pytest.approx(1 / 3)
+
+
+def test_survival_refuses_repeated_ids():
+    data = pd.DataFrame({"id": [1, 2, 3, 3, 4, 5], "arm": ["A", "A", "A", "A", "B", "B"],
+                         "t": [1.0, 2, 3, 3, 4, 5], "e": [0, 0, 1, 1, 1, 1]})
+    with pytest.raises(ValueError, match="id 3 has 2 rows in 'id'"):
+        quiet_study(data, group="arm", id="id", time="t", event="e").survival()
+
+
+def test_rank_sum_keeps_far_tails_in_either_order():
+    first, second = list(range(50)), list(range(50, 100))
+    assert rank_sum(first, second) == rank_sum(second, first) == pytest.approx(7.066071930389029e-18, rel=1e-9)
+
+
+def test_one_value_has_no_standard_deviation():
+    data = pd.DataFrame({"x": [60.0]})
+    result = quiet_study(data, variables=["x"], types={"x": "numeric"}).distribution("x", stats=["mean_sd"])
+    assert result.values["groups"]["Overall"] == "60.0 (–)"
+    assert np.isnan(result.numbers["groups"]["Overall"]["sd"])
+
+
+def test_a_group_named_test_keeps_its_summary():
+    data = pd.DataFrame({"arm": ["control"] * 3 + ["test"] * 3, "score": [1.0, 2, 3, 4, 5, 6]})
+    result = quiet_study(data, group="arm", variables=["score"]).compare("score")
+    assert result.values["groups"]["test"] == "5 (4.5–5.5)" and result.values["test"] == "Wilcoxon rank-sum"
+
+
+def test_over_time_reads_a_clock_change():
+    data = pd.DataFrame({"t": ["2025-03-30T01:30:00+01:00", "2025-03-30T03:30:00+02:00", "2025-03-30T04:30:00+02:00"],
+                         "v": [1.0, 2.0, 3.0]})
+    result = quiet_study(data, variables=["v"], types={"v": "numeric"}).over_time("t", "v", window=1)
+    assert result.numbers["rows"]["analysed"] == 3

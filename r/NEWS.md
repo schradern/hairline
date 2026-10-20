@@ -102,6 +102,20 @@
 * `hl_save()` names its temporary files so they never meet existing ones.
 * Tooltips show seconds when the times have them; impossible zone offsets (+99:99) are refused.
 
+## Fixes from a fourth review
+
+* A group left out of `order` no longer adds its categories to a comparison's table: they changed the
+  chi-squared test's degrees of freedom and p-value although none of the group's rows were analysed.
+* A 2 x 2 table with an expected count below 5 is tested with Fisher's exact test instead of chi-squared.
+* With `id =` set, every endpoint that counts patients (`hl_describe()`, `hl_compare()`, `hl_distribution()`,
+  `hl_survival()`) refuses an id with more than one row, wherever its values are missing.
+* The rank-sum p keeps far tails in either order of the groups; `wilcox.test()` returned 0 for one order.
+* The SD of a single value is undefined and reads "–" (it read 0.0).
+* `hl_compare()` keeps a decimal for quartiles of small whole numbers, as `hl_distribution()` does.
+* `$values` of `hl_compare()`, `hl_distribution()` and `hl_survival()` holds the group summaries under
+  `groups`, beside `test` and `p`, so a group named "test" or "p" no longer collides with them.
+* The README installs the package from GitHub (it is not on CRAN yet); the version is now 0.1.0.9000.
+
 # hairline 0.1.0
 
 * First release.

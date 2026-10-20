@@ -90,7 +90,10 @@ hl_survival <- function(study, fit = NULL) {
     stop("hairline: survival needs time and event; set time = and event = in hl_study(), or pass fit =",
          call. = FALSE)
   }
-  if (has_data) study_require(study, c(time, event, study$roles$group), "survival")
+  if (has_data) {
+    study_require(study, c(time, event, study$roles$group), "survival")
+    study_require_one_row(study, "survival")
+  }
   data <- if (has_data) study_follow_up_rows(study) else NULL
   estimated <- survival_rows(survival_estimates(study, data, fit), study_overall(study))
   group_key <- study_group_key(study)
@@ -102,7 +105,8 @@ hl_survival <- function(study, fit = NULL) {
                   group_key)
   }
   p <- if (is.null(test) || is.na(test$p)) NULL else format_p(test$p)
-  values <- c(stats::setNames(lapply(rows, `[[`, 4), names), if (!is.null(p)) list(p = p))
+  values <- c(list(groups = stats::setNames(lapply(rows, `[[`, 4), names)),
+              if (!is.null(p)) list(test = "Log-rank", p = p))
   title <- if (grouped && !is.null(study$roles$group)) paste("Survival by", gsub("_", " ", study$roles$group)) else
     "Survival"
   x_title <- if (is.null(time)) "Time" else study_label_unit(study, time)

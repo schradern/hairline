@@ -94,7 +94,7 @@ def describe(study: Study, stats: Sequence[str] = ("median_iqr",), size: str = "
     stats = (stats,) if isinstance(stats, str) else tuple(stats)
     check_stats(stats)
     study.require([study.group, *study.variables], "describe")
-    study.require_one_row(study.variables, "describe")
+    study.require_one_row("describe")
     parts = subsets(study)
     found: dict = {"rows": counted_rows(study, group_role(study), in_overall=True),
                    "n": {label: len(rows) for label, rows in parts}, "variables": {}}

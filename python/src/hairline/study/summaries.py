@@ -41,7 +41,7 @@ def summary_numbers(values: np.ndarray, stats: tuple[str, ...], missing: int) ->
             found["q1"], found["median"], found["q3"] = quantiles(values, [0.25, 0.5, 0.75])
         elif stat == "mean_sd":
             found["mean"] = float(np.mean(values))
-            found["sd"] = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
+            found["sd"] = float(np.std(values, ddof=1)) if len(values) > 1 else math.nan  # undefined for one value
         elif stat == "range":
             found["min"], found["max"] = float(np.min(values)), float(np.max(values))
     return found

@@ -17,7 +17,8 @@ A \code{hairline_result}.
 \description{
 Numeric variables: median (IQR) per group with the Wilcoxon rank-sum test
 (two groups) or Kruskal–Wallis (more), shown as a raincloud. Categorical
-variables: n (\%) per group with the chi-squared test, shown as 100 \% bars.
+variables: n (\%) per group with the chi-squared test (Fisher's exact test for a 2 x 2 table with an
+expected count below 5), shown as 100 \% bars.
 }
 \examples{
 set.seed(1)

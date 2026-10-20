@@ -81,7 +81,7 @@ __all__ = [
     "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter", "spread", "study", "swatches",
     "timeseries", "use", "venn",
 ]
-__version__ = "0.1.0"
+__version__ = "0.2.0.dev0"
 
 
 def _apply_host_context() -> None:

@@ -147,20 +147,19 @@ study_require <- function(study, columns, endpoint) {
   }
 }
 
-# Refuse to count repeated rows of one id as separate patients; name the id and the most rows per id.
-study_require_one_row <- function(study, columns, endpoint) {
+# Refuse to count repeated rows of one id as separate patients, in every row (counts, events and values all count
+# rows); name the id and the most rows per id.
+study_require_one_row <- function(study, endpoint) {
   name <- study$roles$id
   if (is.null(name) || !name %in% names(study$data)) return(invisible())
-  ids <- study$data[[name]]
-  for (column in columns) {
-    present <- !study_is_missing(ids) & !study_is_missing(study$data[[column]])
-    most <- if (any(present)) max(table(level_text(ids[present]))) else 0
-    if (most > 1) {
-      stop(sprintf(paste("hairline: %s: '%s' has up to %d rows per id in '%s', and each would count as one of the %s;",
-                         "summarise to one row per id first (for example each patient's first value), or follow",
-                         "repeated measurements with hl_over_time()"), endpoint, column, most, name, study$unit),
-           call. = FALSE)
-    }
+  ids <- level_text(study$data[[name]][!study_is_missing(study$data[[name]])])
+  if (!length(ids)) return(invisible())
+  counts <- sort(table(ids), decreasing = TRUE)
+  if (counts[[1]] > 1) {
+    stop(sprintf(paste("hairline: %s: id %s has %d rows in '%s', and each would count as one of the %s; summarise to",
+                       "one row per id first (for example each patient's first value), or follow repeated",
+                       "measurements with hl_over_time()"), endpoint, names(counts)[1], counts[[1]], name, study$unit),
+         call. = FALSE)
   }
 }
 

@@ -62,7 +62,7 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
     stop(sprintf("hairline: distribution: '%s' is categorical; use hl_compare() for its shares", variable),
          call. = FALSE)
   }
-  study_require_one_row(study, variable, "distribution")
+  study_require_one_row(study, "distribution")
   digits <- study_digits(study_numbers(study$data[[variable]]))
   label <- study_label_unit(study, variable)
   whole <- is_whole(study_numbers(study$data[[variable]]))
@@ -84,15 +84,16 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
   text <- paste0(sprintf("%s, %s: %s.", label, study_stat_labels[[stats[1]]],
                          listed_text(vapply(shown, function(row) paste(row[1], row[3]), character(1)))),
                  left_out_text(counted, study$unit, in_overall = TRUE), overall_only_text(counted))
-  study_result(figure, table, stats::setNames(lapply(rows, `[[`, 3), vapply(rows, `[[`, character(1), 1)), text,
-               list(rows = counted, groups = found))
+  values <- list(groups = stats::setNames(lapply(rows, `[[`, 3), vapply(rows, `[[`, character(1), 1)))
+  study_result(figure, table, values, text, list(rows = counted, groups = found))
 }
 
 #' Compare one variable between groups
 #'
 #' Numeric variables: median (IQR) per group with the Wilcoxon rank-sum test
 #' (two groups) or Kruskal–Wallis (more), shown as a raincloud. Categorical
-#' variables: n (%) per group with the chi-squared test, shown as 100 % bars.
+#' variables: n (%) per group with the chi-squared test (Fisher's exact test for a 2 x 2 table with an
+#' expected count below 5), shown as 100 % bars.
 #'
 #' @param study A study from [hl_study()] with a group.
 #' @param variable The variable to compare.
@@ -116,7 +117,7 @@ hl_compare <- function(study, variable) {
          call. = FALSE)
   }
   study_require(study, c(study$roles$group, variable), "compare")
-  study_require_one_row(study, variable, "compare")
+  study_require_one_row(study, "compare")
   if (identical(kind, "numeric")) compare_numeric(study, variable) else compare_categorical(study, variable)
 }
 
@@ -131,15 +132,16 @@ compare_numeric <- function(study, variable) {
   names <- Filter(function(name) found[[name]]$n > 0, study$groups)
   study_require_values(names, variable, "compare")
   test <- numeric_test(lapply(parts[study$groups %in% names], function(part) study_numbers(part$rows[[variable]])))
+  whole <- is_whole(study_numbers(data[[variable]]))
   summaries <- vapply(found[names], summary_text, character(1), stat = "median_iqr", digits = digits,
-                      USE.NAMES = FALSE)
+                      whole = whole, USE.NAMES = FALSE)
   rows <- lapply(seq_along(names), function(index) {
     c(names[index], hl_format_number(found[[names[index]]]$n, 0), summaries[index])
   })
   if (!is.null(test)) rows[[length(rows) + 1]] <- c("Test", "", test_text(test))
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "median (IQR)")
-  values <- c(stats::setNames(as.list(summaries), names),
+  values <- c(list(groups = stats::setNames(as.list(summaries), names)),
               if (!is.null(test)) list(test = test$method, p = format_p(test$p)))
   data[[variable]] <- study_as_number(data[[variable]])
   figure <- hl_spread(data, study_group_key(study), variable, order = names,
@@ -156,21 +158,24 @@ compare_categorical <- function(study, variable) {
   data <- study_present_rows(study, variable)
   label <- study_label(study, variable)
   data[[variable]] <- level_text(data[[variable]])
-  kinds <- study_levels(data[[variable]])
+  # Categories of the compared groups only: one seen only in a group left out of the study's order is no row.
+  kinds <- study_levels(data[[variable]][data[[study_group_key(study)]] %in% study$groups])
   parts <- study_group_parts(study)
   found <- stats::setNames(lapply(parts, function(part) level_numbers(part$rows[[variable]], kinds)),
                            study_part_names(parts))
   names <- Filter(function(name) found[[name]]$n > 0, study$groups)
   study_require_values(names, variable, "compare")
-  counts <- matrix(unlist(lapply(found[names], `[[`, "counts")), nrow = length(kinds))
+  kinds <- Filter(function(kind) any(vapply(found[names], function(part) part$counts[[kind]] > 0, logical(1))),
+                  kinds)
+  counts <- matrix(unlist(lapply(found[names], function(part) unlist(part$counts[kinds]))), nrow = length(kinds))
   rows <- lapply(kinds, function(kind) {
     c(kind, vapply(found[names], function(part) count_share(part$counts[[kind]], part$n), character(1),
                    USE.NAMES = FALSE))
   })
-  test <- if (length(names) > 1 && length(kinds) > 1) c(list(method = "Chi-squared"), chi_square_test(counts))
-  values <- stats::setNames(lapply(seq_along(names), function(column) {
+  test <- if (length(names) > 1 && length(kinds) > 1) contingency_test(counts)
+  values <- list(groups = stats::setNames(lapply(seq_along(names), function(column) {
     stats::setNames(lapply(rows, function(row) row[column + 1]), kinds)
-  }), names)
+  }), names))
   if (!is.null(test)) {
     rows[[length(rows) + 1]] <- c("Test", test_text(test), rep("", length(names) - 1))
     values <- c(values, list(test = test$method, p = format_p(test$p)))

@@ -42,7 +42,7 @@ test_that("all-censored groups draw without a test", {
 test_that("factor numbers are read by their labels", {
   data <- data.frame(months = factor(c("10", "20", "30")), died = 1, score = factor(c(10, 20, 30)))
   study <- suppressWarnings(hl_study(data, time = "months", event = "died", types = c(score = "numeric")))
-  expect_equal(hl_survival(study)$values[["Overall"]], "20.0")
+  expect_equal(hl_survival(study)$values$groups[["Overall"]], "20.0")
   expect_equal(study_numbers(data$score), c(10, 20, 30))
 })
 
@@ -430,18 +430,19 @@ visits <- function() {
 test_that("repeated rows of one id are not counted as patients", {
   study <- suppressWarnings(hl_study(visits(), group = "arm", id = "patient", variables = "lactate",
                                      units = c(lactate = "mmol/l")))
-  pattern <- "'lactate' has up to 3 rows per id in 'patient'.*one row per id first"
+  pattern <- "id 1 has 3 rows in 'patient'.*one row per id first"
   expect_error(hl_describe(study), pattern)
   expect_error(hl_compare(study, "lactate"), pattern)
   expect_error(hl_distribution(study, "lactate"), pattern)
   expect_equal(hl_over_time(study, "day", "lactate")$numbers$rows$analysed, 6)
 })
 
-test_that("an id repeated only where the value is missing is one patient", {
+test_that("an id repeated where the value is missing is still refused", {
+  # Counts take every row: four patients in five rows would read "5 patients: 3 in A and 2 in B".
   data <- data.frame(id = c(1, 1, 2, 3, 4), arm = c("A", "A", "A", "B", "B"), age = c(60, NA, 72, 65, 58))
-  study <- suppressWarnings(hl_study(data, group = "arm", id = "id", variables = "age"))
-  group <- hl_compare(study, "age")$numbers$groups$A
-  expect_equal(group[c("n", "missing", "median")], list(n = 2, missing = 1, median = 66))
+  study <- suppressWarnings(hl_study(data, group = "arm", id = "id", variables = "age", unit = "patients"))
+  expect_error(hl_describe(study), "id 1 has 2 rows in 'id'")
+  expect_error(hl_compare(study, "age"), "id 1 has 2 rows in 'id'")
 })
 
 test_that("results say how many rows were left out", {
@@ -466,11 +467,11 @@ test_that("survival counts rows without a group", {
 })
 
 test_that("numbers keep what the text rounds", {
-  data <- data.frame(arm = rep(c("A", "B"), each = 3), score = c(1, 2, 2, 2, 2, 2))
+  data <- data.frame(arm = rep(c("A", "B"), each = 3), score = c(11, 12, 12, 12, 12, 12))
   result <- hl_compare(suppressWarnings(hl_study(data, group = "arm", variables = "score",
                                                  types = c(score = "numeric"))), "score")
-  expect_equal(result$numbers$groups$A$q1, 1.5)
-  expect_equal(result$values$A, "2 (2–2)")
+  expect_equal(result$numbers$groups$A$q1, 11.5)
+  expect_equal(result$values$groups$A, "12 (12–12)")
   expect_equal(result$numbers$test[c("method", "statistic")], list(method = "Wilcoxon rank-sum", statistic = 3))
   data$score <- 2
   tied <- hl_compare(suppressWarnings(hl_study(data, group = "arm", variables = "score",
@@ -544,4 +545,44 @@ test_that("rows in groups left out of order are counted", {
   expect_true(endsWith(result$text, " 5 of 7 participants; 2 in groups not named in order were left out."))
   expect_equal(hl_describe(study)$numbers$rows$missing, list(group = 0))
   expect_true(endsWith(hl_describe(study)$text, " 2 in groups not named in order are counted in Overall only."))
+})
+
+# Fourth review
+
+test_that("a group left out of order leaves no rows in the test", {
+  data <- data.frame(arm = rep(c("A", "A", "B", "B", "C", "C"), c(8, 2, 2, 8, 1, 1)),
+                     outcome = rep(c("Low", "High", "Low", "High", "OnlyC", "OtherC"), c(8, 2, 2, 8, 1, 1)))
+  study <- suppressWarnings(hl_study(data, group = "arm", variables = "outcome", order = c("A", "B")))
+  test <- hl_compare(study, "outcome")$numbers$test
+  expect_equal(test$df, 1)
+  expect_equal(test$p, 0.00729036, tolerance = 1e-6)
+})
+
+test_that("sparse two-by-two tables use Fisher's exact test", {
+  data <- data.frame(arm = c("A", "A", "B", "B"), response = c("yes", "yes", "no", "no"))
+  test <- hl_compare(suppressWarnings(hl_study(data, group = "arm", variables = "response")), "response")$numbers$test
+  expect_equal(test$method, "Fisher's exact test")
+  expect_equal(test$p, 1 / 3)
+})
+
+test_that("survival refuses repeated ids", {
+  data <- data.frame(id = c(1, 2, 3, 3, 4, 5), arm = rep(c("A", "B"), c(4, 2)), t = c(1, 2, 3, 3, 4, 5),
+                     e = c(0, 0, 1, 1, 1, 1))
+  study <- suppressWarnings(hl_study(data, group = "arm", id = "id", time = "t", event = "e"))
+  expect_error(hl_survival(study), "id 3 has 2 rows in 'id'")
+})
+
+test_that("rank-sum keeps far tails in either order", {
+  expect_equal(rank_sum_p(0:49, 50:99), rank_sum_p(50:99, 0:49))
+  expect_equal(rank_sum_p(0:49, 50:99), 7.066071930389029e-18, tolerance = 1e-9)
+})
+
+test_that("one value has no standard deviation, and a group named test keeps its summary", {
+  study <- suppressWarnings(hl_study(data.frame(x = 60), variables = "x", types = c(x = "numeric")))
+  result <- hl_distribution(study, "x", stats = "mean_sd")
+  expect_equal(result$values$groups$Overall, "60.0 (–)")
+  data <- data.frame(arm = rep(c("control", "test"), each = 3), score = c(1, 2, 3, 4, 5, 6))
+  result <- hl_compare(suppressWarnings(hl_study(data, group = "arm", variables = "score")), "score")
+  expect_equal(result$values$groups$test, "5 (4.5–5.5)")
+  expect_equal(result$values$test, "Wilcoxon rank-sum")
 })

@@ -64,10 +64,15 @@ def with_iso_dates(data: pd.DataFrame, x: str) -> pd.DataFrame:
     reads it; other text stays as it is."""
     if pd.api.types.is_numeric_dtype(data[x]) or pd.api.types.is_datetime64_any_dtype(data[x]):
         return data
-    # Text with zone offsets (+01:00, +02:00 across a clock change) is read in UTC, which mixed offsets need.
-    zoned = data[x].astype(str).str.contains(r"(?:Z|[+-]\d{2}:?\d{2})$", regex=True).any()
-    parsed = pd.to_datetime(data[x], format="ISO8601", errors="coerce", utc=bool(zoned))
+    parsed = iso_datetimes(data[x])
     return data.assign(**{x: parsed}) if parsed.notna().all() else data
+
+
+def iso_datetimes(values: pd.Series) -> pd.Series:
+    """ISO date and time text as datetimes, NaT where a value is not ISO. Text with zone offsets (+01:00 and +02:00
+    across a clock change) is read in UTC, which mixed offsets need."""
+    zoned = values.astype(str).str.contains(r"(?:Z|[+-]\d{2}:?\d{2})$", regex=True).any()
+    return pd.to_datetime(values, format="ISO8601", errors="coerce", utc=bool(zoned))
 
 
 def check_window(window: object) -> None:

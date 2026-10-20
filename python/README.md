@@ -5,8 +5,11 @@ one type scale, colour-vision checked palettes, and print-ready files. The R pac
 the same figures from the same design tokens, so a Python figure and an R figure in one manuscript match.
 
 ```bash
-pip install hairline
+pip install "hairline @ git+https://github.com/schradern/hairline#subdirectory=python"
 ```
+
+That installs the development version this page describes. The 0.1.0 release on PyPI (`pip install hairline`)
+lacks the unrounded `.numbers` of study results and the later fixes in the [changelog](CHANGELOG.md).
 
 Python 3.11 or later, matplotlib 3.11 or later: from 3.11 matplotlib kerns text as R does, so both packages
 place every label alike. The bundled font, Hairline Sans, needs no installation.

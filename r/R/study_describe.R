@@ -117,7 +117,7 @@ describe_missing_text <- function(study, found) {
 hl_describe <- function(study, stats = "median_iqr") {
   check_study_stats(stats)
   study_require(study, c(study$roles$group, study$variables), "describe")
-  study_require_one_row(study, study$variables, "describe")
+  study_require_one_row(study, "describe")
   parts <- study_subsets(study)
   names <- study_part_names(parts)
   found <- list(rows = study_counted_rows(study, study_group_role(study), in_overall = TRUE),

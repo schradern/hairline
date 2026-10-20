@@ -30,13 +30,18 @@ hundred small layout decisions, the same way every time.
 
 ## Install
 
+The development version, which this page describes, from GitHub:
+
 ```bash
-pip install hairline
+pip install "hairline @ git+https://github.com/schradern/hairline#subdirectory=python"
 ```
 
 ```r
-install.packages("hairline")
+pak::pak("schradern/hairline/r")
 ```
+
+The 0.1.0 release is on PyPI (`pip install hairline`); it lacks the unrounded `.numbers` of study results and the
+later fixes listed in the changelogs. The R package is not on CRAN yet.
 
 Python 3.11 or later with matplotlib 3.11 or later; R 4.3 or later with ggplot2 4.0 or later. The bundled
 font, Hairline Sans, needs no installation.

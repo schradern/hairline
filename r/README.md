@@ -6,8 +6,10 @@ of the same name draws the same figures from the same design tokens, so an R fig
 manuscript match.
 
 ```r
-install.packages("hairline")
+pak::pak("schradern/hairline/r")
 ```
+
+That installs the development version from GitHub; the package is not on CRAN yet.
 
 R 4.3 or later with 'ggplot2' 4.0 or later. The bundled font, Hairline Sans, needs no installation for PNG,
 SVG and HTML; for PDF on macOS without XQuartz, run `hl_install_font()` once.

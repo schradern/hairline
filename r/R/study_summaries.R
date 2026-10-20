@@ -31,7 +31,7 @@ summary_numbers <- function(values, stats, missing) {
       found[c("q1", "median", "q3")] <- as.list(density_quantiles(values, c(0.25, 0.5, 0.75)))
     } else if (stat == "mean_sd") {
       found$mean <- mean(values)
-      found$sd <- if (length(values) > 1) stats::sd(values) else 0
+      found$sd <- if (length(values) > 1) stats::sd(values) else NA_real_  # undefined for one value
     } else if (stat == "range") {
       found[c("min", "max")] <- list(min(values), max(values))
     }

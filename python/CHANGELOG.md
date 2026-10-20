@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## Unreleased (0.2.0.dev0)
 
 * Study results carry `numbers`: the unrounded quantities their table, values and text are formatted from. Per
   group n and the median and quartiles, mean and SD, range, or counts and shares; for a test its method,
@@ -102,6 +102,22 @@
 * A Kaplan–Meier fit with delayed entry counts only those who have entered in the number at risk; weighted fits
   keep fractional counts.
 * Tooltips show seconds when the times have them; ISO text with mixed zone offsets reads in UTC.
+
+### Fixes from a fourth review
+
+* A group left out of `order` no longer adds its categories to a comparison's table: they changed the
+  χ² test's degrees of freedom and p-value although none of the group's rows were analysed.
+* A 2 × 2 table with an expected count below 5 is tested with Fisher's exact test instead of χ².
+* With `id=` set, every endpoint that counts patients (`describe`, `compare`, `distribution`, `survival`)
+  refuses an id with more than one row, wherever its values are missing: counts and events take every row.
+* The rank-sum p keeps far tails in either order of the groups (it was 0 for one order).
+* The SD of a single value is undefined and reads "–" (it read 0.0).
+* `compare()` keeps a decimal for quartiles of small whole numbers, as `distribution()` does.
+* `.values` of `compare()`, `distribution()` and `survival()` holds the group summaries under `"groups"`,
+  beside `"test"` and `"p"`, so a group named "test" or "p" no longer overwrites the test or loses its summary.
+* `over_time()` reads ISO times across a clock change (mixed offsets) in UTC.
+* The README installs the development version from GitHub; the version is now 0.2.0.dev0, so a checkout is
+  told apart from the 0.1.0 release on PyPI.
 
 ## 0.1.0
 

@@ -76,20 +76,19 @@ class Study:
         if errors:
             raise ValueError(f"hairline: {endpoint}: fix these first:\n" + "\n".join(f"- {item}" for item in errors))
 
-    def require_one_row(self, columns: Sequence[str], endpoint: str) -> None:
-        """Refuse to count repeated rows of one id as separate patients; name the id and the most rows per id."""
+    def require_one_row(self, endpoint: str) -> None:
+        """Refuse to count repeated rows of one id as separate patients, in every row (counts, events and values
+        all count rows); name the id and the most rows per id."""
         name = self.roles.get("id")
         if name not in self.data.columns:
             return
-        ids = self.data[name]
-        for column in columns:
-            present = ~is_missing(ids) & ~is_missing(self.data[column])
-            most = int(ids[present].map(level_text).value_counts().max()) if present.any() else 0
-            if most > 1:
-                raise ValueError(f"hairline: {endpoint}: '{column}' has up to {most} rows per id in '{name}', and each "
-                                 f"would count as one of the {self.unit}; summarise to one row per id first (for "
-                                 "example each patient's first value), or follow repeated measurements with "
-                                 "over_time()")
+        ids = self.data[name][~is_missing(self.data[name])].map(level_text)
+        counts = ids.value_counts()
+        if len(counts) and counts.iloc[0] > 1:
+            raise ValueError(f"hairline: {endpoint}: id {counts.index[0]} has {counts.iloc[0]} rows in '{name}', and "
+                             f"each would count as one of the {self.unit}; summarise to one row per id first (for "
+                             "example each patient's first value), or follow repeated measurements with "
+                             "over_time()")
 
     def __str__(self) -> str:
         roles = ", ".join(f"{role} = {column}" for role, column in self.roles.items())
