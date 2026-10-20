@@ -25,20 +25,25 @@ def ranks(values: Sequence[float]) -> np.ndarray:
     return result
 
 
-def rank_sum(first: Sequence[float], second: Sequence[float]) -> float:
-    """Two-sided Wilcoxon rank-sum p, normal approximation with tie and continuity correction; NaN when every value
-    ties, which leaves the test undefined (as R's wilcox.test)."""
+def rank_sum_test(first: Sequence[float], second: Sequence[float]) -> dict:
+    """Two-sided Wilcoxon rank-sum test: W (as R's wilcox.test) and p, normal approximation with tie and continuity
+    correction; p is NaN when every value ties, which leaves the test undefined (as R's wilcox.test)."""
     count_x, count_y = len(first), len(second)
     combined = ranks(list(first) + list(second))
-    statistic = combined[:count_x].sum() - count_x * (count_x + 1) / 2
+    statistic = float(combined[:count_x].sum() - count_x * (count_x + 1) / 2)
     total = count_x + count_y
     _, ties = np.unique(combined, return_counts=True)
     sigma = math.sqrt(count_x * count_y / 12 * ((total + 1) - (ties ** 3 - ties).sum() / (total * (total - 1))))
     if sigma == 0:
-        return math.nan
+        return {"statistic": statistic, "p": math.nan}
     shift = statistic - count_x * count_y / 2
     z = (shift - math.copysign(0.5, shift) if shift else 0.0) / sigma
-    return 2 * min(normal_cdf(z), 1 - normal_cdf(z))
+    return {"statistic": statistic, "p": 2 * min(normal_cdf(z), 1 - normal_cdf(z))}
+
+
+def rank_sum(first: Sequence[float], second: Sequence[float]) -> float:
+    """The rank-sum p; NaN when every value ties."""
+    return rank_sum_test(first, second)["p"]
 
 
 def logrank(time: Sequence[float], event: Sequence[int], group: Sequence[str]) -> dict:
@@ -122,10 +127,10 @@ def egger(estimate: Sequence[float], se: Sequence[float]) -> float:
     return 2 * (1 - t_cdf(abs(fit["intercept"] / intercept_se), fit["count"] - 2))
 
 
-def kruskal(samples: Sequence[Sequence[float]]) -> float:
-    """Kruskal–Wallis p over two or more samples, with the tie correction (as R's kruskal.test); NaN when every
-    value ties."""
-    sizes = [len(sample) for sample in samples]
+def kruskal_test(samples: Sequence[Sequence[float]]) -> dict:
+    """Kruskal–Wallis test over two or more samples, with the tie correction (as R's kruskal.test): H, degrees of
+    freedom and p; H and p are NaN when every value ties."""
+    sizes, df = [len(sample) for sample in samples], len(samples) - 1
     combined = ranks([value for sample in samples for value in sample])
     total, bounds = sum(sizes), np.cumsum([0, *sizes])
     statistic = 12 / (total * (total + 1)) * sum(combined[start:end].sum() ** 2 / (end - start)
@@ -134,15 +139,26 @@ def kruskal(samples: Sequence[Sequence[float]]) -> float:
     _, ties = np.unique(combined, return_counts=True)
     correction = 1 - (ties ** 3 - ties).sum() / (total ** 3 - total)
     if correction == 0:
-        return math.nan
-    statistic /= correction
-    return chi2_sf(float(statistic), len(samples) - 1)
+        return {"statistic": math.nan, "df": df, "p": math.nan}
+    statistic = float(statistic / correction)
+    return {"statistic": statistic, "df": df, "p": chi2_sf(statistic, df)}
 
 
-def chi_square(counts: Sequence[Sequence[float]]) -> float:
-    """Pearson χ² test of independence on a table of counts, without continuity correction."""
+def kruskal(samples: Sequence[Sequence[float]]) -> float:
+    """The Kruskal–Wallis p; NaN when every value ties."""
+    return kruskal_test(samples)["p"]
+
+
+def chi_square_test(counts: Sequence[Sequence[float]]) -> dict:
+    """Pearson χ² test of independence on a table of counts, without continuity correction: χ², degrees of freedom
+    and p."""
     observed = np.asarray(counts, dtype=float)
     expected = np.outer(observed.sum(axis=1), observed.sum(axis=0)) / observed.sum()
     used = expected > 0
     statistic = float(((observed[used] - expected[used]) ** 2 / expected[used]).sum())
-    return chi2_sf(statistic, (observed.shape[0] - 1) * (observed.shape[1] - 1))
+    df = (observed.shape[0] - 1) * (observed.shape[1] - 1)
+    return {"statistic": statistic, "df": df, "p": chi2_sf(statistic, df)}
+
+
+def chi_square(counts: Sequence[Sequence[float]]) -> float:
+    return chi_square_test(counts)["p"]

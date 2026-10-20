@@ -1,17 +1,27 @@
 study_fixture <- function() read_fixture("study.json")
 
+# Columns typed by their first value that is not null.
 fixture_frame <- function(columns) {
   as.data.frame(lapply(columns, function(values) {
-    vapply(values, function(value) if (is.null(value)) NA else value,
-           if (is.character(values[[1]])) character(1) else numeric(1))
+    text <- is.character(Find(Negate(is.null), values))
+    missing <- if (text) NA_character_ else NA_real_
+    vapply(values, function(value) if (is.null(value)) missing else value, if (text) character(1) else numeric(1))
   }), stringsAsFactors = FALSE)
 }
 
-fixture_study <- function(fixture) {
+# The cohort as the endpoints read it; with `id`, as the checks read it (its repeated id blocks the endpoints).
+fixture_study <- function(fixture, id = NULL) {
   data <- fixture_frame(fixture$cohort)
-  suppressWarnings(hl_study(data, group = "arm", time = "months", event = "died", id = "id",
+  suppressWarnings(hl_study(data, group = "arm", time = "months", event = "died", id = id,
                             variables = c("age", "sex", "sofa", "score"),
                             units = c(age = "years", months = "months")))
+}
+
+# Numbers as R has them: JSON null (undefined) as NA.
+fixture_numbers <- function(value) {
+  if (is.null(value)) return(NA_real_)
+  if (is.list(value)) return(lapply(value, fixture_numbers))
+  value
 }
 
 expect_result <- function(result, case) {
@@ -19,12 +29,13 @@ expect_result <- function(result, case) {
   expect_equal(unname(as.matrix(result$table)), do.call(rbind, lapply(case$rows, unlist)))
   expect_equal(result$values, case$values)
   expect_equal(result$text, case$text)
+  expect_equal(result$numbers, fixture_numbers(case$numbers))
 }
 
 test_that("study checks match the shared fixture", {
   hl_use(brand = FALSE)
   fixture <- study_fixture()
-  study <- fixture_study(fixture)
+  study <- fixture_study(fixture, id = "id")
   expect_equal(lapply(study$checks, function(finding) {
     finding$rows <- as.list(finding$rows)
     finding
@@ -51,6 +62,23 @@ test_that("study endpoints match the shared fixture", {
   three <- suppressWarnings(hl_study(fixture_frame(fixture$three), group = "arm", variables = "lactate",
                                      units = c(lactate = "mmol/l")))
   expect_result(hl_compare(three, "lactate"), fixture$compare_three)
+  expect_result(hl_compare(study, "age"), fixture$compare_missing)
+})
+
+test_that("rows left out as missing match the shared fixture", {
+  hl_use(brand = FALSE)
+  fixture <- study_fixture()
+  gaps <- suppressWarnings(hl_study(fixture_frame(fixture$gaps), group = "arm", variables = "lactate",
+                                    units = c(lactate = "mmol/l")))
+  expect_result(hl_describe(gaps), fixture$gaps_describe)
+  expect_result(hl_compare(gaps, "lactate"), fixture$gaps_compare)
+  expect_result(hl_distribution(gaps, "lactate"), fixture$gaps_distribution)
+})
+
+test_that("repeated rows of one id are refused as in Python", {
+  fixture <- study_fixture()
+  expected <- sub("over_time()", "hl_over_time()", fixture$repeated, fixed = TRUE)
+  expect_error(hl_describe(fixture_study(fixture, id = "id")), expected, fixed = TRUE)
 })
 
 test_that("over_time matches the shared fixture and refuses dates it cannot read", {

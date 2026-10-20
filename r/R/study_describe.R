@@ -10,43 +10,69 @@ study_subsets <- function(study) {
   }), overall)
 }
 
+study_part_names <- function(parts) vapply(parts, `[[`, character(1), "name")
+
 describe_numeric <- function(study, name, parts, stats) {
   digits <- study_digits(study_numbers(study$data[[name]]))
   whole <- is_whole(study_numbers(study$data[[name]]))
+  found <- stats::setNames(lapply(parts, function(part) {
+    summary_numbers(study_numbers(part$rows[[name]]), stats, sum(study_is_missing(part$rows[[name]])))
+  }), study_part_names(parts))
   rows <- lapply(stats, function(stat) {
     c(paste0(study_label_unit(study, name), ", ", study_stat_labels[[stat]]),
-      vapply(parts, function(part) {
-        numeric_summary(study_numbers(part$rows[[name]]), stat, digits, sum(study_is_missing(part$rows[[name]])),
-                        whole)
-      }, character(1)))
+      vapply(found, summary_text, character(1), stat = stat, digits = digits, whole = whole, USE.NAMES = FALSE))
   })
-  values <- stats::setNames(as.list(rows[[1]][-1]), vapply(parts, `[[`, character(1), "name"))
-  list(rows = rows, values = stats::setNames(list(values), name))
+  values <- stats::setNames(as.list(rows[[1]][-1]), names(found))
+  list(rows = rows, values = stats::setNames(list(values), name), numbers = found)
+}
+
+# n and missing, then the count and share (of the non-missing values) of each level.
+level_numbers <- function(values, kinds) {
+  present <- level_text(values[!study_is_missing(values)])
+  counts <- stats::setNames(lapply(kinds, function(kind) sum(present == kind)), kinds)
+  list(n = length(present), missing = length(values) - length(present), counts = counts,
+       shares = lapply(counts, share_of, total = length(present)))
 }
 
 describe_categorical <- function(study, name, parts) {
   kinds <- study_levels(study$data[[name]])
-  presents <- lapply(parts, function(part) {
-    values <- part$rows[[name]]
-    level_text(values[!study_is_missing(values)])
-  })
+  found <- stats::setNames(lapply(parts, function(part) level_numbers(part$rows[[name]], kinds)),
+                           study_part_names(parts))
   header <- c(paste0(study_label(study, name), ", n (%)"), rep("", length(parts)))
   level_rows <- lapply(kinds, function(kind) {
-    c(paste0("  ", kind), vapply(presents, function(present) count_share(sum(present == kind), length(present)),
-                                 character(1)))
+    c(paste0("  ", kind), vapply(found, function(part) count_share(part$counts[[kind]], part$n), character(1),
+                                 USE.NAMES = FALSE))
   })
   rows <- c(list(header), level_rows)
   values <- stats::setNames(lapply(seq_along(parts), function(index) {
     stats::setNames(lapply(rows[-1], function(row) row[index + 1]), kinds)
-  }), vapply(parts, `[[`, character(1), "name"))
-  list(rows = rows, values = stats::setNames(list(values), name))
+  }), names(found))
+  list(rows = rows, values = stats::setNames(list(values), name), numbers = found)
+}
+
+# Every row is described in Overall; rows without a group are missing from the group columns.
+describe_counts <- function(study, parts) {
+  total <- nrow(study$data)
+  grouped <- parts[-length(parts)]
+  missing <- if (is.null(study$roles$group)) stats::setNames(list(), character()) else
+    list(group = total - sum(vapply(grouped, function(part) nrow(part$rows), integer(1))))
+  list(total = total, analysed = total, missing = missing)
 }
 
 describe_text <- function(study, parts, counts) {
   total <- paste(counts[length(counts)], study$unit)
   if (is.null(study$roles$group)) return(paste0(total, "."))
-  groups <- paste(counts[-length(counts)], "in", vapply(parts[-length(parts)], `[[`, character(1), "name"))
+  groups <- paste(counts[-length(counts)], "in", study_part_names(parts[-length(parts)]))
   paste0(total, ": ", listed_text(groups), ".")
+}
+
+# " Left out where missing: Age 1 and SOFA 2."; empty when no variable misses a value.
+describe_missing_text <- function(study, found) {
+  missing <- vapply(study$variables, function(name) found$variables[[name]][["Overall"]]$missing, numeric(1))
+  if (!any(missing > 0)) return("")
+  parts <- paste(vapply(study$variables[missing > 0], study_label, character(1), study = study),
+                 vapply(missing[missing > 0], hl_format_number, character(1), digits = 0))
+  sprintf(" Left out where missing: %s.", listed_text(parts))
 }
 
 #' Table 1: the cohort by group
@@ -56,7 +82,8 @@ describe_text <- function(study, parts, counts) {
 #'
 #' @param study A study from [hl_study()].
 #' @param stats Statistics for numeric variables: `"median_iqr"`, `"mean_sd"`, `"range"`, `"n_missing"`.
-#' @return A `hairline_result`: `figure`, `table`, `values` and `text`.
+#' @return A `hairline_result`: `figure`, `table`, `values`, `text` and the unrounded `numbers` they are formatted
+#'   from (per group n, rows missing a value or a group, and the statistics).
 #' @examples
 #' set.seed(1)
 #' cohort <- data.frame(arm = rep(c("Standard care", "Early mobilisation"), each = 40),
@@ -72,20 +99,26 @@ describe_text <- function(study, parts, counts) {
 hl_describe <- function(study, stats = "median_iqr") {
   check_study_stats(stats)
   study_require(study, c(study$roles$group, study$variables), "describe")
+  study_require_one_row(study, study$variables, "describe")
   parts <- study_subsets(study)
-  names <- vapply(parts, `[[`, character(1), "name")
-  counts <- vapply(parts, function(part) hl_format_number(nrow(part$rows), 0), character(1))
+  names <- study_part_names(parts)
+  found <- list(rows = describe_counts(study, parts),
+                n = stats::setNames(lapply(parts, function(part) nrow(part$rows)), names), variables = list())
+  counts <- vapply(found$n, hl_format_number, character(1), digits = 0, USE.NAMES = FALSE)
   rows <- list(c("n", counts))
   values <- list(n = stats::setNames(as.list(counts), names))
   for (name in study$variables) {
-    found <- if (study$types[[name]] == "numeric") describe_numeric(study, name, parts, stats) else
+    described <- if (study$types[[name]] == "numeric") describe_numeric(study, name, parts, stats) else
       describe_categorical(study, name, parts)
-    rows <- c(rows, found$rows)
-    values <- c(values, found$values)
+    rows <- c(rows, described$rows)
+    values <- c(values, described$values)
+    found$variables[[name]] <- described$numbers
   }
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Characteristic", names)
-  study_result(study_overview(study, parts), table, values, describe_text(study, parts, counts))
+  text <- paste0(describe_text(study, parts, counts), overall_only_text(found$rows),
+                 describe_missing_text(study, found))
+  study_result(study_overview(study, parts), table, values, text, found)
 }
 
 study_overview <- function(study, parts) {

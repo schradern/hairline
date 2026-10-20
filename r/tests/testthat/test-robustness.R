@@ -241,8 +241,9 @@ test_that("numbers beyond their precision do not round up, and non-finite ones r
 test_that("small or tight values keep their digits, and small whole medians their half", {
   expect_equal(auto_digits(c(0.0004, 0.0003, 0.0005)), 4)
   expect_equal(auto_digits(c(1000.1, 1000.2, 1000.3)), 1)
-  expect_equal(numeric_summary(c(1, 2, 3, 4), "median_iqr", 0, 0, whole = TRUE), "2.5 (1.8–3.3)")
-  expect_equal(numeric_summary(c(55, 56, 61, 70), "median_iqr", 0, 0, whole = TRUE), "59 (56–63)")
+  median_iqr <- function(values) summary_text(summary_numbers(values, "median_iqr", 0), "median_iqr", 0, whole = TRUE)
+  expect_equal(median_iqr(c(1, 2, 3, 4)), "2.5 (1.8–3.3)")
+  expect_equal(median_iqr(c(55, 56, 61, 70)), "59 (56–63)")
 })
 
 test_that("bar labels keep the data's decimals and order leaves out what it does not name", {
@@ -417,4 +418,75 @@ test_that("tooltips show seconds when the data has them", {
   times <- as.POSIXct("2025-01-01 10:00:01", tz = "UTC") + 0:2
   expect_equal(datetime_texts(as.numeric(times), "UTC"),
                c("2025-01-01 10:00:01", "2025-01-01 10:00:02", "2025-01-01 10:00:03"))
+})
+
+# Three patients measured on several days: rows are visits, not patients.
+visits <- function() {
+  data.frame(patient = c(1, 1, 1, 2, 2, 3), arm = rep(c("A", "B"), each = 3),
+             day = c("2025-01-01", "2025-01-02", "2025-01-03", "2025-01-01", "2025-01-02", "2025-01-01"),
+             lactate = c(2.1, 2.4, 2.0, 3.1, 2.9, 2.5))
+}
+
+test_that("repeated rows of one id are not counted as patients", {
+  study <- suppressWarnings(hl_study(visits(), group = "arm", id = "patient", variables = "lactate",
+                                     units = c(lactate = "mmol/l")))
+  pattern <- "'lactate' has up to 3 rows per id in 'patient'.*one row per id first"
+  expect_error(hl_describe(study), pattern)
+  expect_error(hl_compare(study, "lactate"), pattern)
+  expect_error(hl_distribution(study, "lactate"), pattern)
+  expect_equal(hl_over_time(study, "day", "lactate")$numbers$rows$analysed, 6)
+})
+
+test_that("an id repeated only where the value is missing is one patient", {
+  data <- data.frame(id = c(1, 1, 2, 3, 4), arm = c("A", "A", "A", "B", "B"), age = c(60, NA, 72, 65, 58))
+  study <- suppressWarnings(hl_study(data, group = "arm", id = "id", variables = "age"))
+  group <- hl_compare(study, "age")$numbers$groups$A
+  expect_equal(group[c("n", "missing", "median")], list(n = 2, missing = 1, median = 66))
+})
+
+test_that("results say how many rows were left out", {
+  data <- data.frame(arm = rep(c("A", "B"), each = 50), score = c(0:81, rep(NA, 18)))
+  study <- suppressWarnings(hl_study(data, group = "arm", variables = "score", unit = "patients"))
+  result <- hl_compare(study, "score")
+  expect_true(endsWith(result$text, " 82 of 100 patients; 18 without a value were left out."))
+  expect_equal(result$numbers$rows, list(total = 100, analysed = 82, missing = list(variable = 18, group = 0)))
+  expect_equal(vapply(result$numbers$groups, `[[`, numeric(1), "n"), c(A = 50, B = 32))
+  expect_equal(result$numbers$groups$B$missing, 18)
+  expect_equal(result$table$n[1:2], c("50", "32"))
+})
+
+test_that("survival counts rows without a group", {
+  data <- three_arms()
+  data$arm[40] <- NA
+  result <- hl_survival(suppressWarnings(hl_study(data, group = "arm", time = "time", event = "event")))
+  expect_equal(result$numbers$rows, list(total = 60, analysed = 59, missing = list(group = 1)))
+  expect_true(endsWith(result$text, " 59 of 60 participants; 1 without a group was left out."))
+  expect_equal(result$numbers$test[c("method", "df")], list(method = "Log-rank", df = 2))
+})
+
+test_that("numbers keep what the text rounds", {
+  data <- data.frame(arm = rep(c("A", "B"), each = 3), score = c(1, 2, 2, 2, 2, 2))
+  result <- hl_compare(suppressWarnings(hl_study(data, group = "arm", variables = "score",
+                                                 types = c(score = "numeric"))), "score")
+  expect_equal(result$numbers$groups$A$q1, 1.5)
+  expect_equal(result$values$A, "2 (2–2)")
+  expect_equal(result$numbers$test[c("method", "statistic")], list(method = "Wilcoxon rank-sum", statistic = 3))
+  data$score <- 2
+  tied <- hl_compare(suppressWarnings(hl_study(data, group = "arm", variables = "score",
+                                               types = c(score = "numeric"))), "score")$numbers$test
+  expect_true(is.na(tied$p))
+  expect_null(tied$df)
+})
+
+test_that("effects name the reference level of a model", {
+  data <- data.frame(sex = rep(c("Female", "Male"), 4), age = c(60, 72, 65, 58, 70, 61, 66, 59))
+  study <- suppressWarnings(hl_study(data))
+  result <- hl_effects(study, stats::lm(age ~ sex, data = data))
+  expect_equal(result$numbers$reference, list(sex = "Female"))
+  expect_equal(result$numbers$scale, "difference")
+  expect_equal(result$numbers$terms$sexMale$estimate, unname(stats::coef(stats::lm(age ~ sex, data = data))[2]))
+  table <- data.frame(study = "age", estimate = 0.5, low = 0.1, high = 0.9)
+  expect_equal(hl_effects(study, table)$numbers,
+               list(scale = "difference", reference = stats::setNames(list(), character()),
+                    terms = list(Age = list(estimate = 0.5, low = 0.1, high = 0.9))))
 })

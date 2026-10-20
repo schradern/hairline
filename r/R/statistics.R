@@ -8,6 +8,13 @@ rank_sum_p <- function(first, second) {
   suppressWarnings(stats::wilcox.test(first, second, exact = FALSE, correct = TRUE)$p.value)
 }
 
+# W as wilcox.test() reports it (the first sample's rank sum less its minimum) and the rank-sum p.
+rank_sum_test <- function(first, second) {
+  ranks <- rank(c(first, second))
+  statistic <- sum(ranks[seq_along(first)]) - length(first) * (length(first) + 1) / 2
+  list(statistic = statistic, p = rank_sum_p(first, second))
+}
+
 # As survival::survdiff, only groups with expected events take part, one of them left out of the quadratic form.
 # With fewer than two such groups, or a singular variance (every event at one time), the test is undefined: p is NA.
 logrank_test <- function(time, event, group) {
@@ -87,4 +94,17 @@ kruskal_p <- function(samples) {
   suppressWarnings(stats::kruskal.test(samples)$p.value)
 }
 
+# H, degrees of freedom and p; H and p are NA when every value ties.
+kruskal_test <- function(samples) {
+  df <- length(samples) - 1L
+  if (length(unique(unlist(samples))) < 2) return(list(statistic = NA_real_, df = df, p = NA_real_))
+  test <- suppressWarnings(stats::kruskal.test(samples))
+  list(statistic = unname(test$statistic), df = df, p = test$p.value)
+}
+
 chi_square_p <- function(counts) suppressWarnings(stats::chisq.test(counts, correct = FALSE)$p.value)
+
+chi_square_test <- function(counts) {
+  test <- suppressWarnings(stats::chisq.test(counts, correct = FALSE))
+  list(statistic = unname(test$statistic), df = unname(test$parameter), p = test$p.value)
+}

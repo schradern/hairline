@@ -284,9 +284,12 @@ def test_small_or_tight_values_keep_their_digits():
 
 
 def test_a_median_between_small_whole_numbers_keeps_its_half():
-    from hairline.study.summaries import numeric_text
-    assert numeric_text(np.array([1.0, 2, 3, 4]), "median_iqr", 0, 0, whole=True) == "2.5 (1.8–3.3)"
-    assert numeric_text(np.array([55.0, 56, 61, 70]), "median_iqr", 0, 0, whole=True) == "59 (56–63)"
+    from hairline.study.summaries import summary_numbers, summary_text
+
+    def median_iqr(values):
+        return summary_text(summary_numbers(np.array(values), ("median_iqr",), 0), "median_iqr", 0, whole=True)
+    assert median_iqr([1.0, 2, 3, 4]) == "2.5 (1.8–3.3)"
+    assert median_iqr([55.0, 56, 61, 70]) == "59 (56–63)"
 
 
 def test_value_labels_keep_the_data_decimals():
@@ -505,3 +508,88 @@ def test_iso_text_across_a_clock_change_reads_in_utc():
     data = pd.DataFrame({"x": ["2025-03-30T00:00+01:00", "2025-03-30T04:00+02:00"], "y": [1.0, 2.0]})
     figure = hl.timeseries(data, "x", "y", window=1)
     assert figure.title
+
+
+def quiet_study(data: pd.DataFrame, **roles) -> hl.Study:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return hl.study(data, **roles)
+
+
+def visits() -> pd.DataFrame:
+    """Three patients measured on several days: rows are visits, not patients."""
+    return pd.DataFrame({"patient": [1, 1, 1, 2, 2, 3], "arm": ["A", "A", "A", "B", "B", "B"],
+                         "day": ["2025-01-01", "2025-01-02", "2025-01-03", "2025-01-01", "2025-01-02", "2025-01-01"],
+                         "lactate": [2.1, 2.4, 2.0, 3.1, 2.9, 2.5]})
+
+
+def test_repeated_rows_of_one_id_are_not_counted_as_patients():
+    study = quiet_study(visits(), group="arm", id="patient", variables=["lactate"], units={"lactate": "mmol/l"})
+    for endpoint in (study.describe, lambda: study.compare("lactate"), lambda: study.distribution("lactate")):
+        with pytest.raises(ValueError, match=r"'lactate' has up to 3 rows per id in 'patient'.*one row per id first"):
+            endpoint()
+    assert study.over_time("day", "lactate").numbers["rows"]["analysed"] == 6
+
+
+def test_an_id_repeated_only_where_the_value_is_missing_is_one_patient():
+    data = pd.DataFrame({"id": [1, 1, 2, 3, 4], "arm": ["A", "A", "A", "B", "B"], "age": [60.0, None, 72, 65, 58]})
+    result = quiet_study(data, group="arm", id="id", variables=["age"]).compare("age")
+    group = result.numbers["groups"]["A"]
+    assert (group["n"], group["missing"], group["median"]) == (2, 1, 66.0)
+
+
+def test_results_say_how_many_rows_were_left_out():
+    data = pd.DataFrame({"arm": ["A"] * 50 + ["B"] * 50, "score": [float(value) for value in range(82)] + [None] * 18})
+    result = quiet_study(data, group="arm", variables=["score"], unit="patients").compare("score")
+    assert result.text.endswith(" 82 of 100 patients; 18 without a value were left out.")
+    assert result.numbers["rows"] == {"total": 100, "analysed": 82, "missing": {"variable": 18, "group": 0}}
+    assert [result.numbers["groups"][name]["n"] for name in "AB"] == [50, 32]
+    assert result.numbers["groups"]["B"]["missing"] == 18
+    assert result.table["n"].tolist()[:2] == ["50", "32"]
+
+
+def test_survival_counts_rows_without_a_group():
+    data = three_arms().assign(arm=["A"] * 20 + ["B"] * 19 + [None] + ["C"] * 20)
+    result = quiet_study(data, group="arm", time="time", event="event").survival()
+    assert result.numbers["rows"] == {"total": 60, "analysed": 59, "missing": {"group": 1}}
+    assert result.text.endswith(" 59 of 60 participants; 1 without a group was left out.")
+    assert result.numbers["test"]["method"] == "Log-rank" and result.numbers["test"]["df"] == 2
+
+
+def test_numbers_keep_what_the_text_rounds():
+    data = pd.DataFrame({"arm": ["A"] * 3 + ["B"] * 3, "score": [1.0, 2.0, 2.0, 2.0, 2.0, 2.0]})
+    result = quiet_study(data, group="arm", variables=["score"], types={"score": "numeric"}).compare("score")
+    assert result.numbers["groups"]["A"]["q1"] == 1.5 and result.values["A"] == "2 (2–2)"
+    test = result.numbers["test"]
+    assert (test["method"], test["statistic"]) == ("Wilcoxon rank-sum", 3.0) and 0 < test["p"] < 1
+    tied = quiet_study(data.assign(score=2.0), group="arm", variables=["score"], types={"score": "numeric"})
+    test = tied.compare("score").numbers["test"]
+    assert np.isnan(test["p"]) and "df" not in test
+
+
+class Factor:
+    """A formula factor as patsy names it."""
+    def name(self):
+        return "sex"
+
+
+def test_effects_name_the_reference_level_of_a_formula_model():
+    from types import SimpleNamespace
+    factor = Factor()
+    info = SimpleNamespace(
+        term_codings={"sex": [SimpleNamespace(contrast_matrices={factor: SimpleNamespace(matrix=[[0.0], [1.0]])})]},
+        factor_infos={factor: SimpleNamespace(categories=("Female", "Male"))})
+
+    class Model:
+        params = pd.Series({"Intercept": -1.2, "sex[T.Male]": 0.4})
+        model = SimpleNamespace(data=SimpleNamespace(design_info=info))
+
+        def conf_int(self):
+            return pd.DataFrame({0: self.params - 0.3, 1: self.params + 0.3})
+    study = quiet_study(pd.DataFrame({"sex": ["Female", "Male"]}))
+    result = study.effects(Model(), exponentiate=True)
+    assert result.numbers["reference"] == {"sex": "Female"} and result.numbers["scale"] == "ratio"
+    assert result.numbers["terms"]["sex[T.Male]"]["estimate"] == pytest.approx(np.exp(0.4))
+    table = pd.DataFrame({"study": ["age"], "estimate": [0.5], "low": [0.1], "high": [0.9]})
+    assert study.effects(table).numbers == {"scale": "difference", "reference": {},
+                                            "terms": {"age": {"estimate": 0.5, "low": 0.1, "high": 0.9}}}

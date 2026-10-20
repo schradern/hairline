@@ -25,7 +25,8 @@ hl_study(
 
 \item{time, event}{Follow-up time and event (1 = event, 0 = censored).}
 
-\item{id}{Participant id, checked for duplicates.}
+\item{id}{Participant id, checked for duplicates; \code{\link[=hl_describe]{hl_describe()}}, \code{\link[=hl_compare]{hl_compare()}} and \code{\link[=hl_distribution]{hl_distribution()}}
+refuse a variable with more than one row per id.}
 
 \item{variables}{Characteristics to describe; default every other column.}
 

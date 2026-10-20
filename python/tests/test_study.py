@@ -61,7 +61,8 @@ def test_describe_builds_table_one_with_counts_and_shares():
     assert result.table.iloc[1, 0] == "Age (years), median (IQR)"
     assert result.figure.headers[0].x_title == "years"
     assert result.values["n"]["Overall"] == "40"
-    assert result.text == "40 participants: 20 in Standard care and 20 in Early mobilisation."
+    assert result.text == ("40 participants: 20 in Standard care and 20 in Early mobilisation. Left out where missing: "
+                           "Age 1.")
     assert result.table.iloc[2, 0] == "Sex, n (%)"
     assert result.figure is not None and len(result.figure.axes) == 1
 

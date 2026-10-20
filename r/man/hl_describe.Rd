@@ -12,7 +12,8 @@ hl_describe(study, stats = "median_iqr")
 \item{stats}{Statistics for numeric variables: \code{"median_iqr"}, \code{"mean_sd"}, \code{"range"}, \code{"n_missing"}.}
 }
 \value{
-A \code{hairline_result}: \code{figure}, \code{table}, \code{values} and \code{text}.
+A \code{hairline_result}: \code{figure}, \code{table}, \code{values}, \code{text} and the unrounded \code{numbers} they are formatted
+from (per group n, rows missing a value or a group, and the statistics).
 }
 \description{
 One row per statistic or category, one column per group plus Overall,

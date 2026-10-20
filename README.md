@@ -54,7 +54,7 @@ cohort = pd.read_csv("gallery/data/cohort.csv")
 study = hl.study(cohort, group="arm", time="months", event="died", id="id",
                  variables=["age", "sex", "sofa", "lactate"], labels={"sofa": "SOFA score", "lactate": "Lactate"},
                  units={"age": "years", "sofa": "points", "lactate": "mmol/l", "months": "months"})
-overview = study.describe()      # .table (Table 1), .figure, .values, .text
+overview = study.describe()      # .table (Table 1), .figure, .values, .text, .numbers
 hl.save(overview.figure, "cohort", formats=["pdf", "png"])
 ```
 
@@ -65,7 +65,7 @@ cohort <- read.csv("gallery/data/cohort.csv")
 study <- hl_study(cohort, group = "arm", time = "months", event = "died", id = "id",
                   variables = c("age", "sex", "sofa", "lactate"), labels = c(sofa = "SOFA score", lactate = "Lactate"),
                   units = c(age = "years", sofa = "points", lactate = "mmol/l", months = "months"))
-overview <- hl_describe(study)   # $table (Table 1), $figure, $values, $text
+overview <- hl_describe(study)   # $table (Table 1), $figure, $values, $text, $numbers
 hl_save(overview$figure, "cohort", formats = c("pdf", "png"), size = "double")
 ```
 

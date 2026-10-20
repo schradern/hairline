@@ -35,7 +35,8 @@ study_kind <- function(study, column, endpoint) {
 #' @param data A data frame, one row per participant.
 #' @param group Column with the comparison groups.
 #' @param time,event Follow-up time and event (1 = event, 0 = censored).
-#' @param id Participant id, checked for duplicates.
+#' @param id Participant id, checked for duplicates; [hl_describe()], [hl_compare()] and [hl_distribution()]
+#'   refuse a variable with more than one row per id.
 #' @param variables Characteristics to describe; default every other column.
 #' @param labels Named display names, e.g. `c(sofa = "SOFA score")`.
 #' @param types Named types overriding the inference, e.g. `c(score = "categorical")`.
@@ -120,8 +121,27 @@ study_require <- function(study, columns, endpoint) {
   }
 }
 
-study_result <- function(figure, table, values, text) {
-  structure(list(figure = figure, table = table, values = values, text = text), class = "hairline_result")
+# Refuse to count repeated rows of one id as separate patients; name the id and the most rows per id.
+study_require_one_row <- function(study, columns, endpoint) {
+  name <- study$roles$id
+  if (is.null(name) || !name %in% names(study$data)) return(invisible())
+  ids <- study$data[[name]]
+  for (column in columns) {
+    present <- !study_is_missing(ids) & !study_is_missing(study$data[[column]])
+    most <- if (any(present)) max(table(level_text(ids[present]))) else 0
+    if (most > 1) {
+      stop(sprintf(paste("hairline: %s: '%s' has up to %d rows per id in '%s', and each would count as one of the %s;",
+                         "summarise to one row per id first (for example each patient's first value), or follow",
+                         "repeated measurements with hl_over_time()"), endpoint, column, most, name, study$unit),
+           call. = FALSE)
+    }
+  }
+}
+
+# The formatted table, values and text, and the unrounded numbers they are formatted from.
+study_result <- function(figure, table, values, text, numbers) {
+  structure(list(figure = figure, table = table, values = values, text = text, numbers = numbers),
+            class = "hairline_result")
 }
 
 #' @export

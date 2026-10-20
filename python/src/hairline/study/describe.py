@@ -15,7 +15,17 @@ from hairline.numbers import format_number, is_whole
 from hairline.stats.density import quantiles
 from hairline.study.columns import is_missing, level_text, levels, numbers
 from hairline.study.result import Result
-from hairline.study.summaries import STAT_LABELS, check_stats, count_share, digits_for, numeric_text
+from hairline.study.summaries import (
+    STAT_LABELS,
+    check_stats,
+    count_share,
+    digits_for,
+    listed,
+    overall_only_text,
+    share_of,
+    summary_numbers,
+    summary_text,
+)
 from hairline.tokens import load_tokens
 
 if TYPE_CHECKING:
@@ -32,45 +42,60 @@ def subsets(study: Study) -> list[tuple[str, pd.DataFrame]]:
     return [(name, study.data[labels == name]) for name in study.groups] + [(OVERALL, study.data)]
 
 
-def numeric_rows(study: Study, name: str, parts: list, stats: Sequence[str]) -> tuple[list[list[str]], dict]:
+def numeric_rows(study: Study, name: str, parts: list, stats: Sequence[str]) -> tuple[list[list[str]], dict, dict]:
     digits, whole = digits_for(numbers(study.data[name])), is_whole(numbers(study.data[name]))
-    rows, values = [], {}
-    for stat in stats:
-        texts = [numeric_text(numbers(rows_[name]), stat, digits, int(is_missing(rows_[name]).sum()), whole)
-                 for _, rows_ in parts]
-        rows.append([f"{study.label_unit(name)}, {STAT_LABELS[stat]}", *texts])
-        values.setdefault(name, dict(zip([label for label, _ in parts], texts, strict=True)))
-    return rows, values
+    found = {label: summary_numbers(numbers(rows_[name]), tuple(stats), int(is_missing(rows_[name]).sum()))
+             for label, rows_ in parts}
+    rows = [[f"{study.label_unit(name)}, {STAT_LABELS[stat]}",
+             *[summary_text(found[label], stat, digits, whole) for label, _ in parts]] for stat in stats]
+    return rows, {name: dict(zip(found, rows[0][1:], strict=True))}, found
 
 
-def categorical_rows(study: Study, name: str, parts: list) -> tuple[list[list[str]], dict]:
+def level_numbers(column: pd.Series, names: list[str]) -> dict:
+    """n and missing, then the count and share (of the non-missing values) of each level."""
+    present = column[~is_missing(column)].map(level_text)
+    counts = {level: int((present == level).sum()) for level in names}
+    return {"n": len(present), "missing": len(column) - len(present), "counts": counts,
+            "shares": {level: share_of(count, len(present)) for level, count in counts.items()}}
+
+
+def categorical_rows(study: Study, name: str, parts: list) -> tuple[list[list[str]], dict, dict]:
     names = levels(study.data[name])
+    found = {label: level_numbers(subset[name], names) for label, subset in parts}
     rows = [[f"{study.label(name)}, n (%)", *([""] * len(parts))]]
-    values: dict[str, dict[str, str]] = {label: {} for label, _ in parts}
-    for level in names:
-        texts = []
-        for label, subset in parts:
-            present = subset[name][~is_missing(subset[name])].map(level_text)
-            texts.append(count_share(int((present == level).sum()), len(present)))
-            values[label][level] = texts[-1]
-        rows.append([f"  {level}", *texts])
-    return rows, {name: values}
+    rows += [[f"  {level}", *[count_share(found[label]["counts"][level], found[label]["n"]) for label in found]]
+             for level in names]
+    values = {label: {level: row[1 + index] for level, row in zip(names, rows[1:], strict=True)}
+              for index, label in enumerate(found)}
+    return rows, {name: values}, found
+
+
+def study_rows(study: Study, parts: list) -> dict:
+    """Every row is described in Overall; rows without a group are missing from the group columns."""
+    total = len(study.data)
+    missing = {"group": total - sum(len(rows) for _, rows in parts[:-1])} if study.group else {}
+    return {"total": total, "analysed": total, "missing": missing}
 
 
 def describe(study: Study, stats: Sequence[str] = ("median_iqr",), size: str = "double") -> Result:
     stats = (stats,) if isinstance(stats, str) else tuple(stats)
     check_stats(stats)
     study.require([study.group, *study.variables], "describe")
+    study.require_one_row(study.variables, "describe")
     parts = subsets(study)
-    counts = [format_number(len(rows), 0) for _, rows in parts]
-    table, values = [["n", *counts]], {"n": dict(zip([label for label, _ in parts], counts, strict=True))}
+    found: dict = {"rows": study_rows(study, parts), "n": {label: len(rows) for label, rows in parts},
+                   "variables": {}}
+    counts = [format_number(count, 0) for count in found["n"].values()]
+    table, values = [["n", *counts]], {"n": dict(zip(found["n"], counts, strict=True))}
     for name in study.variables:
-        rows, found = (numeric_rows(study, name, parts, stats) if study.types[name] == "numeric"
-                       else categorical_rows(study, name, parts))
+        rows, shown, found["variables"][name] = (numeric_rows(study, name, parts, stats)
+                                                 if study.types[name] == "numeric" else
+                                                 categorical_rows(study, name, parts))
         table += rows
-        values.update(found)
+        values.update(shown)
     frame = pd.DataFrame(table, columns=["Characteristic", *[label for label, _ in parts]])
-    return Result(overview(study, parts, size), frame, values, counts_text(study, parts, counts))
+    text = counts_text(study, parts, counts) + overall_only_text(found["rows"]) + missing_text(study, found)
+    return Result(overview(study, parts, size), frame, values, text, found)
 
 
 def counts_text(study: Study, parts: list, counts: list[str]) -> str:
@@ -78,7 +103,14 @@ def counts_text(study: Study, parts: list, counts: list[str]) -> str:
     if not study.group:
         return f"{total}."
     groups = [f"{count} in {label}" for (label, _), count in zip(parts[:-1], counts[:-1], strict=True)]
-    return f"{total}: {', '.join(groups[:-1])} and {groups[-1]}." if len(groups) > 1 else f"{total}: {groups[0]}."
+    return f"{total}: {listed(groups)}."
+
+
+def missing_text(study: Study, found: dict) -> str:
+    """' Left out where missing: Age 1 and SOFA 2.'; empty when no variable misses a value."""
+    missing = {name: found["variables"][name][OVERALL]["missing"] for name in study.variables}
+    parts = [f"{study.label(name)} {format_number(count, 0)}" for name, count in missing.items() if count]
+    return f" Left out where missing: {listed(parts)}." if parts else ""
 
 
 def overview_row(ax, values, y: float, color: str, style: dict) -> None:

@@ -34,12 +34,15 @@ table_one <- hl_describe(study)    # Table 1: median (IQR) and n (%) per group
 table_one$table                    # a data frame
 age <- hl_compare(study, "age")    # spread rows per group, Wilcoxon rank-sum
 age$text                           # "Age (years), median (IQR): ... (Wilcoxon rank-sum, p = ...)."
+age$numbers$test$p                 # the unrounded p the text formats
 survival <- hl_survival(study)     # Kaplan-Meier with numbers at risk and the log-rank test
 hl_save(survival$figure, "survival")              # survival.pdf and survival.png
 ```
 
 Printing a study lists its checks: missing values, duplicate ids, categories that differ only in case,
-small groups, numeric columns without a unit. Errors stop the analysis; warnings name the fix.
+small groups, numeric columns without a unit. Errors stop the analysis; warnings name the fix. With `id =`,
+`hl_describe()`, `hl_compare()` and `hl_distribution()` refuse a variable with more than one row per id, so
+repeated measurements are not counted as separate patients.
 
 ## Charts
 

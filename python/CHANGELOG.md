@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* Study results carry `numbers`: the unrounded quantities their table, values and text are formatted from. Per
+  group n and the median and quartiles, mean and SD, range, or counts and shares; for a test its method,
+  statistic, degrees of freedom where defined and p (NaN when undefined); for survival n, events, medians and the
+  log-rank test; for effects the estimates, intervals, scale (ratio or difference) and, for formula models, the
+  reference level of each factor.
+* Every study result counts the rows it analysed and those left out because the variable, group or date was
+  missing, overall and per group, and its text says so when rows were left out: "82 of 100 patients; 18 without
+  a value were left out." `describe()` names the variables with missing values; rows without a group are counted
+  in Overall only, and the text says how many.
+* With `id=`, `describe()`, `compare()` and `distribution()` refuse a variable with more than one row per id
+  instead of counting repeated measurements as separate patients; the error names the id column and the most
+  rows per id, and points to one row per id or to `over_time()`.
 * `HairlineFigure.percent_axis()` takes `digits`, and the new `HairlineFigure.number_axis()` does the same for
   plain numbers: the decimals of the values a reader looks up in interactive output. A power of 89.6 % no longer
   shows as 90 % beside a 90 % target. Without `digits` tooltips follow the shared digits rule as before; ticks

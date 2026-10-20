@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import warnings
 
 import numpy as np
@@ -44,17 +45,37 @@ def frame(data: dict[str, list]) -> pd.DataFrame:
                          for name, values in data.items()})
 
 
+def gaps_data() -> dict[str, list]:
+    """Three arms with a row without an arm and two without lactate, for the rows a result leaves out."""
+    data = three_arm_data()
+    data["arm"][0] = None
+    data["lactate"][5] = data["lactate"][30] = None
+    return data
+
+
+def plain(value):
+    """Numbers as JSON has them: NaN (undefined) as null."""
+    if isinstance(value, dict):
+        return {key: plain(item) for key, item in value.items()}
+    if isinstance(value, float) and math.isnan(value):
+        return None
+    return value
+
+
 def result_case(result) -> dict:
     return {"columns": list(result.table.columns), "rows": result.table.values.tolist(), "values": result.values,
-            "text": result.text}
+            "text": result.text, "numbers": plain(result.numbers)}
 
 
 def study_cases() -> dict:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         data = cohort_data()
-        cohort = study(frame(data), group="arm", time="months", event="died", id="id",
-                       variables=["age", "sex", "sofa", "score"], units={"age": "years", "months": "months"})
+        options = {"group": "arm", "time": "months", "event": "died", "variables": ["age", "sex", "sofa", "score"],
+                   "units": {"age": "years", "months": "months"}}
+        checked = study(frame(data), id="id", **options)
+        cohort = study(frame(data), **options)
+        gaps = study(frame(gaps_data()), group="arm", variables=["lactate"], units={"lactate": "mmol/l"})
         three = study(frame(three_arm_data()), group="arm", variables=["lactate"], units={"lactate": "mmol/l"})
         daily = study(frame(daily_data()), group="unit", variables=["occupied"], units={"occupied": "beds"})
         broken = cohort_data()
@@ -62,7 +83,7 @@ def study_cases() -> dict:
         failing = study(frame(broken), group="arm", time="months", event="died", variables=["age"])
     effects = pd.DataFrame({"study": ["age", "sofa"], "estimate": [1.2, 1.8], "low": [1.0, 1.2], "high": [1.5, 2.6]})
     return {"cohort": data, "three": three_arm_data(), "broken_event": broken["died"],
-            "checks": [vars(finding) | {"rows": list(finding.rows)} for finding in cohort.checks],
+            "checks": [vars(finding) | {"rows": list(finding.rows)} for finding in checked.checks],
             "broken_checks": [vars(finding) | {"rows": list(finding.rows)} for finding in failing.checks],
             "describe": result_case(cohort.describe(stats=("median_iqr", "mean_sd", "range", "n_missing"))),
             "compare_numeric": result_case(cohort.compare("sofa")),
@@ -72,7 +93,20 @@ def study_cases() -> dict:
             "survival": result_case(cohort.survival()),
             "effects_table": effects.to_dict(orient="list"),
             "effects": result_case(cohort.effects(effects, measure="OR")),
-            "daily": daily_data(), "over_time": result_case(daily.over_time("date", "occupied"))}
+            "daily": daily_data(), "over_time": result_case(daily.over_time("date", "occupied")),
+            "compare_missing": result_case(cohort.compare("age")), "repeated": repeated_message(checked),
+            "gaps": gaps_data(), "gaps_describe": result_case(gaps.describe()),
+            "gaps_compare": result_case(gaps.compare("lactate")),
+            "gaps_distribution": result_case(gaps.distribution("lactate"))}
+
+
+def repeated_message(checked) -> str:
+    """describe() refuses a study whose id repeats; R names hl_over_time() where Python names over_time()."""
+    try:
+        checked.describe()
+    except ValueError as error:
+        return str(error)
+    raise AssertionError("describe() counted repeated rows of one id as separate participants")
 
 
 def spread_cases(style: dict, measure) -> dict:

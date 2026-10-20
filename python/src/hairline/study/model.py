@@ -10,7 +10,7 @@ import pandas as pd
 
 from hairline.charts.common import humanise
 from hairline.study.checks import Finding, missing_values, numbers_as_text, spellings
-from hairline.study.columns import infer_type, levels
+from hairline.study.columns import infer_type, is_missing, level_text, levels
 from hairline.study.result import Result
 from hairline.study.rules import event_findings, group_findings, id_findings, time_findings
 from hairline.tokens import load_tokens
@@ -59,6 +59,21 @@ class Study:
         errors = [finding for finding in self.checks if finding.level == "error" and finding.column in columns]
         if errors:
             raise ValueError(f"hairline: {endpoint}: fix these first:\n" + "\n".join(f"- {item}" for item in errors))
+
+    def require_one_row(self, columns: Sequence[str], endpoint: str) -> None:
+        """Refuse to count repeated rows of one id as separate patients; name the id and the most rows per id."""
+        name = self.roles.get("id")
+        if name not in self.data.columns:
+            return
+        ids = self.data[name]
+        for column in columns:
+            present = ~is_missing(ids) & ~is_missing(self.data[column])
+            most = int(ids[present].map(level_text).value_counts().max()) if present.any() else 0
+            if most > 1:
+                raise ValueError(f"hairline: {endpoint}: '{column}' has up to {most} rows per id in '{name}', and each "
+                                 f"would count as one of the {self.unit}; summarise to one row per id first (for "
+                                 "example each patient's first value), or follow repeated measurements with "
+                                 "over_time()")
 
     def __str__(self) -> str:
         roles = ", ".join(f"{role} = {column}" for role, column in self.roles.items())
@@ -139,9 +154,9 @@ def study(data: pd.DataFrame, group: str | None = None, time: str | None = None,
           id: str | None = None, variables: Sequence[str] | None = None, *, labels: Mapping[str, str] | None = None,
           types: Mapping[str, str] | None = None, order: Sequence[str] | None = None,
           unit: str | None = None, units: Mapping[str, str] | None = None) -> Study:
-    """Describe a dataset once: the comparison `group`, follow-up `time` and `event`, the `id`, the `variables`
-    to characterise (default: every other column) and their `units` ({"age": "years"}). Checks run now; print
-    the study to read them."""
+    """Describe a dataset once: the comparison `group`, follow-up `time` and `event`, the `id` (describe, compare
+    and distribution refuse a variable with more than one row per id), the `variables` to characterise (default:
+    every other column) and their `units` ({"age": "years"}). Checks run now; print the study to read them."""
     if not len(data):
         raise ValueError("hairline: study: the data has no rows")
     roles = {role: column for role, column in zip(ROLES, (group, time, event, id), strict=True) if column is not None}

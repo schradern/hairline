@@ -14,11 +14,32 @@ study_present_rows <- function(study, variable) {
   data
 }
 
+# Rows in the study, analysed, and missing: without the variable, then (with a value) without a group; those still
+# count in Overall when `in_overall`.
+study_variable_rows <- function(study, variable, in_overall = FALSE) {
+  without_value <- study_is_missing(study$data[[variable]])
+  missing <- list(variable = sum(without_value))
+  group <- study$roles$group
+  if (!is.null(group)) missing$group <- sum(!without_value & study_is_missing(study$data[[group]]))
+  left_out <- missing$variable + if (in_overall) 0L else missing$group %||% 0L
+  list(total = nrow(study$data), analysed = nrow(study$data) - left_out, missing = missing)
+}
+
+# Per part (group, or Overall) the summary numbers of a numeric variable.
+study_part_summaries <- function(parts, variable, stats) {
+  stats::setNames(lapply(parts, function(part) {
+    values <- part$rows[[variable]]
+    summary_numbers(study_numbers(values), stats, sum(study_is_missing(values)))
+  }), study_part_names(parts))
+}
+
 numeric_test <- function(samples) {
-  if (length(samples) == 2) return(c("Wilcoxon rank-sum", format_p(rank_sum_p(samples[[1]], samples[[2]]))))
-  if (length(samples) > 2) return(c("Kruskal\u2013Wallis", format_p(kruskal_p(samples))))
+  if (length(samples) == 2) return(c(list(method = "Wilcoxon rank-sum"), rank_sum_test(samples[[1]], samples[[2]])))
+  if (length(samples) > 2) return(c(list(method = "Kruskal\u2013Wallis"), kruskal_test(samples)))
   NULL
 }
+
+test_text <- function(test) paste0(test$method, ", ", format_p(test$p))
 
 study_by_title <- function(study, label) {
   if (is.null(study$roles$group)) label else paste(label, "by", gsub("_", " ", study$roles$group))
@@ -48,28 +69,30 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
     stop(sprintf("hairline: distribution: '%s' is categorical; use hl_compare() for its shares", variable),
          call. = FALSE)
   }
+  study_require_one_row(study, variable, "distribution")
   digits <- study_digits(study_numbers(study$data[[variable]]))
   label <- study_label_unit(study, variable)
   whole <- is_whole(study_numbers(study$data[[variable]]))
-  parts <- study_subsets(study)
-  rows <- lapply(parts, function(part) {
-    values <- part$rows[[variable]]
-    c(part$name, hl_format_number(sum(!study_is_missing(values)), 0),
-      vapply(stats, numeric_summary, character(1), values = study_numbers(values), digits = digits,
-             missing = sum(study_is_missing(values)), whole = whole))
+  found <- study_part_summaries(study_subsets(study), variable, stats)
+  rows <- lapply(names(found), function(name) {
+    c(name, hl_format_number(found[[name]]$n, 0),
+      vapply(stats, summary_text, character(1), found = found[[name]], digits = digits, whole = whole))
   })
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", unname(study_stat_labels[stats]))
   data <- study_present_rows(study, variable)
   data[[variable]] <- study_as_number(data[[variable]])
-  names <- if (is.null(study$roles$group)) "Overall" else vapply(parts[-length(parts)], `[[`, character(1), "name")
+  names <- if (is.null(study$roles$group)) "Overall" else names(found)[-length(found)]
   figure <- hl_spread(data, study_group_column, variable, order = names,
                       title = study_by_title(study, study_label(study, variable)),
                       axis_title = study_measure(study, variable))
   shown <- if (is.null(study$roles$group)) rows else rows[-length(rows)]
-  text <- sprintf("%s, %s: %s.", label, study_stat_labels[[stats[1]]],
-                  listed_text(vapply(shown, function(row) paste(row[1], row[3]), character(1))))
-  study_result(figure, table, stats::setNames(lapply(rows, `[[`, 3), vapply(rows, `[[`, character(1), 1)), text)
+  counted <- study_variable_rows(study, variable, in_overall = TRUE)
+  text <- paste0(sprintf("%s, %s: %s.", label, study_stat_labels[[stats[1]]],
+                         listed_text(vapply(shown, function(row) paste(row[1], row[3]), character(1)))),
+                 left_out_text(counted, study$unit, "variable"), overall_only_text(counted))
+  study_result(figure, table, stats::setNames(lapply(rows, `[[`, 3), vapply(rows, `[[`, character(1), 1)), text,
+               list(rows = counted, groups = found))
 }
 
 #' Compare one variable between groups
@@ -100,61 +123,70 @@ hl_compare <- function(study, variable) {
          call. = FALSE)
   }
   study_require(study, c(study$roles$group, variable), "compare")
+  study_require_one_row(study, variable, "compare")
   if (identical(kind, "numeric")) compare_numeric(study, variable) else compare_categorical(study, variable)
 }
+
+study_group_parts <- function(study) utils::head(study_subsets(study), -1)
 
 compare_numeric <- function(study, variable) {
   data <- study_present_rows(study, variable)
   label <- study_label_unit(study, variable)
   digits <- study_digits(study_numbers(data[[variable]]))
-  names <- Filter(function(name) any(data[[study_group_column]] == name), study$groups)
-  samples <- lapply(names, function(name) study_numbers(data[[variable]][data[[study_group_column]] == name]))
-  summaries <- vapply(samples, numeric_summary, character(1), stat = "median_iqr", digits = digits, missing = 0)
-  test <- numeric_test(samples)
+  parts <- study_group_parts(study)
+  found <- study_part_summaries(parts, variable, "median_iqr")
+  names <- Filter(function(name) found[[name]]$n > 0, study$groups)
+  test <- numeric_test(lapply(parts[study$groups %in% names], function(part) study_numbers(part$rows[[variable]])))
+  summaries <- vapply(found[names], summary_text, character(1), stat = "median_iqr", digits = digits,
+                      USE.NAMES = FALSE)
   rows <- lapply(seq_along(names), function(index) {
-    c(names[index], hl_format_number(length(samples[[index]]), 0), summaries[index])
+    c(names[index], hl_format_number(found[[names[index]]]$n, 0), summaries[index])
   })
-  if (!is.null(test)) rows[[length(rows) + 1]] <- c("Test", "", paste0(test[1], ", ", test[2]))
+  if (!is.null(test)) rows[[length(rows) + 1]] <- c("Test", "", test_text(test))
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "median (IQR)")
-  values <- c(stats::setNames(as.list(summaries), names), if (!is.null(test)) list(test = test[1], p = test[2]))
+  values <- c(stats::setNames(as.list(summaries), names),
+              if (!is.null(test)) list(test = test$method, p = format_p(test$p)))
   data[[variable]] <- study_as_number(data[[variable]])
   figure <- hl_spread(data, study_group_column, variable, order = names,
                       title = study_by_title(study, study_label(study, variable)),
-                      subtitle = if (!is.null(test)) paste0(test[1], ", ", test[2]),
-                      axis_title = study_measure(study, variable))
+                      subtitle = if (!is.null(test)) test_text(test), axis_title = study_measure(study, variable))
+  counted <- study_variable_rows(study, variable)
   text <- paste0(label, ", median (IQR): ", listed_text(paste(names, summaries)),
-                 if (!is.null(test)) sprintf(" (%s, %s).", test[1], test[2]) else ".")
-  study_result(figure, table, values, text)
+                 if (!is.null(test)) sprintf(" (%s).", test_text(test)) else ".", left_out_text(counted, study$unit))
+  study_result(figure, table, values, text,
+               c(list(rows = counted, groups = found), if (!is.null(test)) list(test = test)))
 }
 
 compare_categorical <- function(study, variable) {
   data <- study_present_rows(study, variable)
   label <- study_label(study, variable)
   data[[variable]] <- level_text(data[[variable]])
-  names <- Filter(function(name) any(data[[study_group_column]] == name), study$groups)
   kinds <- study_levels(data[[variable]])
-  counts <- t(vapply(kinds, function(kind) {
-    vapply(names, function(name) sum(data[[study_group_column]] == name & data[[variable]] == kind), numeric(1))
-  }, numeric(length(names))))
-  if (length(names) == 1) counts <- t(counts)
-  totals <- vapply(names, function(name) sum(data[[study_group_column]] == name), numeric(1))
-  rows <- lapply(seq_along(kinds), function(row) {
-    c(kinds[row], vapply(seq_along(names), function(column) count_share(counts[row, column], totals[column]),
-                         character(1)))
+  parts <- study_group_parts(study)
+  found <- stats::setNames(lapply(parts, function(part) level_numbers(part$rows[[variable]], kinds)),
+                           study_part_names(parts))
+  names <- Filter(function(name) found[[name]]$n > 0, study$groups)
+  counts <- matrix(unlist(lapply(found[names], `[[`, "counts")), nrow = length(kinds))
+  rows <- lapply(kinds, function(kind) {
+    c(kind, vapply(found[names], function(part) count_share(part$counts[[kind]], part$n), character(1),
+                   USE.NAMES = FALSE))
   })
-  test <- if (length(names) > 1 && length(kinds) > 1) c("Chi-squared", format_p(chi_square_p(counts))) else NULL
+  test <- if (length(names) > 1 && length(kinds) > 1) c(list(method = "Chi-squared"), chi_square_test(counts))
   values <- stats::setNames(lapply(seq_along(names), function(column) {
     stats::setNames(lapply(rows, function(row) row[column + 1]), kinds)
   }), names)
   if (!is.null(test)) {
-    rows[[length(rows) + 1]] <- c("Test", paste0(test[1], ", ", test[2]), rep("", length(names) - 1))
-    values <- c(values, list(test = test[1], p = test[2]))
+    rows[[length(rows) + 1]] <- c("Test", test_text(test), rep("", length(names) - 1))
+    values <- c(values, list(test = test$method, p = format_p(test$p)))
   }
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c(label, names)
   figure <- hl_bars(data, study_group_column, by = variable, stacked = TRUE, percent = TRUE, horizontal = TRUE,
                     order = names, title = study_by_title(study, label))
-  text <- paste0(study_by_title(study, label), if (!is.null(test)) sprintf(": %s, %s.", test[1], test[2]) else ".")
-  study_result(figure, table, values, text)
+  counted <- study_variable_rows(study, variable)
+  text <- paste0(study_by_title(study, label), if (!is.null(test)) sprintf(": %s.", test_text(test)) else ".",
+                 left_out_text(counted, study$unit))
+  study_result(figure, table, values, text,
+               c(list(rows = counted, groups = found), if (!is.null(test)) list(test = test)))
 }

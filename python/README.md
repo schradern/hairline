@@ -39,12 +39,15 @@ table_one = study.describe()     # Table 1: median (IQR) and n (%) per group
 table_one.table                  # a data frame
 age = study.compare("age")       # spread rows per group, Wilcoxon rank-sum
 age.text                         # "Age (years), median (IQR): ... (Wilcoxon rank-sum, p = ...)."
+age.numbers["test"]["p"]         # the unrounded p the text formats
 survival = study.survival()      # Kaplan–Meier with numbers at risk and the log-rank test
 hl.save(survival.figure, "survival")              # survival.pdf and survival.png
 ```
 
 Printing a study lists its checks: missing values, duplicate ids, categories that differ only in case,
-small groups, numeric columns without a unit. Errors stop the analysis; warnings name the fix.
+small groups, numeric columns without a unit. Errors stop the analysis; warnings name the fix. With `id=`,
+`describe()`, `compare()` and `distribution()` refuse a variable with more than one row per id, so repeated
+measurements are not counted as separate patients.
 
 ## Charts
 
