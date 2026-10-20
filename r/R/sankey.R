@@ -24,7 +24,7 @@ sankey_links <- function(data, columns, value, group) {
       source <- as.character(data[[columns[index]]][row])
       target <- as.character(data[[columns[index + 1]]][row])
       link_group <- if (is.null(group)) "" else as.character(data[[group]][row])
-      key <- paste(index - 1, source, target, link_group, sep = "\r")
+      key <- combination_key(index - 1, source, target, link_group)
       if (!key %in% keys) {
         keys <- c(keys, key)
         links[[key]] <- list(column = index - 1, source = source, target = target, group = link_group, value = 0)

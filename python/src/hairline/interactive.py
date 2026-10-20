@@ -49,14 +49,18 @@ def is_date_axis(axis) -> bool:
 
 def date_texts(values, zone) -> list[str]:
     """ISO dates in the data's own time zone (matplotlib keeps it as the axis units), with the clock time when any
-    point has one, so hourly points stay apart."""
+    point has one (and its seconds when any has those), so hourly or second-apart points stay apart. Times are
+    rounded to the second first: matplotlib's day numbers leave microsecond noise."""
     import datetime
 
     import matplotlib.dates as dates
     zone = zone if isinstance(zone, datetime.tzinfo) else None
-    moments = [dates.num2date(float(value), tz=zone) for value in values]
-    timed = any((moment.hour, moment.minute, moment.second) != (0, 0, 0) for moment in moments)
-    return [moment.strftime("%Y-%m-%d %H:%M" if timed else "%Y-%m-%d") for moment in moments]
+    moments = [(dates.num2date(float(value), tz=zone) + datetime.timedelta(microseconds=500_000)).replace(microsecond=0)
+               for value in values]
+    seconds = any(moment.second for moment in moments)
+    timed = seconds or any((moment.hour, moment.minute) != (0, 0) for moment in moments)
+    shape = "%Y-%m-%d %H:%M:%S" if seconds else "%Y-%m-%d %H:%M" if timed else "%Y-%m-%d"
+    return [moment.strftime(shape) for moment in moments]
 
 
 def x_texts(figure: HairlineFigure, index: int, ax, values) -> list[str]:
@@ -152,7 +156,9 @@ def bar_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         for patch in container.patches:
             low, high = to_pt(ax, (patch.get_x(), patch.get_y() + patch.get_height())), to_pt(
                 ax, (patch.get_x() + patch.get_width(), patch.get_y()))
-            marks.append({"rect": [low[0], low[1], high[0] - low[0], high[1] - low[1]]})
+            # A negative bar runs the other way; the target is the same box with its corners in order.
+            left, top = min(low[0], high[0]), min(low[1], high[1])
+            marks.append({"rect": [left, top, abs(high[0] - low[0]), abs(high[1] - low[1])]})
             values.append(patch.get_width() if horizontal else patch.get_height())
         axis = "x" if horizontal else "y"
         texts = axis_number_texts(figure, index, axis, values)

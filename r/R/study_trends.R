@@ -11,6 +11,12 @@ iso_offset <- function(text) {
   digits <- gsub("[^0-9]", "", zone)
   hours <- suppressWarnings(as.numeric(substr(digits, 1, 2)))
   minutes <- suppressWarnings(as.numeric(substr(digits, 3, 4)))
+  # Zones run from -12:00 to +14:00 in whole quarters of an hour at most; anything else is not a time zone.
+  impossible <- zone != "Z" & (is.na(hours) | hours > 14 | is.na(minutes) | minutes >= 60)
+  if (any(impossible)) {
+    stop(sprintf("hairline: over_time: '%s' has the zone offset '%s', which is not a time zone", text[impossible][1],
+                 zone[impossible][1]), call. = FALSE)
+  }
   ifelse(zone == "Z", 0, ifelse(startsWith(zone, "-"), -1, 1) * (hours * 3600 + minutes * 60))
 }
 

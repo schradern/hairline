@@ -126,7 +126,12 @@ hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", wid
   invisible(paths)
 }
 
-hidden_path <- function(paths, role) file.path(dirname(paths), paste0(".", basename(paths), ".", role))
+# A hidden sibling for each file while it is written or backed up, named so it never meets an existing file.
+hidden_path <- function(paths, role) {
+  vapply(paths, function(path) {
+    tempfile(pattern = ".hairline-", tmpdir = dirname(path), fileext = paste0(".", tools::file_ext(path), ".", role))
+  }, character(1), USE.NAMES = FALSE)
+}
 
 renamed <- function(from, to) suppressWarnings(file.rename(from, to))
 

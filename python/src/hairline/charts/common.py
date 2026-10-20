@@ -24,6 +24,17 @@ def check_labels(data: pd.DataFrame, columns: Sequence[str | None], chart: str) 
         if len(missing):
             raise ValueError(f"hairline: {chart}: '{column}' is missing in row {missing[0] + 1}; every row needs a "
                              f"name there: fill it (e.g. 'Unknown') or drop the row")
+        check_distinct_text(data[column], column, chart)
+
+
+def check_distinct_text(values: pd.Series, column: str, chart: str) -> None:
+    """Groups are named by their text, so two values that read the same (1 and "1") would merge into one."""
+    seen: dict[str, object] = {}
+    for value in dict.fromkeys(values):
+        other = seen.setdefault(str(value), value)
+        if other is not value and other != value:
+            raise ValueError(f"hairline: {chart}: '{column}' holds {other!r} and {value!r}, which read the same; "
+                             f"give the column one type")
 
 
 def check_numeric(data: pd.DataFrame, columns: Sequence[str], chart: str) -> None:
@@ -56,6 +67,9 @@ def ordered_names(values: pd.Series, order: Sequence | None, chart: str, column:
     if order is None:
         return names
     wanted = [str(name) for name in order]
+    repeated = [name for name in dict.fromkeys(wanted) if wanted.count(name) > 1]
+    if repeated:
+        raise ValueError(f"hairline: {chart}: order names {repeated[0]!r} more than once; each group is drawn once")
     unknown = [name for name in wanted if name not in names]
     if unknown:
         raise ValueError(f"hairline: {chart}: order names {unknown[0]!r}, which is not a group in '{column}'; "

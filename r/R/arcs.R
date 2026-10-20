@@ -14,25 +14,25 @@ arcs_spec <- function(data, source, target, value = NULL, order = NULL) {
   swap <- match(first, names) > match(second, names)
   low <- ifelse(swap, second, first)
   high <- ifelse(swap, first, second)
-  keys <- paste(low, high, sep = "\r")
+  keys <- combination_key(low, high)
   totals <- tapply(data[[value]], factor(keys, levels = unique(keys)), sum)
   values <- unname(totals[totals > 0])
   digits <- auto_digits(values)
   links <- list()
   for (key in names(totals)[totals > 0]) {
-    pair <- strsplit(key, "\r", fixed = TRUE)[[1]]
-    directions <- unique(paste(first, second, sep = "\r")[keys == key])
-    links[[length(links) + 1]] <- list(source = pair[1], target = pair[2], value = totals[[key]],
+    rows <- which(keys == key)
+    links[[length(links) + 1]] <- list(source = low[rows[1]], target = high[rows[1]], value = totals[[key]],
                                        value_text = hl_format_number(totals[[key]], digits),
-                                       pair = arcs_pair_text(directions))
+                                       pair = arcs_pair_text(first[rows], second[rows]))
   }
   list(nodes = as.list(names), links = links, color = lone_colour(), key = arcs_key(values, digits))
 }
 
-# "A -> B" for one direction, "A <-> B" when the arc carries both.
-arcs_pair_text <- function(directions) {
-  ends <- strsplit(sort(directions, method = "radix")[1], "\r", fixed = TRUE)[[1]]
-  paste(ends[1], if (length(directions) > 1) "\u2194" else "\u2192", ends[2])
+# "A -> B" for one direction, "A <-> B" when the arc carries both; the first direction in code-point order names it.
+arcs_pair_text <- function(first, second) {
+  directions <- unique(data.frame(first = first, second = second))
+  directions <- directions[order(directions$first, directions$second, method = "radix"), , drop = FALSE]
+  paste(directions$first[1], if (nrow(directions) > 1) "\u2194" else "\u2192", directions$second[1])
 }
 
 # Key widths for the largest link, half of it and the smallest, each once and above zero, in the data's decimals.

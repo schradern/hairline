@@ -128,11 +128,20 @@ def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: s
             "effect_heading": effect_heading, "weight_heading": weight_heading if weight else None, "marker": marker}
 
 
+def model_terms(model, count: int) -> list[str]:
+    """Term names: the params' index, else the model's exog_names, else x1, x2, ... as statsmodels numbers them."""
+    index = getattr(model.params, "index", None)
+    names = list(index) if index is not None else getattr(getattr(model, "model", None), "exog_names", None)
+    return [str(name) for name in names] if names is not None and len(names) == count else \
+        [f"x{number}" for number in range(1, count + 1)]
+
+
 def model_table(model, exponentiate: bool) -> pd.DataFrame:
-    """Terms, estimates and 95 % intervals of a fitted model (statsmodels-like: params and conf_int())."""
-    limits = model.conf_int()
-    table = pd.DataFrame({"term": [str(name) for name in model.params.index], "estimate": list(model.params),
-                          "low": list(limits.iloc[:, 0]), "high": list(limits.iloc[:, 1])})
+    """Terms, estimates and 95 % intervals of a fitted model (statsmodels-like: params and conf_int()), whether it
+    was fitted from pandas objects (named terms) or arrays (names from the model's exog_names)."""
+    estimates, limits = np.asarray(model.params, dtype=float), np.asarray(model.conf_int(), dtype=float)
+    table = pd.DataFrame({"term": model_terms(model, len(estimates)), "estimate": estimates,
+                          "low": limits[:, 0], "high": limits[:, 1]})
     table = table[~table["term"].str.lower().isin(["intercept", "const", "(intercept)"])]
     aliased = table[table[["estimate", "low", "high"]].isna().any(axis=1)]
     if len(aliased):

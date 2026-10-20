@@ -24,7 +24,7 @@ risk_of_bias_spec <- function(data, study, domain = NULL, judgement = NULL, doma
     check_columns(data, c(study, domain, judgement))
     table <- data.frame(study = data[[study]], domain = data[[domain]], judgement = data[[judgement]])
   }
-  keys <- paste(table$study, table$domain, sep = "\r")
+  keys <- combination_key(table$study, table$domain)
   repeated <- which(duplicated(keys))
   if (length(repeated)) {
     first <- repeated[1]

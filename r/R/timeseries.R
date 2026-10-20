@@ -54,10 +54,13 @@ with_iso_dates <- function(values) {
 prepared_series <- function(data, x, y, by, order, window) {
   groups <- chart_groups(data, by, order, "timeseries")
   if (!is.null(by)) data <- data[as.character(data[[by]]) %in% groups, , drop = FALSE]
-  data$.group <- factor(if (is.null(by)) "" else as.character(data[[by]]), levels = groups)
-  data <- data[order(data$.group, data[[x]]), , drop = FALSE]
-  data$.mean <- stats::ave(data[[y]], data$.group, FUN = function(values) rolling_mean(values, window))
-  data
+  # A frame of its own (.x, .y, .group, .mean), so a data column with one of those names is never overwritten.
+  frame <- data.frame(.x = data[[x]], .y = data[[y]],
+                      .group = factor(if (is.null(by)) rep("", nrow(data)) else as.character(data[[by]]),
+                                      levels = groups))
+  frame <- frame[order(frame$.group, frame$.x), , drop = FALSE]
+  frame$.mean <- stats::ave(frame$.y, frame$.group, FUN = function(values) rolling_mean(values, window))
+  frame
 }
 
 as_axis_value <- function(value, data_x) if (inherits(data_x, "Date")) as.Date(value) else value
@@ -185,6 +188,8 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   check_present(data, y, "timeseries")
   data[[x]] <- with_iso_dates(data[[x]])
   data <- prepared_series(data, x, y, by, order, window)
+  x <- ".x"
+  y <- ".y"
   colours <- if (is.null(by)) stats::setNames(lone_colour(), levels(data$.group)) else
     colours_for(levels(data$.group), colors)
   threshold_text <- if (is.null(threshold)) "" else value_formatter(percent)(threshold, 0)

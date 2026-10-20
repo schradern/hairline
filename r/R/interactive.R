@@ -21,11 +21,13 @@ is_percent_scale <- function(scale) isTRUE(scale$hairline$percent)
 # Values as their scale labels them: percentages on a share scale, with the scale's digits or the shared rule.
 scale_numbers <- function(scale, values) interactive_numbers(values, is_percent_scale(scale), scale$hairline$digits)
 
-# ISO dates in the data's own time zone, with the clock time when any point has one, so hourly points stay apart.
+# ISO dates in the data's own time zone, with the clock time when any point has one (and its seconds when any has
+# those), so hourly or second-apart points stay apart.
 datetime_texts <- function(values, zone) {
-  moments <- as.POSIXct(values, origin = "1970-01-01", tz = zone %||% "UTC")
-  timed <- any(format(moments, "%H:%M:%S") != "00:00:00")
-  format(moments, if (timed) "%Y-%m-%d %H:%M" else "%Y-%m-%d")
+  moments <- as.POSIXct(round(values), origin = "1970-01-01", tz = zone %||% "UTC")
+  seconds <- any(format(moments, "%S") != "00")
+  timed <- seconds || any(format(moments, "%H:%M") != "00:00")
+  format(moments, if (seconds) "%Y-%m-%d %H:%M:%S" else if (timed) "%Y-%m-%d %H:%M" else "%Y-%m-%d")
 }
 
 # X (or y) values as text: ISO dates on a date scale, category names on a discrete scale, else numbers.
@@ -87,19 +89,30 @@ panel_context <- function(parts, plan, panel) {
 }
 
 # Missing values get no tip; ggplot leaves them out of the drawn line too.
+# The stretches of a line between missing values, where ggplot breaks it: row numbers per stretch.
+finite_runs <- function(rows) {
+  finite <- which(is.finite(rows$x) & is.finite(rows$y))
+  unname(split(finite, cumsum(c(1, diff(finite) > 1))))
+}
+
 line_targets <- function(data, geom, parts, plan, scaled) {
-  data <- data[is.finite(data$x) & is.finite(data$y), , drop = FALSE]
-  if (!nrow(data)) return(list())
-  lapply(split(data, list(data$PANEL, data$group), drop = TRUE), function(rows) {
+  if (!any(is.finite(data$x) & is.finite(data$y))) return(list())
+  groups <- split(data, list(data$PANEL, data$group), drop = TRUE)
+  groups <- Filter(function(rows) any(is.finite(rows$x) & is.finite(rows$y)), groups)
+  lapply(groups, function(rows) {
     context <- panel_context(parts, plan, rows$PANEL[1])
-    path <- if (geom == "GeomStep") step_points(rows$x, rows$y) else cbind(rows$x, rows$y)
+    runs <- finite_runs(rows)
+    paths <- lapply(runs, function(run) {
+      if (geom == "GeomStep") step_points(rows$x[run], rows$y[run]) else cbind(rows$x[run], rows$y[run])
+    })
+    rows <- rows[unlist(runs), , drop = FALSE]
     name <- series_named(rows$colour[1], parts, context$index)
     xs <- axis_texts(context$params$x, context$x_scale, rows$x)
     ys <- scale_numbers(context$y_scale, rows$y)
     at <- context$to_pt(rows$x, rows$y)
     width <- rows$linewidth[1] * ggplot2::.pt * 0.75 * if (scaled) line_scale(context$box[3]) else 1
     list(name = name, color = colour_hex(rows$colour[1]),
-         marks = list(list(line = context$to_pt(path[, 1], path[, 2]), width = width)),
+         marks = lapply(paths, function(path) list(line = context$to_pt(path[, 1], path[, 2]), width = width)),
          tips = lapply(seq_len(nrow(rows)), function(index) {
            list(at = at[index, ], text = tip_text(name, paste0(xs[index], ", ", ys[index])))
          }))
@@ -131,17 +144,22 @@ bar_targets <- function(data, parts, plan) {
     name <- series_named(rows$fill[1], parts, context$index)
     top_left <- context$to_pt(rows$xmin, rows$ymax)
     bottom_right <- context$to_pt(rows$xmax, rows$ymin)
-    values <- if (horizontal) rows$xmax - rows$xmin else rows$ymax - rows$ymin
+    # A bar's value with its sign: a bar (or stacked segment) that lies below zero is negative.
+    values <- if (horizontal) ifelse(rows$xmax <= 0, rows$xmin - rows$xmax, rows$xmax - rows$xmin) else
+      ifelse(rows$ymax <= 0, rows$ymin - rows$ymax, rows$ymax - rows$ymin)
     texts <- scale_numbers(if (horizontal) context$x_scale else context$y_scale, values)
     categories <- if (horizontal) axis_texts(context$params$y, context$y_scale, (rows$ymin + rows$ymax) / 2) else
       axis_texts(context$params$x, context$x_scale, (rows$xmin + rows$xmax) / 2)
-    widths <- bottom_right[, 1] - top_left[, 1]
+    lefts <- pmin(top_left[, 1], bottom_right[, 1])
+    tops <- pmin(top_left[, 2], bottom_right[, 2])
+    widths <- abs(bottom_right[, 1] - top_left[, 1])
+    heights <- abs(bottom_right[, 2] - top_left[, 2])
     list(name = name, color = colour_hex(rows$fill[1]),
          marks = lapply(seq_len(nrow(rows)), function(index) {
-           list(rect = c(top_left[index, ], widths[index], bottom_right[index, 2] - top_left[index, 2]))
+           list(rect = c(lefts[index], tops[index], widths[index], heights[index]))
          }),
          tips = lapply(seq_len(nrow(rows)), function(index) {
-           list(at = c(top_left[index, 1] + widths[index] / 2, top_left[index, 2]),
+           list(at = c(lefts[index] + widths[index] / 2, tops[index]),
                 text = tip_text(name, paste0(categories[index], ", ", texts[index])))
          }))
   })

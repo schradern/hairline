@@ -66,6 +66,17 @@
 * Greek letters (α, β, Δ, χ) fall back to DejaVu Sans, glyph by glyph; the bundled font has none.
 * `km_estimate()` is vectorised: 50,000 rows take milliseconds instead of seconds.
 
+### Fixes from a third review
+
+* Models fitted from arrays (statsmodels OLS or PHReg without pandas) reach the forest plot, their terms named
+  from the model.
+* A group named twice in `order` is refused instead of entering the analysis twice.
+* Labels that read the same as text (1 and "1") are refused instead of merging their groups.
+* Negative bars have proper hover targets in HTML.
+* A Kaplan–Meier fit with delayed entry counts only those who have entered in the number at risk; weighted fits
+  keep fractional counts.
+* Tooltips show seconds when the times have them; ISO text with mixed zone offsets reads in UTC.
+
 ## 0.1.0
 
 * First release.

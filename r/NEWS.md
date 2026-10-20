@@ -63,6 +63,20 @@
   `hl_use()` refuses sizes of zero or less and empty palettes. `hl_format_number()` formats one number.
 * Models with aliased terms leave those out with a warning; a Kaplan–Meier fit without intervals draws its curves.
 
+## Fixes from a third review
+
+* `lm` models in the forest plot keep their own Student-t intervals (as `confint()`); glm and coxph keep their
+  Wald intervals.
+* A group named twice in `order` is refused instead of entering the analysis twice.
+* `hl_timeseries()` keeps data columns named `.mean`, `.group`, `.x` or `.y` as they are.
+* Labels holding a carriage return no longer merge with other labels.
+* Negative bars keep their sign in HTML tooltips and have proper hover targets; interactive lines break where the
+  static line breaks.
+* A survfit with delayed entry draws without a number-at-risk table, with a warning: it keeps no entry times, so
+  the counts between its times are unknown.
+* `hl_save()` names its temporary files so they never meet existing ones.
+* Tooltips show seconds when the times have them; impossible zone offsets (+99:99) are refused.
+
 # hairline 0.1.0
 
 * First release.

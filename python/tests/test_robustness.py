@@ -451,3 +451,57 @@ def test_kaplan_meier_handles_large_cohorts_quickly():
     from hairline.stats.survival import km_estimate
     km_estimate(generator.exponential(10, 50000).round(2), generator.integers(0, 2, 50000))
     assert clock.perf_counter() - started < 2
+
+
+# Third review
+
+def test_models_fitted_from_arrays_keep_their_terms():
+    from types import SimpleNamespace
+
+    from hairline.charts.forest import model_table
+    model = SimpleNamespace(params=np.array([0.1, 1.2, -0.3]),
+                            conf_int=lambda: np.array([[0.0, 0.2], [1.0, 1.4], [-0.5, -0.1]]),
+                            model=SimpleNamespace(exog_names=["const", "x1", "x2"]))
+    table = model_table(model, False)
+    assert list(table["term"]) == ["x1", "x2"] and list(table["low"]) == [1.0, -0.5]
+
+
+def test_a_group_named_twice_in_order_is_refused():
+    data = pd.DataFrame({"g": ["A"] * 3 + ["B"] * 4, "v": [1.0, 2, 3, 4, 5, 6, 7]})
+    with pytest.raises(ValueError, match="order names 'A' more than once"):
+        hl.raincloud(data, "g", "v", order=["A", "A", "B"])
+
+
+def test_labels_that_read_the_same_are_refused():
+    data = pd.DataFrame({"parent": [1, "1"], "child": ["x", "y"], "value": [10, 30]})
+    with pytest.raises(ValueError, match="holds 1 and '1', which read the same"):
+        hl.partition(data, ["parent", "child"], "value")
+
+
+def test_negative_bars_have_proper_targets():
+    figure = hl.bars(pd.DataFrame({"g": ["A", "B"], "v": [-3.0, 2.0]}), "g", "v", sort="given", horizontal=False)
+    series = figure_targets(figure)["series"][0]
+    assert all(mark["rect"][2] > 0 and mark["rect"][3] > 0 for mark in series["marks"])
+    assert [tip["text"].split(", ")[-1] for tip in series["tips"]] == ["−3", "2"]
+
+
+def test_delayed_entry_counts_only_those_who_have_entered():
+    from lifelines import KaplanMeierFitter
+
+    from hairline.charts.kaplan_meier import at_risk_from, fitter_table
+    table, total = fitter_table(KaplanMeierFitter().fit([2, 4, 6, 8], [1, 0, 1, 0], entry=[0, 0, 3, 5]))
+    assert at_risk_from(table, total, [0, 2.5, 4.5, 6.5]) == [2, 1, 1, 1]
+
+
+def test_tooltips_show_seconds_when_the_data_has_them():
+    x = pd.to_datetime(["2025-01-01 10:00:01", "2025-01-01 10:00:02", "2025-01-01 10:00:03"])
+    figure = hl.timeseries(pd.DataFrame({"x": x, "y": [1.0, 2, 3]}), "x", "y", window=1)
+    texts = [tip["text"] for series in figure_targets(figure)["series"] for tip in series["tips"]]
+    assert [text.split(": ", 1)[1].split(",")[0] for text in texts[:3]] == [
+        "2025-01-01 10:00:01", "2025-01-01 10:00:02", "2025-01-01 10:00:03"]
+
+
+def test_iso_text_across_a_clock_change_reads_in_utc():
+    data = pd.DataFrame({"x": ["2025-03-30T00:00+01:00", "2025-03-30T04:00+02:00"], "y": [1.0, 2.0]})
+    figure = hl.timeseries(data, "x", "y", window=1)
+    assert figure.title

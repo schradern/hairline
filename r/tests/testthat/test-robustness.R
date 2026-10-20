@@ -320,7 +320,7 @@ test_that("iso dates with a zone are read in UTC, and timeseries reads iso text 
   times <- study_iso_dates(c("2025-01-01T10:00:00Z", "2025-01-01T11:00+01:00"), "x")
   expect_equal(times[1], times[2])
   plot <- hl_timeseries(data.frame(day = c("2025-01-01", "2025-01-02", "2025-01-03"), v = 1:3), "day", "v")
-  expect_true(inherits(plot@data$day, "Date"))
+  expect_true(inherits(plot@data$.x, "Date"))
 })
 
 test_that("save refuses sizes that would crash the device and reads formats as given", {
@@ -352,4 +352,69 @@ test_that("upright arc labels keep their room when the figure fits its height", 
   height <- fitted_size_mm(plot_for_size(plot, "onehalf"), figure_size_mm("onehalf", NULL, NULL))[2]
   expect_gt(height, 145 / 72 * 25.4)
   expect_no_error(hl_layout_report(plot))
+})
+
+# Third review
+
+test_that("a linear model keeps its own t intervals", {
+  fit <- lm(y ~ x, data.frame(x = 1:6, y = c(1, 3, 2, 5, 4, 8)))
+  table <- forest_from_model(fit, NULL)$table
+  expect_equal(c(table$low, table$high), unname(stats::confint(fit)["x", ]))
+})
+
+test_that("a group named twice in order is refused", {
+  data <- data.frame(g = rep(c("A", "B"), c(3, 4)), v = 1:7)
+  expect_error(hl_raincloud(data, "g", "v", order = c("A", "A", "B")), "order names 'A' more than once")
+})
+
+test_that("timeseries leaves data columns named like its working columns alone", {
+  plot <- hl_timeseries(data.frame(t = 1:4, .mean = c(1, 3, 5, 9)), "t", ".mean", window = 2)
+  raw <- ggplot2::ggplot_build(plot)@data[[1]]
+  expect_equal(raw$y, c(1, 3, 5, 9))
+  plot <- hl_timeseries(data.frame(.group = 1:4, v = c(1, 3, 5, 9)), ".group", "v", window = 1)
+  expect_equal(ggplot2::ggplot_build(plot)@data[[1]]$x, 1:4)
+})
+
+test_that("labels holding the key separator stay apart", {
+  data <- data.frame(a = c("A\rB", "A"), b = c("C", "B\rC"), n = c(2, 3))
+  expect_equal(nrow(donut_totals(data, c("a", "b"), "n")), 2)
+})
+
+test_that("negative bars keep their sign and a proper target", {
+  plot <- hl_bars(data.frame(g = c("A", "B"), v = c(-3, 2)), "g", "v", sort = "given", horizontal = FALSE)
+  series <- interactive_targets(plot)$series[[1]]
+  expect_true(all(vapply(series$marks, function(mark) mark$rect[3] > 0 && mark$rect[4] > 0, logical(1))))
+  texts <- vapply(series$tips, `[[`, character(1), "text")
+  expect_equal(sub(".*, ", "", texts), c("−3", "2"))
+})
+
+test_that("interactive lines break where the static line breaks", {
+  plot <- hl_timeseries(data.frame(x = 1:5, y = c(1, 2, NA, 4, 5)), "x", "y", window = 1, raw = FALSE)
+  targets <- suppressWarnings(interactive_targets(plot))
+  expect_length(targets$series[[1]]$marks, 2)
+})
+
+test_that("a save leaves unrelated hidden files alone", {
+  folder <- withr::local_tempdir()
+  for (name in c(".f.png.backup", ".f.png.partial")) writeLines("keep", file.path(folder, name))
+  plot <- ggplot2::ggplot() + ggplot2::labs(title = "T") + theme_hairline()
+  hl_save(plot, file.path(folder, "f"), formats = "png", dpi = 72)
+  expect_setequal(list.files(folder, all.files = TRUE, no.. = TRUE), c("f.png", ".f.png.backup", ".f.png.partial"))
+})
+
+test_that("impossible zone offsets are refused", {
+  expect_error(study_iso_dates("2025-01-01T10:00:00+99:99", "x"), "not a time zone")
+})
+
+test_that("a delayed-entry fit draws without a number-at-risk table it cannot know", {
+  skip_if_not_installed("survival")
+  fit <- survival::survfit(survival::Surv(c(0, 0, 3, 5), c(2, 4, 6, 8), c(1, 0, 1, 0)) ~ 1)
+  expect_warning(plot <- hl_kaplan_meier(fit), "delayed entry")
+  expect_null(plot@meta$hairline_table)
+})
+
+test_that("tooltips show seconds when the data has them", {
+  times <- as.POSIXct("2025-01-01 10:00:01", tz = "UTC") + 0:2
+  expect_equal(datetime_texts(as.numeric(times), "UTC"),
+               c("2025-01-01 10:00:01", "2025-01-01 10:00:02", "2025-01-01 10:00:03"))
 })

@@ -7,12 +7,20 @@ km_from_fit <- function(fit) {
   lapply(seq_along(strata), function(index) {
     rows <- (ends[index] - strata[index] + 1):ends[index]
     list(name = sub("^[^=]*=", "", names(strata)[index]), total = fit$n[index],
+         delayed = km_delayed_entry(fit$n.risk[rows], fit$n.event[rows], fit$n.censor[rows], fit$n[index]),
          table = data.frame(time = fit$time[rows], at_risk = fit$n.risk[rows], events = fit$n.event[rows],
                             censored = fit$n.censor[rows], survival = fit$surv[rows],
                             # a fit without intervals (conf.type = "none") draws its curve without a band
                             low = if (is.null(fit$lower)) NA_real_ else fit$lower[rows],
                             high = if (is.null(fit$upper)) NA_real_ else fit$upper[rows]))
   })
+}
+
+# Whether people entered after time 0 (start-stop data): the number at risk then grows between times, or starts below
+# the group's size. A survfit keeps no entry times, so the number at risk between its times is not known.
+km_delayed_entry <- function(at_risk, events, censored, total) {
+  expected <- c(total, utils::head(at_risk - events - censored, -1))
+  any(at_risk > expected + sqrt(.Machine$double.eps)) || at_risk[1] < total - sqrt(.Machine$double.eps)
 }
 
 km_from_data <- function(data, time, event, by, order) {
@@ -136,11 +144,16 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = x_title, y = NULL) + theme_hairline() +
     scale_y_hairline(percent = TRUE) + hl_panel_header(name = endpoint, stats = c(Median = medians, stats))
   if (!grouped) plot <- plot + hl_legend(list())
+  if (at_risk && any(vapply(estimates, function(estimate) isTRUE(estimate$delayed), logical(1)))) {
+    warning(paste("hairline: kaplan_meier: the fit has delayed entry, and a survfit keeps no entry times, so the",
+                  "number at risk between its times is unknown and is left out"), call. = FALSE)
+    at_risk <- FALSE
+  }
   if (at_risk) {
     rows <- lapply(seq_along(estimates), function(index) {
       counts <- km_at_risk(estimates[[index]]$table, estimates[[index]]$total, moments)
       list(label = names[index], colour = unname(colours[index]), x = moments,
-           text = vapply(counts, hl_format_number, character(1), digits = 0))
+           text = vapply(counts, hl_format_number, character(1), digits = auto_digits(counts)))
     })
     plot@meta$hairline_table <- list(heading = "Number at risk", rows = rows)
   }

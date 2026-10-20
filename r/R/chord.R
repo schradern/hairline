@@ -10,22 +10,23 @@ chord_spec <- function(data, source, target, value = NULL, order = NULL, colors 
   names <- flows$names
   keys <- character()
   totals <- numeric()
+  ends <- list()
   for (row in seq_len(nrow(data))) {
     first <- as.character(data[[source]][row])
     second <- as.character(data[[target]][row])
     amount <- data[[value]][row]
     if (first == second) next
     pair <- if (match(first, names) <= match(second, names)) c(first, second) else c(second, first)
-    key <- paste(pair, collapse = "\r")
+    key <- combination_key(pair[1], pair[2])
     if (!key %in% keys) {
       keys <- c(keys, key)
       totals[[key]] <- 0
+      ends[[key]] <- pair
     }
     totals[[key]] <- totals[[key]] + amount
   }
   links <- lapply(keys[totals[keys] > 0], function(key) {
-    pair <- strsplit(key, "\r", fixed = TRUE)[[1]]
-    list(source = pair[1], target = pair[2], value = totals[[key]])
+    list(source = ends[[key]][1], target = ends[[key]][2], value = totals[[key]])
   })
   palette <- colours_for(names, colors)
   flows <- vapply(names, function(name) {

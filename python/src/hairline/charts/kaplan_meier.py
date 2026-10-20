@@ -14,7 +14,7 @@ from hairline.charts.common import check_columns
 from hairline.charts.timeseries import groups_of, reference_style
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
-from hairline.numbers import format_number, format_p
+from hairline.numbers import auto_digits, format_number, format_p
 from hairline.settings import current_settings
 from hairline.stats.survival import km_estimate, km_median, median_digits
 from hairline.stats.tests import logrank
@@ -22,13 +22,20 @@ from hairline.ticks import nice_breaks
 from hairline.tokens import load_tokens
 
 
-def at_risk_from(table: pd.DataFrame, total: int, moments: Sequence[float]) -> list[int]:
-    """Number at risk at each moment from an estimate table: the count at the next distinct time, 0 past the end."""
+def at_risk_from(table: pd.DataFrame, total: float, moments: Sequence[float]) -> list[float]:
+    """Number at risk at each moment: the count at the next distinct time, 0 past the end. A fit with delayed entry
+    (its entries in table.attrs["entries"]) counts those who entered before the moment and have not yet left, so
+    someone entering later is not yet at risk. Weighted fits keep their fractional counts."""
+    entries = table.attrs.get("entries")
+    if entries is not None:
+        removed = table["events"] + table["censored"]
+        return [float(sum(count for time, count in entries if time < moment or time <= 0)
+                      - removed[table["time"] < moment].sum()) for moment in moments]
     counts = []
     for moment in moments:
         later = table[table["time"] >= moment]
-        counts.append(int(later["at_risk"].iloc[0]) if len(later) else 0)
-    return counts if len(table) else [total] * len(moments)
+        counts.append(float(later["at_risk"].iloc[0]) if len(later) else 0.0)
+    return counts if len(table) else [float(total)] * len(moments)
 
 
 def draw_curve(ax, table: pd.DataFrame, color: str, label: str) -> None:
@@ -73,7 +80,10 @@ def fitter_table(fitter) -> tuple[pd.DataFrame, int]:
                           "survival": survival.loc[rows.index].to_numpy(),
                           "low": bands.iloc[:, 0].loc[rows.index].to_numpy(),
                           "high": bands.iloc[:, 1].loc[rows.index].to_numpy()})
-    return table, int(events["entrance"].sum())
+    entered = events[events["entrance"] > 0]["entrance"]
+    if (entered.index > entered.index.min()).any():
+        table.attrs["entries"] = [(float(time), float(count)) for time, count in entered.items()]
+    return table, float(events["entrance"].sum())
 
 
 def estimates_from(data, time: str | None, event: str | None, by: str | None,
@@ -120,8 +130,10 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
     for name, table, total in estimates:
         color = palette.get(name, lone_color())
         draw_curve(result.ax, table, color, name or endpoint)
-        rows.append((name or endpoint, color, [(moment, format_number(count, 0)) for moment, count in
-                                               zip(moments, at_risk_from(table, total, moments), strict=True)]))
+        counts = at_risk_from(table, total, moments)
+        digits = auto_digits(counts)
+        rows.append((name or endpoint, color, [(moment, format_number(count, digits)) for moment, count in
+                                               zip(moments, counts, strict=True)]))
     finish_survival(result, [(name, table) for name, table, _ in estimates], stats, endpoint, x_title,
                     median_line, grouped)
     if at_risk:

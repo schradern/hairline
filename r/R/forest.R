@@ -116,7 +116,10 @@ forest_from_model <- function(model, exponentiate) {
   link <- if (inherits(model, "glm")) model$family$link else ""
   exponentiate <- exponentiate %||% (inherits(model, "coxph") || link %in% c("logit", "log"))
   estimates <- stats::coef(model)
-  limits <- stats::confint.default(model)
+  # The model's own 95 % intervals: Student t for lm (as confint() and Python's statsmodels give them), Wald for glm
+  # and coxph (as summary() and statsmodels report them; confint() would profile a glm instead).
+  limits <- if (inherits(model, "lm") && !inherits(model, "glm")) stats::confint(model) else
+    stats::confint.default(model)
   keep <- names(estimates) != "(Intercept)"
   aliased <- keep & is.na(estimates)
   if (any(aliased)) {

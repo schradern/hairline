@@ -1,7 +1,7 @@
 # Donut and nested donut: one ring, or up to three hierarchy levels.
 
 donut_totals <- function(data, columns, value) {
-  keys <- do.call(paste, c(lapply(columns, function(column) as.character(data[[column]])), sep = "\r"))
+  keys <- do.call(combination_key, lapply(columns, function(column) data[[column]]))
   first <- !duplicated(keys)
   sums <- tapply(data[[value]], factor(keys, levels = unique(keys)), sum, na.rm = TRUE)
   grouped <- data[first, columns, drop = FALSE]

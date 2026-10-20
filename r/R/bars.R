@@ -10,7 +10,7 @@ bar_table <- function(data, category, value, by, order, sort) {
   names <- ordered_names(data[[category]], order, "bars", category)
   groups <- if (is.null(by)) "" else group_names(data[[by]])
   keys <- if (is.null(by)) as.character(data[[category]]) else
-    paste(data[[category]], data[[by]], sep = "\r")
+    combination_key(data[[category]], data[[by]])
   first <- !duplicated(keys)
   table <- data[first, c(category, by), drop = FALSE]
   table[[category]] <- as.character(table[[category]])

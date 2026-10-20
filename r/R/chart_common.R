@@ -77,6 +77,11 @@ ordered_names <- function(values, order, chart, column, complete = FALSE) {
   names <- group_names(values)
   if (is.null(order)) return(names)
   wanted <- as.character(order)
+  repeated <- unique(wanted[duplicated(wanted)])
+  if (length(repeated)) {
+    stop(sprintf("hairline: %s: order names '%s' more than once; each group is drawn once", chart, repeated[1]),
+         call. = FALSE)
+  }
   unknown <- setdiff(wanted, names)
   if (length(unknown)) {
     stop(sprintf("hairline: %s: order names '%s', which is not a group in '%s'; groups: %s", chart, unknown[1],
@@ -125,4 +130,11 @@ check_numeric <- function(data, columns, chart) {
            call. = FALSE)
     }
   }
+}
+
+# A key per combination of labels that no two different combinations share, whatever characters the labels hold:
+# each label with its length in front ("1:A2:BC" for A and BC). Vectorised over rows.
+combination_key <- function(...) {
+  parts <- lapply(list(...), as.character)
+  do.call(paste0, lapply(parts, function(part) paste0(nchar(part, type = "chars"), ":", part)))
 }
