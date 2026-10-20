@@ -33,7 +33,7 @@ def column_codes(data: pd.DataFrame, columns: Sequence[str]) -> list[int]:
     codes = [0] * len(data)
     for bit, column in enumerate(columns):
         for row, value in enumerate(data[column].tolist()):
-            if isinstance(value, str) or value not in (0, 1):
+            if isinstance(value, str) or pd.isna(value) or value not in (0, 1):
                 raise ValueError(f"hairline: venn: column '{column}' needs TRUE/FALSE or 0/1 values; "
                                  f"found {value!r}")
             codes[row] += (1 << bit) if value else 0
@@ -42,8 +42,8 @@ def column_codes(data: pd.DataFrame, columns: Sequence[str]) -> list[int]:
 
 def member_codes(sets: Mapping[str, Iterable]) -> list[int]:
     """Per member of any set, the sets it belongs to as bits (first set = 1). Each set is read once, so iterators
-    and generators count like lists."""
-    listed = [list(values) for values in sets.values()]
+    and generators count like lists; missing values are no members."""
+    listed = [[value for value in values if not pd.isna(value)] for values in sets.values()]
     groups = [set(values) for values in listed]
     members = dict.fromkeys(member for values in listed for member in values)
     return [sum(1 << bit for bit, group in enumerate(groups) if member in group) for member in members]

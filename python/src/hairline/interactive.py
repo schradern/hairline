@@ -47,15 +47,31 @@ def is_date_axis(axis) -> bool:
     return converter is not None and type(converter).__module__ == "matplotlib.dates"
 
 
+def date_texts(values, zone) -> list[str]:
+    """ISO dates in the data's own time zone (matplotlib keeps it as the axis units), with the clock time when any
+    point has one, so hourly points stay apart."""
+    import datetime
+
+    import matplotlib.dates as dates
+    zone = zone if isinstance(zone, datetime.tzinfo) else None
+    moments = [dates.num2date(float(value), tz=zone) for value in values]
+    timed = any((moment.hour, moment.minute, moment.second) != (0, 0, 0) for moment in moments)
+    return [moment.strftime("%Y-%m-%d %H:%M" if timed else "%Y-%m-%d") for moment in moments]
+
+
 def x_texts(figure: HairlineFigure, index: int, ax, values) -> list[str]:
     """X values as text: ISO dates on a date axis, category names on a category axis, else numbers."""
-    import matplotlib.dates as dates
     categories = figure.category_axes.get((index, "x"))
     if categories:
         return [categories[int(round(value))] if 0 <= round(value) < len(categories) else "" for value in values]
     if is_date_axis(ax.xaxis):
-        return [dates.num2date(float(value)).strftime("%Y-%m-%d") for value in values]
+        return date_texts(values, ax.xaxis.get_units())
     return axis_number_texts(figure, index, "x", values)
+
+
+def tip_text(name: str, values: str) -> str:
+    """'Series: x, y', or the values alone for a figure without a series name or title."""
+    return f"{name}: {values}" if name else values
 
 
 def series_name(label: str, figure: HairlineFigure, index: int) -> str:
@@ -101,7 +117,7 @@ def line_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         found.append({"name": name, "color": to_hex(line.get_color()),
                       "marks": [{"line": [to_pt(ax, point) for point in path], "width": line.get_linewidth()}
                                 for path in paths],
-                      "tips": [{"at": to_pt(ax, point), "text": f"{name}: {x}, {y}"}
+                      "tips": [{"at": to_pt(ax, point), "text": tip_text(name, f"{x}, {y}")}
                                for point, x, y in zip(xy, xs, ys, strict=True)]})
     return found
 
@@ -120,7 +136,7 @@ def point_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         ys = axis_number_texts(figure, index, "y", offsets[:, 1])
         found.append({"name": name, "color": to_hex(collection.get_facecolor()[0]),
                       "marks": [{"dot": to_pt(ax, point), "r": radius} for point in offsets],
-                      "tips": [{"at": to_pt(ax, point), "text": f"{name}: {x}, {y}"}
+                      "tips": [{"at": to_pt(ax, point), "text": tip_text(name, f"{x}, {y}")}
                                for point, x, y in zip(offsets, xs, ys, strict=True)]})
     return found
 
@@ -145,7 +161,7 @@ def bar_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         labels = category_texts(figure, index, "y" if horizontal else "x", centres)
         for mark, label, value in zip(marks, labels, texts, strict=True):
             x, y, width, height = mark["rect"]
-            tips.append({"at": [x + width / 2, y], "text": f"{name}: {label}, {value}"})
+            tips.append({"at": [x + width / 2, y], "text": tip_text(name, f"{label}, {value}")})
         found.append({"name": name, "color": to_hex(container.patches[0].get_facecolor()) if marks else "#000000",
                       "marks": marks, "tips": tips})
     return found

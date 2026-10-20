@@ -58,7 +58,7 @@ def categorical_rows(study: Study, name: str, parts: list) -> tuple[list[list[st
 
 
 def describe(study: Study, stats: Sequence[str] = ("median_iqr",), size: str = "double") -> Result:
-    stats = tuple(stats)
+    stats = (stats,) if isinstance(stats, str) else tuple(stats)
     check_stats(stats)
     study.require([study.group, *study.variables], "describe")
     parts = subsets(study)

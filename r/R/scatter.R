@@ -3,7 +3,7 @@
 
 scatter_stats <- function(x, y) {
   c(n = hl_format_number(length(x), 0), r = hl_format_number(pearson_test(x, y)[1], 2),
-    Slope = hl_format_number(linear_fit(x, y)$slope, 2))
+    Slope = hl_format_number(linear_fit(x, y)$slope, significant_places(linear_fit(x, y)$slope)))
 }
 
 scatter_fit_layers <- function(x, y) {
@@ -21,6 +21,10 @@ scatter_fit_layers <- function(x, y) {
 
 # A line and its band need three points and two x values; fewer leave slope or band undefined.
 scatter_check_fit <- function(x) {
+  if (!is.numeric(x)) {
+    stop(sprintf("hairline: scatter: a linear fit needs numbers on x; got %s; use fit = NULL for the points alone",
+                 class(x)[1]), call. = FALSE)
+  }
   distinct <- length(unique(x))
   if (length(x) < 3 || distinct < 2) {
     stop(sprintf(paste("hairline: scatter: a linear fit needs at least 3 points with x and y and 2 different x values;",
@@ -54,7 +58,10 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
     stop(sprintf("hairline: scatter: fit '%s' must be 'linear' or NULL", fit), call. = FALSE)
   }
   rows <- data[stats::complete.cases(data[, c(x, y)]), , drop = FALSE]
-  groups <- if (is.null(by)) "" else order %||% unique(as.character(rows[[by]]))
+  if (!nrow(rows)) stop(sprintf("hairline: scatter: no rows with both '%s' and '%s' to draw", x, y), call. = FALSE)
+  groups <- chart_groups(rows, by, order, "scatter")
+  # The fit and its key numbers cover the points drawn: the groups in `order`, when given.
+  if (!is.null(by)) rows <- rows[as.character(rows[[by]]) %in% groups, , drop = FALSE]
   colours <- if (is.null(by)) stats::setNames(lone_colour(), "") else
     colours_for(groups, colors)
   plot <- ggplot2::ggplot()

@@ -42,12 +42,16 @@ validated_sizes <- function(sizes) {
     stop(sprintf("hairline: unknown text role '%s' in sizes; use one of %s", unknown[1],
                  paste(sort(roles), collapse = ", ")), call. = FALSE)
   }
+  for (role in names(sizes)) check_positive(sizes[[role]], sprintf("sizes['%s']", role))
   as.list(sizes %||% list())
 }
 
 palette_fields <- function(palette) {
   if (is.null(palette)) return(list())
   colors <- hl_palette(palette)
+  if (!length(colors)) {
+    stop("hairline: palette has no colours; give a palette name (see hl_palettes()) or hex colours", call. = FALSE)
+  }
   named <- is.character(palette) && length(palette) == 1 && !startsWith(palette, "#")
   list(palette = colors, palette_name = if (named) palette else "custom",
        palette_label = if (named) sprintf("palette '%s'", palette) else "custom palette")
@@ -101,6 +105,7 @@ hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, 
   settings <- utils::modifyList(settings, palette_fields(palette))
   if (!is.null(font)) settings$font <- resolve_family(font)
   if (!is.null(sizes)) settings$sizes <- utils::modifyList(settings$sizes, validated_sizes(sizes))
+  check_positive(base_size, "base_size")
   if (!is.null(base_size)) settings[c("base_size", "base_size_explicit")] <- list(as.numeric(base_size), TRUE)
   if (!is.null(locale)) settings$locale <- locale
   if (!is.null(background)) settings$background <- background

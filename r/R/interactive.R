@@ -21,6 +21,13 @@ is_percent_scale <- function(scale) isTRUE(scale$hairline$percent)
 # Values as their scale labels them: percentages on a share scale, with the scale's digits or the shared rule.
 scale_numbers <- function(scale, values) interactive_numbers(values, is_percent_scale(scale), scale$hairline$digits)
 
+# ISO dates in the data's own time zone, with the clock time when any point has one, so hourly points stay apart.
+datetime_texts <- function(values, zone) {
+  moments <- as.POSIXct(values, origin = "1970-01-01", tz = zone %||% "UTC")
+  timed <- any(format(moments, "%H:%M:%S") != "00:00:00")
+  format(moments, if (timed) "%Y-%m-%d %H:%M" else "%Y-%m-%d")
+}
+
 # X (or y) values as text: ISO dates on a date scale, category names on a discrete scale, else numbers.
 axis_texts <- function(params, scale, values) {
   if (scale$is_discrete()) {
@@ -30,10 +37,14 @@ axis_texts <- function(params, scale, values) {
     }, character(1)))
   }
   if (inherits(scale, "ScaleContinuousDate")) return(format(as.Date(values, origin = "1970-01-01"), "%Y-%m-%d"))
+  if (inherits(scale, "ScaleContinuousDatetime")) return(datetime_texts(values, scale$timezone))
   scale_numbers(scale, values)
 }
 
 colour_hex <- function(colour) tolower(substr(grDevices::rgb(t(grDevices::col2rgb(colour)), maxColorValue = 255), 1, 7))
+
+# "Series: x, y", or the values alone for a plot without a series name or title.
+tip_text <- function(name, values) if (nzchar(name)) paste0(name, ": ", values) else values
 
 series_named <- function(colour, parts, index) {
   items <- Filter(function(item) !is.null(item$colour) && colour_hex(item$colour) == colour_hex(colour), parts$legend)
@@ -90,7 +101,7 @@ line_targets <- function(data, geom, parts, plan, scaled) {
     list(name = name, color = colour_hex(rows$colour[1]),
          marks = list(list(line = context$to_pt(path[, 1], path[, 2]), width = width)),
          tips = lapply(seq_len(nrow(rows)), function(index) {
-           list(at = at[index, ], text = paste0(name, ": ", xs[index], ", ", ys[index]))
+           list(at = at[index, ], text = tip_text(name, paste0(xs[index], ", ", ys[index])))
          }))
   })
 }
@@ -108,7 +119,7 @@ point_targets <- function(data, parts, plan) {
     list(name = name, color = colour_hex(rows$colour[1]),
          marks = lapply(seq_len(nrow(rows)), function(index) list(dot = at[index, ], r = radius)),
          tips = lapply(seq_len(nrow(rows)), function(index) {
-           list(at = at[index, ], text = paste0(name, ": ", xs[index], ", ", ys[index]))
+           list(at = at[index, ], text = tip_text(name, paste0(xs[index], ", ", ys[index])))
          }))
   })
 }
@@ -131,7 +142,7 @@ bar_targets <- function(data, parts, plan) {
          }),
          tips = lapply(seq_len(nrow(rows)), function(index) {
            list(at = c(top_left[index, 1] + widths[index] / 2, top_left[index, 2]),
-                text = paste0(name, ": ", categories[index], ", ", texts[index]))
+                text = tip_text(name, paste0(categories[index], ", ", texts[index])))
          }))
   })
 }

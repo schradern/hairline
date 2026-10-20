@@ -9,7 +9,7 @@ import pandas as pd
 from matplotlib.patches import Polygon
 
 from hairline import entities
-from hairline.charts.common import check_columns, humanise
+from hairline.charts.common import check_columns, check_numeric, check_present, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import STATIC_ID
@@ -44,11 +44,22 @@ def draw_median(ax, values: pd.Series, curve: tuple[list[float], list[float]], b
             linewidth=load_tokens()["reference"]["width"] * settings.base_size, gid=MEDIAN_ID, label="_nolegend_")
 
 
+def draw_spikes(ax, values: pd.Series, base: float, color: str, layer: float) -> None:
+    """A group too small or too uniform for a density (one value, or all alike) shows each value as a spike, so
+    its row is never empty."""
+    settings = current_settings()
+    height = load_tokens()["ridgeline"]["spike"]
+    for value in sorted(set(values.astype(float))):
+        ax.plot([value, value], [base, base + height], color=color, zorder=layer + 0.002, label="_nolegend_",
+                linewidth=load_tokens()["lines"]["data"] * settings.base_size, gid=STATIC_ID)
+
+
 def draw_ridges(ax, groups: list, curves: list, scale: float, value: str, medians: bool) -> None:
     """Top row first, so each lower ridge is drawn in front of the one above."""
     for index, ((name, rows), curve) in enumerate(zip(groups, curves, strict=True)):
         base, layer = float(len(groups) - 1 - index), 1 + index * 0.01
         if curve is None:
+            draw_spikes(ax, rows[value].dropna(), base, entities.color(name), layer)
             continue
         draw_ridge(ax, curve, base, scale, entities.color(name), layer)
         if medians:
@@ -60,7 +71,9 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               colors: Mapping[str, str] | None = None, size: str = "onehalf") -> HairlineFigure:
     """Distributions per group as overlapping ridges, the first group on top; all ridges share one height scale."""
     check_columns(data, [group, value])
-    rules, groups = load_tokens()["ridgeline"], groups_of(data, group, order)
+    check_present(data, value, "ridgeline")
+    check_numeric(data, [value], "ridgeline")
+    rules, groups = load_tokens()["ridgeline"], groups_of(data, group, order, "ridgeline")
     curves = [density(rows[value].dropna()) for _, rows in groups]
     peak = max((max(curve[1]) for curve in curves if curve), default=1.0)
     scale = (1 + rules["overlap"]) / peak

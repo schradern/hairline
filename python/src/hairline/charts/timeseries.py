@@ -2,29 +2,34 @@
 
 from __future__ import annotations
 
+import numbers
 from collections.abc import Mapping, Sequence
 
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns, humanise
+from hairline.charts.common import check_columns, check_labels, check_present, humanise, ordered_names
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
+from hairline.fonts import families
 from hairline.marks import SECONDARY_ID, lone_color
-from hairline.numbers import auto_digits, format_number, format_percent, is_whole
+from hairline.numbers import auto_digits, format_number, format_percent, is_whole, quantile_places
 from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
 
 STAT_LABELS = {"mean": "Mean", "median": "Median", "range": "Range"}
 
 
-def groups_of(data: pd.DataFrame, by: str | None, order: Sequence[str] | None) -> list[tuple[str, pd.DataFrame]]:
+def groups_of(data: pd.DataFrame, by: str | None, order: Sequence[str] | None,
+              chart: str = "chart") -> list[tuple[str, pd.DataFrame]]:
+    """Rows per group in `order` (or category, else data order); groups match by their text, so order=["1"] finds
+    the group 1. A missing group label and an order naming no group are refused."""
     if by is None:
         return [("", data)]
-    """Rows per group in `order` (or data order); groups match by their text, so order=["1"] finds the group 1."""
-    names = list(order) if order is not None else list(dict.fromkeys(data[by]))
+    check_labels(data, [by], chart)
+    names = ordered_names(data[by], order, chart, by)
     labels = data[by].astype(str)
-    return [(str(name), data[labels == str(name)]) for name in names]
+    return [(name, data[labels == name]) for name in names]
 
 
 def formatter(percent: bool):
@@ -46,14 +51,25 @@ def panel_stats(values: pd.Series, stats: Sequence[str], percent: bool, threshol
         elif stat == "range":
             pairs.append(("Range", f"{show(clean.min(), digits)}–{show(clean.max(), digits)}"))
         elif stat in STAT_LABELS:
-            pairs.append((STAT_LABELS[stat], show(getattr(clean, stat)(), digits + (extra if stat == "mean" else 0))))
+            value = getattr(clean, stat)()
+            places = digits + extra if stat == "mean" else quantile_places(value, digits, bool(extra))
+            pairs.append((STAT_LABELS[stat], show(value, places)))
         else:
             raise ValueError(f"hairline: unknown stat {stat!r}; use mean, median, range or share_above")
     return pairs
 
 
+def with_iso_dates(data: pd.DataFrame, x: str) -> pd.DataFrame:
+    """ISO date text on x (2025-01-31, 2025-01-31T10:00) becomes dates, so the axis is a time axis, as over_time()
+    reads it; other text stays as it is."""
+    if pd.api.types.is_numeric_dtype(data[x]) or pd.api.types.is_datetime64_any_dtype(data[x]):
+        return data
+    parsed = pd.to_datetime(data[x], format="ISO8601", errors="coerce")
+    return data.assign(**{x: parsed}) if parsed.notna().all() else data
+
+
 def check_window(window: object) -> None:
-    if isinstance(window, bool) or not isinstance(window, int | float) or not window >= 1 or window != int(window):
+    if isinstance(window, bool) or not isinstance(window, numbers.Real) or not window >= 1 or window != int(window):
         raise ValueError(f"hairline: timeseries: window must be a whole number of 1 or more; got {window!r}")
 
 
@@ -77,11 +93,21 @@ def caption_note(ax, text: str, x: object, settings) -> None:
     gap = load_tokens()["reference"]["label_gap"] * role_size(settings, "caption")
     ax.annotate(text, xy=(x, 0), xycoords=("data", "axes fraction"), xytext=(gap, gap), textcoords="offset points",
                 ha="left", va="bottom", fontsize=role_size(settings, "caption"), color=settings.neutral["faint"],
-                fontfamily=settings.font, annotation_clip=False)
+                fontfamily=families(settings.font), annotation_clip=False)
 
 
 def as_x(value: object, is_date: bool) -> object:
     return pd.Timestamp(value) if is_date else value
+
+
+def check_marks(bands: Sequence[Mapping], events: Sequence[Mapping]) -> None:
+    """Bands need start and end, events need x."""
+    for kind, items, keys in (("band", bands, ("start", "end")), ("event", events, ("x",))):
+        for index, item in enumerate(items):
+            missing = [key for key in keys if key not in item]
+            if missing:
+                raise ValueError(f"hairline: timeseries: {kind} {index + 1} needs {' and '.join(keys)}; missing "
+                                 f"{', '.join(missing)}")
 
 
 def draw_marks(ax, bands: Sequence[Mapping], events: Sequence[Mapping], name: str, is_date: bool) -> None:
@@ -123,8 +149,11 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers."""
     check_columns(data, [x, y, by])
     check_window(window)
+    check_present(data, y, "timeseries")
+    check_marks(bands, events)
+    data = with_iso_dates(data, x)
     title = title or (f"{humanise(y)} by {str(by).replace('_', ' ')}" if by else f"{humanise(y)} over time")
-    groups = groups_of(data, by, order)
+    groups = groups_of(data, by, order, "timeseries")
     result = figure(title, subtitle=subtitle, caption=caption, size=size, panels=len(groups), layout="rows")
     is_date = pd.api.types.is_datetime64_any_dtype(data[x])
     share_label = share_label or f"≥ {formatter(percent)(threshold, 0) if threshold is not None else ''}"

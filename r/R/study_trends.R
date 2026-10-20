@@ -1,7 +1,18 @@
 # hl_over_time(): one measure over calendar time by group, mirroring the Python over_time().
 
 iso_date_pattern <- "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
-iso_time_pattern <- "^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]+)?)?$"
+iso_zone_pattern <- "(Z|[+-][0-9]{2}:?[0-9]{2})$"
+iso_time_pattern <- paste0("^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]+)?)?",
+                           "(Z|[+-][0-9]{2}:?[0-9]{2})?$")
+
+# Seconds east of UTC in an ISO zone suffix ("Z", "+01:00", "-0530"); 0 without one.
+iso_offset <- function(text) {
+  zone <- ifelse(grepl(iso_zone_pattern, text), sub(".*?(Z|[+-][0-9]{2}:?[0-9]{2})$", "\\1", text, perl = TRUE), "Z")
+  digits <- gsub("[^0-9]", "", zone)
+  hours <- suppressWarnings(as.numeric(substr(digits, 1, 2)))
+  minutes <- suppressWarnings(as.numeric(substr(digits, 3, 4)))
+  ifelse(zone == "Z", 0, ifelse(startsWith(zone, "-"), -1, 1) * (hours * 3600 + minutes * 60))
+}
 
 # ISO date text as dates, or as times (UTC) when any value carries a clock time; anything else is refused, as in
 # the Python package.
@@ -10,9 +21,10 @@ study_iso_dates <- function(values, column) {
   is_date <- grepl(iso_date_pattern, text)
   has_time <- grepl(iso_time_pattern, text)
   parsed <- if (any(has_time)) {
-    clock <- ifelse(is_date, paste(text, "00:00:00"), sub("T", " ", text, fixed = TRUE))
+    offset <- ifelse(has_time, iso_offset(text), 0)
+    clock <- ifelse(is_date, paste(text, "00:00:00"), sub("T", " ", sub(iso_zone_pattern, "", text), fixed = TRUE))
     clock <- ifelse(grepl("^.{16}$", clock), paste0(clock, ":00"), clock)
-    as.POSIXct(clock, tz = "UTC", format = "%Y-%m-%d %H:%M:%OS")
+    as.POSIXct(clock, tz = "UTC", format = "%Y-%m-%d %H:%M:%OS") - offset
   } else {
     as.Date(text, format = "%Y-%m-%d")
   }

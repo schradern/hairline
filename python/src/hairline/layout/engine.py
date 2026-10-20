@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from matplotlib.layout_engine import LayoutEngine
 
+from hairline.errors import HairlineLayoutError
 from hairline.layout.apply import apply_frame
 
 if TYPE_CHECKING:
@@ -22,7 +23,15 @@ class HairlineLayout(LayoutEngine):
         self.hairline_figure = hairline_figure
 
     def execute(self, fig) -> None:
-        dropped = apply_frame(self.hairline_figure)
+        """Lays out the frame. matplotlib drops a ValueError raised here and draws a blank figure, so every error
+        but our own is passed on as a HairlineLayoutError that reaches savefig(), show() and notebooks."""
+        try:
+            dropped = apply_frame(self.hairline_figure)
+        except HairlineLayoutError:
+            raise
+        except Exception as error:
+            raise HairlineLayoutError(f"hairline: drawing the figure failed: {type(error).__name__}: {error}") \
+                from error
         for panel, labels in dropped.items():
             warnings.warn(f"hairline: panel {panel} header: key numbers dropped because they do not fit: "
                           f"{', '.join(labels)}", UserWarning, stacklevel=2)

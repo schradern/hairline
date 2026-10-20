@@ -1,5 +1,30 @@
 # A study: a dataset described once, checked when it is created, mirroring hl.study().
 
+study_kinds <- c("numeric", "categorical")
+
+# Variables are numeric or categorical; dates are followed over time, not summarised in a table.
+study_check_kinds <- function(kinds) {
+  for (name in names(kinds)) {
+    if (kinds[[name]] == "date") {
+      stop(sprintf(paste("hairline: study: '%s' holds dates, which tables do not summarise; leave it out of",
+                         "variables and follow a measure over it with hl_over_time()"), name), call. = FALSE)
+    }
+    if (!kinds[[name]] %in% study_kinds) {
+      stop(sprintf("hairline: study: type '%s' for '%s' is not one of %s", kinds[[name]], name,
+                   paste(study_kinds, collapse = ", ")), call. = FALSE)
+    }
+  }
+}
+
+# The variable's type; a role column (follow-up time) is typed from its values.
+study_kind <- function(study, column, endpoint) {
+  if (!column %in% names(study$data)) {
+    stop(sprintf("hairline: %s: '%s' is not a column of the study; columns: %s", endpoint, column,
+                 paste(names(study$data), collapse = ", ")), call. = FALSE)
+  }
+  if (column %in% names(study$types)) study$types[[column]] else infer_study_type(study$data[[column]])
+}
+
 #' Describe a dataset once for the study endpoints
 #'
 #' Names the column that plays each role, runs the checks and returns a study
@@ -31,11 +56,16 @@
 #' @export
 hl_study <- function(data, group = NULL, time = NULL, event = NULL, id = NULL, variables = NULL, labels = NULL,
                      types = NULL, order = NULL, unit = NULL, units = NULL) {
+  if (!nrow(data)) stop("hairline: study: the data has no rows", call. = FALSE)
   roles <- Filter(Negate(is.null), list(group = group, time = time, event = event, id = id))
-  variables <- variables %||% setdiff(names(data), unlist(roles))
+  others <- setdiff(names(data), unlist(roles))
+  variables <- variables %||% others[vapply(others, function(name) infer_study_type(data[[name]]) != "date",
+                                            logical(1))]
+  types <- as.list(types)
   kinds <- vapply(intersect(variables, names(data)), function(name) {
     types[[name]] %||% infer_study_type(data[[name]])
   }, character(1))
+  study_check_kinds(kinds)
   has_group <- !is.null(group) && group %in% names(data)
   groups <- order %||% if (has_group) study_levels(data[[group]], FALSE) else character()
   checks <- c(run_study_checks(data, roles, variables, groups), unit_findings(roles, variables, kinds, as.list(units)))

@@ -9,6 +9,8 @@ from matplotlib.patches import Rectangle
 from matplotlib.text import Text
 from matplotlib.transforms import Affine2D, Transform
 
+from hairline.fonts import families
+
 
 class FrameArtist(Artist):
     """Holds the frame's text and swatches; drawn after the layout engine has replaced its children.
@@ -48,7 +50,7 @@ def pt_transform(fig: Figure) -> Transform:
 def add_text(fig: Figure, x: float, baseline: float, text: str, style: dict, align: str = "left") -> Text:
     """Place one line of text with its baseline at `baseline` pt."""
     artist = Text(x, baseline, text, transform=pt_transform(fig), ha=align, va="baseline",
-                  fontfamily=style["family"], fontsize=style["size"], fontweight=style["weight"],
+                  fontfamily=families(style["family"]), fontsize=style["size"], fontweight=style["weight"],
                   color=style["color"])
     artist.set_figure(fig)
     artist.set_in_layout(False)

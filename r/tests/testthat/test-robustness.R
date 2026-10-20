@@ -222,3 +222,134 @@ test_that("html export skips missing values", {
   tips <- unlist(lapply(targets$series, function(series) vapply(series$tips, `[[`, character(1), "text")))
   expect_false(any(grepl("NA", tips, fixed = TRUE)))
 })
+
+test_that("a median on a flat half is the middle of the flat, as survfit takes it", {
+  expect_equal(km_median(km_estimate(1:4, c(1, 1, 1, 1))), 2.5)
+  expect_equal(km_median(km_estimate(1:4, c(1, 1, 0, 0))), 2)
+})
+
+# Second stress test
+
+test_that("numbers beyond their precision do not round up, and non-finite ones read plainly", {
+  expect_equal(hl_format_number(999999999999999.4, 0, "en"), "999,999,999,999,999")
+  expect_equal(hl_format_number(1234567.345, 2, "en"), "1,234,567.35")
+  expect_equal(hl_format_number(NA), "–")
+  expect_equal(hl_format_number(Inf, 0, "de"), "∞")
+  expect_error(hl_format_interval(c(1, 2), 0.5, 3), "formats one estimate")
+})
+
+test_that("small or tight values keep their digits, and small whole medians their half", {
+  expect_equal(auto_digits(c(0.0004, 0.0003, 0.0005)), 4)
+  expect_equal(auto_digits(c(1000.1, 1000.2, 1000.3)), 1)
+  expect_equal(numeric_summary(c(1, 2, 3, 4), "median_iqr", 0, 0, whole = TRUE), "2.5 (1.8–3.3)")
+  expect_equal(numeric_summary(c(55, 56, 61, 70), "median_iqr", 0, 0, whole = TRUE), "59 (56–63)")
+})
+
+test_that("bar labels keep the data's decimals and order leaves out what it does not name", {
+  built <- ggplot2::ggplot_build(hl_bars(data.frame(g = c("A", "B"), v = c(0.25, 0.5)), "g", "v"))
+  expect_setequal(unlist(lapply(built@data[-1], `[[`, "label")), c("0.25", "0.50"))
+  data <- data.frame(u = rep(c("Ward", "ICU", "ED"), each = 2), n = 1:6)
+  bars <- ggplot2::ggplot_build(hl_bars(data, "u", "n", order = "ICU"))@data[[1]]
+  expect_equal(bars$y, 7)
+  expect_error(hl_bars(data, "u", "n", order = "Theatre"), "order names 'Theatre'")
+})
+
+test_that("a missing group label is named", {
+  data <- data.frame(arm = c("A", NA, "B"), n = c(30, 10, 60))
+  expect_error(hl_bars(data, "arm", "n"), "'arm' is missing in row 2")
+  expect_error(hl_donut(data, "arm", "n"), "'arm' is missing in row 2")
+  expect_error(hl_raincloud(data, "arm", "n"), "'arm' is missing in row 2")
+})
+
+test_that("flows skip missing values, refuse self-flows and combine both directions of an arc", {
+  data <- data.frame(s = c("A", "A", "B"), t = c("x", "x", "x"), v = c(5, NA, 3))
+  expect_equal(sort(vapply(chord_spec(data, "s", "t", "v")$links, `[[`, numeric(1), "value")), c(3, 5))
+  expect_error(chord_spec(data.frame(s = c("A", "A"), t = c("A", "B"), v = c(10, 1)), "s", "t", "v"),
+               "flows to itself")
+  spec <- arcs_spec(data.frame(s = c("A", "B"), t = c("B", "A"), v = c(2, 3)), "s", "t", "v")
+  expect_equal(spec$links[[1]]$pair, "A ↔ B")
+  expect_equal(spec$links[[1]]$value, 5)
+})
+
+test_that("log-rank follows survdiff where groups have no expected events", {
+  expect_true(is.na(logrank_test(1:6, c(0, 0, 0, 0, 1, 0), rep(c("A", "B", "C"), each = 2))$p))
+  expect_true(is.na(logrank_test(rep(3, 6), rep(1, 6), rep(c("A", "B", "C"), each = 2))$p))
+  expect_equal(logrank_test(1:6, rep(1, 6), letters[1:6])$p, 0.09259092767611, tolerance = 1e-9)
+  expect_no_error(hl_kaplan_meier(data.frame(time = 1:3, event = c(1, 1, 0), arm = "A"), "time", "event",
+                                  by = "arm"))
+})
+
+test_that("forest refuses values it cannot draw and gives small values their digits", {
+  rows <- data.frame(study = "S", estimate = 5, low = 0.9, high = 1.6)
+  expect_error(hl_forest(rows), "outside its interval")
+  expect_error(hl_forest(transform(rows, estimate = NA)), "must be numbers")
+  expect_error(hl_forest(transform(rows, estimate = 1), favours = "A"), "favours takes two labels")
+  tiny <- data.frame(study = "S", estimate = 0.0004, low = 0.0003, high = 0.0005)
+  spec <- forest_spec(tiny, "study", "estimate", "low", "high", ratio = FALSE, colour = "#000000")
+  expect_equal(spec$rows[[1]]$effect_text, "0.0004 [0.0003; 0.0005]")
+  expect_equal(anyDuplicated(spec$axis$labels), 0L)
+})
+
+test_that("egger needs three studies with different errors", {
+  expect_true(is.na(egger_p(c(0.1, 0.2), c(0.1, 0.2))))
+  expect_true(is.na(egger_p(c(0.1, 0.2, 0.3), c(0.1, 0.1, 0.1))))
+})
+
+test_that("scatter fits the points it draws and gives the slope two significant digits", {
+  data <- data.frame(x = 0:29, y = (0:29) %% 7, g = rep(c("A", "B", "C"), 10))
+  plot <- hl_scatter(data, "x", "y", by = "g", order = c("A", "B"))
+  expect_equal(plot@meta$hairline_headers[[1]]$stats[["n"]], "20")
+  expect_equal(significant_places(0.000407), 5)
+})
+
+test_that("survival medians gain decimals for short times", {
+  expect_equal(median_digits(list(km_estimate(c(0.01, 0.02, 0.03, 0.05), c(1, 1, 1, 0)))), 2)
+})
+
+test_that("study refuses what it cannot summarise and names unknown columns", {
+  data <- data.frame(g = rep(c("a", "b"), 3), x = c(1.5, 2, 3, 4, 5, 6), a = 1:6,
+                     day = as.Date("2025-01-01") + 0:5)
+  study <- suppressWarnings(hl_study(data, group = "g", types = c(a = "categorical")))
+  expect_equal(study$variables, c("x", "a"))
+  expect_error(hl_compare(study, "nope"), "'nope' is not a column of the study")
+  expect_error(hl_study(data[0, ], group = "g"), "no rows")
+  expect_error(suppressWarnings(hl_study(data, types = list(x = "banana"))), "type 'banana'")
+})
+
+test_that("iso dates with a zone are read in UTC, and timeseries reads iso text as dates", {
+  times <- study_iso_dates(c("2025-01-01T10:00:00Z", "2025-01-01T11:00+01:00"), "x")
+  expect_equal(times[1], times[2])
+  plot <- hl_timeseries(data.frame(day = c("2025-01-01", "2025-01-02", "2025-01-03"), v = 1:3), "day", "v")
+  expect_true(inherits(plot@data$day, "Date"))
+})
+
+test_that("save refuses sizes that would crash the device and reads formats as given", {
+  plot <- ggplot2::ggplot() + ggplot2::labs(title = "T") + theme_hairline()
+  folder <- withr::local_tempdir()
+  expect_error(hl_save(plot, file.path(folder, "a"), formats = "png", width_mm = -5), "width_mm must be a number")
+  expect_error(hl_save(plot, file.path(folder, "a"), formats = "png", dpi = 0), "dpi must be a number")
+  expect_equal(basename(hl_save(plot, file.path(folder, "b"), formats = c("PNG", "png"), dpi = 72)), "b.png")
+  expect_error(hl_use(base_size = 0), "base_size must be a number above zero")
+})
+
+test_that("ridgeline shows constant groups and venn leaves missing values out", {
+  data <- data.frame(g = rep(c("A", "B"), each = 10), v = c(rep(5, 10), seq(0, 1, length.out = 10)))
+  built <- ggplot2::ggplot_build(hl_ridgeline(data, "g", "v"))
+  expect_true(any(vapply(built@data, function(layer) "xend" %in% names(layer) && any(layer$x == 5), logical(1))))
+  codes <- venn_member_codes(list(A = c(1, 2, NA), B = c(2, NA, NA)))
+  expect_equal(length(codes), 2)
+})
+
+test_that("a real Other joins the folded Other slice", {
+  folded <- fold_other(c(LETTERS[1:7], "Other", "H"), c(9, 8, 7, 6, 5, 4, 3, 100, 1))
+  expect_equal(folded$labels, c(LETTERS[1:6], "Other"))
+  expect_equal(folded$values[7], 104)
+})
+
+test_that("upright arc labels keep their room when the figure fits its height", {
+  data <- data.frame(g = c("Intensive care unit of the university hospital", "Ward B"), h = c("z", "w"), v = 1:2)
+  plot <- hl_arcs(data, "g", "h", "v")
+  height <- fitted_size_mm(plot_for_size(plot, "onehalf"), figure_size_mm("onehalf", NULL, NULL))[2]
+  expect_gt(height, 145 / 72 * 25.4)
+  expect_no_error(hl_layout_report(plot))
+})

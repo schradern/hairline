@@ -35,7 +35,8 @@ panel_stats <- function(values, stats, percent, threshold, share_label) {
       result[["Range"]] <- paste0(show(min(values), digits), "\u2013", show(max(values), digits))
     } else if (stat %in% c("mean", "median")) {
       value <- if (stat == "mean") mean(values) else stats::median(values)
-      result[[if (stat == "mean") "Mean" else "Median"]] <- show(value, digits + if (stat == "mean") extra else 0)
+      places <- if (stat == "mean") digits + extra else quantile_places(value, digits, extra > 0)
+      result[[if (stat == "mean") "Mean" else "Median"]] <- show(value, places)
     } else {
       stop(sprintf("hairline: unknown stat '%s'; use mean, median, range or share_above", stat), call. = FALSE)
     }
@@ -43,8 +44,16 @@ panel_stats <- function(values, stats, percent, threshold, share_label) {
   result
 }
 
+# ISO date text on x (2025-01-31, 2025-01-31T10:00) becomes dates, so the axis is a time axis, as hl_over_time()
+# reads it; other text stays as it is.
+with_iso_dates <- function(values) {
+  if (!is.character(values) && !is.factor(values)) return(values)
+  tryCatch(study_iso_dates(values, "x"), error = function(error) values)
+}
+
 prepared_series <- function(data, x, y, by, order, window) {
-  groups <- if (is.null(by)) "" else (order %||% unique(as.character(data[[by]])))
+  groups <- chart_groups(data, by, order, "timeseries")
+  if (!is.null(by)) data <- data[as.character(data[[by]]) %in% groups, , drop = FALSE]
   data$.group <- factor(if (is.null(by)) "" else as.character(data[[by]]), levels = groups)
   data <- data[order(data$.group, data[[x]]), , drop = FALSE]
   data$.mean <- stats::ave(data[[y]], data$.group, FUN = function(values) rolling_mean(values, window))
@@ -97,7 +106,7 @@ series_layers <- function(data, x, y, raw, colours) {
 }
 
 period_mean_layer <- function(data, y) {
-  means <- stats::aggregate(data[[y]], list(.group = data$.group), mean)
+  means <- stats::aggregate(data[[y]], list(.group = data$.group), mean, na.rm = TRUE)
   ggplot2::geom_hline(data = means, ggplot2::aes(yintercept = .data$x), colour = hl_settings()$neutral$muted,
                       linetype = "32",
                       linewidth = pt_to_linewidth(hl_tokens()$reference$width * hl_settings()$base_size))
@@ -173,6 +182,8 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   check_columns(data, c(x, y, by))
   title <- title %||% if (is.null(by)) paste(humanise(y), "over time") else paste(humanise(y), "by", gsub("_", " ", by))
   check_window(window)
+  check_present(data, y, "timeseries")
+  data[[x]] <- with_iso_dates(data[[x]])
   data <- prepared_series(data, x, y, by, order, window)
   colours <- if (is.null(by)) stats::setNames(lone_colour(), levels(data$.group)) else
     colours_for(levels(data$.group), colors)

@@ -14,7 +14,7 @@ from hairline.marks import lone_color
 
 def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = None, high: str | None = None, *,
             title: str | None = None, subtitle: str | None = None, caption: str | None = None, sort: bool = True,
-            ratio: bool = False, reference: float | None = None, digits: int = 2,
+            ratio: bool = False, reference: float | None = None, digits: int | None = None,
             size: str = "onehalf") -> HairlineFigure:
     """One dot per row, largest at the top; with `low` and `high` an interval and its numbers on the right.
     `reference` draws a vertical line (a target or a null value)."""

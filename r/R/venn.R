@@ -32,6 +32,7 @@ venn_column_codes <- function(data, columns) {
 }
 
 venn_member_codes <- function(sets) {
+  sets <- lapply(sets, function(values) values[!is.na(values)])
   members <- unique(unlist(sets, use.names = FALSE))
   codes <- numeric(length(members))
   for (bit in seq_along(sets)) codes <- codes + (members %in% sets[[bit]]) * 2^(bit - 1)

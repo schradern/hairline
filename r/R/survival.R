@@ -50,9 +50,24 @@ km_estimate <- function(time, event) {
   do.call(rbind, rows)
 }
 
+median_tolerance <- sqrt(.Machine$double.eps)
+
+# Decimals for medians: one, or more where the times are small (0.02 years is not 0.0).
+median_digits <- function(tables) {
+  times <- unlist(lapply(tables, function(table) table$time))
+  max(1, auto_digits(times[times > 0]))
+}
+
+# First time the survival reaches 50 % or less; where the curve stays at exactly 50 %, the middle between that time
+# and its next drop (survival::survfit's rule). NULL when the curve stays above.
 km_median <- function(table) {
-  reached <- table$time[table$survival <= 0.5]
-  if (length(reached)) reached[1] else NULL
+  keep <- table$survival < 0.5 + median_tolerance
+  if (!any(keep)) return(NULL)
+  times <- table$time[keep]
+  survival <- table$survival[keep]
+  lower <- which(survival < survival[1])
+  if (abs(survival[1] - 0.5) < median_tolerance && length(lower)) return((times[1] + times[lower[1]]) / 2)
+  times[1]
 }
 
 at_risk_at <- function(time, moments) vapply(moments, function(moment) sum(time >= moment), numeric(1))

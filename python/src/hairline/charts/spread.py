@@ -9,13 +9,13 @@ import numpy as np
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns, humanise
+from hairline.charts.common import check_columns, check_numeric, humanise
 from hairline.charts.forest import decimals
 from hairline.charts.spread_geometry import spread_drawing
 from hairline.charts.timeseries import groups_of
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
-from hairline.numbers import auto_digits, format_number, is_whole, locale_symbols
+from hairline.numbers import auto_digits, format_number, is_whole, locale_symbols, quantile_places
 from hairline.stats.density import quantiles
 from hairline.ticks import axis_limits, nice_breaks
 
@@ -64,15 +64,22 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
                 stats: Sequence[str] = ("median", "iqr", "mean"), percent: bool = False, digits: int | None = None,
                 zero: bool = False, axis_title: str | None = None, colors: Mapping[str, str] | None = None) -> dict:
     check_columns(data, [group, value])
+    check_numeric(data, [value], "spread")
     unknown = [name for name in stats if name not in STATS]
     if unknown:
         raise ValueError(f"hairline: spread: unknown statistic {unknown[0]!r}; use any of {', '.join(STATS)}")
     groups = [(str(name), rows[value].dropna().astype(float).to_numpy())
-              for name, rows in groups_of(data, group, order)]
+              for name, rows in groups_of(data, group, order, "spread")]
     groups = [(name, values) for name, values in groups if len(values)]
+    if not groups:
+        raise ValueError(f"hairline: spread: no values to draw; '{value}' is empty or missing in every row")
     every = np.concatenate([values for _, values in groups])
-    numbers = (number_formatter(every, percent, digits),
-               number_formatter(every, percent, digits, 1 if is_whole(every) and not percent else 0))
+    whole = is_whole(every) and not percent
+    plain, mean_number = number_formatter(every, percent, digits), number_formatter(every, percent, digits,
+                                                                                    1 if whole else 0)
+    whole = whole and digits is None
+    # Of whole numbers, a quantile between two of them keeps one decimal (a median of 2.5, not 3).
+    numbers = ((lambda value: mean_number(value) if quantile_places(value, 0, whole) else plain(value)), mean_number)
     palette, marks = entities.colors_for([name for name, _ in groups], colors), dict(marks or {})
     rows = []
     for name, values in groups:

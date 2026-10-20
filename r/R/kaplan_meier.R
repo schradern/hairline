@@ -8,14 +8,16 @@ km_from_fit <- function(fit) {
     rows <- (ends[index] - strata[index] + 1):ends[index]
     list(name = sub("^[^=]*=", "", names(strata)[index]), total = fit$n[index],
          table = data.frame(time = fit$time[rows], at_risk = fit$n.risk[rows], events = fit$n.event[rows],
-                            censored = fit$n.censor[rows], survival = fit$surv[rows], low = fit$lower[rows],
-                            high = fit$upper[rows]))
+                            censored = fit$n.censor[rows], survival = fit$surv[rows],
+                            # a fit without intervals (conf.type = "none") draws its curve without a band
+                            low = if (is.null(fit$lower)) NA_real_ else fit$lower[rows],
+                            high = if (is.null(fit$upper)) NA_real_ else fit$upper[rows]))
   })
 }
 
 km_from_data <- function(data, time, event, by, order) {
   check_columns(data, c(time, event, by))
-  groups <- if (is.null(by)) "" else (order %||% unique(as.character(data[[by]])))
+  groups <- chart_groups(data, by, order, "kaplan_meier")
   lapply(groups, function(name) {
     rows <- if (is.null(by)) data else data[as.character(data[[by]]) == name, , drop = FALSE]
     list(name = name, total = nrow(rows), table = km_estimate(rows[[time]], rows[[event]]))
@@ -113,20 +115,22 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
     by <- if (length(sides$right)) sides$right[1] else NULL
   }
   title <- title %||% if (is.null(by)) endpoint else paste(endpoint, "by", gsub("_", " ", by))
+  estimates <- if (inherits(data, "survfit")) km_from_fit(data) else km_from_data(data, time, event, by, order)
+  if (!length(estimates)) stop("hairline: kaplan_meier: no rows to draw", call. = FALSE)
   if (!inherits(data, "survfit") && !is.null(by) && test && !any(startsWith(tolower(names(stats)), "log-rank"))) {
     shown <- if (length(order)) data[as.character(data[[by]]) %in% as.character(order), , drop = FALSE] else data
     stats <- c(stats, `Log-rank` = logrank_text(shown[[time]], shown[[event]], shown[[by]]))
   }
-  estimates <- if (inherits(data, "survfit")) km_from_fit(data) else km_from_data(data, time, event, by, order)
   grouped <- !is.null(by) || length(estimates) > 1
   names <- vapply(estimates, function(estimate) if (nzchar(estimate$name)) estimate$name else endpoint, character(1))
   for (index in seq_along(estimates)) estimates[[index]]$name <- names[index]
   colours <- if (grouped) colours_for(names, colors) else stats::setNames(lone_colour(), names)
   max_time <- max(vapply(estimates, function(estimate) max(estimate$table$time), numeric(1)))
   moments <- times %||% nice_breaks(0, max_time)
+  digits <- median_digits(lapply(estimates, `[[`, "table"))
   medians <- paste(vapply(estimates, function(estimate) {
     median <- km_median(estimate$table)
-    if (is.null(median)) "not reached" else hl_format_number(median, 1)
+    if (is.null(median)) "not reached" else hl_format_number(median, digits)
   }, character(1)), collapse = " vs ")
   plot <- ggplot2::ggplot() + km_layers(km_layer_data(estimates), colours, median_line) +
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = x_title, y = NULL) + theme_hairline() +

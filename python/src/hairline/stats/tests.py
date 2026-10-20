@@ -42,27 +42,34 @@ def rank_sum(first: Sequence[float], second: Sequence[float]) -> float:
 
 
 def logrank(time: Sequence[float], event: Sequence[int], group: Sequence[str]) -> dict:
-    """Log-rank test over all groups (order of appearance): chi-square, degrees of freedom and p; without a single
-    event the test is undefined and its p is NaN."""
+    """Log-rank test over all groups (order of appearance): chi-square, degrees of freedom and p. As
+    survival::survdiff, only groups with expected events take part, one of them left out of the quadratic form. With
+    fewer than two such groups, or a singular variance (every event at one time), the test is undefined: p is NaN."""
     time, event = np.asarray(time, dtype=float), np.asarray(event, dtype=float)
     labels = list(dict.fromkeys(group))
     member = np.array([[name == label for name in group] for label in labels])
     observed_minus_expected, variance = np.zeros(len(labels)), np.zeros((len(labels), len(labels)))
-    moments = np.unique(time[event == 1])
-    if not len(moments):
-        return {"chisq": math.nan, "df": len(labels) - 1, "p": math.nan}
-    for moment in moments:
+    expected = np.zeros(len(labels))
+    undefined = {"chisq": math.nan, "df": len(labels) - 1, "p": math.nan}
+    for moment in np.unique(time[event == 1]):
         at_risk = (member & (time >= moment)).sum(axis=1).astype(float)
         deaths = (member & (time == moment) & (event == 1)).sum(axis=1).astype(float)
         n, d = at_risk.sum(), deaths.sum()
         share = at_risk / n
+        expected += d * share
         observed_minus_expected += deaths - d * share
         if n > 1:
             variance += d * (n - d) / (n - 1) * (np.diag(share) - np.outer(share, share))
-    keep = len(labels) - 1
-    statistic = float(observed_minus_expected[:keep] @ np.linalg.solve(variance[:keep, :keep],
-                                                                       observed_minus_expected[:keep]))
-    return {"chisq": statistic, "df": keep, "p": chi2_sf(statistic, keep)}
+    kept = np.flatnonzero(expected > 0)
+    if len(kept) < 2:
+        return undefined
+    used = kept[1:]
+    try:
+        statistic = float(observed_minus_expected[used] @ np.linalg.solve(variance[np.ix_(used, used)],
+                                                                          observed_minus_expected[used]))
+    except np.linalg.LinAlgError:
+        return undefined
+    return {"chisq": statistic, "df": len(used), "p": chi2_sf(statistic, len(used))}
 
 
 def linear_fit(x: Sequence[float], y: Sequence[float]) -> dict:
@@ -102,11 +109,16 @@ def spearman(x: Sequence[float], y: Sequence[float]) -> tuple[float, float]:
 
 
 def egger(estimate: Sequence[float], se: Sequence[float]) -> float:
-    """Egger's test for funnel asymmetry: p of the intercept when estimate / se is regressed on 1 / se."""
+    """Egger's test for funnel asymmetry: p of the intercept when estimate / se is regressed on 1 / se. NaN
+    (undefined) with fewer than three studies, one standard error for all, or a perfect fit."""
     se = np.asarray(se, dtype=float)
+    if len(se) < 3 or len(np.unique(se)) < 2:
+        return math.nan
     precision, standardised = 1 / se, np.asarray(estimate, dtype=float) / se
     fit = linear_fit(precision, standardised)
     intercept_se = fit["residual"] * math.sqrt(1 / fit["count"] + fit["mean_x"] ** 2 / fit["spread"])
+    if intercept_se == 0:
+        return math.nan
     return 2 * (1 - t_cdf(abs(fit["intercept"] / intercept_se), fit["count"] - 2))
 
 

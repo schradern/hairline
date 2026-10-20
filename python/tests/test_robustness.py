@@ -259,3 +259,195 @@ def test_html_export_skips_missing_values(tmp_path):
     assert [path.name for path in paths] == ["gaps.png", "gaps.html"]
     tips = [tip["text"] for series in figure_targets(figure)["series"] for tip in series["tips"]]
     assert not any("nan" in text for text in tips)
+
+
+def test_a_median_on_a_flat_half_is_the_middle_of_the_flat():
+    from hairline.stats.survival import km_estimate, km_median
+    assert km_median(km_estimate([1, 2, 3, 4], [1, 1, 1, 1])) == 2.5
+    assert km_median(km_estimate([1, 2, 3, 4], [1, 1, 0, 0])) == 2.0
+
+
+# Second stress test
+
+def test_numbers_beyond_their_precision_do_not_round_up():
+    assert format_number(999999999999999.4, 0, "en") == "999,999,999,999,999"
+    assert format_number(1234567.345, 2, "en") == "1,234,567.35"
+    assert format_number(np.nan, 1) == "–"
+    assert format_number(np.inf, 0, "de") == "∞"
+
+
+def test_small_or_tight_values_keep_their_digits():
+    from hairline.numbers import auto_digits
+    assert auto_digits([0.0004, 0.0003, 0.0005]) == 4
+    assert auto_digits([1000.1, 1000.2, 1000.3]) == 1
+    assert auto_digits([1, 2, 3]) == 0
+
+
+def test_a_median_between_small_whole_numbers_keeps_its_half():
+    from hairline.study.summaries import numeric_text
+    assert numeric_text(np.array([1.0, 2, 3, 4]), "median_iqr", 0, 0, whole=True) == "2.5 (1.8–3.3)"
+    assert numeric_text(np.array([55.0, 56, 61, 70]), "median_iqr", 0, 0, whole=True) == "59 (56–63)"
+
+
+def test_value_labels_keep_the_data_decimals():
+    figure = hl.bars(pd.DataFrame({"g": list("ABC"), "v": [0.12, 0.08, 0.31]}), "g", "v")
+    labels = sorted(text.get_text() for text in figure.ax.texts if text.get_gid() == "hairline-value")
+    assert labels == ["0.08", "0.12", "0.31"]
+
+
+def test_a_missing_group_label_is_named():
+    data = pd.DataFrame({"arm": ["A", None, "B"], "sex": ["F", "F", "M"], "n": [30, 10, 60]})
+    for draw in (lambda: hl.donut(data, levels=["arm", "sex"], value="n"), lambda: hl.bars(data, "arm", "n"),
+                 lambda: hl.raincloud(data, "arm", "n")):
+        with pytest.raises(ValueError, match="'arm' is missing in row 2"):
+            draw()
+
+
+def test_flows_skip_missing_values_and_refuse_self_flows():
+    from hairline.charts.chord import chord_spec
+    data = pd.DataFrame({"s": ["A", "A", "B"], "t": ["x", "x", "x"], "v": [5.0, np.nan, 3]})
+    assert sorted(link["value"] for link in chord_spec(data, "s", "t", "v")["links"]) == [3, 5]
+    with pytest.raises(ValueError, match="A → A flows to itself"):
+        chord_spec(pd.DataFrame({"s": ["A", "A"], "t": ["A", "B"], "v": [10, 1]}), "s", "t", "v")
+
+
+def test_arcs_combine_both_directions():
+    from hairline.charts.arcs import arcs_spec
+    spec = arcs_spec(pd.DataFrame({"s": ["A", "B"], "t": ["B", "A"], "v": [2, 3]}), "s", "t", "v")
+    assert [(link["pair"], link["value"]) for link in spec["links"]] == [("A ↔ B", 5.0)]
+    assert [entry["value"] for entry in spec["key"]] == [2.0, 5.0]
+
+
+def test_an_order_naming_no_group_is_refused():
+    with pytest.raises(ValueError, match="order names 'C', which is not a group"):
+        hl.spread(pd.DataFrame({"g": ["A", "B"], "v": [1.0, 2.0]}), "g", "v", order=["A", "C"])
+
+
+def test_categories_keep_their_order():
+    data = pd.DataFrame({"level": pd.Categorical(["high", "low", "mid"], ["low", "mid", "high"], ordered=True),
+                         "n": [1, 2, 3]})
+    assert hl.bars(data, "level", "n", sort="given").category_axes[(0, "x")] == ["low", "mid", "high"]
+
+
+def test_empty_input_draws_nothing_silently():
+    empty = pd.DataFrame({"g": pd.Series([], dtype=str), "h": pd.Series([], dtype=str),
+                          "v": pd.Series([], dtype=float)})
+    with pytest.raises(ValueError, match="no flows above zero"):
+        hl.sankey(empty, ["g", "h"], "v")
+    with pytest.raises(ValueError, match="no colour sets named"):
+        hl.swatches([])
+
+
+def test_upright_labels_keep_their_room_when_the_figure_fits_its_height():
+    data = pd.DataFrame({"g": ["Intensive care unit of the university hospital", "Ward B"], "h": ["z", "w"],
+                         "v": [1, 2]})
+    figure = hl.arcs(data, "g", "h", "v")
+    figure.figure.canvas.draw()
+    assert figure.figure.get_size_inches()[1] * 72 > 145
+    assert min(point[1] for shape in figure.shapes if shape["kind"] == "line" for point in shape["points"]) > 0
+
+
+def test_log_rank_follows_survdiff_where_groups_have_no_expected_events():
+    assert np.isnan(logrank([1, 2, 3, 4, 5, 6], [0, 0, 0, 0, 1, 0], list("AABBCC"))["p"])
+    assert np.isnan(logrank([3] * 6, [1] * 6, list("AABBCC"))["p"])
+    assert logrank(list(range(1, 7)), [1] * 6, list("abcdef"))["p"] == pytest.approx(0.09259092767611, rel=1e-9)
+
+
+def test_forest_refuses_values_it_cannot_draw():
+    rows = pd.DataFrame({"study": ["S"], "estimate": [5.0], "low": [0.9], "high": [1.6]})
+    with pytest.raises(ValueError, match="outside its interval"):
+        hl.forest(rows)
+    with pytest.raises(ValueError, match="must be numbers"):
+        hl.forest(rows.assign(estimate=np.nan))
+    with pytest.raises(ValueError, match="favours takes two labels"):
+        hl.forest(rows.assign(estimate=1.0), favours=["A"])
+
+
+def test_forest_digits_follow_small_values():
+    from hairline.charts.forest import forest_spec
+    rows = pd.DataFrame({"study": ["S"], "estimate": [0.0004], "low": [0.0003], "high": [0.0005]})
+    spec = forest_spec(rows, "study", "estimate", "low", "high", ratio=False, color="#000000")
+    assert spec["rows"][0]["effect_text"] == "0.0004 [0.0003; 0.0005]"
+    assert len(set(spec["axis"]["labels"])) == len(spec["axis"]["labels"])
+
+
+def test_egger_needs_three_studies_with_different_errors():
+    from hairline.stats.tests import egger
+    assert np.isnan(egger([0.1, 0.2], [0.1, 0.2]))
+    assert np.isnan(egger([0.1, 0.2, 0.3], [0.1, 0.1, 0.1]))
+
+
+def test_date_tooltips_keep_the_time_zone_and_the_clock():
+    x = pd.date_range("2024-03-01", periods=2, tz="Europe/Berlin", freq="h")
+    figure = hl.timeseries(pd.DataFrame({"x": x, "y": [1.5, 2.5]}), "x", "y", window=1)
+    texts = [tip["text"] for series in figure_targets(figure)["series"] for tip in series["tips"]]
+    assert texts[:2] == ["Y over time: 2024-03-01 00:00, 1.5", "Y over time: 2024-03-01 01:00, 2.5"]
+
+
+def test_scatter_fits_the_points_it_draws():
+    data = pd.DataFrame({"x": range(30), "y": [float(index % 7) for index in range(30)], "g": list("ABC") * 10})
+    figure = hl.scatter(data, "x", "y", by="g", order=["A", "B"])
+    assert ("n", "20") in figure.headers[0].stats
+
+
+def test_numpy_numbers_count_as_numbers():
+    prisma_spec({"identified": np.int64(100), "screened": np.int64(100), "included": np.int64(10)})
+    hl.timeseries(pd.DataFrame({"x": [1, 2, 3], "y": [1.0, 2, 3]}), "x", "y", window=np.int64(2))
+
+
+def test_venn_leaves_missing_values_out():
+    spec = venn_spec({"A": pd.Series([1, 2, np.nan]), "B": pd.Series([2, np.nan, np.nan])})
+    assert [entry["value"] for entry in spec["sets"]] == [2, 1]
+
+
+def test_ridgeline_shows_constant_groups():
+    data = pd.DataFrame({"g": ["A"] * 10 + ["B"] * 10, "v": [5.0] * 10 + list(np.linspace(0, 1, 10))})
+    figure = hl.ridgeline(data, "g", "v")
+    assert any(list(line.get_xdata()) == [5.0, 5.0] for line in figure.ax.lines)
+
+
+def test_study_names_the_column_it_cannot_use():
+    data = pd.DataFrame({"g": ["a", "b"] * 3, "x": [1.0, 2, 3, 4, 5, 6],
+                         "day": pd.date_range("2025-01-01", periods=6)})
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        study = hl.study(data, group="g")
+    assert study.variables == ["x"]
+    with pytest.raises(ValueError, match="'nope' is not a column of the study"):
+        study.compare("nope")
+    with pytest.raises(ValueError, match="no rows"):
+        hl.study(data.iloc[:0], group="g")
+    assert study.describe(stats="median_iqr").table is not None
+
+
+def test_save_reads_options_as_given(tmp_path):
+    figure = hl.figure("T")
+    paths = hl.save(figure, tmp_path / "f", formats=["PNG", "png"], dpi=72, background="#ffeedd")
+    assert [path.name for path in paths] == ["f.png"]
+    with Image.open(paths[0]) as image:
+        assert image.convert("RGB").getpixel((1, 1)) == (255, 238, 221)
+    with pytest.raises(ValueError, match="dpi must be a number above zero"):
+        hl.save(figure, tmp_path / "g", formats=["png"], dpi=0)
+    long_name = tmp_path / ("x" * 240)
+    assert hl.save(figure, long_name, formats=["png"], dpi=72)[0].exists()
+
+
+def test_use_refuses_sizes_of_zero_or_less():
+    with pytest.raises(ValueError, match="base_size must be a number above zero"):
+        hl.use(base_size=0)
+    with pytest.raises(ValueError, match="palette has no colours"):
+        hl.use(palette=[])
+
+
+def test_greek_letters_fall_back_to_a_font_that_has_them():
+    from hairline.layout.measure import font
+    assert font("Hairline Sans", 9).get_family() == ["Hairline Sans", "DejaVu Sans"]
+
+
+def test_kaplan_meier_handles_large_cohorts_quickly():
+    import time as clock
+    generator = np.random.default_rng(1)
+    started = clock.perf_counter()
+    from hairline.stats.survival import km_estimate
+    km_estimate(generator.exponential(10, 50000).round(2), generator.integers(0, 2, 50000))
+    assert clock.perf_counter() - started < 2

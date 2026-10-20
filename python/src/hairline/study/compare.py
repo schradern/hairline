@@ -44,10 +44,11 @@ def numeric_test(samples: list) -> tuple[str, str] | None:
 
 
 def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iqr",), size: str = "double") -> Result:
-    stats = tuple(stats)
+    stats = (stats,) if isinstance(stats, str) else tuple(stats)
     check_stats(stats)
+    kind = study.kind(variable, "distribution")
     study.require([study.group, variable], "distribution")
-    if study.types.get(variable) != "numeric":
+    if kind != "numeric":
         raise ValueError(f"hairline: distribution: '{variable}' is categorical; use compare() for its shares")
     digits, label = digits_for(numbers(study.data[variable])), study.label_unit(variable)
     whole = is_whole(numbers(study.data[variable]))
@@ -70,8 +71,11 @@ def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iq
 def compare(study: Study, variable: str, size: str = "double") -> Result:
     if not study.group:
         raise ValueError("hairline: compare needs a group; set group= in study()")
+    kind = study.kind(variable, "compare")
+    if kind == "date":
+        raise ValueError(f"hairline: compare: '{variable}' holds dates; follow a measure over it with over_time()")
     study.require([study.group, variable], "compare")
-    if study.types.get(variable) == "numeric":
+    if kind == "numeric":
         return compare_numeric(study, variable, size)
     return compare_categorical(study, variable, size)
 

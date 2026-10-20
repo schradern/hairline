@@ -1,7 +1,9 @@
 # hl_save(): print-ready PDF, PNG, SVG and TIFF in one call.
 
+# Known formats in the order given, each once, in any case ("PNG" is png).
 validated_formats <- function(formats) {
   valid <- hl_tokens()$export$valid_formats
+  formats <- unique(tolower(as.character(formats)))
   unknown <- setdiff(formats, valid)
   if (length(unknown) > 0) {
     stop(sprintf("hairline: unknown format '%s'; use one of %s", unknown[1], paste(valid, collapse = ", ")),
@@ -17,7 +19,17 @@ strip_known_extension <- function(name) {
   else name
 }
 
+# A size or resolution above zero; ragg crashes R on zero or negative ones.
+check_positive <- function(value, name) {
+  if (!is.null(value) && (!is.numeric(value) || length(value) != 1 || !is.finite(value) || value <= 0)) {
+    stop(sprintf("hairline: %s must be a number above zero; got %s", name, paste(format(value), collapse = ", ")),
+         call. = FALSE)
+  }
+}
+
 figure_size_mm <- function(size, width_mm, height_mm) {
+  check_positive(width_mm, "width_mm")
+  check_positive(height_mm, "height_mm")
   presets <- hl_tokens()$sizes
   if (!size %in% names(presets)) {
     stop(sprintf("hairline: unknown size '%s'; use one of %s", size, paste(sort(names(presets)), collapse = ", ")),
@@ -88,6 +100,7 @@ write_format <- function(plot, path, format, size_mm, dpi, background, size = "o
 hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", width_mm = NULL, height_mm = NULL,
                     dpi = 600, background = NULL) {
   formats <- validated_formats(formats)
+  check_positive(dpi, "dpi")
   if ("svg" %in% formats && !requireNamespace("svglite", quietly = TRUE)) {
     stop("hairline: SVG export needs the 'svglite' package", call. = FALSE)
   }

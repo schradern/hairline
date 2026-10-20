@@ -16,7 +16,7 @@ from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
 from hairline.numbers import format_number, format_p
 from hairline.settings import current_settings
-from hairline.stats.survival import km_estimate, km_median
+from hairline.stats.survival import km_estimate, km_median, median_digits
 from hairline.stats.tests import logrank
 from hairline.ticks import nice_breaks
 from hairline.tokens import load_tokens
@@ -46,14 +46,15 @@ def draw_curve(ax, table: pd.DataFrame, color: str, label: str) -> None:
             markersize=rules["censor_tick"] * base, markeredgewidth=rules["censor_width"] * base, label="_nolegend_")
 
 
-def median_text(table: pd.DataFrame) -> str:
+def median_text(table: pd.DataFrame, digits: int = 1) -> str:
     median = km_median(table)
-    return "not reached" if median is None else format_number(median, 1, current_settings().locale)
+    return "not reached" if median is None else format_number(median, digits, current_settings().locale)
 
 
 def header_stats(estimates: list[tuple[str, pd.DataFrame]], stats: Sequence[tuple[str, str]]) -> list[tuple[str, str]]:
     """One key number for the medians, in legend order ("9.1 vs 19.9"), then the user's statistics."""
-    medians = " vs ".join(median_text(table) for _, table in estimates)
+    digits = median_digits([table for _, table in estimates])
+    medians = " vs ".join(median_text(table, digits) for _, table in estimates)
     return [("Median", medians)] + [(str(label), str(value)) for label, value in stats]
 
 
@@ -80,7 +81,8 @@ def estimates_from(data, time: str | None, event: str | None, by: str | None,
     """(name, estimate table, group size) per group: from raw rows, one fit, or a mapping of group to fit."""
     if isinstance(data, pd.DataFrame):
         check_columns(data, [time, event, by])
-        return [(name, km_estimate(rows[time], rows[event]), len(rows)) for name, rows in groups_of(data, by, order)]
+        return [(name, km_estimate(rows[time], rows[event]), len(rows))
+                for name, rows in groups_of(data, by, order, "kaplan_meier")]
     fits = dict(data) if isinstance(data, Mapping) else {"": data}
     names = [str(name) for name in (order or fits)]
     return [(name, *fitter_table(fits[name])) for name in names]
@@ -88,7 +90,7 @@ def estimates_from(data, time: str | None, event: str | None, by: str | None,
 
 def logrank_stats(data: pd.DataFrame, time: str, event: str, by: str, order: Sequence[str] | None) -> list:
     """The log-rank p over the groups the chart draws (those in `order`, when given); none without events."""
-    shown = pd.concat([rows for _, rows in groups_of(data, by, order)]) if order else data
+    shown = pd.concat([rows for _, rows in groups_of(data, by, order, "kaplan_meier")]) if order else data
     result = logrank(shown[time], shown[event], [str(name) for name in shown[by]])
     return [] if math.isnan(result["p"]) else [("Log-rank", format_p(result["p"]))]
 
@@ -103,6 +105,8 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
     Kaplan–Meier objects (one lifelines KaplanMeierFitter, or a mapping of group to one); with groups in raw data
     and `test`, the log-rank p joins the key numbers."""
     estimates = estimates_from(data, time, event, by, order)
+    if not estimates:
+        raise ValueError("hairline: kaplan_meier: no rows to draw")
     grouped = by is not None or len(estimates) > 1
     title = title or (f"{endpoint} by {str(by).replace('_', ' ')}" if by else endpoint)
     if by and test and isinstance(data, pd.DataFrame) and \

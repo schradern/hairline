@@ -7,6 +7,7 @@ import math
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
 from hairline.charts.tips import tagged
+from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -71,11 +72,14 @@ def arcs_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[di
     ceiling = box.y + line_height(style, "label") + rules["key_gap"] * base
     position = dict(zip(names, xs, strict=True))
     widest = max(abs(position[link["target"]] - position[link["source"]]) / 2 for link in spec["links"])
+    if ground <= ceiling:
+        raise HairlineLayoutError(f"hairline: arcs: the node labels take {label_height:.0f} pt and leave no room "
+                                  f"for the arcs; shorten the longest labels or give the figure more height")
     squeeze = min(1.0, (ground - ceiling) / widest)
     shapes = []
     for link in sorted(spec["links"], key=lambda item: -item["value"]):
         start, end = position[link["source"]], position[link["target"]]
-        pair = f"{link['source']} \u2192 {link['target']}"
+        pair = link.get("pair", f"{link['source']} \u2192 {link['target']}")
         shapes.append(tagged({"kind": "line", "points": arc_points(start, end, ground,
                                                                    abs(end - start) / 2 * squeeze, rules["points"]),
                               "color": spec["color"], "width": stroke(link["value"], largest, style, rules),

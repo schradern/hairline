@@ -8,9 +8,9 @@ import pandas as pd
 
 from hairline import entities
 from hairline.charts.chord_geometry import chord_drawing
-from hairline.charts.common import check_columns, humanise, with_counts
+from hairline.charts.common import flow_rows, humanise, with_counts
 from hairline.figure import HairlineFigure, figure
-from hairline.numbers import format_number
+from hairline.numbers import auto_digits, format_number
 from hairline.settings import current_settings
 
 
@@ -18,13 +18,9 @@ def chord_spec(data: pd.DataFrame, source: str, target: str, value: str | None =
                order: Sequence[str] | None = None, colors: Mapping[str, str] | None = None) -> dict:
     """One link per pair (both directions combined), groups with their totals and colours by count."""
     data, value = with_counts(data, value)
-    check_columns(data, [source, target, value])
-    names = list(order) if order else list(dict.fromkeys(str(name) for pair in zip(data[source], data[target],
-                                                                                    strict=True) for name in pair))
+    rows, names = flow_rows(data, source, target, value, "chord", order)
     totals: dict[tuple[str, str], float] = {}
-    for first, second, amount in zip(data[source].astype(str), data[target].astype(str), data[value], strict=True):
-        if amount < 0:
-            raise ValueError(f"hairline: chord: {first} – {second} has a negative value ({amount})")
+    for first, second, amount in zip(rows[source].astype(str), rows[target].astype(str), rows[value], strict=True):
         if first != second:
             key = (first, second) if names.index(first) <= names.index(second) else (second, first)
             totals[key] = totals.get(key, 0.0) + float(amount)
@@ -32,7 +28,8 @@ def chord_spec(data: pd.DataFrame, source: str, target: str, value: str | None =
              if amount > 0]
     locale, palette = current_settings().locale, entities.colors_for(names, colors)
     flows = {name: sum(link["value"] for link in links if name in (link["source"], link["target"])) for name in names}
-    nodes = [{"name": name, "value": flows[name], "value_text": format_number(flows[name], 0, locale),
+    digits = auto_digits([link["value"] for link in links])
+    nodes = [{"name": name, "value": flows[name], "value_text": format_number(flows[name], digits, locale),
               "color": palette[name]} for name in names if flows[name] > 0]
     return {"nodes": nodes, "links": links}
 

@@ -28,6 +28,18 @@ ridge_layers <- function(curve, values, base, scale, colour, medians) {
   layers
 }
 
+# A group too small or too uniform for a density (one value, or all alike) shows each value as a spike, so its row is
+# never empty.
+ridge_spikes <- function(values, base, colour, rules) {
+  shown <- sort(unique(as.numeric(values)))
+  if (!length(shown)) return(list())
+  spikes <- data.frame(x = shown, y = base, yend = base + rules$spike)
+  list(static_layer(ggplot2::geom_segment(data = spikes, ggplot2::aes(.data$x, .data$y, xend = .data$x,
+                                                                      yend = .data$yend), colour = colour,
+                                          linewidth = pt_to_linewidth(hl_tokens()$lines$data * hl_settings()$base_size),
+                                          inherit.aes = FALSE)))
+}
+
 #' Ridgeline plot
 #'
 #' One density ridge per group on a shared x-axis, the first group on top,
@@ -57,8 +69,10 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     group <- sides$right[1]
   }
   check_columns(data, c(group, value))
+  check_present(data, value, "ridgeline")
+  check_numeric(data, value, "ridgeline")
   rules <- hl_tokens()$ridgeline
-  names <- order %||% unique(as.character(data[[group]]))
+  names <- chart_groups(data, group, order, "ridgeline")
   values <- lapply(names, function(name) stats::na.omit(data[[value]][as.character(data[[group]]) == name]))
   curves <- lapply(values, density_curve)
   peak <- max(c(0, unlist(lapply(curves, function(curve) if (is.null(curve)) 0 else max(curve$height)))))
@@ -66,7 +80,10 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   plot <- ggplot2::ggplot()
   palette <- colours_for(names, colors)
   for (index in seq_along(names)) {
-    if (is.null(curves[[index]])) next
+    if (is.null(curves[[index]])) {
+      plot <- plot + ridge_spikes(values[[index]], length(names) - index, palette[[names[index]]], rules)
+      next
+    }
     plot <- plot + ridge_layers(curves[[index]], values[[index]], length(names) - index, scale,
                                 palette[[names[index]]], medians)
   }

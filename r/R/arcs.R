@@ -5,22 +5,42 @@ arcs_spec <- function(data, source, target, value = NULL, order = NULL) {
   counted <- with_counts(data, value)
   data <- counted$data
   value <- counted$value
-  check_columns(data, c(source, target, value))
-  names <- order %||% unique(as.vector(rbind(as.character(data[[source]]), as.character(data[[target]]))))
-  keys <- paste(data[[source]], data[[target]], sep = "\r")
+  flows <- flow_rows(data, source, target, value, "arcs", order)
+  data <- flows$rows
+  names <- flows$names
+  first <- as.character(data[[source]])
+  second <- as.character(data[[target]])
+  # An arc has no direction: A -> B and B -> A share one arc, so they add up rather than overlap.
+  swap <- match(first, names) > match(second, names)
+  low <- ifelse(swap, second, first)
+  high <- ifelse(swap, first, second)
+  keys <- paste(low, high, sep = "\r")
   totals <- tapply(data[[value]], factor(keys, levels = unique(keys)), sum)
+  values <- unname(totals[totals > 0])
+  digits <- auto_digits(values)
   links <- list()
-  for (key in names(totals)) {
+  for (key in names(totals)[totals > 0]) {
     pair <- strsplit(key, "\r", fixed = TRUE)[[1]]
-    if (pair[1] == pair[2] || totals[[key]] <= 0) next
+    directions <- unique(paste(first, second, sep = "\r")[keys == key])
     links[[length(links) + 1]] <- list(source = pair[1], target = pair[2], value = totals[[key]],
-                                       value_text = hl_format_number(totals[[key]], 0))
+                                       value_text = hl_format_number(totals[[key]], digits),
+                                       pair = arcs_pair_text(directions))
   }
-  values <- vapply(links, `[[`, numeric(1), "value")
+  list(nodes = as.list(names), links = links, color = lone_colour(), key = arcs_key(values, digits))
+}
+
+# "A -> B" for one direction, "A <-> B" when the arc carries both.
+arcs_pair_text <- function(directions) {
+  ends <- strsplit(sort(directions, method = "radix")[1], "\r", fixed = TRUE)[[1]]
+  paste(ends[1], if (length(directions) > 1) "\u2194" else "\u2192", ends[2])
+}
+
+# Key widths for the largest link, half of it and the smallest, each once and above zero, in the data's decimals.
+arcs_key <- function(values, digits) {
   # round() halves to even in R, as Python's round() does
-  key <- sort(unique(c(max(values), round(max(values) / 2), min(values))))
-  list(nodes = as.list(names), links = links, color = lone_colour(),
-       key = lapply(key, function(amount) list(value = amount, text = hl_format_number(amount, 0))))
+  shown <- sort(unique(c(max(values), round(max(values) / 2, digits), min(values))))
+  shown <- shown[shown > 0]
+  lapply(shown, function(amount) list(value = amount, text = hl_format_number(amount, digits)))
 }
 
 arc_stroke <- function(value, largest, style, rules) {
@@ -85,13 +105,17 @@ arcs_drawing <- function(spec, box, measure, style) {
   ceiling <- box[2] + line_height(style, "label") + rules$key_gap * base
   position <- stats::setNames(xs, names)
   spans <- vapply(spec$links, function(link) abs(position[[link$target]] - position[[link$source]]) / 2, numeric(1))
+  if (ground <= ceiling) {
+    stop(sprintf(paste("hairline: arcs: the node labels take %.0f pt and leave no room for the arcs; shorten the",
+                       "longest labels or give the figure more height"), labels$height), call. = FALSE)
+  }
   squeeze <- min(1, (ground - ceiling) / max(spans))
   shapes <- list()
   for (index in order(-values, seq_along(values))) {
     link <- spec$links[[index]]
     start <- position[[link$source]]
     end <- position[[link$target]]
-    pair <- paste(link$source, "\u2192", link$target)
+    pair <- link$pair %||% paste(link$source, "\u2192", link$target)
     arc <- list(kind = "line", points = arc_points(start, end, ground, abs(end - start) / 2 * squeeze, rules$points),
                 color = spec$color, width = arc_stroke(values[index], largest, style, rules), alpha = rules$opacity,
                 role = "arc", source = link$source, target = link$target)

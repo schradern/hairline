@@ -3,7 +3,7 @@
 donut_totals <- function(data, columns, value) {
   keys <- do.call(paste, c(lapply(columns, function(column) as.character(data[[column]])), sep = "\r"))
   first <- !duplicated(keys)
-  sums <- tapply(data[[value]], factor(keys, levels = unique(keys)), sum)
+  sums <- tapply(data[[value]], factor(keys, levels = unique(keys)), sum, na.rm = TRUE)
   grouped <- data[first, columns, drop = FALSE]
   grouped[[value]] <- as.numeric(sums)
   for (index in seq_len(nrow(grouped))) {
@@ -69,11 +69,15 @@ child_ring <- function(data, levels, value, parents, total) {
 donut_rings <- function(data, label, value, levels = NULL, chart = "donut", colors = NULL, order = NULL) {
   levels <- levels %||% label
   check_columns(data, c(levels, value))
+  check_labels(data, levels, chart)
   if (length(levels) > hl_tokens()$donut$max_levels) {
     stop(sprintf("hairline: %s: %d levels given (%s); at most 3 levels fit", chart, length(levels),
                  paste(levels, collapse = ", ")), call. = FALSE)
   }
   rings <- list(top_ring(data, levels[1], value, fold = length(levels) == 1, colors = colors, order = order))
+  if (!length(rings[[1]])) {
+    stop(sprintf("hairline: %s: no values above zero to draw in '%s'", chart, value), call. = FALSE)
+  }
   total <- sum(vapply(rings[[1]], `[[`, numeric(1), "value"))
   for (depth in seq_along(levels)[-1]) {
     rings[[depth]] <- child_ring(data, levels[seq_len(depth)], value, rings[[depth - 1]], total)
@@ -117,7 +121,8 @@ hl_donut <- function(data, label = NULL, value = NULL, levels = NULL, title = NU
     stop(sprintf("hairline: donut: labels '%s' does not fit %d ring(s); use %s", mode, length(rings),
                  if (length(rings) == 1) "outside, key or ring" else "key or ring"), call. = FALSE)
   }
-  amount <- hl_format_number(sum(vapply(rings[[1]], `[[`, numeric(1), "value")), 0)
+  amounts <- unlist(lapply(rings, function(ring) vapply(ring, `[[`, numeric(1), "value")))
+  amount <- hl_format_number(sum(vapply(rings[[1]], `[[`, numeric(1), "value")), auto_digits(amounts))
   spec <- list(rings = rings, labels = mode, total = if (isTRUE(total)) amount else NULL, total_label = total_label)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +

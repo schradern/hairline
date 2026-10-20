@@ -55,10 +55,14 @@ drawing_texts <- function(shapes) {
   lapply(Filter(function(shape) shape$kind == "text", shapes), function(shape) c(shape$x, shape$y))
 }
 
-content_bottom <- function(shapes, style) {
+# Lowest point the shapes reach: outlines, texts down to their descenders, and a text turned upright (rotated 90
+# degrees, anchored at its end) down to its start, its length below the anchor.
+content_bottom <- function(shapes, style, measure = NULL) {
   max(vapply(shapes, function(shape) {
     if (shape$kind == "text") {
-      return(shape$y + if (is.null(shape$rotation)) style$descender * style$sizes[[shape$role]] else 0)
+      if (is.null(shape$rotation)) return(shape$y + style$descender * style$sizes[[shape$role]])
+      upright <- shape$rotation == 90 && identical(shape$align, "right") && !is.null(measure)
+      return(shape$y + if (upright) measure(shape$text, shape$role, shape$weight) else 0)
     }
     max(shape_points(shape)[, 2])
   }, numeric(1)))
@@ -78,6 +82,7 @@ fitted_size_mm <- function(plot, size_mm) {
   if (!inherits(frame, "hairline_frame")) return(size_mm)
   plan <- plan_frame(frame$parts, size_mm / 25.4 * 72)
   box <- fitted_box(plan$layout$panels[[1]], frame$parts$aspect)
-  slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(frame$parts$settings))
+  slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(frame$parts$settings),
+                                            measure_for(frame$parts$settings))
   c(size_mm[1], size_mm[2] - slack / 72 * 25.4)
 }

@@ -13,7 +13,7 @@
 #' @param sort Sort by value, largest at the top.
 #' @param ratio Values are ratios (log axis).
 #' @param reference Value for a vertical reference line.
-#' @param digits Decimals of the numbers.
+#' @param digits Decimals of the numbers; `NULL` gives two, or more for small or close values.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' rates <- data.frame(unit = c("Medical", "Surgical", "Cardiac"), mortality = c(0.13, 0.08, 0.06),
@@ -21,7 +21,7 @@
 #' hl_dotplot(rates, "unit", "mortality", "low", "high")
 #' @export
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
-                       sort = TRUE, ratio = FALSE, reference = NULL, digits = 2) {
+                       sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL) {
   check_columns(data, c(label, estimate, low, high))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",

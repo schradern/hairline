@@ -69,7 +69,8 @@ def test_arcs_join_each_pair_once_and_width_follows_the_count():
     spec = arcs_spec(transfers(), "source", "target", None)
     shapes = arcs_drawing(spec, Box(0, 0, 400, 200), fake_measure, STYLE)
     lines = [shape for shape in shapes if shape.get("role") == "arc"]
-    assert len(lines) == 6
+    assert len(lines) == 5
+    assert {link["pair"] for link in spec["links"]} >= {"ICU ↔ Ward", "ED → ICU"}
     widths = {(shape["source"], shape["target"]): shape["width"] for shape in lines}
     assert widths[("ED", "ICU")] > widths[("ED", "Ward")]
     assert [shape["text"] for shape in shapes if shape.get("part") == "node"] == ["ED", "ICU", "Ward", "Home"]

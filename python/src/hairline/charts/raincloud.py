@@ -9,9 +9,10 @@ import pandas as pd
 from matplotlib.patches import Polygon, Rectangle
 
 from hairline import entities
-from hairline.charts.common import check_columns, humanise
+from hairline.charts.common import check_columns, check_numeric, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
+from hairline.fonts import families
 from hairline.marks import FIXED_ID, STATIC_ID
 from hairline.numbers import format_p
 from hairline.settings import current_settings, role_size
@@ -71,7 +72,7 @@ def draw_brackets(ax, comparisons: Sequence[tuple[str, str, str]], names: list[s
                 label="_nolegend_", gid=FIXED_ID)
         ax.annotate(label, xy=((low + high) / 2, y), xytext=(0, rules["label_pad"] * role_size(settings, "label")),
                     textcoords="offset points", ha="center", va="bottom", fontsize=role_size(settings, "label"),
-                    color=color, fontfamily=settings.font, annotation_clip=False)
+                    color=color, fontfamily=families(settings.font), annotation_clip=False)
         ax.update_datalim([(low, y + spread * rules["bracket_step"] * 0.6)])
 
 
@@ -107,7 +108,8 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     left out, and "n = …" counts the values shown."""
     check_columns(data, [group, value])
     data = data[data[value].notna()]
-    groups = groups_of(data, group, order)
+    check_numeric(data, [value], "raincloud")
+    groups = groups_of(data, group, order, "raincloud")
     names = [name for name, _ in groups]
     title = title or f"{humanise(value)} by {str(group).replace('_', ' ')}"
     comparisons = resolve_comparisons(comparisons, groups, value)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numbers
 import warnings
 from collections.abc import Mapping
 
@@ -28,7 +29,7 @@ def check_counts(counts: Mapping) -> None:
     named = [(key, value) for key, value in counts.items() if key != "excluded_reasons"]
     named += [(f"excluded_reasons[{reason!r}]", value) for reason, value in counts.get("excluded_reasons", {}).items()]
     for key, value in named:
-        if isinstance(value, bool) or not isinstance(value, int | float) or not value >= 0 or value != int(value):
+        if isinstance(value, bool) or not isinstance(value, numbers.Real) or not value >= 0 or value != int(value):
             raise ValueError(f"hairline: prisma: {key} is {value!r}; counts must be whole numbers of 0 or more")
 
 

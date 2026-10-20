@@ -5,33 +5,40 @@ rank_sum_p <- function(first, second) {
   suppressWarnings(stats::wilcox.test(first, second, exact = FALSE, correct = TRUE)$p.value)
 }
 
-# Without a single event the test is undefined and its p is NA.
+# As survival::survdiff, only groups with expected events take part, one of them left out of the quadratic form.
+# With fewer than two such groups, or a singular variance (every event at one time), the test is undefined: p is NA.
 logrank_test <- function(time, event, group) {
   labels <- unique(as.character(group))
-  member <- vapply(labels, function(label) as.character(group) == label, logical(length(group)))
+  member <- outer(as.character(group), labels, "==")
   difference <- numeric(length(labels))
+  expected <- numeric(length(labels))
   variance <- matrix(0, length(labels), length(labels))
-  moments <- sort(unique(time[event == 1]))
-  if (!length(moments)) return(list(chisq = NA_real_, df = length(labels) - 1L, p = NA_real_))
-  for (moment in moments) {
+  undefined <- list(chisq = NA_real_, df = length(labels) - 1L, p = NA_real_)
+  for (moment in sort(unique(time[event == 1]))) {
     at_risk <- colSums(member & time >= moment)
     deaths <- colSums(member & time == moment & event == 1)
     n <- sum(at_risk)
     d <- sum(deaths)
     share <- at_risk / n
+    expected <- expected + d * share
     difference <- difference + deaths - d * share
     if (n > 1) variance <- variance + d * (n - d) / (n - 1) * (diag(share, length(share)) - outer(share, share))
   }
-  keep <- seq_len(length(labels) - 1)
-  statistic <- as.numeric(t(difference[keep]) %*% solve(variance[keep, keep, drop = FALSE], difference[keep]))
-  list(chisq = statistic, df = length(keep), p = stats::pchisq(statistic, length(keep), lower.tail = FALSE))
+  kept <- which(expected > 0)
+  if (length(kept) < 2) return(undefined)
+  used <- kept[-1]
+  solved <- tryCatch(solve(variance[used, used, drop = FALSE], difference[used]), error = function(error) NULL)
+  if (is.null(solved)) return(undefined)
+  statistic <- sum(difference[used] * solved)
+  list(chisq = statistic, df = length(used), p = stats::pchisq(statistic, length(used), lower.tail = FALSE))
 }
 
 linear_fit <- function(x, y) {
   model <- stats::lm(y ~ x)
-  residual <- summary(model)$sigma
+  # A perfect fit (constant y) is a valid line; summary() would only warn about it.
+  fitted <- suppressWarnings(summary(model))
   list(slope = unname(stats::coef(model)[2]), intercept = unname(stats::coef(model)[1]),
-       slope_se = summary(model)$coefficients[2, 2], residual = residual, count = length(x), mean_x = mean(x),
+       slope_se = fitted$coefficients[2, 2], residual = fitted$sigma, count = length(x), mean_x = mean(x),
        spread = sum((x - mean(x))^2), t = stats::qt(0.975, length(x) - 2))
 }
 
@@ -51,9 +58,12 @@ pearson_test <- function(x, y, method = "pearson") {
   c(unname(test$estimate), test$p.value)
 }
 
+# NA (undefined) with fewer than three studies, one standard error for all, or a perfect fit.
 egger_p <- function(estimate, se) {
+  if (length(se) < 3 || length(unique(se)) < 2) return(NA_real_)
   model <- stats::lm(I(estimate / se) ~ I(1 / se))
-  summary(model)$coefficients[1, 4]
+  p <- suppressWarnings(summary(model)$coefficients[1, 4])
+  if (is.finite(p)) p else NA_real_
 }
 
 # The log-rank p as key-number text over the given rows; NULL when no event makes the test undefined.

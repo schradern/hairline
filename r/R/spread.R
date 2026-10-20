@@ -44,7 +44,9 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
     stop(sprintf("hairline: spread: unknown statistic '%s'; use any of %s", unknown[1],
                  paste(spread_stats, collapse = ", ")), call. = FALSE)
   }
-  names <- order %||% unique(as.character(data[[group]]))
+  check_present(data, value, "spread")
+  check_numeric(data, value, "spread")
+  names <- chart_groups(data, group, order, "spread")
   samples <- lapply(names, function(name) {
     values <- as.numeric(data[[value]][!is.na(data[[group]]) & as.character(data[[group]]) == name])
     values[!is.na(values)]
@@ -53,8 +55,13 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   names <- names[keep]
   samples <- samples[keep]
   every <- unlist(samples)
-  numbers <- list(spread_formatter(every, percent, digits),
-                  spread_formatter(every, percent, digits, if (is_whole(every) && !percent) 1 else 0))
+  whole <- is_whole(every) && !percent
+  plain <- spread_formatter(every, percent, digits)
+  mean_number <- spread_formatter(every, percent, digits, if (whole) 1 else 0)
+  whole <- whole && is.null(digits)
+  # Of whole numbers, a quantile between two of them keeps one decimal (a median of 2.5, not 3).
+  numbers <- list(function(value) if (quantile_places(value, 0, whole) > 0) mean_number(value) else plain(value),
+                  mean_number)
   palette <- colours_for(names, colors)
   rows <- lapply(seq_along(names), function(index) {
     limits <- density_quantiles(samples[[index]], c(0, 0.25, 0.5, 0.75, 1))

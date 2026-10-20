@@ -47,6 +47,13 @@ class Study:
         unit = self.measure(column)
         return f"{self.label(column)} ({unit})" if unit else self.label(column)
 
+    def kind(self, column: str, endpoint: str) -> str:
+        """The variable's type; a role column (follow-up time) is typed from its values."""
+        if column not in self.data.columns:
+            raise ValueError(f"hairline: {endpoint}: '{column}' is not a column of the study; columns: "
+                             f"{', '.join(map(str, self.data.columns))}")
+        return self.types.get(column) or infer_type(self.data[column])
+
     def require(self, columns: Sequence[str | None], endpoint: str) -> None:
         """Refuse an endpoint while its columns have errors; name each one."""
         errors = [finding for finding in self.checks if finding.level == "error" and finding.column in columns]
@@ -84,12 +91,25 @@ class Study:
         return effects(self, model_or_table, measure, size, **options)
 
 
+KINDS = ("numeric", "categorical")
+
+
+def check_kinds(kinds: Mapping[str, str]) -> None:
+    """Variables are numeric or categorical; dates are followed over time, not summarised in a table."""
+    for name, kind in kinds.items():
+        if kind == "date":
+            raise ValueError(f"hairline: study: '{name}' holds dates, which tables do not summarise; leave it out of "
+                             f"variables and follow a measure over it with over_time()")
+        if kind not in KINDS:
+            raise ValueError(f"hairline: study: type {kind!r} for '{name}' is not one of {', '.join(KINDS)}")
+
+
 def unit_findings(roles: dict[str, str], variables: list[str], types: dict[str, str],
                   units: Mapping[str, str]) -> list[Finding]:
     """Numeric variables (and follow-up time) need a unit, so mixed tables and panels say what they measure."""
     measured = [*([roles["time"]] if "time" in roles else []), *(name for name in variables
                                                               if types.get(name) == "numeric")]
-    missing = [name for name in measured if not units.get(name)]
+    missing = [str(name) for name in measured if not units.get(name)]
     if not missing:
         return []
     return [Finding("warning", ", ".join(missing), "numeric columns without a unit", (),
@@ -122,10 +142,14 @@ def study(data: pd.DataFrame, group: str | None = None, time: str | None = None,
     """Describe a dataset once: the comparison `group`, follow-up `time` and `event`, the `id`, the `variables`
     to characterise (default: every other column) and their `units` ({"age": "years"}). Checks run now; print
     the study to read them."""
+    if not len(data):
+        raise ValueError("hairline: study: the data has no rows")
     roles = {role: column for role, column in zip(ROLES, (group, time, event, id), strict=True) if column is not None}
     used = set(roles.values())
-    names = list(variables) if variables is not None else [column for column in data.columns if column not in used]
+    names = list(variables) if variables is not None else [column for column in data.columns if column not in used
+                                                           and infer_type(data[column]) != "date"]
     kinds = {name: (types or {}).get(name) or infer_type(data[name]) for name in names if name in data.columns}
+    check_kinds(kinds)
     groups = list(order) if order else (levels(data[group], ordered=False) if group in data.columns else [])
     checks = run_checks(data, roles, names, groups) + unit_findings(roles, names, kinds, units or {})
     result = Study(data, roles, names, dict(labels or {}), kinds, groups,

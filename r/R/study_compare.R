@@ -42,8 +42,9 @@ study_by_title <- function(study, label) {
 #' @export
 hl_distribution <- function(study, variable, stats = "median_iqr") {
   check_study_stats(stats)
+  kind <- study_kind(study, variable, "distribution")
   study_require(study, c(study$roles$group, variable), "distribution")
-  if (!identical(study$types[[variable]], "numeric")) {
+  if (!identical(kind, "numeric")) {
     stop(sprintf("hairline: distribution: '%s' is categorical; use hl_compare() for its shares", variable),
          call. = FALSE)
   }
@@ -93,9 +94,13 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
 #' @export
 hl_compare <- function(study, variable) {
   if (is.null(study$roles$group)) stop("hairline: compare needs a group; set group = in hl_study()", call. = FALSE)
+  kind <- study_kind(study, variable, "compare")
+  if (kind == "date") {
+    stop(sprintf("hairline: compare: '%s' holds dates; follow a measure over it with hl_over_time()", variable),
+         call. = FALSE)
+  }
   study_require(study, c(study$roles$group, variable), "compare")
-  if (identical(study$types[[variable]], "numeric")) compare_numeric(study, variable) else
-    compare_categorical(study, variable)
+  if (identical(kind, "numeric")) compare_numeric(study, variable) else compare_categorical(study, variable)
 }
 
 compare_numeric <- function(study, variable) {

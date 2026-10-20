@@ -4,7 +4,10 @@ producer banners."""
 from __future__ import annotations
 
 import io
+import math
+import numbers
 import os
+import uuid
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -21,15 +24,33 @@ METADATA = {
 }
 
 
-def validated_formats(formats: Sequence[str]) -> list[str]:
+def validated_formats(formats: Sequence[str] | None) -> list[str]:
+    """Known formats in the order given, each once, in any case ("PNG" is png)."""
     valid = load_tokens()["export"]["valid_formats"]
-    requested = [formats] if isinstance(formats, str) else list(formats)
+    requested = [formats] if isinstance(formats, str) else list(formats or [])
     for name in requested:
-        if name not in valid:
+        if not isinstance(name, str) or name.lower() not in valid:
             raise ValueError(f"hairline: unknown format {name!r}; use one of {', '.join(valid)}")
     if not requested:
         raise ValueError(f"hairline: no output format given; use one or more of {', '.join(valid)}")
-    return requested
+    return list(dict.fromkeys(name.lower() for name in requested))
+
+
+def save_options(dpi: float | None, background: str | None) -> tuple[float, dict]:
+    """The resolution (the token default unless given, above zero) and the background: transparent, a colour, or
+    the figure's own surface."""
+    from matplotlib.colors import is_color_like
+    dpi = load_tokens()["export"]["dpi"] if dpi is None else dpi
+    if isinstance(dpi, bool) or not isinstance(dpi, numbers.Real) or not dpi > 0 or not math.isfinite(dpi):
+        raise ValueError(f"hairline: save: dpi must be a number above zero; got {dpi!r}")
+    if background is None:
+        return dpi, {}
+    if background == "transparent":
+        return dpi, {"transparent": True}
+    if not is_color_like(background):
+        raise ValueError(f"hairline: save: background {background!r} is not a colour; use 'transparent', a colour "
+                         f"such as '#ffffff', or None for the figure's own")
+    return dpi, {"facecolor": background}
 
 
 def figure_alt(owner: HairlineFigure) -> str:
@@ -109,25 +130,27 @@ def write_one(fig: Figure, path: Path, name: str, dpi: int, options: dict) -> No
 
 def save(figure: HairlineFigure | Figure, name: str | os.PathLike, formats: Sequence[str] = ("pdf", "png"),
          dpi: int | None = None, background: str | None = None) -> list[Path]:
-    """Write `name.<format>` for each format; returns the paths. Parent folders are created."""
+    """Write `name.<format>` for each format; returns the paths. Parent folders are created. `background` is None
+    for the figure's surface, "transparent", or any colour. Nothing is replaced until every format is written."""
     requested = validated_formats(formats)
     fig = figure.figure if isinstance(figure, HairlineFigure) else figure
-    dpi = dpi or load_tokens()["export"]["dpi"]
-    options = {"transparent": True} if background == "transparent" else {}
+    dpi, options = save_options(dpi, background)
     base = strip_known_extension(Path(name))
     base.parent.mkdir(parents=True, exist_ok=True)
     paths = [base.with_name(f"{base.name}.{format_name}") for format_name in requested]
     folders = [path for path in paths if path.is_dir()]
     if folders:
         raise RuntimeError(f"hairline: cannot write {folders[0]}: a folder of that name exists")
-    partials = [hidden_path(path, "partial") for path in paths]
+    # A link stays a link: the file it points to gets the new content.
+    destinations = [path.resolve() if path.is_symlink() else path for path in paths]
+    partials = [hidden_path(path, "partial") for path in destinations]
     try:
         for format_name, path, partial in zip(requested, paths, partials, strict=True):
             try:
                 write_one(fig, partial, format_name, dpi, options)
             except Exception as error:
                 raise RuntimeError(f"hairline: writing {path} failed: {type(error).__name__}: {error}") from error
-        move_into_place(partials, paths)
+        move_into_place(partials, destinations)
     finally:
         for partial in partials:
             partial.unlink(missing_ok=True)
@@ -135,7 +158,8 @@ def save(figure: HairlineFigure | Figure, name: str | os.PathLike, formats: Sequ
 
 
 def hidden_path(path: Path, role: str) -> Path:
-    return path.with_name(f".{path.name}.{role}")
+    """A hidden sibling for the file while it is written or backed up; short, so a long name still fits."""
+    return path.with_name(f".hairline-{uuid.uuid4().hex[:12]}{path.suffix}.{role}")
 
 
 def move_into_place(partials: list[Path], paths: list[Path]) -> None:

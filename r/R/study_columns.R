@@ -30,6 +30,7 @@ study_levels <- function(values, ordered = TRUE) {
 is_text_column <- function(values) !is.numeric(values) && !is.logical(values)
 
 infer_study_type <- function(values) {
+  if (inherits(values, c("Date", "POSIXt"))) return("date")
   if (is_text_column(values) || is.logical(values)) return("categorical")
   if (length(unique(values[!study_is_missing(values)])) > 2) "numeric" else "categorical"
 }

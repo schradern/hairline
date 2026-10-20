@@ -34,7 +34,7 @@ def test_censoring_at_time_zero_counts_as_at_risk():
 
 
 def test_median_or_not_reached():
-    assert km_median(km_estimate([1, 2, 3, 4], [1, 1, 1, 1])) == 2
+    assert km_median(km_estimate([1, 2, 3, 4], [1, 1, 1, 1])) == 2.5
     assert km_median(km_estimate([1, 2, 3, 4], [1, 0, 0, 0])) is None
 
 

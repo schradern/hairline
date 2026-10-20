@@ -2,18 +2,25 @@
 # horizontal, values at the bar ends.
 
 bar_table <- function(data, category, value, by, order, sort) {
+  if (!sort %in% c("value", "given")) {
+    stop(sprintf("hairline: bars: sort '%s' must be 'value' or 'given'", sort), call. = FALSE)
+  }
+  check_labels(data, c(category, by), "bars")
+  check_present(data, value, "bars")
+  names <- ordered_names(data[[category]], order, "bars", category)
+  groups <- if (is.null(by)) "" else group_names(data[[by]])
   keys <- if (is.null(by)) as.character(data[[category]]) else
     paste(data[[category]], data[[by]], sep = "\r")
   first <- !duplicated(keys)
   table <- data[first, c(category, by), drop = FALSE]
   table[[category]] <- as.character(table[[category]])
   table$.value <- as.numeric(tapply(data[[value]], factor(keys, levels = unique(keys)), sum, na.rm = TRUE))
-  names <- order %||% unique(table[[category]])
+  # Categories left out of `order` are not drawn.
+  table <- table[table[[category]] %in% names, , drop = FALSE]
   if (identical(sort, "value") && is.null(order)) {
     totals <- tapply(table$.value, table[[category]], sum)
     names <- names[order(-totals[names], seq_along(names))]
   }
-  groups <- if (is.null(by)) "" else unique(as.character(table[[by]]))
   list(table = table, names = names, groups = groups)
 }
 
@@ -24,6 +31,7 @@ bars_horizontal <- function(names) {
 
 bar_frame <- function(parts, category, by, horizontal, percent) {
   table <- parts$table
+  digits <- auto_digits(table$.value)
   if (percent) {
     totals <- stats::ave(table$.value, table[[category]], FUN = sum)
     empty <- table[[category]][!(totals > 0)]
@@ -34,11 +42,14 @@ bar_frame <- function(parts, category, by, horizontal, percent) {
     table$.value <- table$.value / totals
   }
   levels <- if (horizontal) rev(parts$names) else parts$names
-  data.frame(category = factor(table[[category]], levels = levels),
-             group = factor(if (is.null(by)) "" else as.character(table[[by]]), levels = parts$groups),
-             value = table$.value,
-             label = if (percent) vapply(table$.value, hl_format_percent, character(1), digits = 0) else
-               vapply(table$.value, hl_format_number, character(1), digits = 0))
+  # A bar's value: whole percentages, or the data's own decimals (0.12 stays 0.12, counts stay whole).
+  frame <- data.frame(category = factor(table[[category]], levels = levels),
+                      group = factor(if (is.null(by)) "" else as.character(table[[by]]), levels = parts$groups),
+                      value = table$.value,
+                      label = if (percent) vapply(table$.value, hl_format_percent, character(1), digits = 0) else
+                        vapply(table$.value, hl_format_number, character(1), digits = digits))
+  attr(frame, "digits") <- digits
+  frame
 }
 
 bar_value_mapping <- function(horizontal) {
@@ -71,7 +82,8 @@ stacked_text_layers <- function(frame, colours, horizontal, percent) {
     # The signed total at the end of the stack: past the positive segments, or the negative ones if none is positive.
     totals <- data.frame(category = factor(names(ups)[present], levels = levels(frame$category)),
                          value = ifelse(ups > 0, ups, downs)[present], group = "",
-                         label = vapply((ups + downs)[present], hl_format_number, character(1), digits = 0))
+                         label = vapply((ups + downs)[present], hl_format_number, character(1),
+                                        digits = attr(frame, "digits") %||% 0))
     gap <- rules$label_gap
     layers[[2]] <- bar_text(bar_value_mapping(horizontal), totals, "identity", settings$neutral$muted, settings,
                             hjust = if (horizontal) -gap else 0.5, vjust = if (horizontal) 0.5 else -gap)
@@ -160,6 +172,7 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
                     colors = NULL) {
   counted <- with_counts(data, value)
   check_columns(counted$data, c(category, counted$value, by))
+  stacked <- stacked && !is.null(by)
   parts <- bar_table(counted$data, category, counted$value, by, order,
                      sort %||% if (is.null(by) || stacked) "value" else "given")
   horizontal <- horizontal %||% bars_horizontal(parts$names)

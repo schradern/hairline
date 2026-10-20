@@ -79,12 +79,17 @@ def text_positions(figure: HairlineFigure) -> list[list[float]]:
     return [[shape["x"], shape["y"]] for shape in figure.shapes if shape["kind"] == "text"]
 
 
-def content_bottom(shapes: list[dict], style: dict) -> float:
-    """Lowest point the shapes reach: outlines, and texts down to their descenders (rotated texts at their anchor)."""
+def content_bottom(shapes: list[dict], style: dict, measure=None) -> float:
+    """Lowest point the shapes reach: outlines, texts down to their descenders, and a text turned upright (rotated
+    90°, anchored at its end) down to its start, its length below the anchor."""
     bottoms = []
     for shape in shapes:
         if shape["kind"] == "text":
-            descent = 0.0 if shape.get("rotation") else style["descender"] * style["sizes"][shape["role"]]
+            if shape.get("rotation"):
+                upright = shape["rotation"] == 90 and shape.get("align") == "right" and measure is not None
+                descent = measure(shape["text"], shape["role"], shape.get("weight")) if upright else 0.0
+            else:
+                descent = style["descender"] * style["sizes"][shape["role"]]
             bottoms.append(shape["y"] + descent)
         else:
             bottoms.append(max(point[1] for point in shape["points"]))
@@ -95,7 +100,8 @@ def fit_height(figure: HairlineFigure) -> HairlineFigure:
     """Resize the figure so its drawn panel ends where the content ends (shorter, or taller when it overflows)."""
     figure.figure.canvas.draw()
     box = figure.plot_boxes[0]
-    slack = box.y + box.height - content_bottom(figure.shapes, drawing_style(figure.settings))
+    slack = box.y + box.height - content_bottom(figure.shapes, drawing_style(figure.settings),
+                                                measure_for(figure.settings))
     width, height = figure.figure.get_size_inches()
     figure.figure.set_size_inches(width, height - slack / 72)
     return figure

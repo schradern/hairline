@@ -38,7 +38,10 @@
        "share_text": "56%",
        "color": "#0a6ddd",
        "parent": null,
-       "index": 0
+       "index": 0,
+       "path": [
+        "Home"
+       ]
       },
       {
        "name": "Rehabilitation",
@@ -47,7 +50,10 @@
        "share_text": "23%",
        "color": "#de4642",
        "parent": null,
-       "index": 1
+       "index": 1,
+       "path": [
+        "Rehabilitation"
+       ]
       },
       {
        "name": "Other ward",
@@ -56,7 +62,10 @@
        "share_text": "13%",
        "color": "#e79d01",
        "parent": null,
-       "index": 2
+       "index": 2,
+       "path": [
+        "Other ward"
+       ]
       },
       {
        "name": "Care home",
@@ -65,7 +74,10 @@
        "share_text": "7%",
        "color": "#019a98",
        "parent": null,
-       "index": 3
+       "index": 3,
+       "path": [
+        "Care home"
+       ]
       }
      ],
      [
@@ -76,7 +88,11 @@
        "share_text": "34%",
        "color": "#2f86f9",
        "parent": 0,
-       "index": 0
+       "index": 0,
+       "path": [
+        "Home",
+        "Alone"
+       ]
       },
       {
        "name": "With support",
@@ -85,7 +101,11 @@
        "share_text": "22%",
        "color": "#60a2ff",
        "parent": 0,
-       "index": 1
+       "index": 1,
+       "path": [
+        "Home",
+        "With support"
+       ]
       },
       {
        "name": "Inpatient",
@@ -94,7 +114,11 @@
        "share_text": "16%",
        "color": "#fb615a",
        "parent": 1,
-       "index": 2
+       "index": 2,
+       "path": [
+        "Rehabilitation",
+        "Inpatient"
+       ]
       },
       {
        "name": "Outpatient",
@@ -103,7 +127,11 @@
        "share_text": "7%",
        "color": "#ff9086",
        "parent": 1,
-       "index": 3
+       "index": 3,
+       "path": [
+        "Rehabilitation",
+        "Outpatient"
+       ]
       },
       {
        "name": "Other ward",
@@ -112,7 +140,11 @@
        "share_text": "13%",
        "color": "#ffb847",
        "parent": 2,
-       "index": 4
+       "index": 4,
+       "path": [
+        "Other ward",
+        "Other ward"
+       ]
       },
       {
        "name": "Care home",
@@ -121,7 +153,11 @@
        "share_text": "7%",
        "color": "#36b3b1",
        "parent": 3,
-       "index": 5
+       "index": 5,
+       "path": [
+        "Care home",
+        "Care home"
+       ]
       }
      ]
     ],
@@ -570,7 +606,10 @@
        "share_text": "56%",
        "color": "#0a6ddd",
        "parent": null,
-       "index": 0
+       "index": 0,
+       "path": [
+        "Home"
+       ]
       },
       {
        "name": "Rehabilitation",
@@ -579,7 +618,10 @@
        "share_text": "23%",
        "color": "#de4642",
        "parent": null,
-       "index": 1
+       "index": 1,
+       "path": [
+        "Rehabilitation"
+       ]
       },
       {
        "name": "Other ward",
@@ -588,7 +630,10 @@
        "share_text": "13%",
        "color": "#e79d01",
        "parent": null,
-       "index": 2
+       "index": 2,
+       "path": [
+        "Other ward"
+       ]
       },
       {
        "name": "Care home",
@@ -597,7 +642,10 @@
        "share_text": "7%",
        "color": "#019a98",
        "parent": null,
-       "index": 3
+       "index": 3,
+       "path": [
+        "Care home"
+       ]
       }
      ]
     ],

@@ -29,6 +29,9 @@ def long_table(data: pd.DataFrame, study: str, domain: str | None, judgement: st
     if domains is not None:
         check_columns(data, [study, *domains])
         return data.melt(id_vars=[study], value_vars=list(domains), var_name="_domain", value_name="_judgement")
+    if domain is None or judgement is None:
+        raise ValueError("hairline: risk of bias: name the domain and judgement columns of a long table, or the "
+                         "domain columns of a wide one with domains=[...]")
     check_columns(data, [study, domain, judgement])
     return data.rename(columns={domain: "_domain", judgement: "_judgement"})
 

@@ -16,7 +16,7 @@ hl_dotplot(
   sort = TRUE,
   ratio = FALSE,
   reference = NULL,
-  digits = 2
+  digits = NULL
 )
 }
 \arguments{
@@ -34,7 +34,7 @@ hl_dotplot(
 
 \item{reference}{Value for a vertical reference line.}
 
-\item{digits}{Decimals of the numbers.}
+\item{digits}{Decimals of the numbers; \code{NULL} gives two, or more for small or close values.}
 }
 \value{
 A ggplot with the hairline frame.

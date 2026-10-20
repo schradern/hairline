@@ -7,7 +7,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from hairline.charts.common import check_columns, humanise
+from hairline.charts.common import check_columns, check_numeric, humanise
 from hairline.charts.forest import decimals
 from hairline.charts.forest_geometry import log_breaks
 from hairline.charts.funnel_geometry import funnel_drawing
@@ -40,6 +40,8 @@ def funnel_axes(effects: np.ndarray, errors: np.ndarray, pooled: float, ratio: b
 
 def check_funnel_inputs(estimates: np.ndarray, errors: np.ndarray, estimate: str, se: str, ratio: bool) -> None:
     """Standard errors above zero and present estimates (above zero for ratios): pooling weighs by 1 / SE²."""
+    if not len(errors):
+        raise ValueError("hairline: funnel: no rows to draw")
     bad = np.flatnonzero(~np.isfinite(errors) | ~(errors > 0))
     if len(bad):
         raise ValueError(f"hairline: funnel: '{se}' is {errors[bad[0]]:g} in row {bad[0] + 1}; standard errors must "
@@ -55,7 +57,11 @@ def funnel_spec(data: pd.DataFrame, estimate: str, se: str, *, ratio: bool = Tru
                 x_title: str | None = None) -> dict:
     """Points on the analysis scale (log for ratios), the pooled estimate (inverse-variance unless given) and axes."""
     check_columns(data, [estimate, se])
+    check_numeric(data, [estimate, se], "funnel")
     check_funnel_inputs(data[estimate].to_numpy(dtype=float), data[se].to_numpy(dtype=float), estimate, se, ratio)
+    if pooled is not None and ratio and not pooled > 0:
+        raise ValueError(f"hairline: funnel: pooled {pooled} is not a ratio above zero; pass ratio=False for "
+                         f"differences")
     effects = np.log(data[estimate].to_numpy(dtype=float)) if ratio else data[estimate].to_numpy(dtype=float)
     errors = data[se].to_numpy(dtype=float)
     weights = 1 / errors ** 2

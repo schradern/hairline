@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from cycler import cycler
 
+from hairline.fonts import families
 from hairline.settings import Settings, role_size
 from hairline.tokens import load_tokens
 
@@ -12,7 +13,7 @@ def text_params(settings: Settings) -> dict[str, object]:
     neutral = settings.neutral
     label = role_size(settings, "label")
     return {
-        "font.family": [settings.font], "font.size": settings.base_size, "text.color": neutral["ink"],
+        "font.family": families(settings.font), "font.size": settings.base_size, "text.color": neutral["ink"],
         "axes.titlesize": role_size(settings, "panel"), "axes.titleweight": 600,
         "axes.titlecolor": neutral["ink"], "axes.titlelocation": "left", "axes.labelsize": label,
         "axes.labelcolor": neutral["muted"], "xtick.labelsize": label, "ytick.labelsize": label,

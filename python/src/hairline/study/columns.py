@@ -43,7 +43,10 @@ def is_text(series: pd.Series) -> bool:
 
 
 def infer_type(series: pd.Series) -> str:
-    """Numeric when stored as numbers with more than two distinct values; otherwise categorical."""
+    """Date for dates and times; numeric when stored as numbers with more than two distinct values; otherwise
+    categorical."""
+    if pd.api.types.is_datetime64_any_dtype(series):
+        return "date"
     if is_text(series) or pd.api.types.is_bool_dtype(series):
         return "categorical"
     return "numeric" if series[~is_missing(series)].nunique() > 2 else "categorical"

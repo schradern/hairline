@@ -7,6 +7,8 @@ from functools import lru_cache
 from matplotlib.backends.backend_agg import RendererAgg
 from matplotlib.font_manager import FontProperties
 
+from hairline.fonts import families
+
 POINTS_PER_INCH = 72
 MEASURE_SCALE = 100
 
@@ -17,7 +19,7 @@ def measuring_renderer() -> RendererAgg:
 
 
 def font(family: str, size: float, weight: int = 400) -> FontProperties:
-    return FontProperties(family=family, size=size, weight=weight)
+    return FontProperties(family=families(family), size=size, weight=weight)
 
 
 @lru_cache(maxsize=4096)

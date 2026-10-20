@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from hairline.numbers import auto_digits, format_number, format_percent
+from hairline.numbers import auto_digits, format_number, format_percent, quantile_places
 from hairline.stats.density import quantiles
 from hairline.tokens import load_tokens
 
@@ -39,7 +39,7 @@ def numeric_text(values: np.ndarray, stat: str, digits: int, missing: int, whole
 
     def number(value: float) -> str:
         # Snap away float noise first: R and numpy reach the same quantile by different arithmetic.
-        return format_number(round(value, SNAP_DIGITS), digits)
+        return format_number(round(value, SNAP_DIGITS), quantile_places(value, digits, whole))
     if stat == "median_iqr":
         low, middle, high = quantiles(values, [0.25, 0.5, 0.75])
         return f"{number(middle)} ({number(low)}{EMPTY}{number(high)})"

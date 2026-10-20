@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import math
+import numbers
 import os
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -75,16 +77,25 @@ def role_size(settings: Settings, role: str) -> float:
 
 def validated_sizes(sizes: Mapping[str, float] | None) -> dict[str, float]:
     roles = load_tokens()["type"]["roles"]
-    for role in sizes or {}:
+    for role, size in (sizes or {}).items():
         if role not in roles:
             raise ValueError(f"hairline: unknown text role {role!r} in sizes; use one of {', '.join(sorted(roles))}")
+        check_positive(size, f"sizes[{role!r}]")
     return dict(sizes or {})
+
+
+def check_positive(value: object, name: str) -> None:
+    if isinstance(value, bool) or not isinstance(value, numbers.Real) or not math.isfinite(value) or value <= 0:
+        raise ValueError(f"hairline: {name} must be a number above zero; got {value!r}")
 
 
 def palette_fields(palette: str | Sequence[str] | None) -> dict[str, object]:
     if palette is None:
         return {}
     colors = tuple(resolve_palette(palette))
+    if not colors:
+        raise ValueError("hairline: palette has no colours; give a palette name (see palettes()) or a list of hex "
+                         "colours")
     name = palette if isinstance(palette, str) else "custom"
     label = f"palette {name!r}" if isinstance(palette, str) else "custom palette"
     return {"palette": colors, "palette_name": name, "palette_label": label}
@@ -207,6 +218,7 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     if sizes is not None:
         changes["sizes"] = {**layered.sizes, **validated_sizes(sizes)}
     if base_size is not None:
+        check_positive(base_size, "base_size")
         changes |= {"base_size": float(base_size), "base_size_explicit": True}
     changes |= {"locale": locale or layered.locale, "background": background or layered.background}
     changes |= scheme_fields(scheme, background, accent)

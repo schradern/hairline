@@ -9,6 +9,7 @@ from matplotlib.collections import PathCollection
 from matplotlib.colors import to_hex
 
 from hairline.errors import HairlineLayoutError
+from hairline.fonts import families
 from hairline.layout.legend import LegendItem
 from hairline.marks import context_color
 from hairline.settings import role_size
@@ -117,7 +118,7 @@ def add_reference(figure: HairlineFigure, y: float | None, x: float | None, labe
                                xycoords=("axes fraction", "data") if y is not None else ("data", "axes fraction"),
                                ha="right" if y is not None else "left", va="bottom" if y is not None else "top",
                                fontsize=role_size(figure.settings, "caption"), color=figure.settings.neutral["faint"],
-                               fontfamily=figure.settings.font, annotation_clip=False)
+                               fontfamily=families(figure.settings.font), annotation_clip=False)
             figure.references.append((ax, text, y))
     if legend_label:
         figure.extra_legend_items.append(LegendItem("dash", rules["color"], legend_label))

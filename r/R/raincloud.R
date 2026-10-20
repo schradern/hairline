@@ -111,8 +111,10 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     group <- sides$right[1]
   }
   check_columns(data, c(group, value))
+  check_present(data, value, "raincloud")
+  check_numeric(data, value, "raincloud")
   data <- data[!is.na(data[[value]]), , drop = FALSE]
-  names <- order %||% unique(as.character(data[[group]]))
+  names <- chart_groups(data, group, order, "raincloud")
   title <- title %||% paste(humanise(value), "by", gsub("_", " ", group))
   comparisons <- resolve_comparisons(comparisons, data, group, value, names)
   for (name in unlist(lapply(comparisons, `[`, 1:2))) {

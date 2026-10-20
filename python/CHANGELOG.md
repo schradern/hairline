@@ -37,6 +37,35 @@
   "p not defined".
 * The t quantile and the chi-square tail hold at extreme degrees of freedom and probabilities.
 
+### Fixes from a second stress test
+
+* Numbers are rounded in decimal from the 15 significant digits a double holds: 999,999,999,999,999.4 stays
+  999,999,999,999,999, and the stored 8.645 is a half. A missing number reads "–", an infinite one "∞".
+* Decimals follow the data's spread as well as its size, so 0.0004 and 1000.2 ± 0.1 keep their digits in tables,
+  key numbers and tooltips. A median between two small whole numbers keeps its half (2.5, not 3). Bar, flow and
+  donut labels keep the data's decimals (0.12, not 0), slopes show two significant digits, survival medians gain
+  decimals for short times, and forest and dot plots show small estimates with the digits they need.
+* The Kaplan–Meier median on a flat 50 % is the middle of the flat, as survival::survfit takes it. The log-rank
+  test, as survival::survdiff, uses only groups with expected events and is left out (no p) where it is undefined
+  instead of failing.
+* A missing group label, an `order` naming no group, empty data, text where numbers belong, and values a chart
+  cannot draw (an estimate outside its interval, a self-flow, negative arc values) each give a message that names
+  the column and row.
+* Flow charts skip missing values like bars and donuts; an arc carries both directions of a pair (A ↔ B) instead
+  of two arcs drawn on top of each other. A real "Other" joins the folded "Other" slice.
+* Pandas categories set the group order in every chart. Scatter fits cover the groups drawn.
+* Ridgelines show a group too small or uniform for a density as spikes. Egger's test needs three studies with
+  different standard errors and reads "p not defined" otherwise.
+* Dates in study data are left out of tables (follow them with `over_time()`). Unknown columns, empty studies and
+  unknown types are named.
+* Saving checks sizes and resolution, reads formats in any case and each once.
+* Date tooltips keep the data's time zone and show the clock time for intraday data.
+* Figures fitted to their content keep the room for labels turned upright.
+* `save()` takes any background colour, saves through a link to its target and keeps short temporary names. A
+  drawing error raises instead of leaving a blank figure. `use()` refuses sizes of zero or less and empty palettes.
+* Greek letters (α, β, Δ, χ) fall back to DejaVu Sans, glyph by glyph; the bundled font has none.
+* `km_estimate()` is vectorised: 50,000 rows take milliseconds instead of seconds.
+
 ## 0.1.0
 
 * First release.

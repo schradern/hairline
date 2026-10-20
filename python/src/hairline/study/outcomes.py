@@ -10,7 +10,7 @@ import pandas as pd
 from hairline.charts.forest import forest, model_table, ratio_model
 from hairline.charts.kaplan_meier import estimates_from, kaplan_meier
 from hairline.numbers import format_interval, format_number, format_p
-from hairline.stats.survival import km_median
+from hairline.stats.survival import km_median, median_digits
 from hairline.stats.tests import logrank
 from hairline.study.columns import is_missing, level_text
 from hairline.study.compare import GROUP, listed
@@ -34,11 +34,11 @@ def follow_up_rows(study: Study) -> pd.DataFrame:
 
 
 def survival_rows(estimates: list) -> list[list[str]]:
-    rows = []
+    rows, digits = [], median_digits([table for _, table, _ in estimates])
     for name, table, total in estimates:
         median = km_median(table)
         rows.append([name or OVERALL, format_number(total, 0), format_number(int(table["events"].sum()), 0),
-                     NOT_REACHED if median is None else format_number(median, 1)])
+                     NOT_REACHED if median is None else format_number(median, digits)])
     return rows
 
 

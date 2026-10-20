@@ -13,7 +13,7 @@ from hairline.charts.common import check_columns, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import STATIC_ID, lone_color
-from hairline.numbers import format_number
+from hairline.numbers import format_number, significant_places
 from hairline.settings import current_settings
 from hairline.stats.tests import fit_band, linear_fit, pearson
 from hairline.tokens import load_tokens
@@ -23,11 +23,15 @@ def fit_stats(x: pd.Series, y: pd.Series, locale: str) -> list[tuple[str, str]]:
     r, _ = pearson(x, y)
     slope = linear_fit(x, y)["slope"]
     return [("n", format_number(len(x), 0, locale)), ("r", format_number(r, 2, locale)),
-            ("Slope", format_number(slope, 2, locale))]
+            ("Slope", format_number(slope, significant_places(slope), locale))]
 
 
 def check_fit(x: pd.Series) -> None:
-    """A line and its band need three points and two x values; fewer leave slope or band undefined."""
+    """A line and its band need numbers on x, three points and two x values; fewer leave slope or band
+    undefined."""
+    if not pd.api.types.is_numeric_dtype(x) or pd.api.types.is_bool_dtype(x):
+        raise ValueError(f"hairline: scatter: a linear fit needs numbers on x; got {x.dtype}; use fit=None for the "
+                         f"points alone")
     distinct = x.nunique()
     if len(x) < 3 or distinct < 2:
         raise ValueError(f"hairline: scatter: a linear fit needs at least 3 points with x and y and 2 different x "
@@ -48,22 +52,26 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
             subtitle: str | None = None, caption: str | None = None, fit: str | None = "linear",
             order: list[str] | None = None, colors: Mapping[str, str] | None = None,
             size: str = "onehalf") -> HairlineFigure:
-    """Points per group (entity colours) and, with `fit="linear"`, a fit over all points with n, r and slope."""
+    """Points per group (entity colours) and, with `fit="linear"`, a fit over all points drawn (the groups in
+    `order`, when given) with n, r and slope."""
     check_columns(data, [x, y, by])
     if fit not in ("linear", None):
         raise ValueError(f"hairline: scatter: fit {fit!r} must be 'linear' or None")
     rows = data.dropna(subset=[x, y])
+    if not len(rows):
+        raise ValueError(f"hairline: scatter: no rows with both '{x}' and '{y}' to draw")
     result = figure(title or f"{humanise(y)} and {str(x).replace('_', ' ')}", subtitle=subtitle, caption=caption,
                     size=size)
-    groups = groups_of(rows, by, order)
+    groups = groups_of(rows, by, order, "scatter")
     with entities.chart([name for name, _ in groups] if by else [], colors):
         for name, group in groups:
             color = entities.color(name) if by else lone_color()
             result.ax.scatter(group[x], group[y], color=color, label=name if by else "_nolegend_")
     if fit:
-        check_fit(rows[x])
-        draw_fit(result.ax, rows[x], rows[y])
-        result.panel_header(0, "Linear fit", stats=fit_stats(rows[x], rows[y], current_settings().locale))
+        drawn = pd.concat([group for _, group in groups])
+        check_fit(drawn[x])
+        draw_fit(result.ax, drawn[x], drawn[y])
+        result.panel_header(0, "Linear fit", stats=fit_stats(drawn[x], drawn[y], current_settings().locale))
     result.y_title(humanise(y))
     result.x_title(humanise(x))
     if by:

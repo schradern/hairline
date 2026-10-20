@@ -5,16 +5,15 @@ chord_spec <- function(data, source, target, value = NULL, order = NULL, colors 
   counted <- with_counts(data, value)
   data <- counted$data
   value <- counted$value
-  check_columns(data, c(source, target, value))
-  names <- order %||% unique(as.vector(rbind(as.character(data[[source]]), as.character(data[[target]]))))
+  flows <- flow_rows(data, source, target, value, "chord", order)
+  data <- flows$rows
+  names <- flows$names
   keys <- character()
   totals <- numeric()
   for (row in seq_len(nrow(data))) {
     first <- as.character(data[[source]][row])
     second <- as.character(data[[target]][row])
     amount <- data[[value]][row]
-    if (amount < 0) stop(sprintf("hairline: chord: %s \u2013 %s has a negative value (%s)", first, second, amount),
-                         call. = FALSE)
     if (first == second) next
     pair <- if (match(first, names) <= match(second, names)) c(first, second) else c(second, first)
     key <- paste(pair, collapse = "\r")
@@ -32,8 +31,10 @@ chord_spec <- function(data, source, target, value = NULL, order = NULL, colors 
   flows <- vapply(names, function(name) {
     sum(vapply(links, function(link) if (name %in% c(link$source, link$target)) link$value else 0, numeric(1)))
   }, numeric(1))
+  digits <- auto_digits(vapply(links, `[[`, numeric(1), "value"))
   nodes <- lapply(names[flows > 0], function(name) {
-    list(name = name, value = flows[[name]], value_text = hl_format_number(flows[[name]], 0), color = palette[[name]])
+    list(name = name, value = flows[[name]], value_text = hl_format_number(flows[[name]], digits),
+         color = palette[[name]])
   })
   list(nodes = nodes, links = links)
 }

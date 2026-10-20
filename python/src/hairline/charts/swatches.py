@@ -14,6 +14,9 @@ def swatches(names: str | Sequence[str] | None = None, *, title: str | None = No
              caption: str | None = None, size: str = "onehalf") -> HairlineFigure:
     """Palettes, purpose sets and ramps as rows of squares under their headings, each with its use; `names`
     picks some of them (as `palettes()` lists them), in catalogue order. Hover a square in HTML for its hex."""
+    if names is not None and not isinstance(names, str) and not len(names):
+        raise ValueError("hairline: swatches: no colour sets named; pass None for all of them, or names from "
+                         "palettes()")
     rows = swatch_rows([names] if isinstance(names, str) else names)
     result = figure(title or "Colour sets", subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: swatches_drawing({"rows": rows}, box, measure, style))

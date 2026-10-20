@@ -1,14 +1,26 @@
 # Forest plot: a results table with intervals, weighted squares and a pooled diamond;
 # mirrors the Python forest().
 
+# The fewest decimals that show every value exactly (axis breaks: 0.2, 0.0005), up to study.max_digits.
 forest_decimals <- function(values) {
-  for (digits in 0:3) if (all(abs(round(values, digits) - values) < 1e-9)) return(digits)
-  3
+  most <- hl_tokens()$study$max_digits
+  for (digits in 0:most) if (all(abs(round(values, digits) - values) < 1e-12)) return(digits)
+  most
 }
+
+# Two decimals, or more where the estimates and limits are small or close together (0.0004 [0.0003; 0.0005]).
+forest_default_digits <- function(data, columns) max(2, auto_digits(unlist(data[columns], use.names = FALSE)))
 
 forest_axis <- function(lows, highs, ratio, null) {
   low <- min(c(lows, null))
   high <- max(c(highs, null))
+  if (low == high) {
+    # every value alike: an axis around it, a factor of two for ratios
+    pad <- if (low == 0) 1 else abs(low)
+    limits <- if (ratio) c(low / 2, high * 2) else c(low - pad, high + pad)
+    low <- limits[1]
+    high <- limits[2]
+  }
   breaks <- if (ratio) log_breaks(low, high, hl_tokens()$forest$max_ticks) else nice_breaks(low, high)
   limits <- if (ratio) range(breaks) else axis_limits(low, high, breaks)
   shared <- forest_decimals(breaks)
@@ -17,17 +29,47 @@ forest_axis <- function(lows, highs, ratio, null) {
   list(breaks = breaks, labels = labels, low = limits[1], high = limits[2])
 }
 
-forest_check_rows <- function(data, study, low, high, ratio) {
+# Present, ordered limits around their estimate, above zero on a ratio scale.
+forest_check_interval <- function(name, estimate, low, high, ratio) {
+  values <- c(estimate, low, high)
+  if (!is.numeric(values) || length(values) != 3 || !all(is.finite(values))) {
+    stop(sprintf("hairline: forest: '%s' has estimate %s, low %s and high %s; all three must be numbers", name,
+                 format(estimate), format(low), format(high)), call. = FALSE)
+  }
+  if (low > high) stop(sprintf("hairline: forest: '%s' has a lower limit above its upper limit", name), call. = FALSE)
+  if (estimate < low || estimate > high) {
+    stop(sprintf("hairline: forest: '%s' has its estimate %s outside its interval [%s; %s]", name,
+                 format(estimate), format(low), format(high)), call. = FALSE)
+  }
+  if (ratio && low <= 0) {
+    stop(sprintf("hairline: forest: '%s' has a limit of 0 or below on a ratio scale; pass ratio = FALSE for %s",
+                 name, "differences"), call. = FALSE)
+  }
+}
+
+forest_check_rows <- function(data, study, estimate, low, high, weight, ratio) {
+  if (!nrow(data)) stop("hairline: forest: no rows to draw", call. = FALSE)
   for (index in seq_len(nrow(data))) {
-    if (data[[low]][index] > data[[high]][index]) {
-      stop(sprintf("hairline: forest: '%s' has a lower limit above its upper limit", data[[study]][index]),
-           call. = FALSE)
-    }
-    if (ratio && data[[low]][index] <= 0) {
-      stop(sprintf("hairline: forest: '%s' has a limit of 0 or below on a ratio scale; pass ratio = FALSE for %s",
-                   data[[study]][index], "differences"), call. = FALSE)
+    forest_check_interval(as.character(data[[study]][index]), data[[estimate]][index], data[[low]][index],
+                          data[[high]][index], ratio)
+  }
+  if (!is.null(weight)) {
+    weights <- data[[weight]]
+    if (!is.numeric(weights) || !all(is.finite(weights) & weights >= 0) || !(sum(weights) > 0)) {
+      stop(sprintf("hairline: forest: '%s' must hold weights of 0 or more that add up to more than 0; got %s",
+                   weight, paste(format(weights), collapse = ", ")), call. = FALSE)
     }
   }
+}
+
+forest_checked_pooled <- function(pooled, ratio) {
+  missing <- setdiff(c("estimate", "low", "high"), names(pooled))
+  if (length(missing)) {
+    stop(sprintf("hairline: forest: pooled needs estimate, low and high; missing %s",
+                 paste(missing, collapse = ", ")), call. = FALSE)
+  }
+  forest_check_interval(pooled$label %||% "Pooled", pooled$estimate, pooled$low, pooled$high, ratio)
+  pooled
 }
 
 forest_rows <- function(data, study, estimate, low, high, weight, columns, digits, interval = TRUE) {
@@ -45,10 +87,15 @@ forest_rows <- function(data, study, estimate, low, high, weight, columns, digit
 
 forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns = character(), pooled = NULL,
                         ratio = TRUE, favours = NULL, colour, study_heading = "Study",
-                        effect_heading = "Effect [95 % CI]", weight_heading = "Weight", digits = 2,
+                        effect_heading = "Effect [95 % CI]", weight_heading = "Weight", digits = NULL,
                         marker = "square", interval = TRUE, null = "auto") {
   check_columns(data, c(study, estimate, low, high, weight, unname(columns)))
-  forest_check_rows(data, study, low, high, ratio)
+  forest_check_rows(data, study, estimate, low, high, weight, ratio)
+  if (!is.null(favours) && length(favours) != 2) {
+    stop(sprintf("hairline: forest: favours takes two labels (left, right); got %d", length(favours)), call. = FALSE)
+  }
+  if (!is.null(pooled)) pooled <- forest_checked_pooled(as.list(pooled), ratio)
+  digits <- digits %||% forest_default_digits(data, c(estimate, low, high))
   rows <- forest_rows(data, study, estimate, low, high, weight, columns, digits, interval)
   if (identical(null, "auto")) null <- if (ratio) 1 else 0
   if (!is.null(pooled)) {
@@ -71,6 +118,14 @@ forest_from_model <- function(model, exponentiate) {
   estimates <- stats::coef(model)
   limits <- stats::confint.default(model)
   keep <- names(estimates) != "(Intercept)"
+  aliased <- keep & is.na(estimates)
+  if (any(aliased)) {
+    warning(sprintf("hairline: terms without an estimate (aliased with others) are left out: %s",
+                    paste(names(estimates)[aliased], collapse = ", ")), call. = FALSE)
+  }
+  keep <- keep & !aliased
+  if (!any(keep)) stop("hairline: the model has no terms with an estimate besides the intercept", call. = FALSE)
+  limits <- limits[names(estimates), , drop = FALSE]
   back <- if (exponentiate) exp else identity
   list(ratio = exponentiate,
        table = data.frame(term = names(estimates)[keep], estimate = back(unname(estimates[keep])),

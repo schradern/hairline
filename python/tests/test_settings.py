@@ -12,7 +12,8 @@ from hairline.tokens import load_tokens
 def test_use_defaults():
     settings = hl.use()
     assert settings.base_size == 9 and settings.palette_name == "daylight" and settings.locale == "en"
-    assert matplotlib.rcParams["font.family"] == [settings.font] == ["Hairline Sans"]
+    assert settings.font == "Hairline Sans"
+    assert matplotlib.rcParams["font.family"] == ["Hairline Sans", "DejaVu Sans"]
     assert matplotlib.rcParams["pdf.fonttype"] == 42 and matplotlib.rcParams["svg.fonttype"] == "none"
     assert current_settings() is settings
 

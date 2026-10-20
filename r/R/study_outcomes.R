@@ -15,11 +15,12 @@ study_follow_up_rows <- function(study) {
 }
 
 survival_rows <- function(estimates) {
+  digits <- median_digits(lapply(estimates, `[[`, "table"))
   lapply(estimates, function(estimate) {
     median <- km_median(estimate$table)
     c(if (nzchar(estimate$name)) estimate$name else "Overall", hl_format_number(estimate$total, 0),
       hl_format_number(sum(estimate$table$events), 0), if (is.null(median)) "not reached" else
-        hl_format_number(median, 1))
+        hl_format_number(median, digits))
   })
 }
 

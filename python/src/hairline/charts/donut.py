@@ -7,12 +7,12 @@ from collections.abc import Mapping, Sequence
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns, fold_other, humanise, joined, with_counts
+from hairline.charts.common import check_columns, check_labels, fold_other, humanise, joined, with_counts
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.color.tints import tints
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import context_color
-from hairline.numbers import format_number, format_percent
+from hairline.numbers import auto_digits, format_number, format_percent
 from hairline.settings import current_settings
 from hairline.tokens import load_tokens
 
@@ -76,9 +76,12 @@ def donut_rings(data: pd.DataFrame, label: str | None, value: str, levels: Seque
     """Segments per ring, inner to outer; children follow their parent's order and use its tints."""
     levels = list(levels) if levels else [label]
     check_columns(data, levels + [value])
+    check_labels(data, levels, chart)
     if len(levels) > load_tokens()["donut"]["max_levels"]:
         raise ValueError(f"hairline: {chart}: {len(levels)} levels given ({', '.join(levels)}); at most 3 levels fit")
     rings = [top_ring(data, levels[0], value, fold=len(levels) == 1, colors=colors, order=order)]
+    if not rings[0]:
+        raise ValueError(f"hairline: {chart}: no values above zero to draw in '{value}'")
     total = sum(item["value"] for item in rings[0])
     for depth in range(1, len(levels)):
         rings.append(child_ring(data, levels[:depth + 1], value, rings[-1], total))
@@ -100,7 +103,8 @@ def donut(data: pd.DataFrame, label: str | None = None, value: str | None = None
     if mode not in LABEL_MODES or (mode == "outside" and len(rings) > 1):
         raise ValueError(f"hairline: donut: labels {mode!r} does not fit {len(rings)} ring(s); use "
                          f"{'outside, key or ring' if len(rings) == 1 else 'key or ring'}")
-    amount = format_number(sum(item["value"] for item in rings[0]), 0, current_settings().locale)
+    amounts = [item["value"] for ring in rings for item in ring]
+    amount = format_number(sum(item["value"] for item in rings[0]), auto_digits(amounts), current_settings().locale)
     spec = {"rings": rings, "labels": mode, "total": amount if total else None, "total_label": total_label}
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: donut_drawing(spec, box, measure, style))

@@ -19,7 +19,9 @@ numeric_summary <- function(values, stat, digits, missing, whole = FALSE) {
   if (stat == "n_missing") return(hl_format_number(missing, 0))
   if (!length(values)) return(study_empty)
   # Snap away float noise first: R and numpy reach the same quantile by different arithmetic.
-  number <- function(value) hl_format_number(round(value, study_snap_digits), digits)
+  number <- function(value) {
+    hl_format_number(round(value, study_snap_digits), quantile_places(value, digits, whole))
+  }
   if (stat == "median_iqr") {
     limits <- density_quantiles(values, c(0.25, 0.5, 0.75))
     return(sprintf("%s (%s%s%s)", number(limits[2]), number(limits[1]), study_empty, number(limits[3])))
