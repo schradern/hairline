@@ -3,7 +3,7 @@
 **Clean, predictable figures for medical and data science, in Python and R.**
 
 [![PyPI](https://img.shields.io/pypi/v/hairline?color=0a6ddd)](https://pypi.org/project/hairline/)
-[![Licence: MIT](https://img.shields.io/badge/licence-MIT-0a6ddd)](python/LICENSE)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-0a6ddd)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-0a6ddd)](python/README.md)
 [![R 4.3+](https://img.shields.io/badge/R-4.3%2B-0a6ddd)](r/README.md)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23456211.svg)](https://doi.org/10.5281/zenodo.23456211)
@@ -312,5 +312,6 @@ the colour guide.
 
 ## Licence
 
-MIT. The bundled Hairline Sans font is a modified [Public Sans](https://github.com/uswds/public-sans) (SIL Open
-Font License 1.1).
+MIT (see [LICENSE](LICENSE)). The bundled Hairline Sans font is a modified
+[Public Sans](https://github.com/uswds/public-sans) under the SIL Open Font License 1.1
+([tokens/fonts/OFL.txt](tokens/fonts/OFL.txt)).
