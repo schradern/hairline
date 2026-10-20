@@ -14,6 +14,20 @@
 * With `id=`, `describe()`, `compare()` and `distribution()` refuse a variable with more than one row per id
   instead of counting repeated measurements as separate patients; the error names the id column and the most
   rows per id, and points to one row per id or to `over_time()`.
+* Rows in groups that `order=` leaves out are counted (`other_groups`) and named in the text, so the analysed
+  count is exact when `order` selects groups.
+
+### Fixes from a second external review
+
+* `study(order=...)` refuses a group named twice, which analysed the same rows as two samples (Kruskal–Wallis on
+  three samples instead of the rank-sum test on two).
+* A variable named like the column the endpoints add for the group (`_group`) no longer breaks `compare()` and
+  `distribution()`; the internal name never collides with a data column.
+* A group called "Overall" keeps its own column in `describe()`; the aggregate is then "Overall (all)".
+* A group column without a single value, or an `order` that names none of its groups, is a study error that the
+  endpoints name, instead of an `IndexError`. `compare()` and `over_time()` refuse a variable with no value in any
+  group.
+* `stats=[]` is refused with a clear message.
 * `HairlineFigure.percent_axis()` takes `digits`, and the new `HairlineFigure.number_axis()` does the same for
   plain numbers: the decimals of the values a reader looks up in interactive output. A power of 89.6 % no longer
   shows as 90 % beside a 90 % target. Without `digits` tooltips follow the shared digits rule as before; ticks

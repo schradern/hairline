@@ -13,8 +13,7 @@ from hairline.numbers import format_interval, format_number, format_p
 from hairline.stats.survival import km_median, median_digits
 from hairline.stats.tests import logrank
 from hairline.study.columns import is_missing, level_text
-from hairline.study.compare import GROUP
-from hairline.study.describe import OVERALL
+from hairline.study.describe import counted_rows, group_role
 from hairline.study.result import Result
 from hairline.study.summaries import left_out_text, listed
 from hairline.tokens import load_tokens
@@ -29,18 +28,18 @@ def follow_up_rows(study: Study) -> pd.DataFrame:
     time, event = study.roles["time"], study.roles["event"]
     data = study.data.assign(**{time: study.data[time].astype(float), event: study.data[event].astype(int)})
     if not study.group:
-        return data.assign(**{GROUP: OVERALL})
+        return data.assign(**{study.group_key: study.overall})
     data = data[~is_missing(data[study.group])]
-    return data.assign(**{GROUP: data[study.group].map(level_text)})
+    return data.assign(**{study.group_key: data[study.group].map(level_text)})
 
 
-def survival_rows(estimates: list) -> tuple[list[list[str]], dict]:
+def survival_rows(estimates: list, overall: str) -> tuple[list[list[str]], dict]:
     """Per group n, events and the median (NaN when not reached), and the table rows formatted from them."""
     digits = median_digits([table for _, table, _ in estimates])
     found = {}
     for name, table, total in estimates:
         median = km_median(table)
-        found[name or OVERALL] = {"n": int(total), "events": int(table["events"].sum()),
+        found[name or overall] = {"n": int(total), "events": int(table["events"].sum()),
                                   "median": math.nan if median is None else float(median)}
     rows = [[name, format_number(group["n"], 0), format_number(group["events"], 0),
              NOT_REACHED if math.isnan(group["median"]) else format_number(group["median"], digits)]
@@ -51,18 +50,12 @@ def survival_rows(estimates: list) -> tuple[list[list[str]], dict]:
 def survival_estimates(study: Study, data: pd.DataFrame | None, fit) -> tuple[list, list[str]]:
     """Kaplan–Meier tables per group from the rows, or from a fit in the study's group order; and the group names."""
     if fit is None:
-        names = [name for name in (study.groups or [OVERALL]) if (data[GROUP] == name).any()]
-        return estimates_from(data, study.roles["time"], study.roles["event"], GROUP, names), names
+        names = [name for name in (study.groups or [study.overall]) if (data[study.group_key] == name).any()]
+        return estimates_from(data, study.roles["time"], study.roles["event"], study.group_key, names), names
     estimates = estimates_from(fit, None, None, None, None)
     if study.groups and {name for name, _, _ in estimates} <= set(study.groups):
         estimates.sort(key=lambda item: study.groups.index(item[0]))
-    return estimates, [name or OVERALL for name, _, _ in estimates]
-
-
-def follow_up_counts(study: Study) -> dict:
-    """Rows in the study, analysed, and missing a group; time and event cannot be missing (study checks block it)."""
-    missing = {"group": int(is_missing(study.data[study.group]).sum())} if study.group else {}
-    return {"total": len(study.data), "analysed": len(study.data) - sum(missing.values()), "missing": missing}
+    return estimates, [name or study.overall for name, _, _ in estimates]
 
 
 def survival(study: Study, fit=None, size: str = "double") -> Result:
@@ -76,27 +69,29 @@ def survival(study: Study, fit=None, size: str = "double") -> Result:
         study.require([roles["time"], roles["event"], study.group], "survival")
     data = follow_up_rows(study) if has_data else None
     estimates, names = survival_estimates(study, data, fit)
-    rows, groups = survival_rows(estimates)
+    rows, groups = survival_rows(estimates, study.overall)
     grouped = len(estimates) > 1
-    shown = data[data[GROUP].isin(names)] if fit is None and has_data else data
-    test = logrank_test(shown, roles) if grouped and has_data and study.group else None
+    shown = data[data[study.group_key].isin(names)] if fit is None and has_data else data
+    test = logrank_test(shown, roles, study.group_key) if grouped and has_data and study.group else None
     p = None if test is None or math.isnan(test["p"]) else format_p(test["p"])
     values = {**{row[0]: row[3] for row in rows}, **({"p": p} if p else {})}
     time_label = study.label_unit(roles["time"]) if "time" in roles else "Time"
+    by = study.group_key if fit is None and study.group else None
     figure = kaplan_meier(fit if fit is not None else data, roles.get("time"), roles.get("event"),
-                          by=GROUP if fit is None and study.group else None, order=names if fit is None else None,
+                          by=by, order=names if fit is None else None,
                           title=f"Survival by {str(study.group).replace('_', ' ')}" if grouped and study.group
                           else "Survival", x_title=time_label, size=size, test=False,
                           stats=[("Log-rank", p)] if p else ())
-    found = {**({"rows": follow_up_counts(study)} if has_data else {}), "groups": groups,
+    # Time and event cannot be missing: the study's checks block survival() then.
+    found = {**({"rows": counted_rows(study, group_role(study))} if has_data else {}), "groups": groups,
              **({"test": test} if test else {})}
     text = survival_text(study, rows, grouped, p) + (left_out_text(found["rows"], study.unit) if has_data else "")
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "Events", "Median"]), values, text, found)
 
 
-def logrank_test(data: pd.DataFrame, roles: dict) -> dict:
-    """The log-rank test over the groups shown; p is NaN when no event makes it undefined."""
-    found = logrank(data[roles["time"]], data[roles["event"]], data[GROUP])
+def logrank_test(data: pd.DataFrame, roles: dict, key: str) -> dict:
+    """The log-rank test over the groups shown (in column `key`); p is NaN when no event makes it undefined."""
+    found = logrank(data[roles["time"]], data[roles["event"]], data[key])
     return {"method": "Log-rank", "statistic": found["chisq"], "df": int(found["df"]), "p": found["p"]}
 
 

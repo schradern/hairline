@@ -39,12 +39,23 @@ def event_findings(data: pd.DataFrame, column: str, limit: int) -> list[Finding]
 def group_findings(data: pd.DataFrame, column: str, groups: list[str], limit: int) -> list[Finding]:
     findings = missing_values(data, column, limit) + spellings(data, column, limit)
     labels = data[column].map(lambda value: None if pd.isna(value) else level_text(value))
+    findings += empty_groups(labels[~is_missing(data[column])], column, groups)
     for name in groups:
         size = int((labels == name).sum())
         if size < load_tokens()["study"]["small_group"]:
             findings.append(Finding("warning", column, f"group '{name}' has {count_text(size)} rows", (),
                                     "merge it with a similar group or leave it out of comparisons"))
     return findings
+
+
+def empty_groups(present: pd.Series, column: str, groups: list[str]) -> list[Finding]:
+    """An error when no group of the study has a row: the column is empty, or order names none of its groups."""
+    if present.isin(groups).any():
+        return []
+    if present.empty:
+        return [Finding("error", column, "no row has a group", (), "fill in the groups, or leave out the group role")]
+    return [Finding("error", column, "order names none of the groups in the data", (),
+                    f"name groups that are in the data: {', '.join(dict.fromkeys(present))}")]
 
 
 def id_findings(data: pd.DataFrame, column: str, limit: int) -> list[Finding]:

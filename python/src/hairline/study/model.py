@@ -34,6 +34,22 @@ class Study:
     def group(self) -> str | None:
         return self.roles.get("group")
 
+    @property
+    def group_key(self) -> str:
+        """The column endpoints add for the group as text, named so it never collides with a column of the data."""
+        name = "_group"
+        while name in self.data.columns:
+            name = f"_{name}"
+        return name
+
+    @property
+    def overall(self) -> str:
+        """The label of all rows together: 'Overall', unless a group already has that name."""
+        name = "Overall"
+        while name in self.groups:
+            name = f"{name} (all)"
+        return name
+
     def label(self, column: str) -> str:
         return self.labels.get(column, humanise(column))
 
@@ -119,6 +135,15 @@ def check_kinds(kinds: Mapping[str, str]) -> None:
             raise ValueError(f"hairline: study: type {kind!r} for '{name}' is not one of {', '.join(KINDS)}")
 
 
+def check_order(order: Sequence[str] | None) -> None:
+    """Each group once in `order`; a repeated name would analyse the same rows twice."""
+    for name in dict.fromkeys(order or ()):
+        count = list(order).count(name)
+        if count > 1:
+            times = "twice" if count == 2 else f"{count} times"
+            raise ValueError(f"hairline: study: order names '{name}' {times}; name each group once")
+
+
 def unit_findings(roles: dict[str, str], variables: list[str], types: dict[str, str],
                   units: Mapping[str, str]) -> list[Finding]:
     """Numeric variables (and follow-up time) need a unit, so mixed tables and panels say what they measure."""
@@ -165,6 +190,7 @@ def study(data: pd.DataFrame, group: str | None = None, time: str | None = None,
                                                            and infer_type(data[column]) != "date"]
     kinds = {name: (types or {}).get(name) or infer_type(data[name]) for name in names if name in data.columns}
     check_kinds(kinds)
+    check_order(order)
     groups = list(order) if order else (levels(data[group], ordered=False) if group in data.columns else [])
     checks = run_checks(data, roles, names, groups) + unit_findings(roles, names, kinds, units or {})
     result = Study(data, roles, names, dict(labels or {}), kinds, groups,

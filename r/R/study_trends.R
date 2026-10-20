@@ -54,14 +54,6 @@ study_dated_rows <- function(study, date, value) {
   data
 }
 
-# Rows in the study, analysed, and missing: without the value, then without a group, then without a date.
-study_dated_counts <- function(study, date, value) {
-  counted <- study_variable_rows(study, value)
-  counted$missing$date <- sum(study_is_missing(study_present_rows(study, value)[[date]]))
-  counted$analysed <- counted$analysed - counted$missing$date
-  counted
-}
-
 #' One measure over time by group
 #'
 #' Small multiples per group with the raw values and a trailing mean; the
@@ -89,11 +81,13 @@ hl_over_time <- function(study, date, value, window = 7) {
   digits <- study_digits(every)
   whole <- is_whole(every)
   parts <- if (is.null(study$roles$group)) study_subsets(study) else study_group_parts(study)
+  key <- study_group_key(study)
   found <- stats::setNames(lapply(parts, function(part) {
-    sample <- study_numbers(data[[value]][data[[study_group_column]] == part$name])
+    sample <- study_numbers(data[[value]][data[[key]] == part$name])
     summary_numbers(sample, c("mean_sd", "median_iqr"), nrow(part$rows) - length(sample))
   }), study_part_names(parts))
   names <- Filter(function(name) found[[name]]$n > 0, names(found))
+  study_require_values(names, value, "over_time")
   rows <- lapply(names, function(name) {
     c(name, hl_format_number(found[[name]]$n, 0), summary_text(found[[name]], "mean_sd", digits, whole),
       summary_text(found[[name]], "median_iqr", digits, whole))
@@ -101,13 +95,13 @@ hl_over_time <- function(study, date, value, window = 7) {
   means <- vapply(found[names], function(group) study_mean_text(group$mean, digits, whole), character(1),
                   USE.NAMES = FALSE)
   figure <- hl_timeseries(data[order(data[[date]]), , drop = FALSE], date, value,
-                          by = if (!is.null(study$roles$group)) study_group_column, order = names, window = window,
+                          by = if (!is.null(study$roles$group)) key, order = names, window = window,
                           title = paste(study_label(study, value), "over time"))
   unit <- study_measure(study, value)
   if (!is.null(unit)) figure <- figure + ggplot2::labs(y = unit)
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "mean (SD)", "median (IQR)")
-  counted <- study_dated_counts(study, date, value)
+  counted <- study_counted_rows(study, c(list(variable = value), study_group_role(study), list(date = date)))
   text <- paste0(sprintf("%s, mean over the period: %s.", study_label_unit(study, value),
                          listed_text(paste(names, means))), left_out_text(counted, "rows"))
   study_result(figure, table, stats::setNames(as.list(means), names), text, list(rows = counted, groups = found))

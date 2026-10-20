@@ -6,22 +6,22 @@ study_follow_up_rows <- function(study) {
   data[[study$roles$event]] <- as.integer(study_as_number(data[[study$roles$event]]))
   group <- study$roles$group
   if (is.null(group)) {
-    data[[study_group_column]] <- rep("Overall", nrow(data))
+    data[[study_group_key(study)]] <- rep(study_overall(study), nrow(data))
     return(data)
   }
   data <- data[!study_is_missing(data[[group]]), , drop = FALSE]
-  data[[study_group_column]] <- level_text(data[[group]])
+  data[[study_group_key(study)]] <- level_text(data[[group]])
   data
 }
 
 # Per group n, events and the median (NA when not reached), and the table rows formatted from them.
-survival_rows <- function(estimates) {
+survival_rows <- function(estimates, overall) {
   digits <- median_digits(lapply(estimates, `[[`, "table"))
   found <- lapply(estimates, function(estimate) {
     median <- km_median(estimate$table)
     list(n = estimate$total, events = sum(estimate$table$events), median = if (is.null(median)) NA_real_ else median)
   })
-  names(found) <- vapply(estimates, function(estimate) if (nzchar(estimate$name)) estimate$name else "Overall",
+  names(found) <- vapply(estimates, function(estimate) if (nzchar(estimate$name)) estimate$name else overall,
                          character(1))
   rows <- lapply(names(found), function(name) {
     group <- found[[name]]
@@ -31,26 +31,18 @@ survival_rows <- function(estimates) {
   list(rows = rows, numbers = found)
 }
 
-# Rows in the study, analysed, and missing a group; time and event cannot be missing (study checks block it).
-study_follow_up_counts <- function(study) {
-  group <- study$roles$group
-  missing <- if (is.null(group)) stats::setNames(list(), character()) else
-    list(group = sum(study_is_missing(study$data[[group]])))
-  list(total = nrow(study$data), analysed = nrow(study$data) - sum(unlist(missing)), missing = missing)
-}
-
-# The log-rank test over the groups shown; p is NA when no event makes it undefined.
-study_logrank <- function(data, time, event) {
-  found <- logrank_test(data[[time]], data[[event]], data[[study_group_column]])
+# The log-rank test over the groups shown (in column `key`); p is NA when no event makes it undefined.
+study_logrank <- function(data, time, event, key) {
+  found <- logrank_test(data[[time]], data[[event]], data[[key]])
   list(method = "Log-rank", statistic = found$chisq, df = found$df, p = found$p)
 }
 
 survival_estimates <- function(study, data, fit) {
   if (is.null(fit)) {
-    names <- Filter(function(name) any(data[[study_group_column]] == name),
-                    if (length(study$groups)) study$groups else "Overall")
+    names <- Filter(function(name) any(data[[study_group_key(study)]] == name),
+                    if (length(study$groups)) study$groups else study_overall(study))
     return(lapply(names, function(name) {
-      rows <- data[data[[study_group_column]] == name, , drop = FALSE]
+      rows <- data[data[[study_group_key(study)]] == name, , drop = FALSE]
       list(name = name, total = nrow(rows), table = km_estimate(rows[[study$roles$time]], rows[[study$roles$event]]))
     }))
   }
@@ -100,12 +92,14 @@ hl_survival <- function(study, fit = NULL) {
   }
   if (has_data) study_require(study, c(time, event, study$roles$group), "survival")
   data <- if (has_data) study_follow_up_rows(study) else NULL
-  estimated <- survival_rows(survival_estimates(study, data, fit))
+  estimated <- survival_rows(survival_estimates(study, data, fit), study_overall(study))
+  group_key <- study_group_key(study)
   rows <- estimated$rows
   grouped <- length(rows) > 1
   names <- names(estimated$numbers)
   test <- if (grouped && has_data && !is.null(study$roles$group)) {
-    study_logrank(if (is.null(fit)) data[data[[study_group_column]] %in% names, , drop = FALSE] else data, time, event)
+    study_logrank(if (is.null(fit)) data[data[[group_key]] %in% names, , drop = FALSE] else data, time, event,
+                  group_key)
   }
   p <- if (is.null(test) || is.na(test$p)) NULL else format_p(test$p)
   values <- c(stats::setNames(lapply(rows, `[[`, 4), names), if (!is.null(p)) list(p = p))
@@ -114,14 +108,16 @@ hl_survival <- function(study, fit = NULL) {
   x_title <- if (is.null(time)) "Time" else study_label_unit(study, time)
   key <- if (is.null(p)) character() else c(`Log-rank` = p)
   figure <- if (is.null(fit)) {
-    hl_kaplan_meier(data, time, event, by = if (!is.null(study$roles$group)) study_group_column, order = names,
+    hl_kaplan_meier(data, time, event, by = if (!is.null(study$roles$group)) group_key, order = names,
                     title = title, x_title = x_title, test = FALSE, stats = key)
   } else {
     hl_kaplan_meier(fit, title = title, x_title = x_title, stats = key)
   }
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "Events", "Median")
-  found <- c(if (has_data) list(rows = study_follow_up_counts(study)), list(groups = estimated$numbers),
+  # Time and event cannot be missing: the study's checks block hl_survival() then.
+  found <- c(if (has_data) list(rows = study_counted_rows(study, study_group_role(study))),
+             list(groups = estimated$numbers),
              if (!is.null(test)) list(test = test))
   text <- paste0(survival_text(study, rows, grouped, p), if (has_data) left_out_text(found$rows, study$unit))
   study_result(figure, table, values, text, found)

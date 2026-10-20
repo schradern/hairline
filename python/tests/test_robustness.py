@@ -542,7 +542,8 @@ def test_results_say_how_many_rows_were_left_out():
     data = pd.DataFrame({"arm": ["A"] * 50 + ["B"] * 50, "score": [float(value) for value in range(82)] + [None] * 18})
     result = quiet_study(data, group="arm", variables=["score"], unit="patients").compare("score")
     assert result.text.endswith(" 82 of 100 patients; 18 without a value were left out.")
-    assert result.numbers["rows"] == {"total": 100, "analysed": 82, "missing": {"variable": 18, "group": 0}}
+    assert result.numbers["rows"] == {"total": 100, "analysed": 82, "missing": {"variable": 18, "group": 0},
+                                      "other_groups": 0}
     assert [result.numbers["groups"][name]["n"] for name in "AB"] == [50, 32]
     assert result.numbers["groups"]["B"]["missing"] == 18
     assert result.table["n"].tolist()[:2] == ["50", "32"]
@@ -551,7 +552,7 @@ def test_results_say_how_many_rows_were_left_out():
 def test_survival_counts_rows_without_a_group():
     data = three_arms().assign(arm=["A"] * 20 + ["B"] * 19 + [None] + ["C"] * 20)
     result = quiet_study(data, group="arm", time="time", event="event").survival()
-    assert result.numbers["rows"] == {"total": 60, "analysed": 59, "missing": {"group": 1}}
+    assert result.numbers["rows"] == {"total": 60, "analysed": 59, "missing": {"group": 1}, "other_groups": 0}
     assert result.text.endswith(" 59 of 60 participants; 1 without a group was left out.")
     assert result.numbers["test"]["method"] == "Log-rank" and result.numbers["test"]["df"] == 2
 
@@ -593,3 +594,54 @@ def test_effects_name_the_reference_level_of_a_formula_model():
     table = pd.DataFrame({"study": ["age"], "estimate": [0.5], "low": [0.1], "high": [0.9]})
     assert study.effects(table).numbers == {"scale": "difference", "reference": {},
                                             "terms": {"age": {"estimate": 0.5, "low": 0.1, "high": 0.9}}}
+
+
+def two_arms() -> pd.DataFrame:
+    return pd.DataFrame({"arm": ["A"] * 3 + ["B"] * 4, "value": [1.0, 2, 3, 4, 5, 6, 7]})
+
+
+def test_order_names_each_group_once():
+    with pytest.raises(ValueError, match="hairline: study: order names 'A' twice"):
+        quiet_study(two_arms(), group="arm", order=["A", "A", "B"])
+
+
+def test_a_variable_may_share_the_internal_group_name():
+    study = quiet_study(two_arms().rename(columns={"value": "_group"}), group="arm", variables=["_group"])
+    result = study.compare("_group")
+    assert result.numbers["test"]["method"] == "Wilcoxon rank-sum" and result.values["p"] == "p = 0.052"
+    assert study.distribution("_group").numbers["groups"]["B"]["median"] == 5.5
+
+
+def test_a_group_called_overall_keeps_its_own_column():
+    data = two_arms().assign(arm=["Overall"] * 3 + ["B"] * 4)
+    result = quiet_study(data, group="arm", variables=["value"]).describe()
+    assert list(result.table.columns) == ["Characteristic", "Overall", "B", "Overall (all)"]
+    assert result.values["n"] == {"Overall": "3", "B": "4", "Overall (all)": "7"}
+    assert result.numbers["variables"]["value"]["Overall"]["median"] == 2.0
+
+
+def test_a_group_without_rows_is_an_error_not_a_crash():
+    empty = quiet_study(two_arms().assign(arm=None), group="arm", variables=["value"])
+    for endpoint in (empty.describe, lambda: empty.compare("value"), lambda: empty.distribution("value")):
+        with pytest.raises(ValueError, match="arm: no row has a group"):
+            endpoint()
+    elsewhere = quiet_study(two_arms(), group="arm", variables=["value"], order=["C"])
+    with pytest.raises(ValueError, match="order names none of the groups in the data.*data: A, B"):
+        elsewhere.describe()
+
+
+def test_empty_stats_are_refused():
+    study = quiet_study(two_arms(), group="arm", variables=["value"])
+    with pytest.raises(ValueError, match="stats is empty"):
+        study.distribution("value", stats=[])
+
+
+def test_rows_in_groups_left_out_of_order_are_counted():
+    data = two_arms().assign(arm=list("AABBBCC"))
+    study = quiet_study(data, group="arm", variables=["value"], order=["A", "B"])
+    result = study.compare("value")
+    assert result.numbers["rows"] == {"total": 7, "analysed": 5, "missing": {"variable": 0, "group": 0},
+                                      "other_groups": 2}
+    assert result.text.endswith(" 5 of 7 participants; 2 in groups not named in order were left out.")
+    assert study.describe().numbers["rows"]["missing"] == {"group": 0}
+    assert study.describe().text.endswith(" 2 in groups not named in order are counted in Overall only.")

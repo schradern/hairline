@@ -12,6 +12,19 @@
 * With `id =`, `hl_describe()`, `hl_compare()` and `hl_distribution()` refuse a variable with more than one row
   per id instead of counting repeated measurements as separate patients; the error names the id column and the
   most rows per id, and points to one row per id or to `hl_over_time()`.
+* Rows in groups that `order =` leaves out are counted (`other_groups`) and named in the text, so the analysed
+  count is exact when `order` selects groups.
+
+## Fixes from a second external review
+
+* `hl_study(order = ...)` refuses a group named twice, which analysed the same rows as two samples
+  (Kruskal–Wallis on three samples instead of the rank-sum test on two).
+* A variable named like the column the endpoints add for the group (`.group`) no longer breaks `hl_compare()` and
+  `hl_distribution()`; the internal name never collides with a data column.
+* A group called "Overall" keeps its own column in `hl_describe()`; the aggregate is then "Overall (all)".
+* A group column without a single value, or an `order` that names none of its groups, is a study error that the
+  endpoints name. `hl_compare()` and `hl_over_time()` refuse a variable with no value in any group.
+* `stats = character()` is refused with a clear message.
 * `scale_y_hairline()` and `scale_x_hairline()` take `digits`, the decimals of the values a reader looks up in
   interactive output. A power of 89.6 % no longer shows as 90 % beside a 90 % target. Without `digits`
   tooltips follow the shared digits rule as before; axis labels are unchanged.

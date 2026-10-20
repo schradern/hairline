@@ -449,7 +449,8 @@ test_that("results say how many rows were left out", {
   study <- suppressWarnings(hl_study(data, group = "arm", variables = "score", unit = "patients"))
   result <- hl_compare(study, "score")
   expect_true(endsWith(result$text, " 82 of 100 patients; 18 without a value were left out."))
-  expect_equal(result$numbers$rows, list(total = 100, analysed = 82, missing = list(variable = 18, group = 0)))
+  expect_equal(result$numbers$rows, list(total = 100, analysed = 82, missing = list(variable = 18, group = 0),
+                                         other_groups = 0))
   expect_equal(vapply(result$numbers$groups, `[[`, numeric(1), "n"), c(A = 50, B = 32))
   expect_equal(result$numbers$groups$B$missing, 18)
   expect_equal(result$table$n[1:2], c("50", "32"))
@@ -459,7 +460,7 @@ test_that("survival counts rows without a group", {
   data <- three_arms()
   data$arm[40] <- NA
   result <- hl_survival(suppressWarnings(hl_study(data, group = "arm", time = "time", event = "event")))
-  expect_equal(result$numbers$rows, list(total = 60, analysed = 59, missing = list(group = 1)))
+  expect_equal(result$numbers$rows, list(total = 60, analysed = 59, missing = list(group = 1), other_groups = 0))
   expect_true(endsWith(result$text, " 59 of 60 participants; 1 without a group was left out."))
   expect_equal(result$numbers$test[c("method", "df")], list(method = "Log-rank", df = 2))
 })
@@ -489,4 +490,58 @@ test_that("effects name the reference level of a model", {
   expect_equal(hl_effects(study, table)$numbers,
                list(scale = "difference", reference = stats::setNames(list(), character()),
                     terms = list(Age = list(estimate = 0.5, low = 0.1, high = 0.9))))
+})
+
+two_arms <- function() data.frame(arm = c(rep("A", 3), rep("B", 4)), value = c(1, 2, 3, 4, 5, 6, 7))
+
+test_that("order names each group once", {
+  expect_error(suppressWarnings(hl_study(two_arms(), group = "arm", order = c("A", "A", "B"))),
+               "hairline: study: order names 'A' twice")
+})
+
+test_that("a variable may share the internal group name", {
+  data <- two_arms()
+  names(data)[2] <- ".group"
+  study <- suppressWarnings(hl_study(data, group = "arm", variables = ".group"))
+  result <- hl_compare(study, ".group")
+  expect_equal(result$numbers$test$method, "Wilcoxon rank-sum")
+  expect_equal(result$values$p, "p = 0.052")
+  expect_equal(hl_distribution(study, ".group")$numbers$groups$B$median, 5.5)
+})
+
+test_that("a group called Overall keeps its own column", {
+  data <- two_arms()
+  data$arm <- c(rep("Overall", 3), rep("B", 4))
+  result <- hl_describe(suppressWarnings(hl_study(data, group = "arm", variables = "value")))
+  expect_equal(names(result$table), c("Characteristic", "Overall", "B", "Overall (all)"))
+  expect_equal(result$values$n, list(Overall = "3", B = "4", `Overall (all)` = "7"))
+  expect_equal(result$numbers$variables$value$Overall$median, 2)
+})
+
+test_that("a group without rows is an error, not a crash", {
+  data <- two_arms()
+  data$arm <- NA_character_
+  empty <- suppressWarnings(hl_study(data, group = "arm", variables = "value"))
+  expect_error(hl_describe(empty), "arm: no row has a group")
+  expect_error(hl_compare(empty, "value"), "arm: no row has a group")
+  expect_error(hl_distribution(empty, "value"), "arm: no row has a group")
+  elsewhere <- suppressWarnings(hl_study(two_arms(), group = "arm", variables = "value", order = "C"))
+  expect_error(hl_describe(elsewhere), "order names none of the groups in the data.*data: A, B")
+})
+
+test_that("empty stats are refused", {
+  study <- suppressWarnings(hl_study(two_arms(), group = "arm", variables = "value"))
+  expect_error(hl_distribution(study, "value", stats = character()), "stats is empty")
+})
+
+test_that("rows in groups left out of order are counted", {
+  data <- two_arms()
+  data$arm <- c("A", "A", "B", "B", "B", "C", "C")
+  study <- suppressWarnings(hl_study(data, group = "arm", variables = "value", order = c("A", "B")))
+  result <- hl_compare(study, "value")
+  expect_equal(result$numbers$rows, list(total = 7, analysed = 5, missing = list(variable = 0, group = 0),
+                                         other_groups = 2))
+  expect_true(endsWith(result$text, " 5 of 7 participants; 2 in groups not named in order were left out."))
+  expect_equal(hl_describe(study)$numbers$rows$missing, list(group = 0))
+  expect_true(endsWith(hl_describe(study)$text, " 2 in groups not named in order are counted in Overall only."))
 })

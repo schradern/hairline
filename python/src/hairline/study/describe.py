@@ -31,15 +31,35 @@ from hairline.tokens import load_tokens
 if TYPE_CHECKING:
     from hairline.study.model import Study
 
-OVERALL = "Overall"
-
-
 def subsets(study: Study) -> list[tuple[str, pd.DataFrame]]:
     """Each group's rows, then all rows as Overall; without a group only Overall."""
     if not study.group:
-        return [(OVERALL, study.data)]
+        return [(study.overall, study.data)]
     labels = study.data[study.group].map(lambda value: None if pd.isna(value) else level_text(value))
-    return [(name, study.data[labels == name]) for name in study.groups] + [(OVERALL, study.data)]
+    return [(name, study.data[labels == name]) for name in study.groups] + [(study.overall, study.data)]
+
+
+def group_role(study: Study) -> dict[str, str]:
+    return {"group": study.group} if study.group else {}
+
+
+def counted_rows(study: Study, columns: dict[str, str], in_overall: bool = False) -> dict:
+    """Rows in the study, analysed, and missing: each role in turn (variable, group, date) counts the rows still in
+    that lack it. With a group, other_groups counts rows in groups that order leaves out; with `in_overall` those and
+    the rows without a group still count as analysed, in Overall."""
+    data, kept, missing = study.data, pd.Series(True, index=study.data.index), {}
+    for role, column in columns.items():
+        absent = is_missing(data[column])
+        missing[role] = int((kept & absent).sum())
+        kept &= ~absent
+    found = {"total": len(data), "analysed": 0, "missing": missing}
+    if study.group:
+        other = kept & ~data[study.group].map(level_text).isin(study.groups)
+        found["other_groups"] = int(other.sum())
+        kept &= ~other
+    overall = missing.get("group", 0) + found.get("other_groups", 0) if in_overall else 0
+    found["analysed"] = int(kept.sum()) + overall
+    return found
 
 
 def numeric_rows(study: Study, name: str, parts: list, stats: Sequence[str]) -> tuple[list[list[str]], dict, dict]:
@@ -70,21 +90,14 @@ def categorical_rows(study: Study, name: str, parts: list) -> tuple[list[list[st
     return rows, {name: values}, found
 
 
-def study_rows(study: Study, parts: list) -> dict:
-    """Every row is described in Overall; rows without a group are missing from the group columns."""
-    total = len(study.data)
-    missing = {"group": total - sum(len(rows) for _, rows in parts[:-1])} if study.group else {}
-    return {"total": total, "analysed": total, "missing": missing}
-
-
 def describe(study: Study, stats: Sequence[str] = ("median_iqr",), size: str = "double") -> Result:
     stats = (stats,) if isinstance(stats, str) else tuple(stats)
     check_stats(stats)
     study.require([study.group, *study.variables], "describe")
     study.require_one_row(study.variables, "describe")
     parts = subsets(study)
-    found: dict = {"rows": study_rows(study, parts), "n": {label: len(rows) for label, rows in parts},
-                   "variables": {}}
+    found: dict = {"rows": counted_rows(study, group_role(study), in_overall=True),
+                   "n": {label: len(rows) for label, rows in parts}, "variables": {}}
     counts = [format_number(count, 0) for count in found["n"].values()]
     table, values = [["n", *counts]], {"n": dict(zip(found["n"], counts, strict=True))}
     for name in study.variables:
@@ -108,7 +121,7 @@ def counts_text(study: Study, parts: list, counts: list[str]) -> str:
 
 def missing_text(study: Study, found: dict) -> str:
     """' Left out where missing: Age 1 and SOFA 2.'; empty when no variable misses a value."""
-    missing = {name: found["variables"][name][OVERALL]["missing"] for name in study.variables}
+    missing = {name: found["variables"][name][study.overall]["missing"] for name in study.variables}
     parts = [f"{study.label(name)} {format_number(count, 0)}" for name, count in missing.items() if count]
     return f" Left out where missing: {listed(parts)}." if parts else ""
 

@@ -1,7 +1,7 @@
 # hl_describe(): Table 1 by group, values per variable, a counts sentence and an overview of the numeric variables.
 
 study_subsets <- function(study) {
-  overall <- list(list(name = "Overall", rows = study$data))
+  overall <- list(list(name = study_overall(study), rows = study$data))
   if (is.null(study$roles$group)) return(overall)
   values <- study$data[[study$roles$group]]
   labels <- ifelse(study_is_missing(values), NA, level_text(values))
@@ -50,13 +50,30 @@ describe_categorical <- function(study, name, parts) {
   list(rows = rows, values = stats::setNames(list(values), name), numbers = found)
 }
 
-# Every row is described in Overall; rows without a group are missing from the group columns.
-describe_counts <- function(study, parts) {
-  total <- nrow(study$data)
-  grouped <- parts[-length(parts)]
-  missing <- if (is.null(study$roles$group)) stats::setNames(list(), character()) else
-    list(group = total - sum(vapply(grouped, function(part) nrow(part$rows), integer(1))))
-  list(total = total, analysed = total, missing = missing)
+study_group_role <- function(study) if (is.null(study$roles$group)) list() else list(group = study$roles$group)
+
+# Rows in the study, analysed, and missing: each role in turn (variable, group, date) counts the rows still in that
+# lack it. With a group, other_groups counts rows in groups that order leaves out; with `in_overall` those and the
+# rows without a group still count as analysed, in Overall.
+study_counted_rows <- function(study, columns, in_overall = FALSE) {
+  data <- study$data
+  kept <- rep(TRUE, nrow(data))
+  missing <- stats::setNames(list(), character())
+  for (role in names(columns)) {
+    absent <- study_is_missing(data[[columns[[role]]]])
+    missing[[role]] <- sum(kept & absent)
+    kept <- kept & !absent
+  }
+  found <- list(total = nrow(data), analysed = 0L, missing = missing)
+  group <- study$roles$group
+  if (!is.null(group)) {
+    other <- kept & !level_text(data[[group]]) %in% study$groups
+    found$other_groups <- sum(other)
+    kept <- kept & !other
+  }
+  overall <- if (in_overall) (missing$group %||% 0L) + (found$other_groups %||% 0L) else 0L
+  found$analysed <- sum(kept) + overall
+  found
 }
 
 describe_text <- function(study, parts, counts) {
@@ -68,7 +85,8 @@ describe_text <- function(study, parts, counts) {
 
 # " Left out where missing: Age 1 and SOFA 2."; empty when no variable misses a value.
 describe_missing_text <- function(study, found) {
-  missing <- vapply(study$variables, function(name) found$variables[[name]][["Overall"]]$missing, numeric(1))
+  missing <- vapply(study$variables, function(name) found$variables[[name]][[study_overall(study)]]$missing,
+                    numeric(1))
   if (!any(missing > 0)) return("")
   parts <- paste(vapply(study$variables[missing > 0], study_label, character(1), study = study),
                  vapply(missing[missing > 0], hl_format_number, character(1), digits = 0))
@@ -102,7 +120,7 @@ hl_describe <- function(study, stats = "median_iqr") {
   study_require_one_row(study, study$variables, "describe")
   parts <- study_subsets(study)
   names <- study_part_names(parts)
-  found <- list(rows = describe_counts(study, parts),
+  found <- list(rows = study_counted_rows(study, study_group_role(study), in_overall = TRUE),
                 n = stats::setNames(lapply(parts, function(part) nrow(part$rows)), names), variables = list())
   counts <- vapply(found$n, hl_format_number, character(1), digits = 0, USE.NAMES = FALSE)
   rows <- list(c("n", counts))

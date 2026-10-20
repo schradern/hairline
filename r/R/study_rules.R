@@ -27,6 +27,7 @@ group_findings <- function(data, column, groups, limit) {
   findings <- c(missing_value_findings(data, column, limit), spelling_findings(data, column, limit))
   labels <- level_text(data[[column]])
   labels[study_is_missing(data[[column]])] <- NA
+  findings <- c(findings, empty_group_findings(labels[!is.na(labels)], column, groups))
   for (name in groups) {
     size <- sum(labels == name, na.rm = TRUE)
     if (size < hl_tokens()$study$small_group) {
@@ -37,6 +38,17 @@ group_findings <- function(data, column, groups, limit) {
     }
   }
   findings
+}
+
+# An error when no group of the study has a row: the column is empty, or order names none of its groups.
+empty_group_findings <- function(present, column, groups) {
+  if (any(present %in% groups)) return(list())
+  if (!length(present)) {
+    return(list(study_finding("error", column, "no row has a group", integer(),
+                              "fill in the groups, or leave out the group role")))
+  }
+  list(study_finding("error", column, "order names none of the groups in the data", integer(),
+                     paste("name groups that are in the data:", paste(unique(present), collapse = ", "))))
 }
 
 id_findings <- function(data, column, limit) {

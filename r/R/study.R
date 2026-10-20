@@ -68,6 +68,7 @@ hl_study <- function(data, group = NULL, time = NULL, event = NULL, id = NULL, v
   }, character(1))
   study_check_kinds(kinds)
   has_group <- !is.null(group) && group %in% names(data)
+  study_check_order(order)
   groups <- order %||% if (has_group) study_levels(data[[group]], FALSE) else character()
   checks <- c(run_study_checks(data, roles, variables, groups), unit_findings(roles, variables, kinds, as.list(units)))
   study <- structure(list(data = data, roles = roles, variables = variables, labels = as.list(labels), types = kinds,
@@ -89,6 +90,31 @@ print.hairline_study <- function(x, ...) {
   lines <- if (length(x$checks)) vapply(x$checks, format_finding, character(1)) else "no problems found"
   cat(paste0("- ", lines, "\n"), sep = "")
   invisible(x)
+}
+
+# Each group once in `order`; a repeated name would analyse the same rows twice.
+study_check_order <- function(order) {
+  counts <- table(factor(order, levels = unique(order)))
+  repeated <- names(counts)[counts > 1]
+  if (length(repeated)) {
+    count <- counts[[repeated[1]]]
+    stop(sprintf("hairline: study: order names '%s' %s; name each group once", repeated[1],
+                 if (count == 2) "twice" else paste(count, "times")), call. = FALSE)
+  }
+}
+
+# The column endpoints add for the group as text, named so it never collides with a column of the data.
+study_group_key <- function(study) {
+  name <- ".group"
+  while (name %in% names(study$data)) name <- paste0(".", name)
+  name
+}
+
+# The label of all rows together: "Overall", unless a group already has that name.
+study_overall <- function(study) {
+  name <- "Overall"
+  while (name %in% study$groups) name <- paste(name, "(all)")
+  name
 }
 
 study_label <- function(study, column) study$labels[[column]] %||% humanise(column)

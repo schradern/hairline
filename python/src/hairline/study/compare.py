@@ -12,7 +12,7 @@ from hairline.charts.spread import spread
 from hairline.numbers import format_number, format_p, is_whole
 from hairline.stats.tests import chi_square_test, kruskal_test, rank_sum_test
 from hairline.study.columns import is_missing, level_text, levels, numbers
-from hairline.study.describe import OVERALL, level_numbers, subsets
+from hairline.study.describe import counted_rows, group_role, level_numbers, subsets
 from hairline.study.result import Result
 from hairline.study.summaries import (
     STAT_LABELS,
@@ -29,27 +29,18 @@ from hairline.study.summaries import (
 if TYPE_CHECKING:
     from hairline.study.model import Study
 
-GROUP = "_group"
-
-
 def present_rows(study: Study, variable: str) -> pd.DataFrame:
-    """Rows with the variable (and the group, if any) present; the group as text in GROUP."""
+    """Rows with the variable (and the group, if any) present; the group as text in the study's group key."""
     data = study.data[~is_missing(study.data[variable])]
     if study.group:
         data = data[~is_missing(data[study.group])]
-        return data.assign(**{GROUP: data[study.group].map(level_text)})
-    return data.assign(**{GROUP: OVERALL})
+        return data.assign(**{study.group_key: data[study.group].map(level_text)})
+    return data.assign(**{study.group_key: study.overall})
 
 
-def variable_rows(study: Study, variable: str, in_overall: bool = False) -> dict:
-    """Rows in the study, analysed, and missing: without the variable, then (with a value) without a group; those
-    still count in Overall when `in_overall`."""
-    without_value = is_missing(study.data[variable])
-    missing = {"variable": int(without_value.sum())}
-    if study.group:
-        missing["group"] = int((~without_value & is_missing(study.data[study.group])).sum())
-    left_out = missing["variable"] + (0 if in_overall else missing.get("group", 0))
-    return {"total": len(study.data), "analysed": len(study.data) - left_out, "missing": missing}
+def require_values(names: list[str], variable: str, endpoint: str) -> None:
+    if not names:
+        raise ValueError(f"hairline: {endpoint}: '{variable}' has no values in any group of the study")
 
 
 def numeric_test(samples: list) -> dict | None:
@@ -81,14 +72,15 @@ def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iq
     table = pd.DataFrame(rows, columns=["Group", "n", *[STAT_LABELS[stat] for stat in stats]])
     values = {row[0]: row[2] for row in rows}
     data = present_rows(study, variable).assign(**{variable: lambda frame: frame[variable].astype(float)})
-    names = list(found)[:-1] if study.group else [OVERALL]
+    names = list(found)[:-1] if study.group else [study.overall]
     name = study.label(variable)
     title = f"{name} by {str(study.group).replace('_', ' ')}" if study.group else name
-    figure = spread(data, GROUP, variable, order=names, title=title, axis_title=study.measure(variable), size=size)
+    figure = spread(data, study.group_key, variable, order=names, title=title, axis_title=study.measure(variable),
+                    size=size)
     shown = rows[:-1] if study.group else rows
-    counted = variable_rows(study, variable, in_overall=True)
+    counted = counted_rows(study, {"variable": variable, **group_role(study)}, in_overall=True)
     text = (f"{label}, {STAT_LABELS[stats[0]]}: {listed([f'{row[0]} {row[2]}' for row in shown])}."
-            + left_out_text(counted, study.unit, ("variable",)) + overall_only_text(counted))
+            + left_out_text(counted, study.unit, in_overall=True) + overall_only_text(counted))
     return Result(figure, table, values, text, {"rows": counted, "groups": found})
 
 
@@ -112,17 +104,18 @@ def compare_numeric(study: Study, variable: str, size: str) -> Result:
     found = {name: summary_numbers(numbers(subset[variable]), ("median_iqr",), int(is_missing(subset[variable]).sum()))
              for name, subset in parts}
     names = [name for name in study.groups if found[name]["n"]]
+    require_values(names, variable, "compare")
     test = numeric_test([numbers(subset[variable]) for name, subset in parts if name in names])
     summaries = [summary_text(found[name], "median_iqr", digits) for name in names]
     rows = [[name, format_number(found[name]["n"], 0), summary] for name, summary in zip(names, summaries, strict=True)]
     rows += [["Test", "", test_text(test)]] if test else []
     values = {**dict(zip(names, summaries, strict=True)),
               **({"test": test["method"], "p": format_p(test["p"])} if test else {})}
-    figure = spread(data.assign(**{variable: data[variable].astype(float)}), GROUP, variable, order=names,
+    figure = spread(data.assign(**{variable: data[variable].astype(float)}), study.group_key, variable, order=names,
                     title=f"{study.label(variable)} by {str(study.group).replace('_', ' ')}",
                     subtitle=test_text(test) if test else None, axis_title=study.measure(variable), size=size)
     parts = listed([f"{name} {summary}" for name, summary in zip(names, summaries, strict=True)])
-    counted = variable_rows(study, variable)
+    counted = counted_rows(study, {"variable": variable, **group_role(study)})
     text = (f"{label}, median (IQR): {parts}" + (f" ({test_text(test)})." if test else ".")
             + left_out_text(counted, study.unit))
     found = {"rows": counted, "groups": found, **({"test": test} if test else {})}
@@ -135,15 +128,16 @@ def compare_categorical(study: Study, variable: str, size: str) -> Result:
     kinds = levels(data[variable])
     found = {name: level_numbers(subset[variable], kinds) for name, subset in subsets(study)[:-1]}
     names = [name for name in study.groups if found[name]["n"]]
+    require_values(names, variable, "compare")
     counts = [[found[name]["counts"][kind] for name in names] for kind in kinds]
     rows = [[kind, *[count_share(found[name]["counts"][kind], found[name]["n"]) for name in names]] for kind in kinds]
     test = {"method": "Chi-squared", **chi_square_test(counts)} if len(names) > 1 and len(kinds) > 1 else None
     rows += [["Test", test_text(test), *[""] * (len(names) - 1)]] if test else []
     values: dict = {name: {row[0]: row[1 + index] for row in rows[:len(kinds)]} for index, name in enumerate(names)}
     values.update({"test": test["method"], "p": format_p(test["p"])} if test else {})
-    figure = bars(data, GROUP, by=variable, stacked=True, percent=True, horizontal=True, order=names,
+    figure = bars(data, study.group_key, by=variable, stacked=True, percent=True, horizontal=True, order=names,
                   title=f"{label} by {str(study.group).replace('_', ' ')}", size=size)
-    counted = variable_rows(study, variable)
+    counted = counted_rows(study, {"variable": variable, **group_role(study)})
     text = (f"{label} by {str(study.group).replace('_', ' ')}" + (f": {test_text(test)}." if test else ".")
             + left_out_text(counted, study.unit))
     found = {"rows": counted, "groups": found, **({"test": test} if test else {})}

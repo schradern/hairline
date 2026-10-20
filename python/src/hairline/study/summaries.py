@@ -18,6 +18,8 @@ STAT_KEYS = {"median_iqr": ("median", "q1", "q3"), "mean_sd": ("mean", "sd"), "r
 
 
 def check_stats(stats: tuple[str, ...]) -> None:
+    if not stats:
+        raise ValueError(f"hairline: study: stats is empty; use one or more of {', '.join(STAT_LABELS)}")
     for name in stats:
         if name not in STAT_LABELS:
             raise ValueError(f"hairline: study: unknown statistic {name!r}; use one of {', '.join(STAT_LABELS)}")
@@ -88,21 +90,29 @@ def listed(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
 
 
-def left_out_text(rows: dict, unit: str, roles: tuple[str, ...] = ("variable", "group", "date")) -> str:
-    """' 39 of 40 participants; 1 without a value was left out.' from a result's rows, for the `roles` whose
-    missing rows left the analysis; empty when none did."""
-    counts = {role: count for role, count in rows["missing"].items() if count and role in roles}
-    if not counts:
-        return ""
-    parts = [f"{format_number(count, 0)} without {MISSING_NOUNS[role]}" for role, count in counts.items()]
-    verb = "was" if sum(counts.values()) == 1 else "were"
-    return (f" {format_number(rows['analysed'], 0)} of {format_number(rows['total'], 0)} {unit}; {listed(parts)} "
-            f"{verb} left out.")
+OTHER_GROUPS = "in groups not named in order"
+
+
+def left_out_text(rows: dict, unit: str, in_overall: bool = False) -> str:
+    """' 39 of 40 participants; 1 without a value was left out.' from a result's rows; empty when none were. With
+    `in_overall`, rows without a group or in other groups are not left out (they count in Overall)."""
+    counts = [(count, f"without {MISSING_NOUNS[role]}") for role, count in rows["missing"].items()
+              if not (in_overall and role == "group")]
+    counts.append((0 if in_overall else rows.get("other_groups", 0), OTHER_GROUPS))
+    return parts_text(counts, f" {format_number(rows['analysed'], 0)} of {format_number(rows['total'], 0)} {unit};",
+                      ("was", "were"), "left out")
 
 
 def overall_only_text(rows: dict) -> str:
-    """' 1 without a group is counted in Overall only.'; empty when every row has a group."""
-    count = rows["missing"].get("group", 0)
-    if not count:
+    """' 1 without a group is counted in Overall only.'; empty when every row is in a group of the study."""
+    counts = [(rows["missing"].get("group", 0), "without a group"), (rows.get("other_groups", 0), OTHER_GROUPS)]
+    return parts_text(counts, "", ("is", "are"), "counted in Overall only")
+
+
+def parts_text(counts: list[tuple[int, str]], lead: str, verbs: tuple[str, str], tail: str) -> str:
+    """'<lead> 2 without a value and 1 without a group were <tail>.' over the nonzero counts; empty without any."""
+    shown = [(count, what) for count, what in counts if count]
+    if not shown:
         return ""
-    return f" {format_number(count, 0)} without a group {'is' if count == 1 else 'are'} counted in Overall only."
+    verb = verbs[0] if sum(count for count, _ in shown) == 1 else verbs[1]
+    return f"{lead} {listed([f'{format_number(count, 0)} {what}' for count, what in shown])} {verb} {tail}."

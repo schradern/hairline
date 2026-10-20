@@ -750,7 +750,8 @@
     "analysed": 40,
     "missing": {
      "group": 0
-    }
+    },
+    "other_groups": 0
    },
    "n": {
     "Standard care": 20,
@@ -992,7 +993,8 @@
     "missing": {
      "variable": 0,
      "group": 0
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "Standard care": {
@@ -1067,7 +1069,8 @@
     "missing": {
      "variable": 0,
      "group": 0
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "Standard care": {
@@ -1150,7 +1153,8 @@
     "missing": {
      "variable": 0,
      "group": 0
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "A": {
@@ -1223,7 +1227,8 @@
     "missing": {
      "variable": 1,
      "group": 0
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "Standard care": {
@@ -1289,7 +1294,8 @@
     "analysed": 40,
     "missing": {
      "group": 0
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "Standard care": {
@@ -1678,7 +1684,8 @@
      "variable": 0,
      "group": 0,
      "date": 0
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "North": {
@@ -1739,7 +1746,8 @@
     "missing": {
      "variable": 1,
      "group": 0
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "Standard care": {
@@ -1888,7 +1896,8 @@
     "analysed": 36,
     "missing": {
      "group": 1
-    }
+    },
+    "other_groups": 0
    },
    "n": {
     "A": 11,
@@ -1973,7 +1982,8 @@
     "missing": {
      "variable": 2,
      "group": 1
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "A": {
@@ -2048,7 +2058,8 @@
     "missing": {
      "variable": 2,
      "group": 1
-    }
+    },
+    "other_groups": 0
    },
    "groups": {
     "A": {

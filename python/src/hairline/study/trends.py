@@ -9,8 +9,8 @@ import pandas as pd
 from hairline.charts.timeseries import timeseries
 from hairline.numbers import format_number, is_whole
 from hairline.study.columns import is_missing, is_text, numbers
-from hairline.study.compare import GROUP, present_rows, variable_rows
-from hairline.study.describe import subsets
+from hairline.study.compare import present_rows, require_values
+from hairline.study.describe import counted_rows, group_role, subsets
 from hairline.study.result import Result
 from hairline.study.summaries import digits_for, left_out_text, listed, mean_text, summary_numbers, summary_text
 
@@ -34,14 +34,6 @@ def dated_rows(study: Study, date: str, value: str) -> pd.DataFrame:
     return data.assign(**{value: data[value].astype(float)})
 
 
-def dated_counts(study: Study, date: str, value: str) -> dict:
-    """Rows in the study, analysed, and missing: without the value, then without a group, then without a date."""
-    counted = variable_rows(study, value)
-    counted["missing"]["date"] = int(is_missing(present_rows(study, value)[date]).sum())
-    counted["analysed"] -= counted["missing"]["date"]
-    return counted
-
-
 def over_time(study: Study, date: str, value: str, window: int = 7, size: str = "double") -> Result:
     """Per group the raw values and a trailing mean over `window` observations; the table gives n, mean and
     median (IQR) over the whole period."""
@@ -52,19 +44,21 @@ def over_time(study: Study, date: str, value: str, window: int = 7, size: str = 
     values_all = numbers(data[value])
     digits, whole = digits_for(values_all), is_whole(values_all)
     sizes = {name: len(rows) for name, rows in (subsets(study)[:-1] if study.group else subsets(study))}
-    found = {name: summary_numbers(numbers(data[data[GROUP] == name][value]), ("mean_sd", "median_iqr"),
-                                   size - int((data[GROUP] == name).sum()))
+    key = study.group_key
+    found = {name: summary_numbers(numbers(data[data[key] == name][value]), ("mean_sd", "median_iqr"),
+                                   size - int((data[key] == name).sum()))
              for name, size in sizes.items()}
     names = [name for name in sizes if found[name]["n"]]
+    require_values(names, value, "over_time")
     rows = [[name, format_number(found[name]["n"], 0), summary_text(found[name], "mean_sd", digits, whole),
              summary_text(found[name], "median_iqr", digits, whole)] for name in names]
-    figure = timeseries(data.sort_values(date), x=date, y=value, by=GROUP if study.group else None, order=names,
+    figure = timeseries(data.sort_values(date), x=date, y=value, by=key if study.group else None, order=names,
                         window=window, title=f"{study.label(value)} over time", size=size)
     if study.measure(value):
         figure.y_title(study.measure(value))
     means = [mean_text(found[name]["mean"], digits, whole) for name in names]
     parts = listed([f"{name} {mean}" for name, mean in zip(names, means, strict=True)])
-    counted = dated_counts(study, date, value)
+    counted = counted_rows(study, {"variable": value, **group_role(study), "date": date})
     text = f"{label}, mean over the period: {parts}." + left_out_text(counted, "rows")
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "mean (SD)", "median (IQR)"]),
                   dict(zip(names, means, strict=True)), text, {"rows": counted, "groups": found})

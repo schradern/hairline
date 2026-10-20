@@ -1,28 +1,21 @@
 # hl_distribution() and hl_compare(): one variable by group, mirroring the Python package.
 
-study_group_column <- ".group"
-
 study_present_rows <- function(study, variable) {
   data <- study$data[!study_is_missing(study$data[[variable]]), , drop = FALSE]
   group <- study$roles$group
   if (is.null(group)) {
-    data[[study_group_column]] <- rep("Overall", nrow(data))
+    data[[study_group_key(study)]] <- rep(study_overall(study), nrow(data))
     return(data)
   }
   data <- data[!study_is_missing(data[[group]]), , drop = FALSE]
-  data[[study_group_column]] <- level_text(data[[group]])
+  data[[study_group_key(study)]] <- level_text(data[[group]])
   data
 }
 
-# Rows in the study, analysed, and missing: without the variable, then (with a value) without a group; those still
-# count in Overall when `in_overall`.
-study_variable_rows <- function(study, variable, in_overall = FALSE) {
-  without_value <- study_is_missing(study$data[[variable]])
-  missing <- list(variable = sum(without_value))
-  group <- study$roles$group
-  if (!is.null(group)) missing$group <- sum(!without_value & study_is_missing(study$data[[group]]))
-  left_out <- missing$variable + if (in_overall) 0L else missing$group %||% 0L
-  list(total = nrow(study$data), analysed = nrow(study$data) - left_out, missing = missing)
+study_require_values <- function(names, variable, endpoint) {
+  if (!length(names)) {
+    stop(sprintf("hairline: %s: '%s' has no values in any group of the study", endpoint, variable), call. = FALSE)
+  }
 }
 
 # Per part (group, or Overall) the summary numbers of a numeric variable.
@@ -82,15 +75,15 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
   names(table) <- c("Group", "n", unname(study_stat_labels[stats]))
   data <- study_present_rows(study, variable)
   data[[variable]] <- study_as_number(data[[variable]])
-  names <- if (is.null(study$roles$group)) "Overall" else names(found)[-length(found)]
-  figure <- hl_spread(data, study_group_column, variable, order = names,
+  names <- if (is.null(study$roles$group)) study_overall(study) else names(found)[-length(found)]
+  figure <- hl_spread(data, study_group_key(study), variable, order = names,
                       title = study_by_title(study, study_label(study, variable)),
                       axis_title = study_measure(study, variable))
   shown <- if (is.null(study$roles$group)) rows else rows[-length(rows)]
-  counted <- study_variable_rows(study, variable, in_overall = TRUE)
+  counted <- study_counted_rows(study, c(list(variable = variable), study_group_role(study)), in_overall = TRUE)
   text <- paste0(sprintf("%s, %s: %s.", label, study_stat_labels[[stats[1]]],
                          listed_text(vapply(shown, function(row) paste(row[1], row[3]), character(1)))),
-                 left_out_text(counted, study$unit, "variable"), overall_only_text(counted))
+                 left_out_text(counted, study$unit, in_overall = TRUE), overall_only_text(counted))
   study_result(figure, table, stats::setNames(lapply(rows, `[[`, 3), vapply(rows, `[[`, character(1), 1)), text,
                list(rows = counted, groups = found))
 }
@@ -136,6 +129,7 @@ compare_numeric <- function(study, variable) {
   parts <- study_group_parts(study)
   found <- study_part_summaries(parts, variable, "median_iqr")
   names <- Filter(function(name) found[[name]]$n > 0, study$groups)
+  study_require_values(names, variable, "compare")
   test <- numeric_test(lapply(parts[study$groups %in% names], function(part) study_numbers(part$rows[[variable]])))
   summaries <- vapply(found[names], summary_text, character(1), stat = "median_iqr", digits = digits,
                       USE.NAMES = FALSE)
@@ -148,10 +142,10 @@ compare_numeric <- function(study, variable) {
   values <- c(stats::setNames(as.list(summaries), names),
               if (!is.null(test)) list(test = test$method, p = format_p(test$p)))
   data[[variable]] <- study_as_number(data[[variable]])
-  figure <- hl_spread(data, study_group_column, variable, order = names,
+  figure <- hl_spread(data, study_group_key(study), variable, order = names,
                       title = study_by_title(study, study_label(study, variable)),
                       subtitle = if (!is.null(test)) test_text(test), axis_title = study_measure(study, variable))
-  counted <- study_variable_rows(study, variable)
+  counted <- study_counted_rows(study, c(list(variable = variable), study_group_role(study)))
   text <- paste0(label, ", median (IQR): ", listed_text(paste(names, summaries)),
                  if (!is.null(test)) sprintf(" (%s).", test_text(test)) else ".", left_out_text(counted, study$unit))
   study_result(figure, table, values, text,
@@ -167,6 +161,7 @@ compare_categorical <- function(study, variable) {
   found <- stats::setNames(lapply(parts, function(part) level_numbers(part$rows[[variable]], kinds)),
                            study_part_names(parts))
   names <- Filter(function(name) found[[name]]$n > 0, study$groups)
+  study_require_values(names, variable, "compare")
   counts <- matrix(unlist(lapply(found[names], `[[`, "counts")), nrow = length(kinds))
   rows <- lapply(kinds, function(kind) {
     c(kind, vapply(found[names], function(part) count_share(part$counts[[kind]], part$n), character(1),
@@ -182,9 +177,9 @@ compare_categorical <- function(study, variable) {
   }
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c(label, names)
-  figure <- hl_bars(data, study_group_column, by = variable, stacked = TRUE, percent = TRUE, horizontal = TRUE,
+  figure <- hl_bars(data, study_group_key(study), by = variable, stacked = TRUE, percent = TRUE, horizontal = TRUE,
                     order = names, title = study_by_title(study, label))
-  counted <- study_variable_rows(study, variable)
+  counted <- study_counted_rows(study, c(list(variable = variable), study_group_role(study)))
   text <- paste0(study_by_title(study, label), if (!is.null(test)) sprintf(": %s.", test_text(test)) else ".",
                  left_out_text(counted, study$unit))
   study_result(figure, table, values, text,
