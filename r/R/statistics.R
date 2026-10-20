@@ -1,7 +1,10 @@
 # Tests and fits the charts compute from raw data; base R where it has them, and a log-rank test that matches
 # survival::survdiff without depending on it. The Python package computes the same values.
 
+# NA when every value ties, which leaves the test undefined; checked here rather than left to wilcox.test(), whose
+# result for that case differs between R versions (NaN in R 4.5, 1 in R-devel).
 rank_sum_p <- function(first, second) {
+  if (length(unique(c(first, second))) < 2) return(NA_real_)
   suppressWarnings(stats::wilcox.test(first, second, exact = FALSE, correct = TRUE)$p.value)
 }
 
@@ -79,6 +82,9 @@ format_p <- function(value, locale = NULL) {
   paste("p =", hl_format_number(value, if (value < 0.1) 3 else 2, locale))
 }
 
-kruskal_p <- function(samples) suppressWarnings(stats::kruskal.test(samples)$p.value)
+kruskal_p <- function(samples) {
+  if (length(unique(unlist(samples))) < 2) return(NA_real_)
+  suppressWarnings(stats::kruskal.test(samples)$p.value)
+}
 
 chi_square_p <- function(counts) suppressWarnings(stats::chisq.test(counts, correct = FALSE)$p.value)
