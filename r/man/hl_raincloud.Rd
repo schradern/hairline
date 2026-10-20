@@ -40,7 +40,8 @@ A ggplot with the hairline frame.
 \description{
 Per group a half density, the box (interquartile range and median) and
 the points, with "n = …" under the group names. Comparison brackets show
-your test results and are stacked so they never overlap.
+your test results and are stacked so they never overlap. Missing values
+are left out, and "n = …" counts the values shown.
 }
 \examples{
 set.seed(1)

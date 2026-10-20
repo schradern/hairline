@@ -24,6 +24,13 @@ risk_of_bias_spec <- function(data, study, domain = NULL, judgement = NULL, doma
     check_columns(data, c(study, domain, judgement))
     table <- data.frame(study = data[[study]], domain = data[[domain]], judgement = data[[judgement]])
   }
+  keys <- paste(table$study, table$domain, sep = "\r")
+  repeated <- which(duplicated(keys))
+  if (length(repeated)) {
+    first <- repeated[1]
+    stop(sprintf("hairline: risk of bias: %s has %d judgements for %s; give one per study and domain",
+                 table$study[first], sum(keys == keys[first]), table$domain[first]), call. = FALSE)
+  }
   table$level <- mapply(judgement_of, table$judgement, table$study, table$domain, USE.NAMES = FALSE)
   names <- unique(as.character(table$domain))
   counts <- lapply(names, function(name) {

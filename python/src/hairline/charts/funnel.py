@@ -38,10 +38,24 @@ def funnel_axes(effects: np.ndarray, errors: np.ndarray, pooled: float, ratio: b
     return x_axis, y_axis
 
 
+def check_funnel_inputs(estimates: np.ndarray, errors: np.ndarray, estimate: str, se: str, ratio: bool) -> None:
+    """Standard errors above zero and present estimates (above zero for ratios): pooling weighs by 1 / SE²."""
+    bad = np.flatnonzero(~np.isfinite(errors) | ~(errors > 0))
+    if len(bad):
+        raise ValueError(f"hairline: funnel: '{se}' is {errors[bad[0]]:g} in row {bad[0] + 1}; standard errors must "
+                         f"be above zero")
+    bad = np.flatnonzero(~np.isfinite(estimates) | ((estimates <= 0) if ratio else False))
+    if len(bad):
+        need = "ratios above zero (or ratio=False for differences)" if ratio else "numbers"
+        raise ValueError(f"hairline: funnel: '{estimate}' is {estimates[bad[0]]:g} in row {bad[0] + 1}; estimates "
+                         f"must be {need}")
+
+
 def funnel_spec(data: pd.DataFrame, estimate: str, se: str, *, ratio: bool = True, pooled: float | None = None,
                 x_title: str | None = None) -> dict:
     """Points on the analysis scale (log for ratios), the pooled estimate (inverse-variance unless given) and axes."""
     check_columns(data, [estimate, se])
+    check_funnel_inputs(data[estimate].to_numpy(dtype=float), data[se].to_numpy(dtype=float), estimate, se, ratio)
     effects = np.log(data[estimate].to_numpy(dtype=float)) if ratio else data[estimate].to_numpy(dtype=float)
     errors = data[se].to_numpy(dtype=float)
     weights = 1 / errors ** 2

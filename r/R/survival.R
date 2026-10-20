@@ -6,6 +6,11 @@ km_check_inputs <- function(time, event) {
     stop(sprintf(paste("hairline: Kaplan\u2013Meier needs as many times as events and at least one;",
                        "got %d times and %d events"), length(time), length(event)), call. = FALSE)
   }
+  missing <- which(is.na(time) | is.na(event))
+  if (length(missing)) {
+    stop(sprintf("hairline: Kaplan\u2013Meier time and event must not be missing; row %d has time %s and event %s",
+                 missing[1], format(time[missing[1]]), format(event[missing[1]])), call. = FALSE)
+  }
   unknown <- setdiff(sort(unique(event)), c(0, 1))
   if (length(unknown)) {
     stop(sprintf("hairline: Kaplan\u2013Meier event values must be 0 or 1; found %s", format(unknown[1])),

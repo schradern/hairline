@@ -19,12 +19,15 @@ group_thousands <- function(integer_part, separator) {
   paste(c(integer_part, groups), collapse = separator)
 }
 rounding_tolerance <- 1e-9
+float_noise <- 1e-15
 
-# `magnitude` (zero or more) with `digits` decimals, halves rounded up. Float noise below a billionth of the last digit
-# does not decide (8.649999999999999 is 8.65), so every platform prints the same digits, as in the Python package.
+# `magnitude` (zero or more) with `digits` decimals, halves rounded up. Float noise does not decide
+# (8.649999999999999 is 8.65): a billionth of the last digit, plus the few units in the last place that float
+# arithmetic leaves on large numbers. Neither ever adds a displayed unit, so every platform prints the same digits
+# and exact values stay exact (1,000,000,000 is not 1,000,000,001), as in the Python package.
 fixed_text <- function(magnitude, digits) {
   scaled <- magnitude * 10^digits
-  units <- sprintf("%.0f", floor(scaled + 0.5 + rounding_tolerance * max(1, scaled)))
+  units <- sprintf("%.0f", floor(scaled + 0.5 + rounding_tolerance + float_noise * scaled))
   if (digits == 0) return(units)
   units <- paste0(strrep("0", max(0, digits + 1 - nchar(units))), units)
   paste0(substr(units, 1, nchar(units) - digits), ".", substring(units, nchar(units) - digits + 1))

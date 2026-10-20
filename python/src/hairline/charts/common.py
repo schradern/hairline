@@ -40,8 +40,19 @@ def joined(names: Sequence[str]) -> str:
     return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
+COUNT_NAMES = (COUNT, "Rows", "Row count")
+
+
+def count_column(data: pd.DataFrame) -> str:
+    """A name for the row counts that no data column has: Count, else Rows, else Row count, else numbered."""
+    taken = {str(column) for column in data.columns}
+    candidates = [*COUNT_NAMES, *(f"{COUNT} {index}" for index in range(2, len(taken) + 3))]
+    return next(name for name in candidates if name not in taken)
+
+
 def with_counts(data: pd.DataFrame, value: str | None) -> tuple[pd.DataFrame, str]:
-    """Raw rows count one each when no value column is given."""
+    """Raw rows count one each when no value column is given; the count never overwrites a data column."""
     if value is not None:
         return data, value
-    return data.assign(**{COUNT: 1}), COUNT
+    name = count_column(data)
+    return data.assign(**{name: 1}), name

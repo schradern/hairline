@@ -23,6 +23,10 @@
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
                        sort = TRUE, ratio = FALSE, reference = NULL, digits = 2) {
   check_columns(data, c(label, estimate, low, high))
+  if (is.null(low) != is.null(high)) {
+    stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
+                 if (is.null(low)) "high" else "low", low %||% high), call. = FALSE)
+  }
   interval <- !is.null(low) && !is.null(high)
   if (sort) data <- data[order(-data[[estimate]], seq_len(nrow(data))), , drop = FALSE]
   if (!interval) {

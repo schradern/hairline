@@ -6,6 +6,7 @@ from __future__ import annotations
 import base64
 import json
 from importlib import resources
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -24,20 +25,21 @@ if TYPE_CHECKING:
 SNAP_DIGITS = 10
 
 
-def number_texts(values, percent: bool, digits: int | None = None) -> list[str]:
-    """Values formatted with `digits` decimals, or the shared digits rule (percentages for share axes)."""
+def number_texts(values, percent: bool, digits: int | None = None, locale: str | None = None) -> list[str]:
+    """Values formatted with `digits` decimals, or the shared digits rule (percentages for share axes), in
+    `locale` (the figure's own, so a later change of the session's settings does not reach it)."""
     array = np.asarray(values, dtype=float)
     if percent:
         digits = auto_digits(array * 100) if digits is None else digits
-        return [format_percent(round(float(value), SNAP_DIGITS), digits) for value in array]
+        return [format_percent(round(float(value), SNAP_DIGITS), digits, locale) for value in array]
     digits = auto_digits(array) if digits is None else digits
-    return [format_number(round(float(value), SNAP_DIGITS), digits) for value in array]
+    return [format_number(round(float(value), SNAP_DIGITS), digits, locale) for value in array]
 
 
 def axis_number_texts(figure: HairlineFigure, index: int, which: str, values) -> list[str]:
     """Values on panel `index`'s axis `which`, as that axis labels them (percent or number, its digits)."""
     key = (index, which)
-    return number_texts(values, key in figure.percent_axes, figure.axis_digits.get(key))
+    return number_texts(values, key in figure.percent_axes, figure.axis_digits.get(key), figure.settings.locale)
 
 
 def is_date_axis(axis) -> bool:
@@ -73,6 +75,14 @@ def steps(xy: np.ndarray) -> np.ndarray:
     return np.asarray(points)
 
 
+def finite_runs(xy: np.ndarray) -> list[np.ndarray]:
+    """The stretches of a line between missing values, where matplotlib breaks it; missing points get no tip."""
+    finite = np.flatnonzero(np.isfinite(xy).all(axis=1))
+    if not len(finite):
+        return []
+    return [xy[run] for run in np.split(finite, np.flatnonzero(np.diff(finite) > 1) + 1)]
+
+
 def line_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
     found = []
     for line in ax.lines:
@@ -81,11 +91,16 @@ def line_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         if line.get_linestyle() in ("None", "none", "", " "):
             continue
         xy = np.asarray(line.get_xydata(), dtype=float)
-        path = steps(xy) if line.get_drawstyle() == "steps-post" else xy
+        runs = finite_runs(xy)
+        if not runs:
+            continue
+        xy = np.concatenate(runs)
+        paths = [steps(run) if line.get_drawstyle() == "steps-post" else run for run in runs]
         name = series_name(line.get_label(), figure, index)
         xs, ys = x_texts(figure, index, ax, xy[:, 0]), axis_number_texts(figure, index, "y", xy[:, 1])
         found.append({"name": name, "color": to_hex(line.get_color()),
-                      "marks": [{"line": [to_pt(ax, point) for point in path], "width": line.get_linewidth()}],
+                      "marks": [{"line": [to_pt(ax, point) for point in path], "width": line.get_linewidth()}
+                                for path in paths],
                       "tips": [{"at": to_pt(ax, point), "text": f"{name}: {x}, {y}"}
                                for point, x, y in zip(xy, xs, ys, strict=True)]})
     return found
@@ -95,6 +110,7 @@ def point_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
     found = []
     for collection in ax.collections:
         offsets = np.asarray(collection.get_offsets(), dtype=float)
+        offsets = offsets[np.isfinite(offsets).all(axis=1)] if offsets.ndim == 2 else offsets
         if not isinstance(collection, PathCollection) or collection.get_gid() == STATIC_ID or not len(offsets) \
                 or not len(collection.get_facecolor()):
             continue
@@ -215,15 +231,42 @@ def asset(name: str) -> str:
     return (resources.files("hairline") / "data" / "interactive" / name).read_text(encoding="utf-8")
 
 
-def font_faces(family: str) -> str:
-    """The bundled font as data URIs, so the page renders the same without installed fonts."""
+FACE_WEIGHTS = (400, 500, 600)
+FONT_FORMATS = {".ttf": ("font/ttf", "truetype"), ".otf": ("font/otf", "opentype")}
+
+
+def bundled_font_files() -> list[tuple[list[int], str, bytes]]:
     weights = {"Regular": 400, "Medium": 500, "SemiBold": 600}
+    folder = resources.files("hairline") / "data" / "fonts"
+    return [([weights[file.split("-")[1].split(".")[0]]], ".ttf", (folder / file).read_bytes())
+            for file in load_tokens()["interactive"]["fonts"]]
+
+
+def installed_font_files(family: str) -> list[tuple[list[int], str, bytes]]:
+    """The files matplotlib draws `family` with, per weight (one file may serve several); a collection (.ttc)
+    cannot be embedded and is left to the reader's installed fonts."""
+    from matplotlib.font_manager import FontProperties, findfont
+    weights: dict[Path, list[int]] = {}
+    for weight in FACE_WEIGHTS:
+        try:
+            path = Path(findfont(FontProperties(family=family, weight=weight), fallback_to_default=False))
+        except ValueError:
+            continue
+        if path.suffix.lower() in FONT_FORMATS:
+            weights.setdefault(path, []).append(weight)
+    return [(found, path.suffix.lower(), path.read_bytes()) for path, found in weights.items()]
+
+
+def font_faces(family: str) -> str:
+    """The figure's font as data URIs under its own name, so the page renders with the font the layout was
+    measured with: the bundled files for the bundled family, else the installed files of the requested one."""
+    bundled = family == load_tokens()["font"]["family"]
     faces = []
-    for file in load_tokens()["interactive"]["fonts"]:
-        data = (resources.files("hairline") / "data" / "fonts" / file).read_bytes()
-        weight = weights[file.split("-")[1].split(".")[0]]
+    for weights, suffix, data in bundled_font_files() if bundled else installed_font_files(family):
+        media, kind = FONT_FORMATS[suffix]
+        weight = f"{min(weights)} {max(weights)}" if len(weights) > 1 else str(weights[0])
         faces.append(f"@font-face{{font-family:'{family}';font-weight:{weight};"
-                     f"src:url(data:font/ttf;base64,{base64.b64encode(data).decode()}) format('truetype')}}")
+                     f"src:url(data:{media};base64,{base64.b64encode(data).decode()}) format('{kind}')}}")
     return "".join(faces)
 
 

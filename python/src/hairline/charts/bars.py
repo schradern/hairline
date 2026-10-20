@@ -39,8 +39,17 @@ def bar_values(table: pd.DataFrame, category: str, value: str, by: str | None, n
                percent: bool) -> list[float]:
     rows = table if not by else table[table[by].astype(str) == group]
     totals = table.groupby(category)[value].sum()
+    if percent:
+        check_percent_totals(totals, names)
     sums = rows.groupby(category)[value].sum()
     return [float(sums.get(name, 0.0)) / (float(totals[name]) if percent else 1.0) for name in names]
+
+
+def check_percent_totals(totals: pd.Series, names: list[str]) -> None:
+    empty = [name for name in names if not totals.get(name, 0.0) > 0]
+    if empty:
+        raise ValueError(f"hairline: bars: percent needs a total above zero in every category; {empty[0]!r} totals "
+                         f"{totals.get(empty[0], 0.0):g}, so its shares are undefined")
 
 
 def value_text(value: float, percent: bool) -> str:
@@ -78,7 +87,8 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
     category, value, by = options["category"], options["value"], options["by"]
     rules, horizontal, stacked = load_tokens()["bars"], options["horizontal"], options["stacked"]
     positions = [len(names) - 1 - index if horizontal else index for index in range(len(names))]
-    base, single = [0.0] * len(names), rules["width"] if stacked else rules["width"] / len(groups)
+    single = rules["width"] if stacked else rules["width"] / len(groups)
+    ups, downs = [0.0] * len(names), [0.0] * len(names)
     edge = {"edgecolor": current_settings().neutral["surface"], "linewidth": rules["gap_pt"] / 2} if stacked else \
         {"linewidth": 0}
     options = {**options, "largest": max_total(table, category, value, by, names, groups, options)}
@@ -90,6 +100,8 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
         color = entities.color(group) if by else lone_color()
         where = [position + offset for position in positions]
         draw = ax.barh if horizontal else ax.bar
+        base = [up if height >= 0 else down for up, down, height in zip(ups, downs, heights, strict=True)] \
+            if stacked else [0.0] * len(names)
         draw(where, heights, single * 0.92, base, color=color, label=group if by else "_nolegend_", **edge)
         ends = max([ends, *heights])
         if stacked and options["labels"]:
@@ -98,15 +110,21 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
             for spot, height in zip(where, heights, strict=True):
                 value_label(ax, height, (height, spot) if horizontal else (spot, height), horizontal,
                             options["percent"])
-        if stacked:
-            base = [low + height for low, height in zip(base, heights, strict=True)]
+        ups = [up + max(height, 0.0) for up, height in zip(ups, heights, strict=True)]
+        downs = [down + min(height, 0.0) for down, height in zip(downs, heights, strict=True)]
     if stacked and options["labels"] and not options["percent"]:
-        for spot, total in zip(positions, base, strict=True):
-            value_label(ax, total, (total, spot) if horizontal else (spot, total), horizontal, False,
-                        "hairline-total")
+        stacked_totals(ax, positions, ups, downs, horizontal)
     if options["labels"] and not (stacked and options["percent"]):
-        reach = (max(base) if stacked else ends) * (1 + rules["label_headroom"])
+        reach = (max(ups) if stacked else ends) * (1 + rules["label_headroom"])
         ax.update_datalim([(reach, positions[0])] if horizontal else [(positions[0], reach)])
+
+
+def stacked_totals(ax, positions: list[float], ups: list[float], downs: list[float], horizontal: bool) -> None:
+    """The signed total at the end of the stack: past the positive segments, or the negative ones if none is
+    positive. Negative segments stack below zero, positive ones above."""
+    for spot, up, down in zip(positions, ups, downs, strict=True):
+        end = up if up > 0 else down
+        value_label(ax, up + down, (end, spot) if horizontal else (spot, end), horizontal, False, "hairline-total")
 
 
 def max_total(table: pd.DataFrame, category: str, value: str, by: str | None, names: list[str], groups: list[str],
@@ -114,7 +132,7 @@ def max_total(table: pd.DataFrame, category: str, value: str, by: str | None, na
     if options["percent"]:
         return 1.0
     if options["stacked"]:
-        return float(table.groupby(category)[value].sum().max())
+        return float(table[value].clip(lower=0).groupby(table[category]).sum().max())
     return float(table[value].max())
 
 

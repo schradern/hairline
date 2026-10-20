@@ -60,7 +60,7 @@ raincloud_bracket_layers <- function(comparisons, names, values, rules) {
 
 resolve_comparisons <- function(comparisons, data, group, value, names) {
   if (is.character(comparisons) && length(comparisons) == 1 && comparisons %in% c("all", "adjacent")) {
-    pairs <- utils::combn(names, 2, simplify = FALSE)
+    pairs <- if (length(names) > 1) utils::combn(names, 2, simplify = FALSE) else list()
     if (comparisons == "adjacent") pairs <- Filter(function(pair) abs(diff(match(pair, names))) == 1, pairs)
     comparisons <- pairs
   } else if (is.character(comparisons) && length(comparisons) == 1) {
@@ -84,7 +84,8 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #'
 #' Per group a half density, the box (interquartile range and median) and
 #' the points, with "n = …" under the group names. Comparison brackets show
-#' your test results and are stacked so they never overlap.
+#' your test results and are stacked so they never overlap. Missing values
+#' are left out, and "n = …" counts the values shown.
 #'
 #' @param data A data frame.
 #' @param group,value Columns: the grouping and the measurement; or a formula `value ~ group` as `group`.
@@ -110,6 +111,7 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     group <- sides$right[1]
   }
   check_columns(data, c(group, value))
+  data <- data[!is.na(data[[value]]), , drop = FALSE]
   names <- order %||% unique(as.character(data[[group]]))
   title <- title %||% paste(humanise(value), "by", gsub("_", " ", group))
   comparisons <- resolve_comparisons(comparisons, data, group, value, names)

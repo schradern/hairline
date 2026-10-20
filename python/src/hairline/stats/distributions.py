@@ -14,13 +14,15 @@ def normal_cdf(value: float) -> float:
 
 
 def gamma_upper(shape: float, value: float) -> float:
-    """Regularised upper incomplete gamma Q(shape, value): series below shape + 1, continued fraction above."""
+    """Regularised upper incomplete gamma Q(shape, value): series below shape + 1, continued fraction above. Both
+    need about √shape steps near the peak, so large degrees of freedom get more of them."""
     if value <= 0:
         return 1.0
     log_front = shape * math.log(value) - value - math.lgamma(shape)
+    steps = ITERATIONS + int(10 * math.sqrt(shape))
     if value < shape + 1:
         term = total = 1.0 / shape
-        for step in range(1, ITERATIONS):
+        for step in range(1, steps):
             term *= value / (shape + step)
             total += term
             if abs(term) < abs(total) * EPSILON:
@@ -28,7 +30,7 @@ def gamma_upper(shape: float, value: float) -> float:
         return 1.0 - total * math.exp(log_front)
     b, c, d = value + 1 - shape, 1 / TINY, 1 / (value + 1 - shape)
     result = d
-    for step in range(1, ITERATIONS):
+    for step in range(1, steps):
         a, b = -step * (step - shape), b + 2
         d, c = 1 / (a * d + b if abs(a * d + b) > TINY else TINY), b + a / c if abs(b + a / c) > TINY else TINY
         result *= d * c
@@ -73,9 +75,19 @@ def t_cdf(value: float, df: float) -> float:
     return 1 - tail if value > 0 else tail
 
 
+MAX_BRACKET = 1e300
+
+
 def t_quantile(probability: float, df: float) -> float:
-    """Inverse of t_cdf by bisection; accurate to well below 1e-10."""
-    low, high = -1e4, 1e4
+    """Inverse of t_cdf by bisection, on a bracket that doubles until it holds the probability (heavy tails at few
+    degrees of freedom reach far: 31,821 for 0.99999 at df 1); accurate to well below 1e-10."""
+    if not 0 < probability < 1:
+        raise ValueError(f"hairline: t quantile needs a probability between 0 and 1; got {probability}")
+    if probability < 0.5:
+        return -t_quantile(1 - probability, df)
+    low, high = 0.0, 1.0
+    while t_cdf(high, df) < probability and high < MAX_BRACKET:
+        low, high = high, high * 2
     for _ in range(ITERATIONS):
         middle = (low + high) / 2
         if t_cdf(middle, df) < probability:

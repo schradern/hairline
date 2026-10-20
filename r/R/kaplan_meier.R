@@ -92,7 +92,7 @@ km_layers <- function(layers, colours, median_line) {
 #' @param stats Named character vector of key numbers, e.g. `c(HR = "0.64 [0.45, 0.91]")`.
 #' @param at_risk Show the number at risk.
 #' @param times Times for the number at risk; default the x-axis breaks.
-#' @param order Group order.
+#' @param order Group order; groups left out are neither drawn nor part of the log-rank test.
 #' @param test Add the log-rank p to the key numbers when there are groups.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
@@ -114,7 +114,8 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
   }
   title <- title %||% if (is.null(by)) endpoint else paste(endpoint, "by", gsub("_", " ", by))
   if (!inherits(data, "survfit") && !is.null(by) && test && !any(startsWith(tolower(names(stats)), "log-rank"))) {
-    stats <- c(stats, `Log-rank` = format_p(logrank_test(data[[time]], data[[event]], data[[by]])$p))
+    shown <- if (length(order)) data[as.character(data[[by]]) %in% as.character(order), , drop = FALSE] else data
+    stats <- c(stats, `Log-rank` = logrank_text(shown[[time]], shown[[event]], shown[[by]]))
   }
   estimates <- if (inherits(data, "survfit")) km_from_fit(data) else km_from_data(data, time, event, by, order)
   grouped <- !is.null(by) || length(estimates) > 1

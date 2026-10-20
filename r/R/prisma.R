@@ -67,6 +67,20 @@ prisma_rows <- function(counts) {
   c(rows, list(list(main = included, exclusion = NULL)))
 }
 
+# Every count is a whole number of zero or more: records and reports cannot be negative or fractional.
+prisma_check_counts <- function(counts) {
+  reasons <- unlist(counts$excluded_reasons)
+  named <- c(counts[setdiff(names(counts), "excluded_reasons")],
+             stats::setNames(as.list(reasons), sprintf("excluded_reasons['%s']", names(reasons))))
+  for (key in names(named)) {
+    value <- named[[key]]
+    if (!is.numeric(value) || length(value) != 1 || is.na(value) || value < 0 || value != round(value)) {
+      stop(sprintf("hairline: prisma: %s is %s; counts must be whole numbers of 0 or more", key,
+                   paste(format(value), collapse = ", ")), call. = FALSE)
+    }
+  }
+}
+
 prisma_spec <- function(counts) {
   counts <- as.list(counts)
   missing <- setdiff(c("identified", "screened", "included"), names(counts))
@@ -74,6 +88,7 @@ prisma_spec <- function(counts) {
     stop(sprintf("hairline: prisma needs identified, screened and included; missing %s",
                  paste(missing, collapse = ", ")), call. = FALSE)
   }
+  prisma_check_counts(counts)
   prisma_check(counts)
   rows <- prisma_rows(counts)
   list(rows = rows, phases = list(list("Identification", 0, 0), list("Screening", 1, length(rows) - 2),

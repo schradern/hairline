@@ -19,6 +19,16 @@ scatter_fit_layers <- function(x, y) {
                                        linewidth = pt_to_linewidth(hl_tokens()$lines$data * settings$base_size))))
 }
 
+# A line and its band need three points and two x values; fewer leave slope or band undefined.
+scatter_check_fit <- function(x) {
+  distinct <- length(unique(x))
+  if (length(x) < 3 || distinct < 2) {
+    stop(sprintf(paste("hairline: scatter: a linear fit needs at least 3 points with x and y and 2 different x values;",
+                       "got %d point(s) and %d x value(s); use fit = NULL for the points alone"), length(x), distinct),
+         call. = FALSE)
+  }
+}
+
 #' Scatter plot with fit
 #'
 #' Points per group in their entity colours and, with `fit = "linear"`, a
@@ -55,6 +65,7 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
   }
   plot <- plot + ggplot2::scale_colour_manual(values = colours, guide = if (is.null(by)) "none" else "legend")
   if (!is.null(fit)) {
+    scatter_check_fit(rows[[x]])
     plot <- plot + scatter_fit_layers(rows[[x]], rows[[y]]) +
       hl_panel_header(name = "Linear fit", stats = scatter_stats(rows[[x]], rows[[y]]))
   }

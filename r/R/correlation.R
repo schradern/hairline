@@ -6,6 +6,20 @@ correlation_colour <- function(value) {
   colours[round((value + 1) / 2 * (length(colours) - 1)) + 1]
 }
 
+# Every column needs two different values in the complete rows; a constant one has no correlation.
+correlation_check_varies <- function(rows, columns) {
+  if (nrow(rows) < 2) {
+    stop(sprintf("hairline: correlation needs at least 2 rows with every column present; got %d", nrow(rows)),
+         call. = FALSE)
+  }
+  for (column in columns) {
+    if (length(unique(rows[[column]])) < 2) {
+      stop(sprintf(paste("hairline: correlation: '%s' has the same value in every complete row, so its correlations",
+                         "are undefined; leave it out"), column), call. = FALSE)
+    }
+  }
+}
+
 correlation_spec <- function(data, columns = NULL, method = "pearson") {
   if (!method %in% c("pearson", "spearman")) {
     stop(sprintf("hairline: correlation: method '%s' must be 'pearson' or 'spearman'", method), call. = FALSE)
@@ -17,6 +31,7 @@ correlation_spec <- function(data, columns = NULL, method = "pearson") {
                  if (length(columns)) paste(columns, collapse = ", ") else "none"), call. = FALSE)
   }
   rows <- data[stats::complete.cases(data[, columns]), columns, drop = FALSE]
+  correlation_check_varies(rows, columns)
   matrix <- stats::cor(as.matrix(rows), method = method)
   list(names = as.list(humanise(columns)), matrix = matrix,
        texts = apply(matrix, c(1, 2), hl_format_number, digits = 2),

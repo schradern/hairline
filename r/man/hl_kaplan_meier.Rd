@@ -45,7 +45,7 @@ hl_kaplan_meier(
 
 \item{times}{Times for the number at risk; default the x-axis breaks.}
 
-\item{order}{Group order.}
+\item{order}{Group order; groups left out are neither drawn nor part of the log-rank test.}
 
 \item{test}{Add the log-rank p to the key numbers when there are groups.}
 

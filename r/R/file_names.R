@@ -1,6 +1,6 @@
 # Each saved file names its figure, as the Python package's save() does: PDF Title and Subject, PNG Title and
-# Description, SVG <title> and <desc>. The description is the title and subtitle, the alt text that the HTML figure
-# and the host manifest give.
+# Description, SVG <title> and <desc>, TIFF DocumentName and ImageDescription. The description is the title and
+# subtitle, the alt text that the HTML figure and the host manifest give.
 
 is_text <- function(value) is.character(value) && length(value) == 1 && !is.na(value) && nzchar(value)
 
@@ -21,6 +21,7 @@ name_file <- function(path, format, naming) {
   if (is.null(naming)) return(invisible(path))
   if (format == "png") name_png(path, naming)
   if (format == "svg") name_svg(path, naming)
+  if (format == "tiff") name_tiff(path, naming)
   invisible(path)
 }
 
@@ -140,4 +141,46 @@ set_pdf_info <- function(path, naming) {
       charToRaw(sprintf("\nendstream\nendobj\nstartxref\n%.0f\n%%%%EOF\n", xref_offset)))
   }
   writeBin(c(bytes, info, update), path)
+}
+
+tiff_number <- function(value, width, little) {
+  bytes <- as.raw((value %/% 256^(0:(width - 1))) %% 256)
+  if (little) bytes else rev(bytes)
+}
+
+tiff_read <- function(bytes, at, width, little) {
+  part <- as.integer(bytes[at + seq_len(width)])
+  if (!little) part <- rev(part)
+  sum(part * 256^(seq_along(part) - 1))
+}
+
+tiff_padded <- function(bytes) if (length(bytes) %% 2) c(bytes, as.raw(0)) else bytes
+
+# Tags 269 DocumentName (the title) and 270 ImageDescription (title and subtitle) as UTF-8 text in ASCII-typed entries,
+# as the Python package writes them. ragg cannot set them, so a copy of the first directory with both tags goes at the
+# end of the file and the header points to it; offsets in the old entries stay valid.
+name_tiff <- function(path, naming) {
+  bytes <- readBin(path, "raw", file.size(path))
+  little <- identical(rawToChar(bytes[1:2]), "II")
+  start <- tiff_read(bytes, 4, 4, little)
+  count <- tiff_read(bytes, start, 2, little)
+  entries <- lapply(seq_len(count) - 1, function(index) bytes[start + 2 + index * 12 + seq_len(12)])
+  following <- tiff_read(bytes, start + 2 + count * 12, 4, little)
+  tags <- vapply(entries, tiff_read, numeric(1), at = 0, width = 2, little = little)
+  keep <- !tags %in% c(269, 270)
+  entries <- entries[keep]
+  tags <- tags[keep]
+  bytes <- tiff_padded(bytes)
+  for (index in 1:2) {
+    text <- c(charToRaw(enc2utf8(naming[index])), as.raw(0))
+    value <- if (length(text) <= 4) c(text, raw(4 - length(text))) else tiff_number(length(bytes), 4, little)
+    if (length(text) > 4) bytes <- tiff_padded(c(bytes, text))
+    entries[[length(entries) + 1]] <- c(tiff_number(268 + index, 2, little), tiff_number(2, 2, little),
+                                        tiff_number(length(text), 4, little), value)
+    tags <- c(tags, 268 + index)
+  }
+  directory <- c(tiff_number(length(entries), 2, little), unlist(entries[order(tags)]),
+                 tiff_number(following, 4, little))
+  bytes[5:8] <- tiff_number(length(bytes), 4, little)
+  writeBin(c(bytes, directory), path)
 }

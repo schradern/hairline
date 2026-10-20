@@ -1,7 +1,19 @@
 # Small-multiple time series with two levels of detail; mirrors the Python timeseries().
 
+# Trailing mean of the values present in each window, as in the Python package; NA where a window has none.
 rolling_mean <- function(values, window) {
-  vapply(seq_along(values), function(index) mean(values[max(1, index - window + 1):index]), numeric(1))
+  vapply(seq_along(values), function(index) {
+    present <- values[max(1, index - window + 1):index]
+    present <- present[!is.na(present)]
+    if (length(present)) mean(present) else NA_real_
+  }, numeric(1))
+}
+
+check_window <- function(window) {
+  if (!is.numeric(window) || length(window) != 1 || is.na(window) || window < 1 || window != round(window)) {
+    stop(sprintf("hairline: timeseries: window must be a whole number of 1 or more; got %s",
+                 paste(format(window), collapse = ", ")), call. = FALSE)
+  }
 }
 
 value_formatter <- function(percent) {
@@ -160,6 +172,7 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
                           order = NULL, raw_label = "Raw values", mean_label = NULL, colors = NULL) {
   check_columns(data, c(x, y, by))
   title <- title %||% if (is.null(by)) paste(humanise(y), "over time") else paste(humanise(y), "by", gsub("_", " ", by))
+  check_window(window)
   data <- prepared_series(data, x, y, by, order, window)
   colours <- if (is.null(by)) stats::setNames(lone_colour(), levels(data$.group)) else
     colours_for(levels(data$.group), colors)

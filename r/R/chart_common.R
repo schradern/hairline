@@ -28,10 +28,14 @@ joined <- function(names) {
   paste(paste(names[-length(names)], collapse = ", "), "and", names[length(names)])
 }
 
+# Raw rows count one each when no value column is given; the count takes a name no data column has (Count, else
+# Rows, else Row count, else numbered), so it never overwrites one.
 with_counts <- function(data, value) {
   if (!is.null(value)) return(list(data = data, value = value))
-  data[[count_column]] <- 1
-  list(data = data, value = count_column)
+  candidates <- c(count_column, "Rows", "Row count", paste(count_column, seq_len(ncol(data)) + 1L))
+  name <- candidates[!candidates %in% names(data)][1]
+  data[[name]] <- 1
+  list(data = data, value = name)
 }
 
 formula_sides <- function(formula) {

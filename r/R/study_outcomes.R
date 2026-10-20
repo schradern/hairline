@@ -2,8 +2,8 @@
 
 study_follow_up_rows <- function(study) {
   data <- study$data
-  data[[study$roles$time]] <- as.numeric(data[[study$roles$time]])
-  data[[study$roles$event]] <- as.integer(data[[study$roles$event]])
+  data[[study$roles$time]] <- study_as_number(data[[study$roles$time]])
+  data[[study$roles$event]] <- as.integer(study_as_number(data[[study$roles$event]]))
   group <- study$roles$group
   if (is.null(group)) {
     data[[study_group_column]] <- rep("Overall", nrow(data))
@@ -81,10 +81,11 @@ hl_survival <- function(study, fit = NULL) {
   estimates <- survival_estimates(study, data, fit)
   rows <- survival_rows(estimates)
   grouped <- length(estimates) > 1
-  test <- if (grouped && has_data && !is.null(study$roles$group)) {
-    format_p(logrank_test(data[[time]], data[[event]], data[[study_group_column]])$p)
-  }
   names <- vapply(rows, `[[`, character(1), 1)
+  test <- if (grouped && has_data && !is.null(study$roles$group)) {
+    shown <- if (is.null(fit)) data[data[[study_group_column]] %in% names, , drop = FALSE] else data
+    logrank_text(shown[[time]], shown[[event]], shown[[study_group_column]])
+  }
   values <- c(stats::setNames(lapply(rows, `[[`, 4), names), if (!is.null(test)) list(p = test))
   title <- if (grouped && !is.null(study$roles$group)) paste("Survival by", gsub("_", " ", study$roles$group)) else
     "Survival"
@@ -144,7 +145,7 @@ hl_effects <- function(study, model_or_table, measure = NULL, study_column = "st
                                  MoreArgs = list(digits = digits), USE.NAMES = FALSE))
   shown <- data.frame(study = terms, estimate = rows$estimate, low = rows$low, high = rows$high)
   ratio <- fit$ratio || (!is.null(measure) && measure %in% hl_tokens()$study$ratio_measures)
-  figure <- hl_forest(shown, ratio = ratio, ...)
+  figure <- hl_forest(shown, ratio = ratio, digits = digits, ...)
   table <- data.frame(Term = terms, `Estimate [95 % CI]` = texts, check.names = FALSE, stringsAsFactors = FALSE)
   study_result(figure, table, stats::setNames(as.list(texts), terms),
                paste0(paste(terms, texts, collapse = "; "), "."))

@@ -26,25 +26,32 @@ def ranks(values: Sequence[float]) -> np.ndarray:
 
 
 def rank_sum(first: Sequence[float], second: Sequence[float]) -> float:
-    """Two-sided Wilcoxon rank-sum p, normal approximation with tie and continuity correction."""
+    """Two-sided Wilcoxon rank-sum p, normal approximation with tie and continuity correction; NaN when every value
+    ties, which leaves the test undefined (as R's wilcox.test)."""
     count_x, count_y = len(first), len(second)
     combined = ranks(list(first) + list(second))
     statistic = combined[:count_x].sum() - count_x * (count_x + 1) / 2
     total = count_x + count_y
     _, ties = np.unique(combined, return_counts=True)
     sigma = math.sqrt(count_x * count_y / 12 * ((total + 1) - (ties ** 3 - ties).sum() / (total * (total - 1))))
+    if sigma == 0:
+        return math.nan
     shift = statistic - count_x * count_y / 2
     z = (shift - math.copysign(0.5, shift) if shift else 0.0) / sigma
     return 2 * min(normal_cdf(z), 1 - normal_cdf(z))
 
 
 def logrank(time: Sequence[float], event: Sequence[int], group: Sequence[str]) -> dict:
-    """Log-rank test over all groups (order of appearance): chi-square, degrees of freedom and p."""
+    """Log-rank test over all groups (order of appearance): chi-square, degrees of freedom and p; without a single
+    event the test is undefined and its p is NaN."""
     time, event = np.asarray(time, dtype=float), np.asarray(event, dtype=float)
     labels = list(dict.fromkeys(group))
     member = np.array([[name == label for name in group] for label in labels])
     observed_minus_expected, variance = np.zeros(len(labels)), np.zeros((len(labels), len(labels)))
-    for moment in np.unique(time[event == 1]):
+    moments = np.unique(time[event == 1])
+    if not len(moments):
+        return {"chisq": math.nan, "df": len(labels) - 1, "p": math.nan}
+    for moment in moments:
         at_risk = (member & (time >= moment)).sum(axis=1).astype(float)
         deaths = (member & (time == moment) & (event == 1)).sum(axis=1).astype(float)
         n, d = at_risk.sum(), deaths.sum()
@@ -104,7 +111,8 @@ def egger(estimate: Sequence[float], se: Sequence[float]) -> float:
 
 
 def kruskal(samples: Sequence[Sequence[float]]) -> float:
-    """Kruskal–Wallis p over two or more samples, with the tie correction (as R's kruskal.test)."""
+    """Kruskal–Wallis p over two or more samples, with the tie correction (as R's kruskal.test); NaN when every
+    value ties."""
     sizes = [len(sample) for sample in samples]
     combined = ranks([value for sample in samples for value in sample])
     total, bounds = sum(sizes), np.cumsum([0, *sizes])
@@ -112,7 +120,10 @@ def kruskal(samples: Sequence[Sequence[float]]) -> float:
                                                  for start, end in zip(bounds[:-1], bounds[1:], strict=True))
     statistic -= 3 * (total + 1)
     _, ties = np.unique(combined, return_counts=True)
-    statistic /= 1 - (ties ** 3 - ties).sum() / (total ** 3 - total)
+    correction = 1 - (ties ** 3 - ties).sum() / (total ** 3 - total)
+    if correction == 0:
+        return math.nan
+    statistic /= correction
     return chi2_sf(float(statistic), len(samples) - 1)
 
 

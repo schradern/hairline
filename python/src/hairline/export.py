@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from matplotlib.figure import Figure
-from PIL import Image
+from PIL import Image, TiffImagePlugin, TiffTags
 
 from hairline.figure import HairlineFigure
 from hairline.tokens import load_tokens
@@ -61,12 +61,24 @@ def name_svg(path: Path, naming: tuple[str, str]) -> None:
     path.write_text(f"{text[:end]}<title>{title}</title><desc>{description}</desc>{text[end:]}", encoding="utf-8")
 
 
+TIFF_NAME_TAGS = (269, 270)  # DocumentName (the title) and ImageDescription (title and subtitle)
+
+
+def tiff_tags(naming: tuple[str, str] | None) -> TiffImagePlugin.ImageFileDirectory_v2:
+    """The figure's name as UTF-8 text in ASCII-typed tags (Pillow would turn every other character into '?')."""
+    tags = TiffImagePlugin.ImageFileDirectory_v2()
+    for tag, text in zip(TIFF_NAME_TAGS, naming or (), strict=False):
+        tags[tag] = text.encode("utf-8")
+        tags.tagtype[tag] = TiffTags.ASCII
+    return tags
+
+
 def write_tiff(fig: Figure, path: Path, dpi: int, options: dict) -> None:
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png", dpi=dpi, metadata=METADATA["png"], **options)
     buffer.seek(0)
     with Image.open(buffer) as image:
-        image.save(path, format="TIFF", compression="tiff_lzw", dpi=(dpi, dpi))
+        image.save(path, format="TIFF", compression="tiff_lzw", dpi=(dpi, dpi), tiffinfo=tiff_tags(figure_name(fig)))
 
 
 def write_html(fig: Figure, path: Path, options: dict) -> None:
@@ -104,19 +116,52 @@ def save(figure: HairlineFigure | Figure, name: str | os.PathLike, formats: Sequ
     options = {"transparent": True} if background == "transparent" else {}
     base = strip_known_extension(Path(name))
     base.parent.mkdir(parents=True, exist_ok=True)
-    written: list[Path] = []
-    for format_name in requested:
-        path = base.with_name(f"{base.name}.{format_name}")
-        partial = path.with_name(f".{path.name}.partial")
-        try:
-            write_one(fig, partial, format_name, dpi, options)
+    paths = [base.with_name(f"{base.name}.{format_name}") for format_name in requested]
+    folders = [path for path in paths if path.is_dir()]
+    if folders:
+        raise RuntimeError(f"hairline: cannot write {folders[0]}: a folder of that name exists")
+    partials = [hidden_path(path, "partial") for path in paths]
+    try:
+        for format_name, path, partial in zip(requested, paths, partials, strict=True):
+            try:
+                write_one(fig, partial, format_name, dpi, options)
+            except Exception as error:
+                raise RuntimeError(f"hairline: writing {path} failed: {type(error).__name__}: {error}") from error
+        move_into_place(partials, paths)
+    finally:
+        for partial in partials:
+            partial.unlink(missing_ok=True)
+    return paths
+
+
+def hidden_path(path: Path, role: str) -> Path:
+    return path.with_name(f".{path.name}.{role}")
+
+
+def move_into_place(partials: list[Path], paths: list[Path]) -> None:
+    """Every new file replaces its destination only once all are written; if one cannot be moved, the files moved
+    before it get their old content back, so a failed save leaves every existing file as it was."""
+    moved: list[tuple[Path, Path | None]] = []
+    current = paths[0]
+    try:
+        for partial, path in zip(partials, paths, strict=True):
+            current = path
+            backup = hidden_path(path, "backup") if path.exists() else None
+            if backup:
+                os.replace(path, backup)
+            moved.append((path, backup))
             os.replace(partial, path)
-        except Exception as error:
-            for leftover in [partial, *written]:
-                leftover.unlink(missing_ok=True)
-            raise RuntimeError(f"hairline: writing {path} failed: {type(error).__name__}: {error}") from error
-        written.append(path)
-    return written
+    except OSError as error:
+        for path, backup in reversed(moved):
+            if backup:
+                os.replace(backup, path)
+            else:
+                path.unlink(missing_ok=True)
+        raise RuntimeError(f"hairline: moving the new file into {current} failed: {error}; existing files "
+                           f"keep their old content") from error
+    for _, backup in moved:
+        if backup:
+            backup.unlink()
 
 
 def strip_known_extension(base: Path) -> Path:

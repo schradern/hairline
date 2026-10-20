@@ -23,6 +23,15 @@ def number(value: int) -> str:
     return format_number(value, 0, current_settings().locale)
 
 
+def check_counts(counts: Mapping) -> None:
+    """Every count is a whole number of zero or more: records and reports cannot be negative or fractional."""
+    named = [(key, value) for key, value in counts.items() if key != "excluded_reasons"]
+    named += [(f"excluded_reasons[{reason!r}]", value) for reason, value in counts.get("excluded_reasons", {}).items()]
+    for key, value in named:
+        if isinstance(value, bool) or not isinstance(value, int | float) or not value >= 0 or value != int(value):
+            raise ValueError(f"hairline: prisma: {key} is {value!r}; counts must be whole numbers of 0 or more")
+
+
 def check_sums(counts: Mapping) -> None:
     """Warn where the counts do not add up; reports and records can differ on purpose, so this is not an error."""
     removed = sum(counts.get(key, 0) for key, _ in REMOVALS)
@@ -73,6 +82,7 @@ def prisma_spec(counts: Mapping) -> dict:
     missing = [key for key in ("identified", "screened", "included") if key not in counts]
     if missing:
         raise ValueError(f"hairline: prisma needs identified, screened and included; missing {', '.join(missing)}")
+    check_counts(counts)
     check_sums(counts)
     rows = prisma_rows(counts)
     return {"rows": rows, "phases": [("Identification", 0, 0), ("Screening", 1, len(rows) - 2),

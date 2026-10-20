@@ -23,7 +23,7 @@ Imports:
     jsonlite,
     ragg,
     rlang,
-    systemfonts,
+    systemfonts (>= 1.1.0),
     textshaping,
     tools,
     utils,

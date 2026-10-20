@@ -34,6 +34,9 @@ infer_study_type <- function(values) {
   if (length(unique(values[!study_is_missing(values)])) > 2) "numeric" else "categorical"
 }
 
-study_numbers <- function(values) as.numeric(values[!study_is_missing(values)])
+# Numbers from a column; a factor gives its labels ("20"), never its level codes.
+study_as_number <- function(values) if (is.factor(values)) as.numeric(as.character(values)) else as.numeric(values)
+
+study_numbers <- function(values) study_as_number(values[!study_is_missing(values)])
 
 row_numbers <- function(mask, limit) utils::head(which(mask), limit)

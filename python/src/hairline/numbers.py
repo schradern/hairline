@@ -27,13 +27,16 @@ def group_thousands(integer_part: str, separator: str) -> str:
 
 
 ROUNDING_TOLERANCE = 1e-9
+FLOAT_NOISE = 1e-15
 
 
 def fixed_text(magnitude: float, digits: int) -> str:
-    """`magnitude` (zero or more) with `digits` decimals, halves rounded up. Float noise below a billionth of the
-    last digit does not decide (8.649999999999999 is 8.65), so every platform prints the same digits."""
+    """`magnitude` (zero or more) with `digits` decimals, halves rounded up. Float noise does not decide
+    (8.649999999999999 is 8.65): a billionth of the last digit, plus the few units in the last place that float
+    arithmetic leaves on large numbers. Neither ever adds a displayed unit, so every platform prints the same
+    digits and exact values stay exact (1,000,000,000 is not 1,000,000,001)."""
     scaled = magnitude * 10**digits
-    units = str(math.floor(scaled + 0.5 + ROUNDING_TOLERANCE * max(1.0, scaled)))
+    units = str(math.floor(scaled + 0.5 + ROUNDING_TOLERANCE + FLOAT_NOISE * scaled))
     if digits == 0:
         return units
     units = units.rjust(digits + 1, "0")
@@ -63,7 +66,10 @@ def format_interval(estimate: float, low: float, high: float, digits: int = 2, l
 
 
 def format_p(value: float, locale: str | None = None) -> str:
-    """A p-value for reading: 'p < 0.001', three decimals below 0.1, two above."""
+    """A p-value for reading: 'p < 0.001', three decimals below 0.1, two above; NaN (a test that all-equal values
+    leave undefined) reads 'p not defined'."""
+    if math.isnan(value):
+        return "p not defined"
     if value < 0.001:
         return f"p < {format_number(0.001, 3, locale)}"
     return f"p = {format_number(value, 3 if value < 0.1 else 2, locale)}"

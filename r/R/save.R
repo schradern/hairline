@@ -62,8 +62,8 @@ write_format <- function(plot, path, format, size_mm, dpi, background, size = "o
 #' Save print-ready files
 #'
 #' Writes `name.<format>` for each format: PDF (vector), PNG and TIFF (600 dpi
-#' by default, TIFF LZW-compressed) and SVG (text kept as text). PDF, PNG and
-#' SVG files are named by the plot's title, with the title and subtitle as
+#' by default, TIFF LZW-compressed) and SVG (text kept as text). Every file
+#' is named by the plot's title, with the title and subtitle as
 #' their description; none shows a timestamp or producer banner. PDF uses cairo
 #' where it is available; otherwise svglite + rsvg. Both embed the bundled font
 #' once it can be found: cairo finds it on its own outside Windows, otherwise
@@ -98,15 +98,43 @@ hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", wid
   name <- strip_known_extension(name)
   dir.create(dirname(name), recursive = TRUE, showWarnings = FALSE)
   paths <- paste0(name, ".", formats)
+  folders <- paths[dir.exists(paths)]
+  if (length(folders)) {
+    stop(sprintf("hairline: cannot write %s: a folder of that name exists", folders[1]), call. = FALSE)
+  }
+  partials <- hidden_path(paths, "partial")
+  on.exit(unlink(partials), add = TRUE)
   for (index in seq_along(formats)) {
-    partial <- file.path(dirname(paths[index]), paste0(".", basename(paths[index]), ".partial"))
-    tryCatch({
-      write_format(plot, partial, formats[index], size_mm, dpi, surface, size)
-      file.rename(partial, paths[index])
-    }, error = function(error) {
-      unlink(c(partial, paths[seq_len(index - 1)]))
+    tryCatch(write_format(plot, partials[index], formats[index], size_mm, dpi, surface, size), error = function(error) {
       stop(sprintf("hairline: writing %s failed: %s", paths[index], conditionMessage(error)), call. = FALSE)
     })
   }
+  move_into_place(partials, paths)
   invisible(paths)
+}
+
+hidden_path <- function(paths, role) file.path(dirname(paths), paste0(".", basename(paths), ".", role))
+
+renamed <- function(from, to) suppressWarnings(file.rename(from, to))
+
+# Every new file replaces its destination only once all are written; if one cannot be moved, the files moved before
+# it get their old content back, so a failed save leaves every existing file as it was.
+move_into_place <- function(partials, paths) {
+  backups <- hidden_path(paths, "backup")
+  existed <- file.exists(paths)
+  moved <- 0L
+  for (index in seq_along(paths)) {
+    if (existed[index] && !renamed(paths[index], backups[index])) break
+    if (!renamed(partials[index], paths[index])) {
+      if (existed[index]) renamed(backups[index], paths[index])
+      break
+    }
+    moved <- index
+  }
+  if (moved < length(paths)) {
+    for (index in seq_len(moved)) if (existed[index]) renamed(backups[index], paths[index]) else unlink(paths[index])
+    stop(sprintf("hairline: moving the new file into %s failed; existing files keep their old content",
+                 paths[moved + 1L]), call. = FALSE)
+  }
+  unlink(backups[existed])
 }

@@ -29,10 +29,12 @@ def totals(data: pd.DataFrame, columns: list[str], value: str) -> pd.DataFrame:
     return grouped[grouped[value] > 0]
 
 
-def segment(name: str, amount: float, total: float, color: str, parent: int | None, index: int) -> dict:
+def segment(name: str, amount: float, total: float, color: str, parent: dict | None, index: int) -> dict:
+    """One slice; `path` names it with all its ancestors, so a label repeated under two parents stays apart."""
     share = amount / total
+    path = (*parent["path"], name) if parent else (name,)
     return {"name": name, "value": float(amount), "share": share, "share_text": format_percent(share, 0),
-            "color": color, "parent": parent, "index": index}
+            "color": color, "parent": parent["index"] if parent else None, "index": index, "path": path}
 
 
 def top_ring(data: pd.DataFrame, column: str, value: str, fold: bool,
@@ -58,10 +60,13 @@ def top_ring(data: pd.DataFrame, column: str, value: str, fold: bool,
 def child_ring(data: pd.DataFrame, levels: list[str], value: str, parents: list[dict], total: float) -> list[dict]:
     grouped, ring = totals(data, levels, value), []
     for parent in parents:
-        rows = grouped[grouped[levels[-2]].astype(str) == parent["name"]]
+        is_child = pd.Series(True, index=grouped.index)
+        for column, name in zip(levels[:-1], parent["path"], strict=True):
+            is_child &= grouped[column].astype(str) == name
+        rows = grouped[is_child]
         colors = tints(parent["color"], len(rows))
         for color, (_, row) in zip(colors, rows.iterrows(), strict=True):
-            ring.append(segment(str(row[levels[-1]]), row[value], total, color, parent["index"], len(ring)))
+            ring.append(segment(str(row[levels[-1]]), row[value], total, color, parent, len(ring)))
     return ring
 
 

@@ -60,7 +60,7 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", unname(study_stat_labels[stats]))
   data <- study_present_rows(study, variable)
-  data[[variable]] <- as.numeric(data[[variable]])
+  data[[variable]] <- study_as_number(data[[variable]])
   names <- if (is.null(study$roles$group)) "Overall" else vapply(parts[-length(parts)], `[[`, character(1), "name")
   figure <- hl_spread(data, study_group_column, variable, order = names,
                       title = study_by_title(study, study_label(study, variable)),
@@ -113,7 +113,7 @@ compare_numeric <- function(study, variable) {
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "median (IQR)")
   values <- c(stats::setNames(as.list(summaries), names), if (!is.null(test)) list(test = test[1], p = test[2]))
-  data[[variable]] <- as.numeric(data[[variable]])
+  data[[variable]] <- study_as_number(data[[variable]])
   figure <- hl_spread(data, study_group_column, variable, order = names,
                       title = study_by_title(study, study_label(study, variable)),
                       subtitle = if (!is.null(test)) paste0(test[1], ", ", test[2]),

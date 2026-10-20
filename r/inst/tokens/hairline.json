@@ -499,6 +499,7 @@
   },
   "forest": {
     "column_gap": 1.5,
+    "min_plot": 8,
     "row_pitch": 1.9,
     "pooled_gap": 0.6,
     "max_square": 1.1,

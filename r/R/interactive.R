@@ -75,7 +75,10 @@ panel_context <- function(parts, plan, panel) {
        x_scale = built@layout$panel_scales_x[[row$SCALE_X[1]]], y_scale = built@layout$panel_scales_y[[row$SCALE_Y[1]]])
 }
 
+# Missing values get no tip; ggplot leaves them out of the drawn line too.
 line_targets <- function(data, geom, parts, plan, scaled) {
+  data <- data[is.finite(data$x) & is.finite(data$y), , drop = FALSE]
+  if (!nrow(data)) return(list())
   lapply(split(data, list(data$PANEL, data$group), drop = TRUE), function(rows) {
     context <- panel_context(parts, plan, rows$PANEL[1])
     path <- if (geom == "GeomStep") step_points(rows$x, rows$y) else cbind(rows$x, rows$y)
@@ -93,7 +96,7 @@ line_targets <- function(data, geom, parts, plan, scaled) {
 }
 
 point_targets <- function(data, parts, plan) {
-  data <- data[data$shape %in% c(16, 19), , drop = FALSE]
+  data <- data[data$shape %in% c(16, 19) & is.finite(data$x) & is.finite(data$y), , drop = FALSE]
   if (!nrow(data)) return(list())
   lapply(split(data, list(data$PANEL, data$colour), drop = TRUE), function(rows) {
     context <- panel_context(parts, plan, rows$PANEL[1])
@@ -199,8 +202,21 @@ plot_targets <- function(parts, plan) {
 }
 
 interactive_targets <- function(plot, size = "onehalf", width_mm = NULL, height_mm = NULL) {
-  framed <- frame_plan(plot, size, width_mm, height_mm, "html export")
-  plot_targets(framed$parts, framed$plan)
+  with_plot_settings(plot, {
+    framed <- frame_plan(plot, size, width_mm, height_mm, "html export")
+    plot_targets(framed$parts, framed$plan)
+  })
+}
+
+# Evaluates `code` with the settings the plot was made with (its locale for tooltip numbers), so a later change of
+# the session's settings does not reach a plot made before it.
+with_plot_settings <- function(plot, code) {
+  settings <- plot@meta$hairline_settings
+  if (is.null(settings)) return(code)
+  previous <- hairline_state$settings
+  hairline_state$settings <- settings
+  on.exit(hairline_state$settings <- previous)
+  code
 }
 
 interactive_asset <- function(name) {
@@ -208,14 +224,39 @@ interactive_asset <- function(name) {
         collapse = "\n")
 }
 
-font_faces <- function(family) {
+face_weights <- c(400, 500, 600)
+
+bundled_font_files <- function() {
   weights <- c(Regular = 400, Medium = 500, SemiBold = 600)
-  paste0(vapply(hl_tokens()$interactive$fonts, function(file) {
-    path <- system.file("fonts", file, package = "hairline")
-    weight <- weights[[sub("\\..*$", "", sub("^[^-]*-", "", file))]]
+  files <- hl_tokens()$interactive$fonts
+  data.frame(path = vapply(files, function(file) system.file("fonts", file, package = "hairline"), character(1)),
+             low = unname(weights[sub("\\..*$", "", sub("^[^-]*-", "", files))]),
+             high = unname(weights[sub("\\..*$", "", sub("^[^-]*-", "", files))]))
+}
+
+# The files the system draws `family` with, per weight (one file may serve several); a collection (.ttc) cannot be
+# embedded and is left to the reader's installed fonts, as is a family that is not installed.
+installed_font_files <- function(family) {
+  if (!font_available(family)) return(data.frame(path = character(), low = numeric(), high = numeric()))
+  paths <- systemfonts::match_fonts(family, weight = face_weights)$path
+  usable <- grepl("\\.(ttf|otf)$", paths, ignore.case = TRUE, useBytes = TRUE)
+  found <- unique(paths[usable])
+  data.frame(path = found, low = vapply(found, function(path) min(face_weights[paths == path]), numeric(1)),
+             high = vapply(found, function(path) max(face_weights[paths == path]), numeric(1)))
+}
+
+# The figure's font as data URIs under its own name, so the page renders with the font the layout was measured
+# with: the bundled files for the bundled family, else the installed files of the requested one.
+font_faces <- function(family) {
+  files <- if (identical(family, hl_tokens()$font$family)) bundled_font_files() else installed_font_files(family)
+  paste0(vapply(seq_len(nrow(files)), function(index) {
+    path <- files$path[index]
+    opentype <- grepl("\\.otf$", path, ignore.case = TRUE, useBytes = TRUE)
+    weight <- if (files$low[index] == files$high[index]) files$low[index] else
+      paste(files$low[index], files$high[index])
     data <- jsonlite::base64_enc(readBin(path, "raw", file.info(path)$size))
-    sprintf("@font-face{font-family:'%s';font-weight:%d;src:url(data:font/ttf;base64,%s) format('truetype')}",
-            family, weight, gsub("\n", "", data))
+    sprintf("@font-face{font-family:'%s';font-weight:%s;src:url(data:%s;base64,%s) format('%s')}", family, weight,
+            if (opentype) "font/otf" else "font/ttf", gsub("\n", "", data), if (opentype) "opentype" else "truetype")
   }, character(1)), collapse = "")
 }
 

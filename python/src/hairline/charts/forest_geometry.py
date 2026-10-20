@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
+from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -51,8 +52,18 @@ def column_layout(spec: dict, box: Box, measure: Measure, rules: dict, base: flo
     weight = widest([spec["weight_heading"]] + [row["weight_text"] for row in rows]) if spec["weight_heading"] else 0
     weight_right = box.x + box.width
     effect_right = weight_right - (weight + gap if spec["weight_heading"] else 0.0)
+    check_plot_span(effect_right - effect - gap - x, rules["min_plot"] * base, study)
     return {"study": box.x, "extras": extras, "plot": (x, effect_right - effect - gap), "effect": effect_right,
             "weight": weight_right}
+
+
+def check_plot_span(span: float, least: float, study: float) -> None:
+    """The table columns must leave room for the intervals; otherwise the axis would run backwards."""
+    if span < least:
+        raise HairlineLayoutError(f"hairline: forest: the table columns leave {max(span, 0.0):.0f} pt for the "
+                                  f"intervals, which need at least {least:.0f} pt; the study column alone takes "
+                                  f"{study:.0f} pt. Shorten the longest study labels, drop a column, or use a wider "
+                                  f"size")
 
 
 def row_centres(spec: dict, top: float, pitch: float, rules: dict) -> tuple[list[float], float | None]:

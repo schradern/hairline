@@ -1,5 +1,29 @@
 # hl_over_time(): one measure over calendar time by group, mirroring the Python over_time().
 
+iso_date_pattern <- "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+iso_time_pattern <- "^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]+)?)?$"
+
+# ISO date text as dates, or as times (UTC) when any value carries a clock time; anything else is refused, as in
+# the Python package.
+study_iso_dates <- function(values, column) {
+  text <- trimws(as.character(values))
+  is_date <- grepl(iso_date_pattern, text)
+  has_time <- grepl(iso_time_pattern, text)
+  parsed <- if (any(has_time)) {
+    clock <- ifelse(is_date, paste(text, "00:00:00"), sub("T", " ", text, fixed = TRUE))
+    clock <- ifelse(grepl("^.{16}$", clock), paste0(clock, ":00"), clock)
+    as.POSIXct(clock, tz = "UTC", format = "%Y-%m-%d %H:%M:%OS")
+  } else {
+    as.Date(text, format = "%Y-%m-%d")
+  }
+  bad <- is.na(parsed) | !(is_date | has_time)
+  if (any(bad)) {
+    stop(sprintf("hairline: over_time: '%s' has '%s', which is not an ISO date (2025-01-31)", column,
+                 text[bad][1]), call. = FALSE)
+  }
+  parsed
+}
+
 study_dated_rows <- function(study, date, value) {
   if (!date %in% names(study$data)) {
     stop(sprintf("hairline: over_time: date column '%s' is not in the data; columns: %s", date,
@@ -7,15 +31,8 @@ study_dated_rows <- function(study, date, value) {
   }
   data <- study_present_rows(study, value)
   data <- data[!study_is_missing(data[[date]]), , drop = FALSE]
-  if (is.character(data[[date]]) || is.factor(data[[date]])) {
-    parsed <- as.Date(substr(as.character(data[[date]]), 1, 10), format = "%Y-%m-%d")
-    if (anyNA(parsed)) {
-      stop(sprintf("hairline: over_time: '%s' has '%s', which is not an ISO date (2025-01-31)", date,
-                   as.character(data[[date]])[is.na(parsed)][1]), call. = FALSE)
-    }
-    data[[date]] <- parsed
-  }
-  data[[value]] <- as.numeric(data[[value]])
+  if (is.character(data[[date]]) || is.factor(data[[date]])) data[[date]] <- study_iso_dates(data[[date]], date)
+  data[[value]] <- study_as_number(data[[value]])
   data
 }
 

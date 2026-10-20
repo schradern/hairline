@@ -33,10 +33,21 @@ def long_table(data: pd.DataFrame, study: str, domain: str | None, judgement: st
     return data.rename(columns={domain: "_domain", judgement: "_judgement"})
 
 
+def check_unique(table: pd.DataFrame, study: str) -> None:
+    """One judgement per study and domain; a repeated pair would count that study twice in the domain."""
+    repeated = table[table.duplicated([study, "_domain"], keep=False)]
+    if len(repeated):
+        first = repeated.iloc[0]
+        times = int(((repeated[study] == first[study]) & (repeated["_domain"] == first["_domain"])).sum())
+        raise ValueError(f"hairline: risk of bias: {first[study]} has {times} judgements for {first['_domain']}; "
+                         f"give one per study and domain")
+
+
 def risk_of_bias_spec(data: pd.DataFrame, study: str, domain: str | None = None, judgement: str | None = None, *,
                       domains: Sequence[str] | None = None, overall: str | None = "Overall") -> dict:
     """Counts of low, some concerns and high per domain; the overall row takes each study's worst judgement."""
     table = long_table(data, study, domain, judgement, domains)
+    check_unique(table, study)
     table["_level"] = [judgement_of(value, row_study, row_domain) for value, row_study, row_domain in
                        zip(table["_judgement"], table[study], table["_domain"], strict=True)]
     names = list(dict.fromkeys(table["_domain"].astype(str)))

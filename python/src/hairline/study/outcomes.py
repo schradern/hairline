@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -61,8 +62,8 @@ def survival(study: Study, fit=None, size: str = "double") -> Result:
         names = [name or OVERALL for name, _, _ in estimates]
     rows = survival_rows(estimates)
     grouped = len(estimates) > 1
-    test = format_p(logrank(data[roles["time"]], data[roles["event"]], data[GROUP])["p"]) \
-        if grouped and has_data and study.group else None
+    shown = data[data[GROUP].isin(names)] if fit is None and has_data else data
+    test = logrank_text(shown, roles) if grouped and has_data and study.group else None
     values = {**{row[0]: row[3] for row in rows}, **({"p": test} if test else {})}
     time_label = study.label_unit(roles["time"]) if "time" in roles else "Time"
     figure = kaplan_meier(fit if fit is not None else data, roles.get("time"), roles.get("event"),
@@ -72,6 +73,12 @@ def survival(study: Study, fit=None, size: str = "double") -> Result:
                           stats=[("Log-rank", test)] if test else ())
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "Events", "Median"]), values,
                   survival_text(study, rows, grouped, test))
+
+
+def logrank_text(data: pd.DataFrame, roles: dict) -> str | None:
+    """The log-rank p over the groups shown; none when no event makes the test undefined."""
+    p = logrank(data[roles["time"]], data[roles["event"]], data[GROUP])["p"]
+    return None if math.isnan(p) else format_p(p)
 
 
 def survival_text(study: Study, rows: list, grouped: bool, test: str | None) -> str:

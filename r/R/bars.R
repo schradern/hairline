@@ -7,7 +7,7 @@ bar_table <- function(data, category, value, by, order, sort) {
   first <- !duplicated(keys)
   table <- data[first, c(category, by), drop = FALSE]
   table[[category]] <- as.character(table[[category]])
-  table$.value <- as.numeric(tapply(data[[value]], factor(keys, levels = unique(keys)), sum))
+  table$.value <- as.numeric(tapply(data[[value]], factor(keys, levels = unique(keys)), sum, na.rm = TRUE))
   names <- order %||% unique(table[[category]])
   if (identical(sort, "value") && is.null(order)) {
     totals <- tapply(table$.value, table[[category]], sum)
@@ -24,7 +24,15 @@ bars_horizontal <- function(names) {
 
 bar_frame <- function(parts, category, by, horizontal, percent) {
   table <- parts$table
-  if (percent) table$.value <- table$.value / stats::ave(table$.value, table[[category]], FUN = sum)
+  if (percent) {
+    totals <- stats::ave(table$.value, table[[category]], FUN = sum)
+    empty <- table[[category]][!(totals > 0)]
+    if (length(empty)) {
+      stop(sprintf(paste("hairline: bars: percent needs a total above zero in every category; '%s' totals %s,",
+                         "so its shares are undefined"), empty[1], format(totals[!(totals > 0)][1])), call. = FALSE)
+    }
+    table$.value <- table$.value / totals
+  }
   levels <- if (horizontal) rev(parts$names) else parts$names
   data.frame(category = factor(table[[category]], levels = levels),
              group = factor(if (is.null(by)) "" else as.character(table[[by]]), levels = parts$groups),
@@ -49,7 +57,7 @@ bar_text <- function(mapping, frame, position, colour, settings, ...) {
 stacked_text_layers <- function(frame, colours, horizontal, percent) {
   rules <- hl_tokens()$bars
   settings <- hl_settings()
-  largest <- if (percent) 1 else max(tapply(frame$value, frame$category, sum))
+  largest <- if (percent) 1 else max(tapply(pmax(frame$value, 0), frame$category, sum), na.rm = TRUE)
   shown <- frame
   shown$label[shown$value < rules$segment_min * largest | shown$value <= 0] <- ""
   style <- list(neutral = settings$neutral)
@@ -57,9 +65,13 @@ stacked_text_layers <- function(frame, colours, horizontal, percent) {
   layers <- list(bar_text(bar_value_mapping(horizontal), shown, ggplot2::position_stack(vjust = 0.5, reverse = TRUE),
                           inks, settings))
   if (!percent) {
-    totals <- stats::aggregate(frame$value, list(category = frame$category), sum)
-    totals <- data.frame(category = totals$category, value = totals$x, group = "",
-                         label = vapply(totals$x, hl_format_number, character(1), digits = 0))
+    ups <- tapply(pmax(frame$value, 0), frame$category, sum)
+    downs <- tapply(pmin(frame$value, 0), frame$category, sum)
+    present <- !is.na(ups)
+    # The signed total at the end of the stack: past the positive segments, or the negative ones if none is positive.
+    totals <- data.frame(category = factor(names(ups)[present], levels = levels(frame$category)),
+                         value = ifelse(ups > 0, ups, downs)[present], group = "",
+                         label = vapply((ups + downs)[present], hl_format_number, character(1), digits = 0))
     gap <- rules$label_gap
     layers[[2]] <- bar_text(bar_value_mapping(horizontal), totals, "identity", settings$neutral$muted, settings,
                             hjust = if (horizontal) -gap else 0.5, vjust = if (horizontal) 0.5 else -gap)
@@ -73,7 +85,7 @@ bar_dodge <- function(horizontal) ggplot2::position_dodge(width = hl_tokens()$ba
 # Room on the value axis for the labels at the bar ends.
 bar_headroom <- function(frame, horizontal, percent, stacked) {
   if (stacked && percent) return(list())
-  largest <- if (stacked) max(tapply(frame$value, frame$category, sum), na.rm = TRUE) else max(frame$value)
+  largest <- if (stacked) max(tapply(pmax(frame$value, 0), frame$category, sum), na.rm = TRUE) else max(frame$value)
   reach <- data.frame(category = factor(levels(frame$category)[1], levels = levels(frame$category)),
                       value = largest * (1 + hl_tokens()$bars$label_headroom))
   mapping <- if (horizontal) ggplot2::aes(.data$value, .data$category) else ggplot2::aes(.data$category, .data$value)

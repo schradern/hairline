@@ -16,10 +16,11 @@ donut_totals <- function(data, columns, value) {
   grouped[grouped[[value]] > 0, , drop = FALSE]
 }
 
+# One slice; `path` names it with all its ancestors, so a label repeated under two parents stays apart.
 donut_segment <- function(name, amount, total, colour, parent, index) {
   share <- amount / total
   list(name = name, value = amount, share = share, share_text = hl_format_percent(share, 0), color = colour,
-       parent = parent, index = index)
+       parent = parent$index, index = index, path = c(parent$path, name))
 }
 
 # Top-level segments in entity colours; a folded "Other" slice is drawn in context grey.
@@ -50,11 +51,14 @@ child_ring <- function(data, levels, value, parents, total) {
   grouped <- donut_totals(data, levels, value)
   ring <- list()
   for (parent in parents) {
-    rows <- grouped[as.character(grouped[[levels[length(levels) - 1]]]) == parent$name, , drop = FALSE]
+    ancestors <- levels[-length(levels)]
+    is_child <- Reduce(`&`, Map(function(column, name) as.character(grouped[[column]]) == name, ancestors,
+                                parent$path), rep(TRUE, nrow(grouped)))
+    rows <- grouped[is_child, , drop = FALSE]
     colours <- tints(parent$color, nrow(rows))
     for (index in seq_len(nrow(rows))) {
       ring[[length(ring) + 1]] <- donut_segment(as.character(rows[[levels[length(levels)]]][index]),
-                                                rows[[value]][index], total, colours[index], parent$index,
+                                                rows[[value]][index], total, colours[index], parent,
                                                 length(ring))
     }
   }

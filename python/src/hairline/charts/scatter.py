@@ -26,6 +26,14 @@ def fit_stats(x: pd.Series, y: pd.Series, locale: str) -> list[tuple[str, str]]:
             ("Slope", format_number(slope, 2, locale))]
 
 
+def check_fit(x: pd.Series) -> None:
+    """A line and its band need three points and two x values; fewer leave slope or band undefined."""
+    distinct = x.nunique()
+    if len(x) < 3 or distinct < 2:
+        raise ValueError(f"hairline: scatter: a linear fit needs at least 3 points with x and y and 2 different x "
+                         f"values; got {len(x)} point(s) and {distinct} x value(s); use fit=None for the points alone")
+
+
 def draw_fit(ax, x: pd.Series, y: pd.Series) -> None:
     settings, rules = current_settings(), load_tokens()["fit"]
     xs = np.linspace(float(x.min()), float(x.max()), rules["points"])
@@ -53,6 +61,7 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
             color = entities.color(name) if by else lone_color()
             result.ax.scatter(group[x], group[y], color=color, label=name if by else "_nolegend_")
     if fit:
+        check_fit(rows[x])
         draw_fit(result.ax, rows[x], rows[y])
         result.panel_header(0, "Linear fit", stats=fit_stats(rows[x], rows[y], current_settings().locale))
     result.y_title(humanise(y))

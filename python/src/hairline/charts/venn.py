@@ -41,9 +41,11 @@ def column_codes(data: pd.DataFrame, columns: Sequence[str]) -> list[int]:
 
 
 def member_codes(sets: Mapping[str, Iterable]) -> list[int]:
-    """Per member of any set, the sets it belongs to as bits (first set = 1)."""
-    groups = [set(values) for values in sets.values()]
-    members = dict.fromkeys(member for values in sets.values() for member in values)
+    """Per member of any set, the sets it belongs to as bits (first set = 1). Each set is read once, so iterators
+    and generators count like lists."""
+    listed = [list(values) for values in sets.values()]
+    groups = [set(values) for values in listed]
+    members = dict.fromkeys(member for values in listed for member in values)
     return [sum(1 << bit for bit, group in enumerate(groups) if member in group) for member in members]
 
 

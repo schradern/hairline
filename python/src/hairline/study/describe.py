@@ -82,7 +82,10 @@ def counts_text(study: Study, parts: list, counts: list[str]) -> str:
 
 
 def overview_row(ax, values, y: float, color: str, style: dict) -> None:
-    """One spread row on axes: range line, interquartile band, median dot (as the spread chart draws them)."""
+    """One spread row on axes: range line, interquartile band, median dot (as the spread chart draws them); a group
+    without values keeps its row empty, as its table cell shows a dash."""
+    if not len(values):
+        return
     rules = load_tokens()["spread"]
     low, q1, middle, q3, high = quantiles(values, [0, 0.25, 0.5, 0.75, 1])
     ax.plot([low, high], [y, y], color=style["faint"], linewidth=style["leader"], gid=FIXED_ID,

@@ -19,6 +19,9 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     """One dot per row, largest at the top; with `low` and `high` an interval and its numbers on the right.
     `reference` draws a vertical line (a target or a null value)."""
     check_columns(data, [label, estimate, low, high])
+    if (low is None) != (high is None):
+        raise ValueError(f"hairline: dotplot: an interval needs both low and high; got only "
+                         f"{'low' if low is not None else 'high'}={low if low is not None else high!r}")
     interval = low is not None and high is not None
     rows = data.sort_values(estimate, ascending=False, kind="mergesort") if sort else data
     if not interval:

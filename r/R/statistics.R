@@ -2,15 +2,18 @@
 # survival::survdiff without depending on it. The Python package computes the same values.
 
 rank_sum_p <- function(first, second) {
-  stats::wilcox.test(first, second, exact = FALSE, correct = TRUE)$p.value
+  suppressWarnings(stats::wilcox.test(first, second, exact = FALSE, correct = TRUE)$p.value)
 }
 
+# Without a single event the test is undefined and its p is NA.
 logrank_test <- function(time, event, group) {
   labels <- unique(as.character(group))
   member <- vapply(labels, function(label) as.character(group) == label, logical(length(group)))
   difference <- numeric(length(labels))
   variance <- matrix(0, length(labels), length(labels))
-  for (moment in sort(unique(time[event == 1]))) {
+  moments <- sort(unique(time[event == 1]))
+  if (!length(moments)) return(list(chisq = NA_real_, df = length(labels) - 1L, p = NA_real_))
+  for (moment in moments) {
     at_risk <- colSums(member & time >= moment)
     deaths <- colSums(member & time == moment & event == 1)
     n <- sum(at_risk)
@@ -53,11 +56,19 @@ egger_p <- function(estimate, se) {
   summary(model)$coefficients[1, 4]
 }
 
+# The log-rank p as key-number text over the given rows; NULL when no event makes the test undefined.
+logrank_text <- function(time, event, group) {
+  p <- logrank_test(time, event, group)$p
+  if (is.na(p)) NULL else format_p(p)
+}
+
+# NA or NaN (a test that all-equal values leave undefined) reads "p not defined".
 format_p <- function(value, locale = NULL) {
+  if (is.na(value)) return("p not defined")
   if (value < 0.001) return(paste("p <", hl_format_number(0.001, 3, locale)))
   paste("p =", hl_format_number(value, if (value < 0.1) 3 else 2, locale))
 }
 
-kruskal_p <- function(samples) stats::kruskal.test(samples)$p.value
+kruskal_p <- function(samples) suppressWarnings(stats::kruskal.test(samples)$p.value)
 
 chi_square_p <- function(counts) suppressWarnings(stats::chisq.test(counts, correct = FALSE)$p.value)

@@ -25,6 +25,16 @@ def ramp_color(value: float) -> str:
     return colors[round((value + 1) / 2 * (len(colors) - 1))]
 
 
+def check_varies(rows: pd.DataFrame, columns: Sequence[str]) -> None:
+    """Every column needs two different values in the complete rows; a constant one has no correlation."""
+    if len(rows) < 2:
+        raise ValueError(f"hairline: correlation needs at least 2 rows with every column present; got {len(rows)}")
+    for column in columns:
+        if rows[column].nunique() < 2:
+            raise ValueError(f"hairline: correlation: '{column}' has the same value in every complete row, so its "
+                             f"correlations are undefined; leave it out")
+
+
 def correlation_spec(data: pd.DataFrame, columns: Sequence[str] | None, method: str) -> dict:
     if method not in ("pearson", "spearman"):
         raise ValueError(f"hairline: correlation: method {method!r} must be 'pearson' or 'spearman'")
@@ -35,6 +45,7 @@ def correlation_spec(data: pd.DataFrame, columns: Sequence[str] | None, method: 
         raise ValueError("hairline: correlation needs at least two numeric columns; got "
                          f"{', '.join(map(str, columns)) or 'none'}")
     rows = data[columns].dropna()
+    check_varies(rows, columns)
     values = rows.to_numpy(dtype=float)
     if method == "spearman":
         values = np.column_stack([ranks(values[:, index]) for index in range(values.shape[1])])

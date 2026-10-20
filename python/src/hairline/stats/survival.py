@@ -15,6 +15,10 @@ def check_inputs(time: np.ndarray, event: np.ndarray) -> None:
     if len(time) == 0 or len(time) != len(event):
         raise ValueError(f"hairline: Kaplan–Meier needs as many times as events and at least one; got {len(time)} "
                          f"times and {len(event)} events")
+    missing = np.flatnonzero(np.isnan(time) | np.isnan(event))
+    if len(missing):
+        raise ValueError(f"hairline: Kaplan–Meier time and event must not be missing; row {missing[0] + 1} has "
+                         f"time {time[missing[0]]:g} and event {event[missing[0]]:g}")
     unknown = sorted(set(np.unique(event)) - {0, 1})
     if unknown:
         raise ValueError(f"hairline: Kaplan–Meier event values must be 0 or 1; found {unknown[0]:g}")

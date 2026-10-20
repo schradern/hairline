@@ -21,8 +21,10 @@ STAT_LABELS = {"mean": "Mean", "median": "Median", "range": "Range"}
 def groups_of(data: pd.DataFrame, by: str | None, order: Sequence[str] | None) -> list[tuple[str, pd.DataFrame]]:
     if by is None:
         return [("", data)]
+    """Rows per group in `order` (or data order); groups match by their text, so order=["1"] finds the group 1."""
     names = list(order) if order is not None else list(dict.fromkeys(data[by]))
-    return [(str(name), data[data[by] == name]) for name in names]
+    labels = data[by].astype(str)
+    return [(str(name), data[labels == str(name)]) for name in names]
 
 
 def formatter(percent: bool):
@@ -40,7 +42,7 @@ def panel_stats(values: pd.Series, stats: Sequence[str], percent: bool, threshol
         if stat == "share_above":
             if threshold is None:
                 raise ValueError("hairline: stats 'share_above' needs threshold=")
-            pairs.append((share_label, format_percent(float((values >= threshold).mean()), 0)))
+            pairs.append((share_label, format_percent(float((clean >= threshold).mean()), 0)))
         elif stat == "range":
             pairs.append(("Range", f"{show(clean.min(), digits)}–{show(clean.max(), digits)}"))
         elif stat in STAT_LABELS:
@@ -50,13 +52,18 @@ def panel_stats(values: pd.Series, stats: Sequence[str], percent: bool, threshol
     return pairs
 
 
+def check_window(window: object) -> None:
+    if isinstance(window, bool) or not isinstance(window, int | float) or not window >= 1 or window != int(window):
+        raise ValueError(f"hairline: timeseries: window must be a whole number of 1 or more; got {window!r}")
+
+
 def draw_series(ax, rows: pd.DataFrame, x: str, y: str, color: str, window: int, raw: bool) -> None:
     lines, base = load_tokens()["lines"], current_settings().base_size
     rows = rows.sort_values(x)
     if raw:
         ax.plot(rows[x], rows[y], color=color, linewidth=lines["secondary"] * base, alpha=lines["secondary_opacity"],
                 gid=SECONDARY_ID)
-    smooth = rows[y].rolling(window, min_periods=1).mean()
+    smooth = rows[y].rolling(int(window), min_periods=1).mean()
     ax.plot(rows[x], smooth, color=color, linewidth=lines["data"] * base)
 
 
@@ -115,6 +122,7 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
                size: str = "double") -> HairlineFigure:
     """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers."""
     check_columns(data, [x, y, by])
+    check_window(window)
     title = title or (f"{humanise(y)} by {str(by).replace('_', ' ')}" if by else f"{humanise(y)} over time")
     groups = groups_of(data, by, order)
     result = figure(title, subtitle=subtitle, caption=caption, size=size, panels=len(groups), layout="rows")

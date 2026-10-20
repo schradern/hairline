@@ -103,8 +103,10 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               comparisons: str | Sequence[tuple] = (), colors: Mapping[str, str] | None = None,
               size: str = "onehalf") -> HairlineFigure:
     """Distributions per group. `comparisons`: "all" or "adjacent" pairs, (group, group) pairs, or
-    (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p."""
+    (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p. Missing values are
+    left out, and "n = …" counts the values shown."""
     check_columns(data, [group, value])
+    data = data[data[value].notna()]
     groups = groups_of(data, group, order)
     names = [name for name, _ in groups]
     title = title or f"{humanise(value)} by {str(group).replace('_', ' ')}"

@@ -22,8 +22,24 @@ funnel_axes <- function(effects, errors, pooled, ratio) {
   list(x = x_axis, y = y_axis)
 }
 
+# Standard errors above zero and present estimates (above zero for ratios): pooling weighs by 1 / SE^2.
+funnel_check_inputs <- function(estimates, errors, estimate, se, ratio) {
+  bad <- which(!is.finite(errors) | !(errors > 0))
+  if (length(bad)) {
+    stop(sprintf("hairline: funnel: '%s' is %s in row %d; standard errors must be above zero", se,
+                 format(errors[bad[1]]), bad[1]), call. = FALSE)
+  }
+  bad <- which(!is.finite(estimates) | (ratio & estimates <= 0))
+  if (length(bad)) {
+    stop(sprintf("hairline: funnel: '%s' is %s in row %d; estimates must be %s", estimate, format(estimates[bad[1]]),
+                 bad[1], if (ratio) "ratios above zero (or ratio = FALSE for differences)" else "numbers"),
+         call. = FALSE)
+  }
+}
+
 funnel_spec <- function(data, estimate, se, ratio = TRUE, pooled = NULL, x_title = NULL) {
   check_columns(data, c(estimate, se))
+  funnel_check_inputs(data[[estimate]], data[[se]], estimate, se, ratio)
   effects <- if (ratio) log(data[[estimate]]) else data[[estimate]]
   errors <- data[[se]]
   weights <- 1 / errors^2

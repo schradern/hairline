@@ -45,8 +45,17 @@ forest_columns <- function(spec, box, measure, rules, base) {
                                           measure) else 0
   weight_right <- box[1] + box[3]
   effect_right <- weight_right - if (has_weight) weight + gap else 0
+  forest_check_span(effect_right - effect - gap - x, rules$min_plot * base, study)
   list(study = box[1], extras = extras, plot = c(x, effect_right - effect - gap), effect = effect_right,
        weight = weight_right)
+}
+
+# The table columns must leave room for the intervals; otherwise the axis would run backwards.
+forest_check_span <- function(span, least, study) {
+  if (span >= least) return(invisible())
+  stop(sprintf(paste("hairline: forest: the table columns leave %.0f pt for the intervals, which need at least %.0f",
+                     "pt; the study column alone takes %.0f pt. Shorten the longest study labels, drop a column, or",
+                     "use a wider size"), max(span, 0), least, study), call. = FALSE)
 }
 
 forest_rule <- function(left, right, y, style) {

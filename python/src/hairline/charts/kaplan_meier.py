@@ -3,6 +3,7 @@ the number at risk under the x-axis aligned to its ticks."""
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 
 import numpy as np
@@ -85,6 +86,13 @@ def estimates_from(data, time: str | None, event: str | None, by: str | None,
     return [(name, *fitter_table(fits[name])) for name in names]
 
 
+def logrank_stats(data: pd.DataFrame, time: str, event: str, by: str, order: Sequence[str] | None) -> list:
+    """The log-rank p over the groups the chart draws (those in `order`, when given); none without events."""
+    shown = pd.concat([rows for _, rows in groups_of(data, by, order)]) if order else data
+    result = logrank(shown[time], shown[event], [str(name) for name in shown[by]])
+    return [] if math.isnan(result["p"]) else [("Log-rank", format_p(result["p"]))]
+
+
 def kaplan_meier(data, time: str | None = None, event: str | None = None, by: str | None = None, *,
                  title: str | None = None, subtitle: str | None = None, caption: str | None = None,
                  x_title: str = "Time", endpoint: str = "Survival", median_line: bool = True,
@@ -99,8 +107,7 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
     title = title or (f"{endpoint} by {str(by).replace('_', ' ')}" if by else endpoint)
     if by and test and isinstance(data, pd.DataFrame) and \
             not any(str(label).lower().startswith("log-rank") for label, _ in stats):
-        test_result = logrank(data[time], data[event], [str(name) for name in data[by]])
-        stats = [*stats, ("Log-rank", format_p(test_result["p"]))]
+        stats = [*stats, *logrank_stats(data, time, event, by, order)]
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     latest = max(float(table["time"].max()) for _, table, _ in estimates)
     moments = list(times) if times is not None else nice_breaks(0, latest)
