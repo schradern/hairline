@@ -30,18 +30,20 @@ hundred small layout decisions, the same way every time.
 
 ## Install
 
-The development version, which this page describes, from GitHub:
+Python, from PyPI:
 
 ```bash
-pip install "hairline @ git+https://github.com/schradern/hairline#subdirectory=python"
+pip install hairline
 ```
+
+R, from GitHub (the package is not on CRAN yet):
 
 ```r
 pak::pak("schradern/hairline/r")
 ```
 
-The 0.1.0 release is on PyPI (`pip install hairline`); it lacks the unrounded `.numbers` of study results and the
-later fixes listed in the changelogs. The R package is not on CRAN yet.
+The development version of the Python package, with changes not yet released, installs from GitHub with
+`pip install "hairline @ git+https://github.com/schradern/hairline#subdirectory=python"`.
 
 Python 3.11 or later with matplotlib 3.11 or later; R 4.3 or later with ggplot2 4.0 or later. The bundled
 font, Hairline Sans, needs no installation.
@@ -252,14 +254,15 @@ cat(hl_brand_report())
 
 ## How to cite
 
-If hairline helped you make the figures in your work, please cite it: [doi:10.5281/zenodo.23456212](https://doi.org/10.5281/zenodo.23456212) for
-version 0.1.0, or [doi:10.5281/zenodo.23456211](https://doi.org/10.5281/zenodo.23456211) for every version. GitHub's "Cite this repository" button
+If hairline helped you make the figures in your work, please cite it:
+[doi:10.5281/zenodo.23456211](https://doi.org/10.5281/zenodo.23456211) resolves to the latest version, and each
+version has its own DOI on Zenodo (0.1.0: [doi:10.5281/zenodo.23456212](https://doi.org/10.5281/zenodo.23456212)). GitHub's "Cite this repository" button
 reads [`CITATION.cff`](CITATION.cff); each package prints its reference:
 
 ```python
 import hairline as hl
 
-print(hl.citation())             # Schrader N (2026). hairline: ... Python package version 0.1.0.
+print(hl.citation())             # Schrader N (2026). hairline: ... Python package version 0.2.0.
 print(hl.citation("bibtex"))
 ```
 
@@ -272,12 +275,12 @@ citation("hairline")
   title = {hairline: Clean, Predictable Figures for Medical and Data Science},
   author = {Nikolas Schrader},
   year = {2026},
-  note = {Python package version 0.1.0},
-  doi = {10.5281/zenodo.23456212},
+  note = {Python package version 0.2.0},
+  doi = {10.5281/zenodo.23456211},
 }
 ```
 
-Cite the package you used: in R, the note reads "R package version 0.1.0".
+Cite the package you used: in R, the note reads "R package version 0.2.0".
 
 ## Author
 

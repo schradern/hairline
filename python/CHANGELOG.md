@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (0.2.0.dev0)
+## 0.2.0
 
 * Study results carry `numbers`: the unrounded quantities their table, values and text are formatted from. Per
   group n and the median and quartiles, mean and SD, range, or counts and shares; for a test its method,

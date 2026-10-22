@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 AUTHOR, INITIALS, YEAR, KEY = "Nikolas Schrader", "Schrader N", "2026", "schrader2026hairline"
-DOI = "10.5281/zenodo.23456212"
+DOI = "10.5281/zenodo.23456211"
 TITLE = "hairline: Clean, Predictable Figures for Medical and Data Science"
 STYLES = ("text", "bibtex")
 

@@ -12,13 +12,13 @@ authors:
     email: hi@nikolasschrader.com
     orcid: "https://orcid.org/0009-0001-4616-3804"
 repository-code: "https://github.com/schradern/hairline"
-version: 0.1.0
-doi: 10.5281/zenodo.23456212
+version: 0.2.0
+doi: 10.5281/zenodo.23456211
 identifiers:
   - type: doi
     value: 10.5281/zenodo.23456211
     description: Every version of hairline
-date-released: 2026-10-18
+date-released: 2026-10-22
 license: MIT
 keywords:
   - data visualisation
