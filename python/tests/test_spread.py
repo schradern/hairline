@@ -48,7 +48,7 @@ def numbers(shapes: list[dict], name: str) -> list[dict]:
 
 @pytest.fixture
 def narrow_context(tmp_path, monkeypatch):
-    """The host context Papers hands a figure in one column of a two-column PDF design."""
+    """The host context Paperings hands a figure in one column of a two-column PDF design."""
     path = tmp_path / "context.json"
     path.write_text(json.dumps({"version": 1, "host": "editor", "output": "pdf", "width_mm": 75}))
     monkeypatch.setenv(host.ENVIRONMENT, str(path))
