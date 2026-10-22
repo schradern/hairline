@@ -8,7 +8,7 @@ hl_save(
   plot,
   name,
   formats = c("pdf", "png"),
-  size = "onehalf",
+  size = NULL,
   width_mm = NULL,
   height_mm = NULL,
   dpi = 600,
@@ -23,7 +23,9 @@ hl_save(
 \item{formats}{Any of \code{"pdf"}, \code{"png"}, \code{"svg"}, \code{"tiff"}, \code{"html"} (the SVG with tooltips and series
 highlighting, self-contained).}
 
-\item{size}{Size preset: \code{"single"} (85 mm), \code{"onehalf"} (120), \code{"double"} (174), \code{"a4"} (160), \code{"slide"}.}
+\item{size}{Size preset: \code{"single"} (85 mm), \code{"onehalf"} (120), \code{"double"} (174), \code{"a4"} (160), \code{"slide"}.
+\code{NULL} uses the plot's own size: \code{"double"} for \code{\link[=hl_timeseries]{hl_timeseries()}} (its panels run in rows across the page, as in
+the Python package), \code{"onehalf"} for every other plot.}
 
 \item{width_mm, height_mm}{Explicit size in mm; overrides the preset.}
 

@@ -6,17 +6,21 @@ decimals_for <- function(step) {
   digits
 }
 
+# Locale labels with the decimals the step needs; numbers from 10^9 on in one short-scale unit for the whole axis
+# (0, 0.5 tn, 1 tn), so that thirteen digits never crowd an axis.
 axis_labels <- function(percent) {
   function(breaks) {
     values <- breaks[is.finite(breaks)]
     if (length(values) == 0) return(character())
     step <- if (length(values) > 1) values[2] - values[1] else 1
-    digits <- decimals_for(step * if (percent) 100 else 1)
+    unit <- if (percent) NULL else number_unit(values)
+    digits <- decimals_for(step * (if (percent) 100 else 1) / (unit$scale %||% 1))
     top <- max(values)
     vapply(breaks, function(value) {
       if (!is.finite(value)) return(NA_character_)
       if (percent && isTRUE(all.equal(value, top))) return(hl_format_percent(value, digits))
-      hl_format_number(if (percent) value * 100 else value, digits)
+      if (percent) return(hl_format_number(value * 100, digits))
+      format_compact(value, digits, unit)
     }, character(1))
   }
 }

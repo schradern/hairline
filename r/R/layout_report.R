@@ -6,20 +6,23 @@
 #'
 #' @param plot A ggplot with [theme_hairline()].
 #' @param width_mm,height_mm Figure size in mm; override the preset.
-#' @param size Size preset, as in [hl_save()]; its base size applies unless one was set explicitly.
+#' @param size Size preset, as in [hl_save()] (`NULL` for the plot's own); its base size applies unless one was set
+#'   explicitly.
 #' @return A named list.
 #' @examples
 #' plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
 #'   ggplot2::labs(title = "Fuel use by weight") + theme_hairline()
 #' str(hl_layout_report(plot, size = "single")$panels)
 #' @export
-hl_layout_report <- function(plot, width_mm = NULL, height_mm = NULL, size = "onehalf") {
+hl_layout_report <- function(plot, width_mm = NULL, height_mm = NULL, size = NULL) {
   framed <- frame_plan(plot, size, width_mm, height_mm, "hl_layout_report()")
   report_from_plan(framed$parts, framed$plan)
 }
 
 # The extracted parts and the planned frame of a plot at its saved size.
 frame_plan <- function(plot, size, width_mm = NULL, height_mm = NULL, caller = "hairline") {
+  size <- plot_size(plot, size)
+  check_size_preset(size)
   plot <- plot_for_size(plot, size)
   size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm %||% plot@meta$hairline_height_mm))
   path <- tempfile(fileext = ".png")

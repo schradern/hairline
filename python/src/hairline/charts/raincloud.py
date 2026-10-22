@@ -13,6 +13,7 @@ from hairline.charts.common import check_columns, check_numeric, check_present, 
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.fonts import families
+from hairline.layout.geometry import load_font_metrics
 from hairline.marks import FIXED_ID, STATIC_ID
 from hairline.numbers import format_p
 from hairline.settings import current_settings, role_size
@@ -21,6 +22,7 @@ from hairline.stats.tests import rank_sum
 from hairline.tokens import load_tokens
 
 DENSITY_ID = "hairline-density"
+BRACKET_HEADROOM = 0.6  # bracket steps above the highest bracket, for its label
 
 
 def bracket_levels(spans: Sequence[tuple[int, int]]) -> list[int]:
@@ -36,6 +38,22 @@ def bracket_levels(spans: Sequence[tuple[int, int]]) -> list[int]:
         levels[index] = level
         taken.append((level, low, high))
     return levels
+
+
+def bracket_plot_height(levels: int) -> float | None:
+    """The least plot height (x the base size) at which each of `levels` bracket levels has room for its p label:
+    the label (pad, cap height and descender at the label size) above its bracket and clear of the next bracket's
+    ticks, on a value axis spanning the data and the brackets, with room for the ticks' overshoot. None without
+    brackets; never below `spacing.min_plot_height`."""
+    if not levels:
+        return None
+    tokens, metrics = load_tokens(), load_font_metrics()
+    rules, ticks = tokens["raincloud"], tokens["ticks"]
+    label = tokens["type"]["roles"]["label"]["factor"] * (rules["label_pad"] + metrics.cap_height + metrics.descender)
+    level = label / (1 - rules["bracket_tick"] / rules["bracket_step"])
+    steps = 1 / rules["bracket_step"] + levels + BRACKET_HEADROOM
+    overshoot = 1 + ticks["overshoot_low"] + ticks["overshoot_high"]
+    return max(tokens["spacing"]["min_plot_height"], level * steps * overshoot)
 
 
 def draw_group(ax, values: pd.Series, position: int, color: str, rules: dict) -> None:
@@ -60,12 +78,14 @@ def draw_group(ax, values: pd.Series, position: int, color: str, rules: dict) ->
 
 
 def draw_brackets(ax, comparisons: Sequence[tuple[str, str, str]], names: list[str], values: pd.Series,
-                  rules: dict) -> None:
+                  rules: dict) -> int:
+    """The brackets, each on the lowest level free of the others; returns the number of levels."""
     settings = current_settings()
     top, spread = float(values.max()), float(values.max() - values.min()) or 1.0
     spans = [(names.index(first), names.index(second)) for first, second, _ in comparisons]
     width, color = load_tokens()["reference"]["width"] * settings.base_size, settings.neutral["muted"]
-    for (low, high), level, (_, _, label) in zip(spans, bracket_levels(spans), comparisons, strict=True):
+    levels = bracket_levels(spans)
+    for (low, high), level, (_, _, label) in zip(spans, levels, comparisons, strict=True):
         y = top + spread * rules["bracket_step"] * (level + 1)
         tick = spread * rules["bracket_tick"]
         ax.plot([low, low, high, high], [y - tick, y, y, y - tick], color=color, linewidth=width,
@@ -73,7 +93,8 @@ def draw_brackets(ax, comparisons: Sequence[tuple[str, str, str]], names: list[s
         ax.annotate(label, xy=((low + high) / 2, y), xytext=(0, rules["label_pad"] * role_size(settings, "label")),
                     textcoords="offset points", ha="center", va="bottom", fontsize=role_size(settings, "label"),
                     color=color, fontfamily=families(settings.font), annotation_clip=False)
-        ax.update_datalim([(low, y + spread * rules["bracket_step"] * 0.6)])
+        ax.update_datalim([(low, y + spread * rules["bracket_step"] * BRACKET_HEADROOM)])
+    return max(levels, default=-1) + 1
 
 
 def resolve_comparisons(comparisons: str | Sequence[tuple], groups: list, value: str) -> list[tuple[str, str, str]]:
@@ -119,7 +140,8 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     with entities.chart(names, colors):
         for position, (name, rows) in enumerate(groups):
             draw_group(result.ax, rows[value], position, entities.color(name), rules)
-    draw_brackets(result.ax, comparisons, names, data[value], rules)
+    # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
+    result.min_plot = bracket_plot_height(draw_brackets(result.ax, comparisons, names, data[value], rules))
     result.categories(0, names)
     result.ax.set_xlim(-0.6, len(names) - 0.4)
     if y_title:

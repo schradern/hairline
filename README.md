@@ -104,9 +104,11 @@ hl_save(overview$figure, "figures/cohort", formats = c("pdf", "png", "svg", "tif
 **Sizes.** `size=` picks a preset, and the text size follows it: `"single"` (85 mm, a journal's single
 column), `"onehalf"` (120 mm), `"double"` (174 mm, two columns), `"a4"` (160 mm) and `"slide"` (254 × 143 mm,
 larger text). `width_mm=` and `height_mm=` set the size exactly. In Python the size belongs to the figure
-(`hl.figure(..., size="double")`, `hl.bars(..., size="double")`); in R it is given when saving
-(`hl_save(plot, "name", size = "double")`). Charts whose height follows their content, such as forest plots
-and Sankey diagrams, size themselves.
+(`hl.figure(..., size="double")`, `hl.bars(..., size="double")`, or later `figure.resize(height_mm=90)`); in R
+it is given when saving (`hl_save(plot, "name", size = "double")`), and a plot may bring its own
+(`hl_timeseries()` saves at `"double"`, `hl_bars(size =)`). Charts whose height follows their content, such as
+forest plots and Sankey diagrams, size themselves, and a plot with axes is never squeezed: in one narrow column
+the figure grows until its panels keep 8 × the base size.
 
 **Every file** carries the figure's title and subtitle as its description and no timestamp;
 `background="transparent"` leaves out the white surface.

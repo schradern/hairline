@@ -184,7 +184,8 @@ headers_for <- function(plot, data, y, stats, percent, threshold, share_label, k
 #' @param raw_label,mean_label Legend labels of the two lines.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
-#' @return A ggplot with the hairline frame.
+#' @return A ggplot with the hairline frame; [hl_save()] writes it at the `"double"` size (174 mm) unless told
+#'   otherwise, as the Python package does.
 #' @examples
 #' set.seed(1)
 #' occupancy <- data.frame(date = rep(as.Date("2025-01-01") + 0:89, 2),
@@ -225,5 +226,8 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
     list(x = as_axis_value(event$x, data[[x]], "event x"), label = event$label, panels = event$panels)
   })
   plot@meta$hairline_notes <- Filter(function(note) !is.null(note$label), notes)
-  headers_for(plot, data, y, stats, percent, threshold, share_label, key, key_panels, qualifiers)
+  plot <- headers_for(plot, data, y, stats, percent, threshold, share_label, key, key_panels, qualifiers)
+  # Panels in rows across the page, as the Python package's default size.
+  plot@meta$hairline_size <- "double"
+  plot
 }

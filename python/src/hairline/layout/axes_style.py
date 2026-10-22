@@ -10,7 +10,7 @@ from matplotlib.axis import Axis
 from matplotlib.ticker import FixedLocator, FuncFormatter, ScalarFormatter
 
 from hairline.layout.measure import text_width
-from hairline.numbers import format_number, format_percent
+from hairline.numbers import format_compact, format_number, format_percent, number_unit
 from hairline.ticks import axis_limits, month_breaks, month_label, nice_breaks
 from hairline.tokens import load_tokens
 
@@ -58,15 +58,18 @@ def axis_breaks(ax: Axes, which: str, interval: tuple[float, float] | None, targ
 
 
 def tick_formatter(breaks: list[float], percent: bool, locale: str) -> FuncFormatter:
+    """Locale labels with the decimals the step needs; numbers from 10^9 on in one short-scale unit for the whole
+    axis (0, 0.5 tn, 1 tn), so that thirteen digits never crowd an axis."""
     step = breaks[1] - breaks[0] if len(breaks) > 1 else 1.0
-    digits = decimals_for(step * (100 if percent else 1))
+    unit = None if percent else number_unit(breaks, locale)
+    digits = decimals_for(step * (100 if percent else 1) / (unit[0] if unit else 1))
     top = breaks[-1]
 
     def label(value: float, _position: object = None) -> str:
         if percent:
             return format_percent(value, digits, locale) if math.isclose(value, top) else format_number(
                 value * 100, digits, locale)
-        return format_number(value, digits, locale)
+        return format_compact(value, digits, unit, locale)
     return FuncFormatter(label)
 
 

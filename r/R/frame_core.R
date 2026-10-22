@@ -78,6 +78,7 @@ frame_parts <- function(table, built) {
   flipped <- inherits(built@layout$coord, "CoordFlip")
   list(settings = settings, panels = panels, bare = isTRUE(built@plot@meta$hairline_bare), built = built,
        drawing = built@plot@meta$hairline_drawing, table = built@plot@meta$hairline_table,
+       min_plot = built@plot@meta$hairline_min_plot,
        aspect = panel_aspect(built), rows = max(vapply(panels, `[[`, numeric(1), "row")),
        columns = max(vapply(panels, `[[`, numeric(1), "col")), title = plot_label(built, "title"),
        subtitle = plot_label(built, "subtitle"), caption = plot_label(built, "caption"),

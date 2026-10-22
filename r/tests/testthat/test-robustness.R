@@ -771,7 +771,7 @@ test_that("a survival plot in one column grows taller instead of failing", {
                      months = round(stats::rexp(150, 1 / 20), 1) + 0.1, died = stats::rbinom(150, 1, 0.5))
   plot <- hl_kaplan_meier(data, "months", "died", "arm")
   narrow <- hl_layout_report(plot, width_mm = 75)
-  expect_equal(narrow$panels[[1]][4], hl_tokens()$survival$min_plot * hl_settings()$base_size, tolerance = 0.5)
+  expect_equal(narrow$panels[[1]][4], hl_tokens()$spacing$min_plot_height * hl_settings()$base_size, tolerance = 0.5)
   expect_equal(fitted_size_mm(plot, c(120, 84))[2], 84)
 })
 
@@ -968,13 +968,14 @@ test_that("values near zero keep two significant digits", {
 
 test_that("a figure that cannot be laid out is a layout error from hl_save", {
   hl_use(brand = FALSE)
-  plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
-    ggplot2::facet_wrap(~cyl, ncol = 1) + ggplot2::labs(title = "T") + theme_hairline()
+  # Too short a plot with axes grows; too narrow a one has no room to give.
+  plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt * 1000, mpg * 1000)) + ggplot2::geom_point() +
+    ggplot2::facet_wrap(~cyl, nrow = 1) + ggplot2::labs(title = "T") + theme_hairline()
   folder <- withr::local_tempdir()
-  error <- tryCatch(hl_save(plot, file.path(folder, "small"), formats = c("png", "svg"), width_mm = 60,
-                            height_mm = 20, dpi = 72), error = function(error) error)
+  error <- tryCatch(hl_save(plot, file.path(folder, "small"), formats = c("png", "svg"), width_mm = 15,
+                            height_mm = 40, dpi = 72), error = function(error) error)
   expect_s3_class(error, "hairline_layout_error")
-  expect_match(conditionMessage(error), "figure too small")
+  expect_match(conditionMessage(error), "figure too narrow")
   expect_length(list.files(folder, all.files = TRUE, no.. = TRUE), 0)
 })
 
@@ -1039,4 +1040,111 @@ test_that("study texts count one row in the singular", {
 
 test_that("an unknown output is refused without a brand", {
   expect_error(hl_use(output = "epub", brand = FALSE), "output 'epub' must be one of screen, pdf, html, docx")
+})
+
+local_host_width <- function(width_mm, env = parent.frame()) {
+  context <- withr::local_tempfile(fileext = ".json", .local_envir = env)
+  writeLines(sprintf("{\"version\":1,\"host\":\"x\",\"output\":\"pdf\",\"width_mm\":%s}", width_mm), context)
+  withr::local_envvar(HAIRLINE_HOST_CONTEXT = context, .local_envir = env)
+}
+
+narrow_points <- function() {
+  set.seed(3)
+  data.frame(x = stats::rnorm(90, 5, 2), y = stats::rnorm(90, 10, 3),
+             risk = sample(c("Low risk", "Medium risk", "High risk"), 90, TRUE))
+}
+
+narrow_wards <- function() {
+  set.seed(4)
+  data.frame(day = rep(as.Date("2025-01-01") + 0:89, 3), beds = stats::rnorm(270, 80, 8),
+             ward = rep(c("Cardiology ward", "Intensive care unit", "General surgery"), each = 90))
+}
+
+test_that("axes charts in one column grow until the plot keeps its room", {
+  # At 75 mm the legend and headers left these plots -14 to 11 pt ("figure too small"); the figure grows until its
+  # panels together keep 8 x the base size.
+  hl_use(brand = FALSE)
+  local_host_width(75)
+  plots <- list(hl_scatter(narrow_points(), "x", "y", by = "risk"),
+                hl_timeseries(narrow_wards(), "day", "beds", by = "ward"),
+                hl_timeseries(narrow_wards()[1:90, ], "day", "beds", title = paste(
+                  "Occupied beds per day in the cardiology ward over the first three months of the year")))
+  for (plot in plots) {
+    report <- hl_layout_report(plot)
+    heights <- vapply(report$panels, `[`, numeric(1), 4)
+    rows <- vapply(report$panels, `[`, numeric(1), 2)
+    expect_equal(sum(heights[!duplicated(rows)]), hl_tokens()$spacing$min_plot_height * 9, tolerance = 0.01)
+    expect_equal(fitted_size_mm(plot, figure_size_mm(plot_size(plot), NULL, NULL))[1], 75)
+  }
+})
+
+test_that("figures with room for their plot keep their size; timeseries default to the double size", {
+  hl_use(brand = FALSE)
+  plot <- hl_scatter(narrow_points(), "x", "y", by = "risk")
+  expect_equal(fitted_size_mm(plot, figure_size_mm(plot_size(plot), NULL, NULL)), c(120, 84))
+  series <- hl_timeseries(narrow_wards(), "day", "beds", by = "ward")
+  expect_equal(plot_size(series), "double")
+  expect_equal(plot_size(series, "single"), "single")
+  expect_equal(figure_size_mm(plot_size(series), NULL, NULL)[1], 174)
+})
+
+test_that("a plot too short for its panel names the height it needs", {
+  hl_use(brand = FALSE)
+  plot <- ggplot2::ggplot(data.frame(x = 1:3, y = 1:3), ggplot2::aes(x, y)) + ggplot2::geom_point() +
+    ggplot2::labs(title = "A plot whose title wraps onto a second line at this narrow width") + theme_hairline()
+  frame <- ggplot2::ggplotGrob(plot)
+  expect_error(plan_frame(frame$parts, c(40, 12) / 25.4 * 72),
+               "make it at least [0-9]+ mm tall \\(hl_save\\(height_mm = [0-9]+\\)\\)")
+  grown <- plan_frame(frame$parts, c(40, 12) / 25.4 * 72, grow = TRUE)
+  expect_equal(grown$layout$panels[[1]][4], hl_tokens()$spacing$min_plot_height * hl_settings()$base_size)
+})
+
+departments <- function(count) {
+  data.frame(department = c("Cardiology", "Neurology", "Oncology", "Orthopaedics", "Paediatrics", "Psychiatry",
+                            "Radiology", "Urology")[seq_len(count)], n = c(120, 95, 80, 70, 64, 40, 33, 20)[seq_len(count)])
+}
+
+lies_down <- function(plot) inherits(ggplot2::ggplot_build(plot)@layout$panel_scales_y[[1]], "ScaleDiscrete")
+
+test_that("bars lie down when their labels do not fit the figure width", {
+  # Seven department names collided under upright bars at 85 mm, though fewer than horizontal_count.
+  hl_use(brand = FALSE)
+  expect_false(lies_down(hl_bars(departments(3), "department", "n")))
+  local_host_width(85)
+  expect_true(lies_down(hl_bars(departments(7), "department", "n")))
+  expect_false(lies_down(hl_bars(departments(3), "department", "n")))
+})
+
+test_that("raincloud brackets keep room for their p labels in one column", {
+  hl_use(brand = FALSE)
+  local_host_width(75)
+  set.seed(5)
+  data <- data.frame(arm = rep(c("Placebo", "Low", "High", "Both"), each = 30), v = stats::rnorm(120, 10, 3))
+  plot <- hl_raincloud(data, "arm", "v", comparisons = "all")
+  expect_gt(plot@meta$hairline_min_plot, hl_tokens()$spacing$min_plot_height)
+  report <- hl_layout_report(plot)
+  expect_equal(report$panels[[1]][4], plot@meta$hairline_min_plot * 9, tolerance = 0.01)
+  expect_null(hl_raincloud(data, "arm", "v")@meta$hairline_min_plot)
+})
+
+test_that("scatter points at the axis limit are drawn whole", {
+  plot <- hl_scatter(data.frame(x = c(0, 5, 10), y = c(0, 5, 10)), "x", "y", fit = NULL)
+  expect_equal(plot@coordinates$clip, "off")
+})
+
+test_that("very large numbers are written in one short-scale unit", {
+  # 1.2e12 printed thirteen digits per tick and bar value, wider than the bars and past the figure.
+  expect_null(number_unit(999999999))
+  expect_equal(format_compact(1.2e12, 1, number_unit(c(1.2e12, 3e11), "en"), "en"), "1.2 tn")
+  expect_equal(format_compact(8e11, 1, number_unit(1.2e12, "de"), "de"), "0,8 Bio.")
+  expect_equal(format_compact(2.5e9, 1, number_unit(2.5e9, "en"), "en"), "2.5 bn")
+  expect_equal(format_compact(0, 2, number_unit(1e12), "en"), "0.00")
+  expect_equal(axis_labels(FALSE)(c(0, 0.25e12, 0.5e12, 0.75e12, 1e12, 1.25e12))[c(1, 6)], c("0.00", "1.25 tn"))
+  hl_use(brand = FALSE)
+  local_host_width(75)
+  plot <- hl_bars(data.frame(c = c("Alpha", "Beta", "Gamma"), v = c(1.2e12, 8e11, 3e11)), "c", "v")
+  layers <- lapply(seq_along(plot@layers), function(index) ggplot2::layer_data(plot, index)$label)
+  labels <- unlist(Filter(Negate(is.null), layers))
+  expect_equal(labels, c("1.2 tn", "0.8 tn", "0.3 tn"))
+  expect_false(lies_down(plot))
 })

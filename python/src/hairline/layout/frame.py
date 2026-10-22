@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import math
+
 from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box, FontMetrics, FrameInput, FrameLayout, Stack
 from hairline.tokens import load_tokens
+
+MM_PER_INCH = 25.4
+FLOOR_TOLERANCE_PT = 1e-6
 
 
 def header_lines(spec: FrameInput, row: int) -> int:
@@ -85,13 +90,35 @@ def fixed_bottom_height(spec: FrameInput, spacing: dict, metrics: FontMetrics, l
     return height + spacing["margin"] * base
 
 
+def frame_height(spec: FrameInput, metrics: FontMetrics) -> float:
+    """Height of everything but the panels: header, legend, panel headers and gaps, axis, table, caption. It depends
+    on the width alone, so the panels get whatever height the figure has beyond it."""
+    tokens = load_tokens()
+    spacing, line_gap = tokens["spacing"], tokens["type"]["line_gap"]
+    stack = Stack(0.0, metrics, line_gap)
+    place_header(stack, spec, FrameLayout(left=0.0, right=spec.width_pt, plot_left=0.0), spacing)
+    rows = sum(fixed_row_height(spec, row, spacing, metrics, line_gap) for row in range(spec.panel_rows))
+    return stack.y + rows + fixed_bottom_height(spec, spacing, metrics, line_gap)
+
+
+def kept_height(spec: FrameInput, metrics: FontMetrics, least: float) -> float:
+    """The figure height at which the panels together keep at least `least` pt (each row at least the smallest
+    panel): the height given when that is enough, else a taller one. The frame keeps its size, the plot its room."""
+    floor = load_tokens()["spacing"]["min_panel_height"] * spec.base_size
+    rows = spec.panel_rows
+    return max(spec.height_pt, frame_height(spec, metrics) + rows * max(least / rows, floor))
+
+
 def panel_height(spec: FrameInput, top: float, spacing: dict, metrics: FontMetrics, line_gap: float) -> float:
     fixed = sum(fixed_row_height(spec, row, spacing, metrics, line_gap) for row in range(spec.panel_rows))
     available = spec.height_pt - top - fixed - fixed_bottom_height(spec, spacing, metrics, line_gap)
     height = available / spec.panel_rows
-    if height < spacing["min_panel_height"] * spec.base_size:
+    floor = spacing["min_panel_height"] * spec.base_size
+    if height < floor - FLOOR_TOLERANCE_PT:
+        needed = (spec.height_pt + spec.panel_rows * (floor - height)) / 72 * MM_PER_INCH
         raise HairlineLayoutError(f"hairline: figure too small: {spec.height_pt:.0f} pt high leaves {height:.1f} pt "
-                                  f"per panel for {spec.panel_rows} panel rows; make it taller or use fewer rows")
+                                  f"per panel for {spec.panel_rows} panel rows; make it at least {math.ceil(needed)} "
+                                  f"mm tall (figure.resize(height_mm={math.ceil(needed)})) or use fewer rows")
     return height
 
 

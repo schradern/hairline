@@ -116,18 +116,6 @@ def fit_height(figure: HairlineFigure, shrink: bool = True) -> HairlineFigure:
             break
         width, height = figure.figure.get_size_inches()
         figure.figure.set_size_inches(width, height - slack / 72)
+    figure.fitted_height = "fit" if shrink else "grow"
     return figure
 
-
-def keep_plot_height(figure: HairlineFigure, least: float) -> HairlineFigure:
-    """Make the figure taller when its frame (title, legend, header, axis, table) would leave a panel less than
-    `least` pt high: the frame keeps its size, the plot its room. Only the frame is laid out, at a probe height
-    tall enough for any frame of this width; nothing is drawn."""
-    width, height = figure.figure.get_size_inches()
-    probe = 2 * height + least / 72
-    figure.figure.set_size_inches(width, probe)
-    figure.figure.get_layout_engine().execute(figure.figure)
-    rows = len({box.y for box in figure.plot_boxes})
-    frame = probe * 72 - rows * min(box.height for box in figure.plot_boxes)
-    figure.figure.set_size_inches(width, max(height, (frame + rows * least) / 72))
-    return figure

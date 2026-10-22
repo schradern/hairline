@@ -18,7 +18,8 @@ hl_bars(
   sort = NULL,
   order = NULL,
   labels = TRUE,
-  colors = NULL
+  colors = NULL,
+  size = NULL
 )
 }
 \arguments{
@@ -36,7 +37,8 @@ hl_bars(
 
 \item{percent}{Show shares of each category instead of amounts.}
 
-\item{horizontal}{Force horizontal (\code{TRUE}) or vertical (\code{FALSE}) bars.}
+\item{horizontal}{Force horizontal (\code{TRUE}) or vertical (\code{FALSE}) bars. By default many or long labels lie
+down, and so do labels too wide for upright bars at the width of \code{size}.}
 
 \item{sort}{\code{"value"} or \code{"given"}; default by value, except for groups side by side.}
 
@@ -46,6 +48,9 @@ hl_bars(
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
 for the number of groups and are not remembered for other charts.}
+
+\item{size}{Size preset the bars are laid out for, as in \code{\link[=hl_save]{hl_save()}} (\code{NULL}: \code{"onehalf"}): its width decides
+between upright and lying bars, and \code{\link[=hl_save]{hl_save()}} uses it unless given another size.}
 }
 \value{
 A ggplot with the hairline frame.

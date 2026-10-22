@@ -188,5 +188,7 @@ study_overview <- function(study, parts) {
   }
   plot@meta$hairline_height_mm <- rules$overview_frame_mm +
     panel_rows * (rules$overview_panel_mm + length(shown) * rules$overview_row_mm)
+  # The strip is sized from its rows, not the 8 x base an axes chart keeps: each group row keeps its own least.
+  plot@meta$hairline_min_plot <- panel_rows * length(shown) * rules$overview_min_row
   plot
 }

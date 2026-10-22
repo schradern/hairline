@@ -49,6 +49,33 @@
   "1 variable". `hl_study(unit = ...)` takes a plural noun, whose singular drops a final s, or a singular and plural
   pair such as `c("mouse", "mice")`.
 * `hl_use(output = ...)` refuses an unknown export type with `brand = FALSE` too.
+## Narrow figures (one column of a two-column page)
+
+* Plots with axes keep their plot room: when the title, legend, panel headers, axis or table would squeeze the
+  panels below `spacing.min_plot_height` (8 x the base size, for all panel rows together, each row at least
+  `min_panel_height`), `hl_save()` (and `hl_layout_report()`, host hand-off, HTML) makes the figure taller instead
+  of failing with "figure too small". `hl_scatter(by =)` and `hl_timeseries()` at 75 mm (`width_mm` from a host
+  context) used to fail. Figures with room to spare keep their size (the gallery is unchanged). It replaces the
+  Kaplan–Meier-only rule and the `survival.min_plot` token. A chart can ask for more room
+  (`plot@meta$hairline_min_plot`): `hl_raincloud()` does, by its bracket levels, and the study overview asks for
+  less (`study.overview_min_row` per group row), as its strip is sized from its rows. A plot printed to a device of
+  fixed size keeps that size; "figure too small" then names the height that fits: "make it at least 52 mm tall
+  (hl_save(height_mm = 52))".
+* `hl_timeseries()` plots are saved at the `"double"` size (174 mm) by default, as in the Python package, where
+  they were 120 mm wide: `hl_save()`, `hl_layout_report()` and the host hand-off take `size = NULL`, the plot's own
+  size (`"onehalf"` for every other plot).
+* `hl_bars()` lies down when its category names, or the values over its bars, are too wide for upright bars at
+  the figure's width (`bars.label_space` x the base size between neighbours), not only by label count and length:
+  seven or eight department names collided at 85 mm, and eight already did at 120 mm. The new `size` argument
+  names the size the bars are laid out for (the host's column, else the preset's width), as `size=` does in
+  Python, and becomes the plot's own size for `hl_save()`.
+* `hl_raincloud()` comparison brackets keep room for their p labels: a short plot grows until every bracket level
+  is taller than its label, instead of stacking the labels into the brackets above.
+* `hl_scatter()` draws points at the axis limits whole (`coord_cartesian(clip = "off")`); limits end on a break,
+  so the panel edge cut them in half.
+* Numbers from 10^9 on are written in one short-scale unit per axis and per bar chart (`1.25 tn`, `0.8 tn`;
+  German `Bio.`, `Mrd.`), with the tick step's decimals on axes and `numbers.compact_digits` on bars, instead of
+  thirteen digits that ran past the bars and the figure. Tooltips keep the full number.
 
 # hairline 0.2.0
 

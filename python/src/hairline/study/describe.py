@@ -158,6 +158,8 @@ def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:
     height = rules["overview_frame_mm"] + rows * (rules["overview_panel_mm"] + len(shown) * rules["overview_row_mm"])
     result = figure(title, subtitle="Range, interquartile range and median", size=size, height_mm=height,
                     panels=len(numeric), layout="pair", columns=columns)
+    # The strip is sized from its rows, not the 8 x base an axes chart keeps: each group row keeps its own least.
+    result.min_plot = rows * len(shown) * rules["overview_min_row"]
     style = {"faint": result.settings.neutral["faint"],
              "leader": load_tokens()["reference"]["width"] * result.settings.base_size}
     with entities.chart(names if study.group else [], None):

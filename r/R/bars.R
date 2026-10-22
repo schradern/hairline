@@ -34,9 +34,51 @@ bars_horizontal <- function(names) {
   length(names) > rules$horizontal_count || max(nchar(names)) > rules$horizontal_length
 }
 
-bar_frame <- function(parts, category, by, horizontal, percent) {
+# Upright bars need every category name, and every value over its bar, to fit the room a category gets across the
+# plot (the figure's width less its margins and the y labels, about as wide as the widest value), with
+# `bars.label_space` x the base size between neighbours; otherwise the bars lie down.
+fits_upright <- function(names, values, bars_per_slot, width_pt, settings) {
+  tokens <- hl_tokens()
+  base <- settings$base_size
+  measure <- measure_for(settings)
+  widest <- max(c(0, vapply(values, measure, numeric(1), role = "label")))
+  plot <- width_pt - 2 * tokens$spacing$margin * base - widest - tokens$spacing$y_labels_plot * base
+  slot <- plot / (length(names) - 1 + 2 * tokens$bars$category_pad)
+  space <- tokens$bars$label_space * base
+  max(vapply(names, measure, numeric(1), role = "label")) <= slot - space && widest <= slot / bars_per_slot - space
+}
+
+# The value texts upright bars would carry over their ends: every bar's, or each stack's total.
+upright_values <- function(frame, stacked, labels, percent) {
+  if (!labels || (stacked && percent)) return(character())
+  if (!stacked) return(frame$label)
+  totals <- tapply(frame$value, frame$category, sum)
+  vapply(totals[!is.na(totals)], format_compact, character(1), digits = attr(frame, "digits"),
+         unit = attr(frame, "unit"))
+}
+
+# Many or long labels lie down, and so do labels too wide for upright bars at the width of `size` (the host's column,
+# else the preset's width).
+bars_lie_down <- function(parts, category, by, stacked, labels, percent, size) {
+  if (bars_horizontal(parts$names)) return(TRUE)
+  values <- upright_values(bar_frame(parts, category, by, FALSE, percent, stacked), stacked, labels, percent)
+  figure <- default_figure(size)
+  !fits_upright(parts$names, values, if (stacked) 1 else length(parts$groups), figure$width_pt, figure$settings)
+}
+
+# Decimals and unit of the values on the bars: the data's own decimals, or, from 10^9 on, one short-scale unit for
+# the chart (1.2 tn, 0.8 tn) with `numbers.compact_digits` decimals.
+bar_numbers <- function(table, category, stacked) {
+  values <- c(table$.value, if (stacked) tapply(table$.value, table[[category]], sum))
+  unit <- number_unit(values)
+  if (is.null(unit)) list(digits = auto_digits(table$.value), unit = NULL) else
+    list(digits = hl_tokens()$numbers$compact_digits, unit = unit)
+}
+
+bar_frame <- function(parts, category, by, horizontal, percent, stacked = FALSE) {
   table <- parts$table
-  digits <- auto_digits(table$.value)
+  numbers <- bar_numbers(table, category, stacked)
+  digits <- numbers$digits
   if (percent) {
     negative <- which(table$.value < 0)
     if (length(negative)) {
@@ -52,13 +94,15 @@ bar_frame <- function(parts, category, by, horizontal, percent) {
     table$.value <- table$.value / totals
   }
   levels <- if (horizontal) rev(parts$names) else parts$names
-  # A bar's value: whole percentages, or the data's own decimals (0.12 stays 0.12, counts stay whole).
+  # A bar's value: whole percentages, or the data's own decimals (0.12 stays 0.12, counts stay whole), in the chart's
+  # unit when its numbers are that large (see bar_numbers()).
   frame <- data.frame(category = factor(table[[category]], levels = levels),
                       group = factor(if (is.null(by)) "" else as.character(table[[by]]), levels = parts$groups),
                       value = table$.value,
                       label = if (percent) vapply(table$.value, hl_format_percent, character(1), digits = 0) else
-                        vapply(table$.value, hl_format_number, character(1), digits = digits))
+                        vapply(table$.value, format_compact, character(1), digits = digits, unit = numbers$unit))
   attr(frame, "digits") <- digits
+  attr(frame, "unit") <- numbers$unit
   frame[!is.na(frame$value), , drop = FALSE]
 }
 
@@ -92,8 +136,8 @@ stacked_text_layers <- function(frame, colours, horizontal, percent) {
     # The signed total at the end of the stack: past the positive segments, or the negative ones if none is positive.
     totals <- data.frame(category = factor(names(ups)[present], levels = levels(frame$category)),
                          value = ifelse(ups > 0, ups, downs)[present], group = "",
-                         label = vapply((ups + downs)[present], hl_format_number, character(1),
-                                        digits = attr(frame, "digits") %||% 0))
+                         label = vapply((ups + downs)[present], format_compact, character(1),
+                                        digits = attr(frame, "digits") %||% 0, unit = attr(frame, "unit")))
     gap <- rules$label_gap
     layers[[2]] <- bar_text(bar_value_mapping(horizontal), totals, "identity", settings$neutral$muted, settings,
                             hjust = if (horizontal) -gap else 0.5, vjust = if (horizontal) 0.5 else -gap)
@@ -163,12 +207,15 @@ bars_title <- function(value, category, by) {
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param stacked Stack the groups.
 #' @param percent Show shares of each category instead of amounts.
-#' @param horizontal Force horizontal (`TRUE`) or vertical (`FALSE`) bars.
+#' @param horizontal Force horizontal (`TRUE`) or vertical (`FALSE`) bars. By default many or long labels lie
+#'   down, and so do labels too wide for upright bars at the width of `size`.
 #' @param sort `"value"` or `"given"`; default by value, except for groups side by side.
 #' @param order Category order.
 #' @param labels Print the values: at the bar ends, or inside stacked segments with the totals at the ends.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#' @param size Size preset the bars are laid out for, as in [hl_save()] (`NULL`: `"onehalf"`): its width decides
+#'   between upright and lying bars, and [hl_save()] uses it unless given another size.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' admissions <- data.frame(
@@ -179,20 +226,23 @@ bars_title <- function(value, category, by) {
 #' @export
 hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subtitle = NULL, caption = NULL,
                     stacked = FALSE, percent = FALSE, horizontal = NULL, sort = NULL, order = NULL, labels = TRUE,
-                    colors = NULL) {
+                    colors = NULL, size = NULL) {
+  if (!is.null(size)) check_size_preset(size)
   counted <- with_counts(data, value)
   check_columns(counted$data, c(category, counted$value, by))
   stacked <- stacked && !is.null(by)
   parts <- bar_table(counted$data, category, counted$value, by, order,
                      sort %||% if (is.null(by) || stacked) "value" else "given")
-  horizontal <- horizontal %||% bars_horizontal(parts$names)
+  horizontal <- horizontal %||% bars_lie_down(parts, category, by, stacked, labels, percent, size %||% "onehalf")
   colours <- if (is.null(by)) stats::setNames(lone_colour(), "") else
     colours_for(parts$groups, colors)
   plot <- ggplot2::ggplot() +
-    bar_layers(bar_frame(parts, category, by, horizontal, percent), colours, horizontal, stacked, labels, percent) +
+    bar_layers(bar_frame(parts, category, by, horizontal, percent, stacked), colours, horizontal, stacked, labels,
+               percent) +
     ggplot2::labs(title = title %||% bars_title(counted$value, category, by),
                   subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline() +
     bar_category_scale(horizontal)
   if (percent) plot <- plot + if (horizontal) scale_x_hairline(percent = TRUE) else scale_y_hairline(percent = TRUE)
+  plot@meta$hairline_size <- size
   plot
 }

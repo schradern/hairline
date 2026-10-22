@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from hairline.drawing import run_drawings, text_positions
@@ -12,7 +12,7 @@ from hairline.focus import apply_entity_colors, apply_highlight, focus_legend_it
 from hairline.layout.axes_style import align_edge_labels, label_width, set_tick_visibility
 from hairline.layout.bare import fitted_box
 from hairline.layout.draw import add_text
-from hairline.layout.frame import compute_frame
+from hairline.layout.frame import compute_frame, kept_height
 from hairline.layout.geometry import FrameInput, FrameLayout, load_font_metrics
 from hairline.layout.legend import draw_legend, items_from_axes, pack_rows
 from hairline.layout.measure import text_width, wrap
@@ -26,6 +26,8 @@ from hairline.tokens import load_tokens
 
 if TYPE_CHECKING:
     from hairline.figure import HairlineFigure
+
+HEIGHT_TOLERANCE_PT = 1e-6
 
 
 @dataclass
@@ -145,10 +147,37 @@ def plan_layout(figure: HairlineFigure, measured: Measured, size: tuple[float, f
     metrics = load_font_metrics()
     provisional = tuple(1 if any(grid_position(figure, i)[0] == row for i in figure.headers) else 0
                         for row in range(math.ceil(len(figure.axes) / figure.columns)))
-    layout = compute_frame(frame_input(figure, measured, size, legend_rows, provisional), metrics)
+    # The provisional pass only places the headers across; its height merely has to leave the panels room.
+    spec = frame_input(figure, measured, size, legend_rows, provisional)
+    layout = compute_frame(replace(spec, height_pt=kept_height(spec, metrics, least_plot_height(figure))), metrics)
     composed = compose_headers(figure, layout)
-    layout = compute_frame(frame_input(figure, measured, size, legend_rows, lines_per_row(figure, composed)), metrics)
-    return layout, placed, compose_headers(figure, layout)
+    spec = kept_plot_room(figure, frame_input(figure, measured, size, legend_rows, lines_per_row(figure, composed)),
+                          metrics)
+    layout = compute_frame(spec, metrics)
+    return layout, placed, compose_headers(figure, layout), (spec.width_pt, spec.height_pt)
+
+
+def keeps_plot_room(figure: HairlineFigure) -> bool:
+    """Figures with axes keep their plot room; drawn panels have their own height (fitted to their content)."""
+    return any(index not in figure.bare_panels for index in range(len(figure.axes)))
+
+
+def least_plot_height(figure: HairlineFigure) -> float:
+    """The least height in pt the axes panels keep together: the chart's own or `spacing.min_plot_height`."""
+    return (figure.min_plot or load_tokens()["spacing"]["min_plot_height"]) * figure.settings.base_size
+
+
+def kept_plot_room(figure: HairlineFigure, spec: FrameInput, metrics) -> FrameInput:
+    """The frame for a figure grown, where needed, until its axes panels together keep the least plot height
+    (`spacing.min_plot_height` x the base size, or the chart's own): a narrow figure whose title, legend, headers,
+    axis or table would squeeze the plot gets taller instead."""
+    if not keeps_plot_room(figure):
+        return spec
+    height = kept_height(spec, metrics, least_plot_height(figure))
+    if height <= spec.height_pt + HEIGHT_TOLERANCE_PT:
+        return spec
+    figure.figure.set_size_inches(spec.width_pt / 72, height / 72, forward=False)
+    return replace(spec, height_pt=height)
 
 
 def position_axes(figure: HairlineFigure, layout: FrameLayout, size: tuple[float, float]) -> None:
@@ -256,7 +285,7 @@ def apply_frame(figure: HairlineFigure) -> dict[int, list[str]]:
     apply_highlight(figure)
     apply_light_slots(figure.axes, figure.settings, figure.light_slot_done, figure.point_done)
     measured = measure_texts(figure, size[0], configure_all_ticks(figure))
-    layout, placed, composed = plan_layout(figure, measured, size)
+    layout, placed, composed, size = plan_layout(figure, measured, size)
     position_axes(figure, layout, size)
     scale_panel_lines(figure.axes, figure.plot_boxes, figure.line_widths)
     place_reference_labels(figure)

@@ -168,7 +168,5 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
     })
     plot@meta$hairline_table <- list(heading = "Number at risk", rows = rows)
   }
-  # A narrow figure (one column of a two-column page) grows taller rather than squeezing the curves away.
-  plot@meta$hairline_min_plot <- hl_tokens()$survival$min_plot
   plot
 }

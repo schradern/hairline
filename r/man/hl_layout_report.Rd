@@ -4,14 +4,15 @@
 \alias{hl_layout_report}
 \title{Frame positions of a hairline plot}
 \usage{
-hl_layout_report(plot, width_mm = NULL, height_mm = NULL, size = "onehalf")
+hl_layout_report(plot, width_mm = NULL, height_mm = NULL, size = NULL)
 }
 \arguments{
 \item{plot}{A ggplot with \code{\link[=theme_hairline]{theme_hairline()}}.}
 
 \item{width_mm, height_mm}{Figure size in mm; override the preset.}
 
-\item{size}{Size preset, as in \code{\link[=hl_save]{hl_save()}}; its base size applies unless one was set explicitly.}
+\item{size}{Size preset, as in \code{\link[=hl_save]{hl_save()}} (\code{NULL} for the plot's own); its base size applies unless one was set
+explicitly.}
 }
 \value{
 A named list.

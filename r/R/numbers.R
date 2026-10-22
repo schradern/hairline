@@ -87,6 +87,26 @@ hl_format_number <- function(value, digits = 1, locale = NULL) {
   paste0(if (is_negative) symbols$minus else "", body)
 }
 
+# The short-scale unit (bn, tn, ...) to write numbers as large as these in: the largest the locale has that the
+# largest finite value reaches, once it has `numbers.compact_from` digits' worth (10^9); NULL below that.
+number_unit <- function(values, locale = NULL) {
+  values <- abs(as.numeric(values))
+  largest <- max(c(0, values[is.finite(values)]))
+  if (largest < 10^hl_tokens()$numbers$compact_from) return(NULL)
+  units <- locale_symbols(locale)$magnitudes
+  reached <- which(largest >= 10^units$power)
+  if (!length(reached)) return(NULL)
+  last <- max(reached)
+  list(scale = 10^units$power[last], suffix = units$suffix[last])
+}
+
+# `value` in `unit` ("1.2 tn", "1,2 Bio."), where a full number would run past an axis or a bar; zero, and any value
+# when there is no unit, as hl_format_number() writes it.
+format_compact <- function(value, digits, unit, locale = NULL) {
+  if (is.null(unit) || is.na(value) || value == 0 || !is.finite(value)) return(hl_format_number(value, digits, locale))
+  paste0(hl_format_number(value / unit$scale, digits, locale), "\u00a0", unit$suffix)
+}
+
 #' @rdname hl_format_number
 #' @export
 hl_format_percent <- function(share, digits = 1, locale = NULL) {

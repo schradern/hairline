@@ -68,7 +68,8 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
     with entities.chart([name for name, _ in groups] if by else [], colors):
         for name, group in groups:
             color = entities.color(name) if by else lone_color()
-            result.ax.scatter(group[x], group[y], color=color, label=name if by else "_nolegend_")
+            # Limits end on a break, so a point at the limit would be cut in half by the panel's edge.
+            result.ax.scatter(group[x], group[y], color=color, label=name if by else "_nolegend_", clip_on=False)
     if fit:
         drawn = pd.concat([group for _, group in groups])
         check_fit(drawn[x])

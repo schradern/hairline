@@ -230,7 +230,7 @@ plot_targets <- function(parts, plan) {
   rapply(targets, function(value) round(value, 2), classes = "numeric", how = "replace")
 }
 
-interactive_targets <- function(plot, size = "onehalf", width_mm = NULL, height_mm = NULL) {
+interactive_targets <- function(plot, size = NULL, width_mm = NULL, height_mm = NULL) {
   with_plot_settings(plot, {
     framed <- frame_plan(plot, size, width_mm, height_mm, "html export")
     plot_targets(framed$parts, framed$plan)

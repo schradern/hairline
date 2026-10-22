@@ -58,10 +58,25 @@ figure_size_mm <- function(size, width_mm, height_mm) {
   c(width, height_mm %||% preset$height_mm %||% (width * preset$aspect))
 }
 
+# The size preset a plot is saved at: the one asked for, else the plot's own (plot@meta$hairline_size), else
+# "onehalf".
+plot_size <- function(plot, size = NULL) {
+  own <- if (inherits(plot, "ggplot")) plot@meta$hairline_size
+  size %||% own %||% "onehalf"
+}
+
 saved_settings <- function(plot, size) {
   settings <- plot@meta$hairline_settings %||% hl_settings()
   if (!isTRUE(settings$base_size_explicit)) settings$base_size <- hl_tokens()$sizes[[size]]$base_size
   settings
+}
+
+# The width (pt) and settings a plot made now gets when saved at `size` without an explicit width: the host's
+# column, else the preset. Charts that adapt to the width (bars' orientation) decide with it.
+default_figure <- function(size = "onehalf") {
+  settings <- hl_settings()
+  if (!isTRUE(settings$base_size_explicit)) settings$base_size <- hl_tokens()$sizes[[size]]$base_size
+  list(width_pt = figure_size_mm(size, NULL, NULL)[1] / 25.4 * 72, settings = settings)
 }
 
 plot_for_size <- function(plot, size) {
@@ -106,6 +121,8 @@ write_format <- function(plot, path, format, size_mm, dpi, background, size = "o
 #' @param formats Any of `"pdf"`, `"png"`, `"svg"`, `"tiff"`, `"html"` (the SVG with tooltips and series
 #'   highlighting, self-contained).
 #' @param size Size preset: `"single"` (85 mm), `"onehalf"` (120), `"double"` (174), `"a4"` (160), `"slide"`.
+#'   `NULL` uses the plot's own size: `"double"` for [hl_timeseries()] (its panels run in rows across the page, as in
+#'   the Python package), `"onehalf"` for every other plot.
 #' @param width_mm,height_mm Explicit size in mm; overrides the preset.
 #' @param dpi Resolution for PNG and TIFF.
 #' @param background `NULL` for the plot's background or `"transparent"`.
@@ -115,7 +132,7 @@ write_format <- function(plot, path, format, size_mm, dpi, background, size = "o
 #'   ggplot2::labs(title = "Fuel use by weight") + theme_hairline()
 #' hl_save(plot, file.path(tempdir(), "fuel"), formats = "png", size = "single", dpi = 150)
 #' @export
-hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", width_mm = NULL, height_mm = NULL,
+hl_save <- function(plot, name, formats = c("pdf", "png"), size = NULL, width_mm = NULL, height_mm = NULL,
                     dpi = 600, background = NULL) {
   formats <- validated_formats(formats)
   check_positive(dpi, "dpi")
@@ -124,6 +141,7 @@ hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", wid
     stop(sprintf("hairline: dpi must be at least %s, below which text is smaller than a pixel; got %s", least, dpi),
          call. = FALSE)
   }
+  size <- plot_size(plot, size)
   check_size_preset(size)
   if (!(is.character(name) && length(name) == 1 && nzchar(name))) {
     stop(sprintf("hairline: name must be one file path; got %s", paste(format(name), collapse = ", ")), call. = FALSE)

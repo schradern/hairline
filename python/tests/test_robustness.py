@@ -955,7 +955,7 @@ def test_a_survival_plot_in_one_column_grows_taller_instead_of_failing(tmp_path,
     host_width(tmp_path, monkeypatch, width_mm=75)
     narrow = hl.kaplan_meier(data, "months", "died", "arm")
     narrow.figure.savefig(io.BytesIO(), format="png", dpi=30)
-    least = load_tokens()["survival"]["min_plot"] * narrow.settings.base_size
+    least = load_tokens()["spacing"]["min_plot_height"] * narrow.settings.base_size
     assert narrow.plot_boxes[0].height == pytest.approx(least, abs=0.5)
     assert narrow.figure.get_size_inches()[1] * 25.4 > 75 * 0.7
 
@@ -1175,8 +1175,11 @@ def test_ordinary_values_keep_their_decimals():
 
 
 def test_a_figure_that_cannot_be_laid_out_is_a_layout_error_from_save(tmp_path):
-    figure = hl.figure("T", width_mm=60, height_mm=20, panels=3)
-    with pytest.raises(hl.HairlineLayoutError, match="figure too small"):
+    # Too short a figure with axes grows; too narrow a one has no room to give.
+    figure = hl.figure("T", width_mm=15, height_mm=40, panels=3, layout="grid", columns=3)
+    for ax in figure.axes:
+        ax.plot(np.arange(10) * 1000, np.arange(10) * 1000)
+    with pytest.raises(hl.HairlineLayoutError, match="figure too narrow"):
         hl.save(figure, tmp_path / "small", formats=["png", "svg"], dpi=72)
     assert list(tmp_path.iterdir()) == []
 
@@ -1257,3 +1260,118 @@ def test_study_texts_count_one_row_in_the_singular():
 def test_an_unknown_output_is_refused_without_a_brand():
     with pytest.raises(ValueError, match="output 'epub' must be one of screen, pdf, html, docx"):
         hl.use(output="epub", brand=False)
+
+
+def narrow_points() -> pd.DataFrame:
+    generator = np.random.default_rng(3)
+    return pd.DataFrame({"x": generator.normal(5, 2, 90), "y": generator.normal(10, 3, 90),
+                         "risk": generator.choice(["Low risk", "Medium risk", "High risk"], 90)})
+
+
+def narrow_wards() -> pd.DataFrame:
+    days = list(pd.date_range("2025-01-01", periods=90)) * 3
+    wards = ["Cardiology ward"] * 90 + ["Intensive care unit"] * 90 + ["General surgery"] * 90
+    return pd.DataFrame({"day": days, "beds": np.random.default_rng(4).normal(80, 8, 270), "ward": wards})
+
+
+@pytest.mark.parametrize("draw", [lambda: hl.scatter(narrow_points(), "x", "y", by="risk"),
+                                  lambda: hl.timeseries(narrow_wards(), "day", "beds", by="ward"),
+                                  lambda: hl.timeseries(narrow_wards().iloc[:90], "day", "beds",
+                                                        title="Occupied beds per day in the cardiology ward over "
+                                                              "the first three months of the year")])
+def test_axes_charts_in_one_column_grow_until_the_plot_keeps_its_room(tmp_path, monkeypatch, draw):
+    """At 75 mm the legend and headers left these plots -14 to 11 pt ("figure too small"); the figure grows until
+    its panels together keep 8 x the base size."""
+    host_width(tmp_path, monkeypatch, width_mm=75)
+    hl.use(brand=False)
+    figure = draw()
+    figure.figure.savefig(io.BytesIO(), format="png", dpi=20)
+    rows = {box.y: box.height for box in figure.plot_boxes}
+    least = load_tokens()["spacing"]["min_plot_height"] * figure.settings.base_size
+    assert sum(rows.values()) == pytest.approx(least, abs=0.01)
+    assert figure.figure.get_size_inches()[0] * 25.4 == pytest.approx(75)
+
+
+def test_figures_with_room_for_their_plot_keep_their_size():
+    hl.use(brand=False)
+    figure = hl.scatter(narrow_points(), "x", "y", by="risk")
+    figure.figure.savefig(io.BytesIO(), format="png", dpi=20)
+    assert [value * 25.4 for value in figure.figure.get_size_inches()] == pytest.approx([120, 84])
+
+
+def test_a_figure_too_short_for_a_drawn_panel_names_the_height_it_needs():
+    hl.use(brand=False)
+    figure = hl.figure("A figure whose title wraps onto a second line at this narrow width", width_mm=40,
+                       height_mm=12)
+    figure.bare(0)
+    with pytest.raises(hl.HairlineLayoutError, match=r"make it at least (\d+) mm tall \(figure.resize\(height_mm="
+                                                     r"\1\)\)") as caught:
+        figure.figure.savefig(io.BytesIO(), format="png", dpi=20)
+    needed = int(re.search(r"height_mm=(\d+)", str(caught.value)).group(1))
+    figure.resize(height_mm=needed).figure.savefig(io.BytesIO(), format="png", dpi=20)
+    assert figure.figure.get_size_inches()[1] * 25.4 == pytest.approx(needed)
+
+
+def test_resize_sets_the_size_and_fits_a_fitted_chart_again():
+    hl.use(brand=False)
+    forest = hl.forest(narrow_studies(), "study", "est", "low", "high", weight="w")
+    height = forest.figure.get_size_inches()[1]
+    forest.resize(width_mm=75)
+    assert forest.figure.get_size_inches()[0] * 25.4 == pytest.approx(75)
+    assert forest.figure.get_size_inches()[1] > height
+    with pytest.raises(ValueError, match="height_mm must be a number above zero"):
+        forest.resize(height_mm=0)
+
+
+def departments(count: int) -> pd.DataFrame:
+    names = ["Cardiology", "Neurology", "Oncology", "Orthopaedics", "Paediatrics", "Psychiatry", "Radiology",
+             "Urology"][:count]
+    return pd.DataFrame({"department": names, "n": [120, 95, 80, 70, 64, 40, 33, 20][:count]})
+
+
+def test_bars_lie_down_when_their_labels_do_not_fit_the_figure_width(tmp_path, monkeypatch):
+    """Seven department names collided under upright bars at 85 mm, though fewer than horizontal_count."""
+    hl.use(brand=False)
+    assert (0, "x") in hl.bars(departments(3), "department", "n").category_axes
+    host_width(tmp_path, monkeypatch, width_mm=85)
+    assert (0, "y") in hl.bars(departments(7), "department", "n").category_axes
+    assert (0, "x") in hl.bars(departments(3), "department", "n").category_axes
+
+
+def test_raincloud_brackets_keep_room_for_their_p_labels_in_one_column(tmp_path, monkeypatch):
+    """At 75 mm six brackets stacked their p labels into the brackets above them."""
+    host_width(tmp_path, monkeypatch, width_mm=75)
+    hl.use(brand=False)
+    generator = np.random.default_rng(5)
+    data = pd.DataFrame({"arm": np.repeat(["Placebo", "Low", "High", "Both"], 30), "v": generator.normal(10, 3, 120)})
+    figure = hl.raincloud(data, "arm", "v", comparisons="all")
+    figure.figure.savefig(io.BytesIO(), format="png", dpi=20)
+    least = figure.min_plot * figure.settings.base_size
+    assert figure.min_plot > load_tokens()["spacing"]["min_plot_height"]
+    assert figure.plot_boxes[0].height == pytest.approx(least, abs=0.01)
+    assert hl.raincloud(data, "arm", "v").min_plot is None
+
+
+def test_scatter_points_at_the_axis_limit_are_drawn_whole():
+    hl.use(brand=False)
+    figure = hl.scatter(pd.DataFrame({"x": [0, 5, 10], "y": [0, 5, 10]}), "x", "y", fit=None)
+    assert not any(collection.get_clip_on() for collection in figure.ax.collections)
+
+
+def test_very_large_numbers_are_written_in_one_short_scale_unit(tmp_path, monkeypatch):
+    """1.2e12 printed thirteen digits per tick and bar value, wider than the bars and past the figure."""
+    from hairline.numbers import format_compact, number_unit
+    assert number_unit([999_999_999]) is None
+    assert format_compact(1.2e12, 1, number_unit([1.2e12, 3e11], "en"), "en") == "1.2\u00a0tn"
+    assert format_compact(8e11, 1, number_unit([1.2e12], "de"), "de") == "0,8\u00a0Bio."
+    assert format_compact(2.5e9, 1, number_unit([2.5e9], "en"), "en") == "2.5\u00a0bn"
+    assert format_compact(0, 2, number_unit([1e12]), "en") == "0.00"
+    host_width(tmp_path, monkeypatch, width_mm=75)
+    hl.use(brand=False)
+    figure = hl.bars(pd.DataFrame({"c": ["Alpha", "Beta", "Gamma"], "v": [1.2e12, 8e11, 3e11]}), "c", "v")
+    figure.figure.savefig(io.BytesIO(), format="png", dpi=20)
+    values = [text.get_text() for text in figure.ax.texts]
+    assert values == ["1.2\u00a0tn", "0.8\u00a0tn", "0.3\u00a0tn"]
+    ticks = [label.get_text() for label in figure.ax.get_yticklabels()]
+    assert ticks[0] == "0.00" and ticks[-1] == "1.25\u00a0tn"
+    assert (0, "x") in figure.category_axes

@@ -8,7 +8,7 @@ from decimal import ROUND_HALF_UP, Decimal, localcontext
 from hairline.tokens import load_tokens
 
 
-def locale_symbols(locale: str | None) -> dict[str, str]:
+def locale_symbols(locale: str | None) -> dict:
     tokens = load_tokens()
     if locale is None:
         from hairline.settings import current_locale
@@ -58,6 +58,27 @@ def format_number(value: float, digits: int = 1, locale: str | None = None) -> s
     body = group_thousands(integer_part, symbols["thousands"]) + (symbols["decimal"] + fraction if fraction else "")
     is_negative = value < 0 and any(character not in "0." for character in text)
     return (symbols["minus"] if is_negative else "") + body
+
+
+def number_unit(values, locale: str | None = None) -> tuple[float, str] | None:
+    """The short-scale unit (bn, tn, ...) to write numbers as large as these in: the largest the locale has that
+    the largest finite value reaches, once it has `numbers.compact_from` digits' worth (10^9); None below that."""
+    largest = max((abs(float(value)) for value in values if math.isfinite(float(value))), default=0.0)
+    if largest < 10.0 ** load_tokens()["numbers"]["compact_from"]:
+        return None
+    units = [unit for unit in locale_symbols(locale)["magnitudes"] if largest >= 10.0 ** unit["power"]]
+    if not units:
+        return None
+    return 10.0 ** units[-1]["power"], units[-1]["suffix"]
+
+
+def format_compact(value: float, digits: int, unit: tuple[float, str] | None, locale: str | None = None) -> str:
+    """`value` in `unit` ('1.2 tn', '1,2 Bio.'), where a full number would run past an axis or a bar; zero, and
+    any value when there is no unit, as format_number() writes it."""
+    if unit is None or value == 0 or not math.isfinite(value):
+        return format_number(value, digits, locale)
+    scale, suffix = unit
+    return f"{format_number(value / scale, digits, locale)}\u00a0{suffix}"
 
 
 def quantile_places(value: float, digits: int, whole: bool) -> int:

@@ -68,6 +68,8 @@ class HairlineFigure:
     category_axes: dict = field(default_factory=dict)
     table_value_xs: list = field(default_factory=list)
     table_keys: list[str] = field(default_factory=list)
+    min_plot: float | None = None
+    fitted_height: str | None = None
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)
@@ -161,6 +163,21 @@ class HairlineFigure:
             raise ValueError(f"hairline: digits must be a whole number from 0 to {MAX_AXIS_DIGITS}, "
                              f"got {digits!r} for panel {index}, axis {which!r}")
         self.axis_digits[(index, which)] = digits
+
+    def resize(self, width_mm: float | None = None, height_mm: float | None = None) -> HairlineFigure:
+        """Set the figure's width and/or height in mm, like `hl_save(width_mm =, height_mm =)` in R. A chart whose
+        height follows its content (forest, spread, ...) is fitted again for a new width unless a height is given.
+        Axes panels still keep their least plot height (`spacing.min_plot_height` x the base size): a figure too
+        short for it grows."""
+        for value, name in ((width_mm, "width_mm"), (height_mm, "height_mm")):
+            if value is not None:
+                check_positive(value, name)
+        width, height = (value * MM_PER_INCH for value in self.figure.get_size_inches())
+        self.figure.set_size_inches((width_mm or width) / MM_PER_INCH, (height_mm or height) / MM_PER_INCH)
+        if self.fitted_height and width_mm is not None and height_mm is None:
+            from hairline.drawing import fit_height
+            fit_height(self, shrink=self.fitted_height == "fit")
+        return self
 
     def layout_report(self) -> dict:
         """Frame positions in pt from the top-left corner, as of the last draw."""

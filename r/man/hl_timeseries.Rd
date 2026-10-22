@@ -72,7 +72,8 @@ hl_timeseries(
 for the number of groups and are not remembered for other charts.}
 }
 \value{
-A ggplot with the hairline frame.
+A ggplot with the hairline frame; \code{\link[=hl_save]{hl_save()}} writes it at the \code{"double"} size (174 mm) unless told
+otherwise, as the Python package does.
 }
 \description{
 One panel per group: raw values as a thin line under a trailing rolling

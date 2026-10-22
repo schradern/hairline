@@ -13,7 +13,6 @@ import pandas as pd
 from hairline import entities
 from hairline.charts.common import check_columns, check_numeric
 from hairline.charts.timeseries import groups_of, reference_style
-from hairline.drawing import keep_plot_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
 from hairline.numbers import auto_digits, format_number, format_p
@@ -170,8 +169,7 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
                     median_line, grouped)
     if at_risk:
         result.table(rows, heading="Number at risk")
-    # A narrow figure (one column of a two-column page) grows taller rather than squeezing the curves away.
-    return keep_plot_height(result, load_tokens()["survival"]["min_plot"] * result.settings.base_size)
+    return result
 
 
 def finish_survival(result: HairlineFigure, estimates: list, stats, endpoint: str, x_title: str, median_line: bool,

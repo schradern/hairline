@@ -72,10 +72,12 @@ content_bottom <- function(shapes, style, measure = NULL) {
 fit_device_megapixels <- 16
 
 # Charts drawn from shapes that set plot@meta$hairline_fit_height get a figure height that ends where their content
-# ends (shorter, or taller when it overflows), as the Python package's fit_height() does. The device only hosts the
-# layout pass (hairline measures text itself), so a very large figure gets a lower resolution, not a buffer that
-# grows with the square of its width. The frame is planned at the final size here, before any file is drawn: one that
-# cannot be laid out is a hairline_layout_error, as save() raises HairlineLayoutError in Python.
+# ends (shorter, or taller when it overflows), as the Python package's fit_height() does; a plot with axes gets a
+# taller figure when its frame would squeeze the panels (plan_frame(grow = TRUE)), as the Python frame does on every
+# draw. The device only hosts the layout pass (hairline measures text itself), so a very large figure gets a lower
+# resolution, not a buffer that grows with the square of its width. The frame is planned at the final size here,
+# before any file is drawn: one that cannot be laid out is a hairline_layout_error, as save() raises
+# HairlineLayoutError in Python.
 fitted_size_mm <- function(plot, size_mm) {
   path <- tempfile(fileext = ".png")
   res <- min(72, sqrt(fit_device_megapixels * 1e6 / prod(size_mm / 25.4)))
@@ -94,10 +96,10 @@ fitted_size_mm <- function(plot, size_mm) {
 }
 
 fitted_frame_size_mm <- function(plot, frame, size_mm) {
-  least <- plot@meta$hairline_min_plot
-  if (!is.null(least)) return(kept_plot_size_mm(frame$parts, size_mm, least))
   if (identical(plot@meta$hairline_fit_height, "grow")) return(grown_size_mm(frame$parts, size_mm))
-  if (!isTRUE(plot@meta$hairline_fit_height)) return(size_mm)
+  if (!isTRUE(plot@meta$hairline_fit_height)) {
+    return(plan_frame(frame$parts, size_mm / 25.4 * 72, grow = TRUE)$size / 72 * 25.4)
+  }
   plan <- plan_frame(frame$parts, size_mm / 25.4 * 72)
   box <- fitted_box(plan$layout$panels[[1]], frame$parts$aspect)
   slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(frame$parts$settings),
@@ -122,17 +124,4 @@ grown_size_mm <- function(parts, size_mm) {
     size_mm <- c(size_mm[1], size_mm[2] - slack / 72 * 25.4)
   }
   size_mm
-}
-
-# A plot whose frame (title, legend, header, axis, table) would leave a panel less than `least` x the base size high
-# gets a taller figure, as the Python package's keep_plot_height() does: the frame keeps its size, the plot its room.
-# The frame is planned at a probe height tall enough for any frame of this width.
-kept_plot_size_mm <- function(parts, size_mm, least) {
-  least_pt <- least * parts$settings$base_size
-  size_pt <- size_mm / 25.4 * 72
-  probe <- c(size_pt[1], 2 * size_pt[2] + least_pt)
-  panels <- plan_frame(parts, probe)$layout$panels
-  rows <- length(unique(vapply(panels, `[`, numeric(1), 2)))
-  frame <- probe[2] - rows * min(vapply(panels, `[`, numeric(1), 4))
-  c(size_mm[1], max(size_mm[2], (frame + rows * least_pt) / 72 * 25.4))
 }

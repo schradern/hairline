@@ -30,6 +30,24 @@ raincloud_group_layers <- function(values, position, colour, rules) {
                                                   inherit.aes = FALSE))))
 }
 
+bracket_headroom <- 0.6 # bracket steps above the highest bracket, for its label
+
+# The least plot height (x the base size) at which each of `levels` bracket levels has room for its p label: the
+# label (pad, cap height and descender at the label size) above its bracket and clear of the next bracket's ticks, on
+# a value axis spanning the data and the brackets, with room for the ticks' overshoot. NULL without brackets; never
+# below `spacing.min_plot_height`.
+bracket_plot_height <- function(levels) {
+  if (!levels) return(NULL)
+  tokens <- hl_tokens()
+  metrics <- font_metrics()
+  rules <- tokens$raincloud
+  label <- tokens$type$roles$label$factor * (rules$label_pad + metrics$cap_height + metrics$descender)
+  level <- label / (1 - rules$bracket_tick / rules$bracket_step)
+  steps <- 1 / rules$bracket_step + levels + bracket_headroom
+  overshoot <- 1 + tokens$ticks$overshoot_low + tokens$ticks$overshoot_high
+  max(tokens$spacing$min_plot_height, level * steps * overshoot)
+}
+
 raincloud_bracket_layers <- function(comparisons, names, values, rules) {
   settings <- hl_settings()
   top <- max(values)
@@ -51,7 +69,8 @@ raincloud_bracket_layers <- function(comparisons, names, values, rules) {
     label <- ggplot2::annotate("text", x = mean(span), y = y, label = comparisons[[index]][3], vjust = -0.35,
                                colour = colour, family = settings$font, size = role_size(settings, "label") /
                                  ggplot2::.pt)
-    headroom <- ggplot2::geom_blank(data = data.frame(x = span[1], y = y + spread * rules$bracket_step * 0.6),
+    headroom <- ggplot2::geom_blank(data = data.frame(x = span[1], y = y + spread * rules$bracket_step *
+                                                        bracket_headroom),
                                     ggplot2::aes(.data$x, .data$y), inherit.aes = FALSE)
     layers <- c(layers, list(path, label, headroom))
   }
@@ -139,5 +158,8 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     hl_legend(list())
   plot@meta$hairline_table <- list(heading = NULL, rows = list(list(label = "", colour = NULL,
                                                                     x = seq_along(names) - 1, text = counts)))
+  # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
+  spans <- lapply(comparisons, function(comparison) match(comparison[1:2], names) - 1)
+  plot@meta$hairline_min_plot <- bracket_plot_height(if (length(spans)) max(bracket_levels(spans)) + 1 else 0)
   plot
 }

@@ -9,5 +9,5 @@ rows <- rows[order(match(rows$destination, destinations)), ]
 plot <- hl_bars(rows, "unit", by = "destination", stacked = TRUE, percent = TRUE, horizontal = TRUE,
                 order = c("Surgical", "Medical", "Neurological", "Cardiac"),
                 title = "Destination after the ICU by unit", subtitle = "640 discharges, 2025",
-                caption = "Synthetic data.")
+                caption = "Synthetic data.", size = "double")
 finish(plot, "bars_percent", "double")

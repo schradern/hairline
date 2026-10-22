@@ -4,6 +4,7 @@ import pytest
 from PIL import Image
 
 import hairline as hl
+from hairline.tokens import load_tokens
 
 
 def framed():
@@ -41,10 +42,18 @@ def test_zoom_after_first_draw_is_kept():
     assert figure.ax.get_xlim() == (2, 3)
 
 
-def test_too_small_figure_raises_instead_of_drawing_broken():
+def test_too_small_figure_grows_or_raises_instead_of_drawing_broken():
+    """Axes panels keep their plot room (the figure grows); drawn panels have no room to give, so they raise."""
     figure = hl.figure("T", width_mm=60, height_mm=20, panels=3)
+    figure.figure.canvas.draw()
+    assert figure.figure.get_size_inches()[1] * 25.4 > 20
+    assert all(box.height >= load_tokens()["spacing"]["min_panel_height"] * figure.settings.base_size
+               for box in figure.plot_boxes)
+    drawn = hl.figure("T", width_mm=60, height_mm=20, panels=3)
+    for index in range(3):
+        drawn.bare(index)
     with pytest.raises(hl.HairlineLayoutError, match="too small"):
-        figure.figure.canvas.draw()
+        drawn.figure.canvas.draw()
 
 
 def test_save_strips_known_extension(tmp_path):

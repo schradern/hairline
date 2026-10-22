@@ -78,6 +78,8 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
     plot <- plot + scatter_fit_layers(rows[[x]], rows[[y]]) +
       hl_panel_header(name = "Linear fit", stats = scatter_stats(rows[[x]], rows[[y]]))
   }
-  plot + ggplot2::labs(title = title %||% paste(humanise(y), "and", gsub("_", " ", x)), subtitle = subtitle,
-                       caption = caption, x = humanise(x), y = humanise(y)) + theme_hairline()
+  # Limits end on a break, so a point at the limit would be cut in half by the panel's edge.
+  plot + ggplot2::coord_cartesian(clip = "off") +
+    ggplot2::labs(title = title %||% paste(humanise(y), "and", gsub("_", " ", x)), subtitle = subtitle,
+                  caption = caption, x = humanise(x), y = humanise(y)) + theme_hairline()
 }

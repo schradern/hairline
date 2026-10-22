@@ -45,6 +45,29 @@
   "1 variable". `study(unit=...)` takes a plural noun, whose singular drops a final s, or a singular and plural
   pair such as `("mouse", "mice")`.
 * `use(output=...)` refuses an unknown export type with `brand=False` too.
+### Narrow figures (one column of a two-column page)
+
+* Axes charts keep their plot room: when the title, legend, panel headers, axis or table would squeeze the panels
+  below `spacing.min_plot_height` (8 x the base size, for all panel rows together, each row at least
+  `min_panel_height`), the figure grows instead of failing with "figure too small". `scatter(by=...)` and
+  `timeseries()` at 75 mm (`width_mm` from a host context) used to fail; the rule lives in the frame, so it holds
+  for every axes figure, hand-built ones included. Figures with room to spare keep their size (the gallery is
+  unchanged). It replaces the Kaplan–Meier-only `keep_plot_height()` and the `survival.min_plot` token. A chart
+  can ask for more room (`HairlineFigure.min_plot`): `raincloud()` does, by its bracket levels, and the study
+  overview asks for less (`study.overview_min_row` per group row), as its strip is sized from its rows.
+* `HairlineFigure.resize(width_mm=None, height_mm=None)` sets a chart's size after the fact, as `hl_save(width_mm
+  =, height_mm =)` does in R; a chart fitted to its content (forest, spread, ...) is fitted again for a new width.
+  "Figure too small" (still raised for drawn panels) now names the height that fits: "make it at least 52 mm tall
+  (figure.resize(height_mm=52))".
+* `bars()` lies down when its category names, or the values over its bars, are too wide for upright bars at the
+  figure's width (`bars.label_space` x the base size between neighbours), not only by label count and length:
+  seven or eight department names collided at 85 mm, and eight already did at 120 mm.
+* `raincloud()` comparison brackets keep room for their p labels: a short plot grows until every bracket level is
+  taller than its label, instead of stacking the labels into the brackets above.
+* `scatter()` draws points at the axis limits whole; limits end on a break, so the panel edge cut them in half.
+* Numbers from 10^9 on are written in one short-scale unit per axis and per bar chart (`1.25 tn`, `0.8 tn`;
+  German `Bio.`, `Mrd.`), with the tick step's decimals on axes and `numbers.compact_digits` on bars, instead of
+  thirteen digits that ran past the bars and the figure. Tooltips keep the full number.
 
 ## 0.2.0
 
