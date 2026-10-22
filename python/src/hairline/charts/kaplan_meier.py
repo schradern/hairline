@@ -4,13 +4,14 @@ the number at risk under the x-axis aligned to its ticks."""
 from __future__ import annotations
 
 import math
+import numbers
 from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns
+from hairline.charts.common import check_columns, check_numeric
 from hairline.charts.timeseries import groups_of, reference_style
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
@@ -86,15 +87,43 @@ def fitter_table(fitter) -> tuple[pd.DataFrame, int]:
     return table, float(events["entrance"].sum())
 
 
+def check_rows(data: pd.DataFrame, time: str | None, event: str | None, by: str | None) -> None:
+    """Raw rows name their time and event columns; times are finite numbers, events numbers or TRUE/FALSE."""
+    if time is None or event is None:
+        raise ValueError("hairline: kaplan_meier: name the time and event columns (time=..., event=...), or pass "
+                         "fitted Kaplan–Meier objects")
+    check_columns(data, [time, event, by])
+    check_numeric(data, [time], "kaplan_meier")
+    if not pd.api.types.is_numeric_dtype(data[event]):
+        raise ValueError(f"hairline: kaplan_meier: '{event}' holds {data[event].dtype} values; code events as 1 "
+                         "(event) and 0 (censored)")
+
+
+def check_options(stats: Sequence, times: Sequence[float] | None) -> None:
+    """Key numbers are (label, value) pairs; at-risk times are finite and not negative."""
+    for item in stats:
+        if isinstance(item, str) or not isinstance(item, Sequence) or len(item) != 2:
+            raise ValueError(f"hairline: kaplan_meier: stats are (label, value) pairs such as ('HR', '0.72'); got "
+                             f"{item!r}")
+    for moment in times or ():
+        if not isinstance(moment, numbers.Real) or not math.isfinite(moment) or moment < 0:
+            raise ValueError(f"hairline: kaplan_meier: times are moments of 0 or more for the numbers at risk; got "
+                             f"{moment!r}")
+
+
 def estimates_from(data, time: str | None, event: str | None, by: str | None,
                    order: Sequence[str] | None) -> list[tuple[str, pd.DataFrame, int]]:
     """(name, estimate table, group size) per group: from raw rows, one fit, or a mapping of group to fit."""
     if isinstance(data, pd.DataFrame):
-        check_columns(data, [time, event, by])
+        check_rows(data, time, event, by)
         return [(name, km_estimate(rows[time], rows[event]), len(rows))
                 for name, rows in groups_of(data, by, order, "kaplan_meier")]
-    fits = dict(data) if isinstance(data, Mapping) else {"": data}
+    fits = {str(name): fit for name, fit in (data.items() if isinstance(data, Mapping) else {"": data}.items())}
     names = [str(name) for name in (order or fits)]
+    unknown = [name for name in names if name not in fits]
+    if unknown:
+        raise ValueError(f"hairline: kaplan_meier: order names '{unknown[0]}', which has no fit; fits are given for "
+                         f"{', '.join(fits)}")
     return [(name, *fitter_table(fits[name])) for name in names]
 
 
@@ -114,6 +143,7 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
     """Survival curves per group from time and event (1 = event, 0 = censored) columns, or from fitted
     Kaplan–Meier objects (one lifelines KaplanMeierFitter, or a mapping of group to one); with groups in raw data
     and `test`, the log-rank p joins the key numbers."""
+    check_options(stats, times)
     estimates = estimates_from(data, time, event, by, order)
     if not estimates:
         raise ValueError("hairline: kaplan_meier: no rows to draw")
@@ -124,7 +154,7 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
         stats = [*stats, *logrank_stats(data, time, event, by, order)]
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     latest = max(float(table["time"].max()) for _, table, _ in estimates)
-    moments = list(times) if times is not None else nice_breaks(0, latest)
+    moments = sorted(set(times)) if times is not None else nice_breaks(0, latest)
     palette = entities.colors_for([name for name, _, _ in estimates], colors) if grouped else {}
     rows = []
     for name, table, total in estimates:

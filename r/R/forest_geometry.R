@@ -1,11 +1,14 @@
 # Forest plot geometry in pt, the same algorithm as the Python package's forest_geometry: study table, intervals
 # with weighted squares, pooled diamond, null and pooled lines, and an x-axis with "favours" labels.
 
+# Ratio breaks are rounded to this many decimals, so a ratio axis reaches from 10^-ratio_places to 10^ratio_places.
+ratio_places <- 10
+
 log_breaks <- function(low, high, max_ticks = 7) {
   first <- floor(log10(low)) - 1
   last <- ceiling(log10(high)) + 1
   for (series in list(c(1, 2, 5), 1)) {
-    candidates <- sort(round(as.vector(outer(series, 10^(first:last))), 10))
+    candidates <- sort(round(as.vector(outer(series, 10^(first:last))), ratio_places))
     start <- max(candidates[candidates <= low * (1 + 1e-9)])
     end <- min(candidates[candidates >= high * (1 - 1e-9)])
     ticks <- candidates[candidates >= start & candidates <= end]

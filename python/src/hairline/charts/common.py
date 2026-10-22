@@ -43,6 +43,17 @@ def check_numeric(data: pd.DataFrame, columns: Sequence[str], chart: str) -> Non
         values = data[column]
         if not pd.api.types.is_numeric_dtype(values) or pd.api.types.is_bool_dtype(values):
             raise ValueError(f"hairline: {chart}: '{column}' holds {values.dtype} values; it needs numbers")
+        check_finite(data, column, chart)
+
+
+def check_finite(data: pd.DataFrame, column: str, chart: str) -> None:
+    """An infinite value has no place on an axis, in a sum or a share; missing values are left out elsewhere."""
+    if not pd.api.types.is_numeric_dtype(data[column]) or pd.api.types.is_bool_dtype(data[column]):
+        return
+    infinite = np.flatnonzero(np.isinf(data[column].to_numpy(dtype=float, na_value=np.nan)))
+    if len(infinite):
+        raise ValueError(f"hairline: {chart}: '{column}' is infinite in row {infinite[0] + 1}; correct the value or "
+                         f"leave the row out")
 
 
 def check_present(data: pd.DataFrame, column: str, chart: str) -> None:
@@ -62,9 +73,9 @@ def group_names(values: pd.Series) -> list[str]:
 def ordered_names(values: pd.Series, order: Sequence | None, chart: str, column: str,
                   complete: bool = False) -> list[str]:
     """The groups in `order`, which may only name groups in the data; with `complete`, the groups it leaves out
-    follow in data order (flows need every node), otherwise they are left out."""
+    follow in data order (flows need every node), otherwise they are left out. An empty `order` is no order."""
     names = group_names(values)
-    if order is None:
+    if order is None or len(order) == 0:
         return names
     wanted = [str(name) for name in order]
     repeated = [name for name in dict.fromkeys(wanted) if wanted.count(name) > 1]
@@ -83,6 +94,7 @@ def flow_rows(data: pd.DataFrame, source: str, target: str, value: str, chart: s
     negative values and flows from a node to itself are refused: a ring or a baseline cannot draw a self-flow."""
     check_columns(data, [source, target, value])
     check_labels(data, [source, target], chart)
+    check_numeric(data, [value], chart)
     rows = data[data[value].notna()]
     negative = rows[rows[value] < 0]
     if len(negative):

@@ -17,11 +17,13 @@ def is_missing(series: pd.Series) -> pd.Series:
 
 
 def level_text(value: object) -> str:
-    """A category as text: whole floats without '.0', booleans as Yes/No (as in R)."""
+    """A category as text: booleans as Yes/No; floats with 15 significant digits, never in scientific notation,
+    whole ones without '.0' and -0 as 0 (as in R)."""
     if isinstance(value, (bool, np.bool_)):
         return "Yes" if value else "No"
-    if isinstance(value, (float, np.floating)) and float(value).is_integer():
-        return str(int(value))
+    if isinstance(value, (float, np.floating)) and np.isfinite(value):
+        return np.format_float_positional(float(value) + 0.0, precision=15, unique=False, fractional=False,
+                                          trim="-")
     return str(value)
 
 

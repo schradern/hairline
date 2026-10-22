@@ -63,7 +63,24 @@ prepared_series <- function(data, x, y, by, order, window) {
   frame
 }
 
-as_axis_value <- function(value, data_x) if (inherits(data_x, "Date")) as.Date(value) else value
+# A band's or event's position on the x axis: a date (or ISO text) on a date or time axis, a number otherwise.
+as_axis_value <- function(value, data_x, key) {
+  shown <- if (is.character(value)) sprintf("'%s'", value) else paste(format(value), collapse = ", ")
+  if (inherits(data_x, c("Date", "POSIXct"))) {
+    parsed <- if (length(value) != 1 || is.numeric(value)) NA else tryCatch({
+      if (inherits(data_x, "Date")) as.Date(value) else as.POSIXct(value, tz = attr(data_x, "tzone") %||% "")
+    }, error = function(error) NA)
+    if (is.na(parsed)) {
+      stop(sprintf("hairline: timeseries: %s %s is not a date; the x axis holds dates, such as '2024-03-10'", key,
+                   shown), call. = FALSE)
+    }
+    return(parsed)
+  }
+  if (!is.numeric(value) || length(value) != 1 || !is.finite(value)) {
+    stop(sprintf("hairline: timeseries: %s %s is not a number; the x axis holds numbers", key, shown), call. = FALSE)
+  }
+  value
+}
 
 panel_frame <- function(values, panels, groups) {
   targets <- panels %||% groups
@@ -75,8 +92,8 @@ mark_layers <- function(bands, events, data_x, groups) {
   settings <- hl_settings()
   layers <- list()
   for (band in bands) {
-    frame <- panel_frame(data.frame(xmin = as_axis_value(band$start, data_x), xmax = as_axis_value(band$end, data_x)),
-                         band$panels, groups)
+    frame <- panel_frame(data.frame(xmin = as_axis_value(band$start, data_x, "band start"),
+                                    xmax = as_axis_value(band$end, data_x, "band end")), band$panels, groups)
     band_layer <- ggplot2::geom_rect(data = frame, ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax),
                                      ymin = -Inf, ymax = Inf, fill = settings$neutral$band, inherit.aes = FALSE)
     band_layer$hairline_decoration <- TRUE
@@ -84,7 +101,7 @@ mark_layers <- function(bands, events, data_x, groups) {
   }
   width <- pt_to_linewidth(hl_tokens()$reference$width * settings$base_size)
   for (event in events) {
-    frame <- panel_frame(data.frame(xintercept = as_axis_value(event$x, data_x)), event$panels, groups)
+    frame <- panel_frame(data.frame(xintercept = as_axis_value(event$x, data_x, "event x")), event$panels, groups)
     layers[[length(layers) + 1]] <- ggplot2::geom_vline(data = frame, ggplot2::aes(xintercept = .data$xintercept),
                                                         colour = settings$neutral$muted, linetype = "13",
                                                         linewidth = width)
@@ -186,6 +203,7 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   title <- title %||% if (is.null(by)) paste(humanise(y), "over time") else paste(humanise(y), "by", gsub("_", " ", by))
   check_window(window)
   check_present(data, y, "timeseries")
+  check_numeric(data, y, "timeseries")
   data[[x]] <- with_iso_dates(data[[x]])
   data <- prepared_series(data, x, y, by, order, window)
   x <- ".x"
@@ -204,7 +222,7 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   if (!is.null(threshold)) plot <- plot + hl_reference(y = threshold, label = threshold_label)
   if (!is.null(highlight)) plot <- plot + hl_highlight(panels = highlight)
   notes <- lapply(events, function(event) {
-    list(x = as_axis_value(event$x, data[[x]]), label = event$label, panels = event$panels)
+    list(x = as_axis_value(event$x, data[[x]], "event x"), label = event$label, panels = event$panels)
   })
   plot@meta$hairline_notes <- Filter(function(note) !is.null(note$label), notes)
   headers_for(plot, data, y, stats, percent, threshold, share_label, key, key_panels, qualifiers)

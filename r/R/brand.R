@@ -1,5 +1,8 @@
 # Read `_brand.yml` (the brand.yml format) and map it onto hairline settings.
 
+# A brand value as an error shows it: quoted, or null when the YAML left it empty (an unquoted #hex is a comment).
+brand_value <- function(value) if (is.null(value)) "null" else sprintf("'%s'", paste(value, collapse = ", "))
+
 brand_fail <- function(path, key, message) {
   stop(sprintf("hairline: %s: %s: %s", basename(path), key, message), call. = FALSE)
 }
@@ -33,7 +36,8 @@ brand_palette <- function(content, path) {
   palette <- brand_get(content, "color.palette") %||% list()
   for (name in names(palette)) {
     if (!is_hex(palette[[name]])) {
-      brand_fail(path, paste0("color.palette.", name), sprintf("'%s' is not a 6-digit hex colour", palette[[name]]))
+      brand_fail(path, paste0("color.palette.", name),
+                 sprintf("%s is not a 6-digit hex colour", brand_value(palette[[name]])))
     }
   }
   lapply(palette, tolower)
@@ -42,7 +46,7 @@ brand_palette <- function(content, path) {
 brand_color <- function(value, key, palette, path) {
   if (is.character(value) && length(value) == 1 && value %in% names(palette)) return(palette[[value]])
   if (is_hex(value)) return(tolower(value))
-  brand_fail(path, key, sprintf("'%s' is not in color.palette and not a 6-digit hex colour", value))
+  brand_fail(path, key, sprintf("%s is not in color.palette and not a 6-digit hex colour", brand_value(value)))
 }
 
 brand_categorical <- function(content, palette, path) {
@@ -57,7 +61,7 @@ brand_categorical <- function(content, palette, path) {
     entry <- entries[[index]]
     key <- sprintf("defaults.hairline.categorical[%d]", index - 1)
     if (is.character(entry) && !startsWith(entry, "#") && !entry %in% names(palette)) {
-      brand_fail(path, key, sprintf("'%s' is not in color.palette", entry))
+      brand_fail(path, key, sprintf("%s is not in color.palette", brand_value(entry)))
     }
     colors <- c(colors, brand_color(entry, key, palette, path))
     names_out <- c(names_out, if (entry %in% names(palette)) entry else colors[length(colors)])
@@ -121,7 +125,7 @@ brand_entities <- function(content, palette, categorical, used, path) {
     } else if (is.character(value) && (value %in% names(palette) || is_hex(value))) {
       resolved[[entity]] <- brand_color(value, key, palette, path)
     } else {
-      brand_fail(path, key, sprintf("'%s' is not in color.palette and not a 6-digit hex colour", value))
+      brand_fail(path, key, sprintf("%s is not in color.palette and not a 6-digit hex colour", brand_value(value)))
     }
   }
   resolved
@@ -157,7 +161,7 @@ hl_load_brand <- function(path, output = NULL) {
   if (!adapt %in% c("exact", "readable")) {
     brand_fail(path, "defaults.hairline.adapt", sprintf("'%s' must be 'exact' or 'readable'", adapt))
   }
-  name <- brand_get(content, "meta.name")
+  name <- brand_get(content, "meta.name") %||% basename(path)
   if (adapt == "exact" && length(categorical$colors)) warn_exact_brand(name, categorical$names, categorical$colors)
   register_brand_fonts(content, path, source$font_dir)
   locale <- brand_get(content, "defaults.hairline.locale")
@@ -271,6 +275,7 @@ brand_layer <- function(settings, brand) {
   }
   if (!is.null(brand$font)) settings$font <- resolve_family(brand$font)
   if (!is.null(brand$base_size)) {
+    check_positive(brand$base_size, "the brand's defaults.hairline.base_size")
     settings[c("base_size", "base_size_explicit")] <- list(as.numeric(brand$base_size), TRUE)
   }
   if (!is.null(brand$locale)) settings$locale <- brand$locale

@@ -8,7 +8,7 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 
-from hairline.charts.common import check_columns, humanise
+from hairline.charts.common import check_columns, check_numeric, humanise
 from hairline.charts.correlation_geometry import correlation_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -41,6 +41,9 @@ def correlation_spec(data: pd.DataFrame, columns: Sequence[str] | None, method: 
     columns = list(columns) if columns else [column for column in data.columns
                                              if pd.api.types.is_numeric_dtype(data[column])]
     check_columns(data, columns)
+    if len(set(data.columns)) < len(data.columns):
+        raise ValueError("hairline: correlation: the data has columns of the same name; give each column its own name")
+    check_numeric(data, columns, "correlation")
     if len(columns) < 2:
         raise ValueError("hairline: correlation needs at least two numeric columns; got "
                          f"{', '.join(map(str, columns)) or 'none'}")

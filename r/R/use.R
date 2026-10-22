@@ -29,7 +29,11 @@ scheme_settings <- function(settings, scheme, background, accent) {
 #' @examples
 #' hl_settings()$font
 #' @export
-hl_settings <- function() hairline_state$settings %||% default_settings()
+hl_settings <- function() {
+  # A host context that changed since is applied first, so the next plot already has its style.
+  host_context()
+  hairline_state$settings %||% default_settings()
+}
 
 role_size <- function(settings, role) {
   settings$sizes[[role]] %||% (hl_tokens()$type$roles[[role]]$factor * settings$base_size)
@@ -84,9 +88,10 @@ palette_fields <- function(palette) {
 #' @export
 hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, locale = NULL,
                    background = NULL, brand = NULL, colors = NULL, output = NULL, accent = NULL, scheme = NULL) {
-  hairline_state$use_arguments <- list(font = font, base_size = base_size, sizes = sizes, palette = palette,
-                                       locale = locale, background = background, brand = brand, colors = colors,
-                                       output = output, accent = accent, scheme = scheme)
+  # Kept for hl_reapply() once they have been applied: a call that fails must not come back with every new context.
+  arguments <- list(font = font, base_size = base_size, sizes = sizes, palette = palette, locale = locale,
+                    background = background, brand = brand, colors = colors, output = output, accent = accent,
+                    scheme = scheme)
   context <- host_context()
   if (!is.null(context)) {
     locale <- locale %||% context$locale
@@ -108,9 +113,10 @@ hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, 
   check_positive(base_size, "base_size")
   if (!is.null(base_size)) settings[c("base_size", "base_size_explicit")] <- list(as.numeric(base_size), TRUE)
   if (!is.null(locale)) settings$locale <- locale
-  if (!is.null(background)) settings$background <- background
+  if (!is.null(background)) settings$background <- checked_background(background)
   settings <- scheme_settings(settings, scheme, background, accent)
   hairline_state$settings <- settings
+  hairline_state$use_arguments <- arguments
   brand_colors <- resolved_brand$entity_colors %||% character()
   configure_entities(c(brand_colors[setdiff(names(brand_colors), names(explicit))], explicit))
   ggplot2::theme_set(theme_hairline_elements(settings))
@@ -119,6 +125,16 @@ hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, 
 
 # Apply the last hl_use() call again (its own arguments, the current host context under them): what a new host
 # context calls. A session that never called hl_use() has nothing to re-apply.
+checked_background <- function(background) {
+  valid <- is.character(background) && length(background) == 1 &&
+    !inherits(tryCatch(grDevices::col2rgb(background), error = identity), "error")
+  if (!valid) {
+    stop(sprintf("hairline: background %s is not a colour; use a hex value such as '#ffffff'",
+                 paste(format(background), collapse = ", ")), call. = FALSE)
+  }
+  background
+}
+
 hl_reapply <- function() {
   if (is.null(hairline_state$settings)) return(invisible())
   do.call(hl_use, hairline_state$use_arguments %||% list())

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import math
 import numbers
 from collections.abc import Mapping, Sequence
 
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns, check_labels, check_present, humanise, ordered_names
+from hairline.charts.common import check_columns, check_labels, check_numeric, check_present, humanise, ordered_names
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
 from hairline.fonts import families
@@ -103,8 +104,19 @@ def caption_note(ax, text: str, x: object, settings) -> None:
                 fontfamily=families(settings.font), annotation_clip=False)
 
 
-def as_x(value: object, is_date: bool) -> object:
-    return pd.Timestamp(value) if is_date else value
+def as_x(value: object, is_date: bool, key: str) -> object:
+    """A band's or event's position on the x axis: a date (or ISO text) on a date axis, a number otherwise."""
+    if not is_date:
+        if isinstance(value, bool) or not isinstance(value, numbers.Real) or not math.isfinite(value):
+            raise ValueError(f"hairline: timeseries: {key} {value!r} is not a number; the x axis holds numbers")
+        return value
+    try:
+        if isinstance(value, numbers.Real):
+            raise TypeError("a number is no date")
+        return pd.Timestamp(value)
+    except (ValueError, TypeError) as error:
+        raise ValueError(f"hairline: timeseries: {key} {value!r} is not a date; the x axis holds dates, such as "
+                         "'2024-03-10'") from error
 
 
 def check_marks(bands: Sequence[Mapping], events: Sequence[Mapping]) -> None:
@@ -121,14 +133,15 @@ def draw_marks(ax, bands: Sequence[Mapping], events: Sequence[Mapping], name: st
     settings = current_settings()
     for band in bands:
         if band.get("panels") is None or name in band["panels"]:
-            ax.axvspan(as_x(band["start"], is_date), as_x(band["end"], is_date), color=settings.neutral["band"],
+            ax.axvspan(as_x(band["start"], is_date, "band start"), as_x(band["end"], is_date, "band end"),
+                       color=settings.neutral["band"],
                        zorder=0, linewidth=0)
     for event in events:
         if event.get("panels") is None or name in event["panels"]:
-            ax.axvline(as_x(event["x"], is_date), **{**reference_style(), "color": settings.neutral["muted"],
+            ax.axvline(as_x(event["x"], is_date, "event x"), **{**reference_style(), "color": settings.neutral["muted"],
                                                      "linestyle": (0, (1, 2))})
             if event.get("label"):
-                caption_note(ax, event["label"], as_x(event["x"], is_date), settings)
+                caption_note(ax, event["label"], as_x(event["x"], is_date, "event x"), settings)
 
 
 def legend_items(raw: bool, period_mean: bool, bands: Sequence[Mapping], labels: Mapping[str, str | None]) -> list:
@@ -157,6 +170,7 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     check_columns(data, [x, y, by])
     check_window(window)
     check_present(data, y, "timeseries")
+    check_numeric(data, [y], "timeseries")
     check_marks(bands, events)
     data = with_iso_dates(data, x)
     title = title or (f"{humanise(y)} by {str(by).replace('_', ' ')}" if by else f"{humanise(y)} over time")

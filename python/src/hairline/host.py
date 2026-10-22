@@ -5,10 +5,14 @@ a manifest. Nothing here is specific to one host."""
 from __future__ import annotations
 
 import json
+import math
+import numbers
 import os
 import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from hairline.tokens import load_tokens
 
 ENVIRONMENT = "HAIRLINE_HOST_CONTEXT"
 VERSION = 1
@@ -39,7 +43,32 @@ def warn_once(path: str, problem: str) -> None:
         warnings.warn(f"hairline: host context {path}: {problem}; continuing without it", UserWarning, stacklevel=3)
 
 
-def parse_context(path: str) -> HostContext | None:
+def positive_number(path: str, value: object, key: str) -> float | None:
+    """A size or resolution from the context: a number above zero, else warned about and left out."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, numbers.Real) or not math.isfinite(value) or value <= 0:
+        warn_once(path, f"{key} {value!r} must be a number above zero")
+        return None
+    return value
+
+
+def host_locale(path: str, value: object) -> str | None:
+    """The context's locale as hairline names it ("de-DE" and "de_AT" are "de"); one hairline lacks is warned about
+    and left out, so figures keep the session's locale."""
+    if value is None:
+        return None
+    locales = load_tokens()["locales"]
+    if isinstance(value, str):
+        language = value.replace("_", "-").split("-")[0].lower()
+        if value in locales or language in locales:
+            return value if value in locales else language
+    warn_once(path, f"locale {value!r} is not one of {', '.join(sorted(locales))}")
+    return None
+
+
+def read_context(path: str) -> dict | None:
+    """The file's content when it is a version-1 context with a known output, else None (warned once)."""
     try:
         content = json.loads(Path(path).read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -51,16 +80,27 @@ def parse_context(path: str) -> HostContext | None:
     if not isinstance(content, dict) or content.get("version") != VERSION:
         warn_once(path, f"version {content.get('version') if isinstance(content, dict) else None!r} is not {VERSION}")
         return None
-    output = content.get("output", "screen")
-    if output not in OUTPUTS:
-        warn_once(path, f"output {output!r} must be one of {', '.join(OUTPUTS)}")
+    if content.get("output", "screen") not in OUTPUTS:
+        warn_once(path, f"output {content['output']!r} must be one of {', '.join(OUTPUTS)}")
         return None
-    folder = content.get("figure_dir")
+    return content
+
+
+def parse_context(path: str) -> HostContext | None:
+    """A context from the file; values of the wrong kind are warned about and left out, the rest applies."""
+    content = read_context(path)
+    if content is None:
+        return None
+    output, folder, design = content.get("output", "screen"), content.get("figure_dir"), content.get("design")
+    if folder is not None and not isinstance(folder, str):
+        folder = warn_once(path, f"figure_dir {folder!r} must be a folder path")
+    if design is not None and not isinstance(design, dict):
+        design = warn_once(path, f"design {design!r} must be a mapping")
+    width, base, dpi = (positive_number(path, content.get(key), key) for key in ("width_mm", "base_size", "dpi"))
     return HostContext(host=str(content.get("host", "host")), output=output, brand=content.get("brand"),
-                       interactive=bool(content.get("interactive", False)) and output == "html",
-                       width_mm=content.get("width_mm"), locale=content.get("locale"),
-                       base_size=content.get("base_size"), figure_dir=Path(folder) if folder else None,
-                       design=dict(content.get("design") or {}), dpi=content.get("dpi"))
+                       interactive=content.get("interactive") is True and output == "html", width_mm=width,
+                       locale=host_locale(path, content.get("locale")), base_size=base,
+                       figure_dir=Path(folder) if folder else None, design=dict(design or {}), dpi=dpi)
 
 
 def host_context() -> HostContext | None:
@@ -74,8 +114,27 @@ def host_context() -> HostContext | None:
         _state["path"], _state["context"] = path, parse_context(path)
         if _state["context"] is not None:
             from hairline.settings import reapply
-            reapply()
+            try:
+                reapply()
+            except ValueError as error:
+                warn_once(path, f"its style could not be applied ({error})")
     return _state["context"]
+
+
+def read_manifest(path: Path) -> list:
+    """The figures already listed; a manifest that is not a list of figures is replaced, with a warning, so one
+    damaged file does not stop every later figure."""
+    if not path.is_file():
+        return []
+    try:
+        entries = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        entries = None
+    if isinstance(entries, list):
+        return entries
+    warnings.warn(f"hairline: host manifest {path} is not a list of figures; starting a new one", UserWarning,
+                  stacklevel=3)
+    return []
 
 
 def hand_off(figure) -> None:
@@ -92,7 +151,7 @@ def hand_off(figure) -> None:
     try:
         context.figure_dir.mkdir(parents=True, exist_ok=True)
         manifest_path = context.figure_dir / MANIFEST
-        entries = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else []
+        entries = read_manifest(manifest_path)
         figure_id = f"figure-{len(entries) + 1}"
         dpi = context.dpi if context.output == "screen" and context.dpi else None
         formats = FORMATS[context.output] + (("html",) if context.interactive else ())

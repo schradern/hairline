@@ -586,3 +586,164 @@ test_that("one value has no standard deviation, and a group named test keeps its
   expect_equal(result$values$groups$test, "5 (4.5–5.5)")
   expect_equal(result$values$test, "Wilcoxon rank-sum")
 })
+
+test_that("a missing or broken host context leaves saving as it was, without the context", {
+  withr::local_envvar(HAIRLINE_HOST_CONTEXT = file.path(tempdir(), "no-such-context.json"))
+  path <- suppressWarnings({
+    plot <- ggplot2::ggplot() + ggplot2::labs(title = "Without a host") + theme_hairline()
+    hl_save(plot, withr::local_tempfile(), formats = "png", dpi = 50)
+  })
+  expect_true(file.exists(path))
+})
+
+test_that("host sizes that are no numbers above zero are left out", {
+  for (value in c("\"85\"", "-50", "0", "true")) {
+    context <- withr::local_tempfile(fileext = ".json")
+    writeLines(sprintf("{\"version\":1,\"host\":\"x\",\"output\":\"pdf\",\"width_mm\":%s}", value), context)
+    withr::local_envvar(HAIRLINE_HOST_CONTEXT = context)
+    expect_warning(size <- figure_size_mm("onehalf", NULL, NULL), "must be a number above zero")
+    expect_equal(size[1], 120)
+  }
+})
+
+test_that("a raster beyond the pixel budget is refused before it is allocated", {
+  plot <- ggplot2::ggplot() + ggplot2::labs(title = "Too large") + theme_hairline()
+  name <- file.path(withr::local_tempdir(), "x")
+  expect_error(hl_save(plot, name, formats = c("pdf", "tiff"), width_mm = 1200, height_mm = 900, dpi = 600),
+               "1200 x 900 mm figure at 600 dpi is 603 megapixels, more than the 600")
+  expect_length(list.files(dirname(name)), 0)
+})
+
+test_that("fitting the height of a very large figure keeps the measuring device small", {
+  hl_use(brand = FALSE)
+  data <- data.frame(g = rep(c("a", "b"), each = 8), v = as.numeric(0:15))
+  opened <- NULL
+  local_mocked_bindings(agg_png = function(path, width, height, units, res, ...) {
+    opened <<- width * height / 25.4^2 * res^2
+    grDevices::pdf(NULL)
+  }, .package = "ragg")
+  size <- suppressWarnings(fitted_size_mm(hl_spread(data, "g", "v"), c(100000, 70000)))
+  expect_lte(opened, fit_device_megapixels * 1e6 * 1.0001)
+  expect_equal(size[1], 100000)
+})
+
+test_that("a rejected hl_use() does not come back with the next host context", {
+  hl_use(brand = FALSE)
+  expect_error(hl_use(brand = FALSE, base_size = -1), "base_size must be a number above zero")
+  context <- withr::local_tempfile(fileext = ".json")
+  writeLines("{\"version\":1,\"host\":\"x\",\"output\":\"pdf\",\"width_mm\":85}", context)
+  withr::local_envvar(HAIRLINE_HOST_CONTEXT = context)
+  expect_equal(figure_size_mm("onehalf", NULL, NULL)[1], 85)
+})
+
+robustness_frame <- data.frame(g = c("a", "b", "c"), v = c(1, 2, 3))
+
+test_that("input that cannot be drawn gets a hairline message", {
+  hl_use(brand = FALSE)
+  cases <- list(
+    list(function() hl_donut(transform(robustness_frame, v = c(1, Inf, 3)), "g", "v"), "'v' is infinite in row 2"),
+    list(function() hl_sankey(data.frame(a = "x", b = "y", n = Inf), c("a", "b"), "n"), "'n' is infinite"),
+    list(function() hl_scatter(data.frame(x = c(1, Inf, 3), y = c(1, 2, 3)), "x", "y"), "'x' is infinite"),
+    list(function() hl_spread(transform(robustness_frame, v = c(1, 2, -Inf)), "g", "v"), "'v' is infinite in row 3"),
+    list(function() hl_kaplan_meier(data.frame(t = c(1, Inf), e = c(1, 0)), "t", "e"), "'t' is infinite"),
+    list(function() hl_prisma(list(identified = Inf, screened = 10, included = 2)), "identified is Inf"),
+    list(function() hl_spread(robustness_frame, "g", "v", marks = c(typo = 5)), "marks names 'typo'"),
+    list(function() hl_spread(robustness_frame, "g", "v", stats = c("median", "median")), "names 'median' twice"),
+    list(function() hl_bars(transform(robustness_frame, v = c("1", "2", "3")), "g", "v"), "it needs numbers"),
+    list(function() hl_funnel(data.frame(e = c(1, 1.2, 1.3), s = c(20, 0.2, 0.3)), "e", "s"),
+         "standard error of 20 puts the funnel's limits beyond ratios"),
+    list(function() hl_kaplan_meier(data.frame(t = c(1, 2), e = c(1, 0))), "name the time and event columns"),
+    list(function() hl_timeseries(data.frame(t = as.Date("2024-01-01") + 0:4, v = 0:4), "t", "v",
+                                  events = list(list(x = 5))), "event x 5 is not a date"),
+    list(function() hl_swatches(character()), "no colour sets named"),
+    list(function() hl_donut(data.frame(g = character(), v = numeric()), "g", "v"), "no values above zero"),
+    list(function() hl_risk_of_bias(data.frame(study = "a"), "study"), "name the domain and judgement columns")
+  )
+  for (case in cases) expect_error(hl_save(case[[1]](), tempfile(), formats = "png", dpi = 30), case[[2]])
+})
+
+test_that("an empty order is no order, and a POSIXct axis takes events", {
+  hl_use(brand = FALSE)
+  expect_silent(hl_bars(robustness_frame, "g", "v", order = character()))
+  times <- data.frame(t = as.POSIXct("2024-03-01", tz = "UTC") + 3600 * 0:47, v = sin(0:47))
+  plot <- hl_timeseries(times, "t", "v", events = list(list(x = "2024-03-02")))
+  expect_true(file.exists(hl_save(plot, tempfile(), formats = "png", dpi = 30)))
+})
+
+test_that("a chart without groups draws no legend swatch", {
+  hl_use(brand = FALSE)
+  expect_length(hl_layout_report(hl_bars(robustness_frame, "g", "v"), width_mm = 120)$legend_row_centers, 0)
+  expect_length(hl_layout_report(hl_scatter(data.frame(x = 1:5, y = c(2, 4, 3, 5, 6)), "x", "y"),
+                                 width_mm = 120)$legend_row_centers, 0)
+})
+
+test_that("labels that leave no room for the panel are refused", {
+  hl_use(brand = FALSE)
+  data <- data.frame(g = c("Intensive care unit of the university hospital, north wing, level three", "B"),
+                     v = c(12, 7))
+  expect_error(hl_layout_report(hl_bars(data, "g", "v"), width_mm = 85), "figure too narrow: .* the y labels take")
+})
+
+test_that("the bundled font is registered when the package loads", {
+  expect_match(systemfonts::match_fonts(hl_tokens()$font$family)$path, "HairlineSans-Regular.ttf", fixed = TRUE)
+})
+
+test_that("host locales follow language tags, and the first plot after a new context has its style", {
+  hl_use(brand = FALSE)
+  context <- withr::local_tempfile(fileext = ".json")
+  writeLines("{\"version\":1,\"host\":\"x\",\"output\":\"pdf\",\"locale\":\"de-DE\",\"base_size\":11}", context)
+  withr::local_envvar(HAIRLINE_HOST_CONTEXT = context)
+  expect_equal(hl_settings()[c("locale", "base_size")], list(locale = "de", base_size = 11))
+  french <- withr::local_tempfile(fileext = ".json")
+  writeLines("{\"version\":1,\"host\":\"x\",\"output\":\"pdf\",\"locale\":\"fr\"}", french)
+  withr::local_envvar(HAIRLINE_HOST_CONTEXT = french)
+  expect_warning(hl_settings(), "locale 'fr' is not one of de, en")
+})
+
+test_that("a host context that is a JSON array is no context", {
+  context <- withr::local_tempfile(fileext = ".json")
+  writeLines("[1, 2]", context)
+  withr::local_envvar(HAIRLINE_HOST_CONTEXT = context)
+  expect_warning(expect_null(host_context()), "version NULL is not 1")
+})
+
+test_that("a damaged manifest is replaced instead of stopping every plot", {
+  path <- withr::local_tempfile(fileext = ".json")
+  writeLines("{broken", path)
+  expect_warning(expect_equal(read_host_manifest(path), list()), "is not a list of figures; starting a new one")
+})
+
+test_that("settings that are no colour, size or brand value are refused clearly", {
+  expect_error(hl_use(brand = FALSE, background = "notacolor"), "background 'notacolor' is not a colour|not a colour")
+  plot <- hl_bars(robustness_frame, "g", "v")
+  expect_error(hl_save(plot, tempfile(), size = "huge"), "unknown size 'huge'")
+  expect_error(hl_save(plot, ""), "name must be one file path")
+  expect_equal(brand_value(NULL), "null")
+})
+
+test_that("study refuses order without a group, numbers values that are no numbers, and keeps factor order", {
+  data <- data.frame(g = rep(c("A", "B"), each = 4), x = c(1, 2, Inf, 4, 5, 6, 7, 8), t = 1:8, e = rep(0:1, 4),
+                     y = c("1", "<5", "3", "4", "5", "6", "7", "8"))
+  expect_error(suppressWarnings(hl_study(data, time = "t", event = "e", order = c("A", "B"))),
+               "order lists groups, but no group column is given")
+  study <- suppressWarnings(hl_study(data, group = "g", variables = c("x", "y"), types = c(y = "numeric")))
+  expect_error(hl_compare(study, "x"), "1 values are infinite \\('Inf'\\)")
+  expect_error(hl_distribution(study, "y"), "1 values are not numbers \\('<5'\\)")
+  numeric <- transform(data, g = rep(c(2, 1), each = 4))
+  expect_equal(suppressWarnings(hl_study(numeric, group = "g", variables = "t", order = c(2, 1)))$groups, c("2", "1"))
+  factors <- data.frame(g = rep(c("A", "B"), each = 6),
+                        level = factor(rep(c("lo", "mid", "hi"), 4), levels = c("lo", "mid", "hi")))
+  result <- hl_compare(suppressWarnings(hl_study(factors, group = "g", variables = "level")), "level")
+  expect_equal(result$table[[1]][1:3], c("lo", "mid", "hi"))
+  expect_error(suppressWarnings(hl_study(data, group = "g", variables = c("t", "t"))), "variables names 't' twice")
+})
+
+test_that("numeric levels read the same in both languages; sentences keep acronyms", {
+  expect_equal(level_text(c(0.1 + 0.2, 0.3, 1e-4, -0, 3, 2.5)), c("0.3", "0.3", "0.0001", "0", "3", "2.5"))
+  data <- data.frame(g = rep(c("A", "B"), each = 4), t = 1:8, e = rep(0:1, 4))
+  study <- suppressWarnings(hl_study(data, group = "g", time = "t", event = "e",
+                                     labels = list(t = "PFS", g = "Treatment arm")))
+  expect_match(hl_survival(study)$text, "^Median PFS")
+  table <- data.frame(study = c("Age", "Age"), estimate = c(1.1, 1.2), low = c(1, 1.1), high = c(1.2, 1.3))
+  expect_error(hl_effects(study, table), "the term 'Age' is named in more than one row")
+})

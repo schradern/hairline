@@ -27,15 +27,33 @@ check_positive <- function(value, name) {
   }
 }
 
+# A raster beyond the pixel budget (about an A0 poster at 600 dpi) is refused before its buffer exists: its memory
+# grows with width x height x dpi^2, so a size in the wrong unit or a stray dpi could fill the machine.
+check_raster_size <- function(size_mm, dpi, format) {
+  if (!format %in% c("png", "tiff")) return(invisible())
+  megapixels <- prod(size_mm / 25.4 * dpi) / 1e6
+  limit <- hl_tokens()$export$max_megapixels
+  if (megapixels <= limit) return(invisible())
+  stop(sprintf(paste("hairline: a %.0f x %.0f mm figure at %s dpi is %s megapixels, more than the %s a raster image",
+                     "may have; lower the dpi or the size (in mm)"), size_mm[1], size_mm[2], format(dpi),
+               format(round(megapixels), big.mark = ",", scientific = FALSE), format(limit, big.mark = ",")),
+       call. = FALSE)
+}
+
+check_size_preset <- function(size) {
+  presets <- names(hl_tokens()$sizes)
+  if (!(is.character(size) && length(size) == 1 && size %in% presets)) {
+    shown <- if (is.character(size)) sprintf("'%s'", size) else format(size)
+    stop(sprintf("hairline: unknown size %s; use one of %s", paste(shown, collapse = ", "),
+                 paste(sort(presets), collapse = ", ")), call. = FALSE)
+  }
+}
+
 figure_size_mm <- function(size, width_mm, height_mm) {
   check_positive(width_mm, "width_mm")
   check_positive(height_mm, "height_mm")
-  presets <- hl_tokens()$sizes
-  if (!size %in% names(presets)) {
-    stop(sprintf("hairline: unknown size '%s'; use one of %s", size, paste(sort(names(presets)), collapse = ", ")),
-         call. = FALSE)
-  }
-  preset <- presets[[size]]
+  check_size_preset(size)
+  preset <- hl_tokens()$sizes[[size]]
   width <- width_mm %||% host_context()$width_mm %||% preset$width_mm
   c(width, height_mm %||% preset$height_mm %||% (width * preset$aspect))
 }
@@ -101,11 +119,16 @@ hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", wid
                     dpi = 600, background = NULL) {
   formats <- validated_formats(formats)
   check_positive(dpi, "dpi")
+  check_size_preset(size)
+  if (!(is.character(name) && length(name) == 1 && nzchar(name))) {
+    stop(sprintf("hairline: name must be one file path; got %s", paste(format(name), collapse = ", ")), call. = FALSE)
+  }
   if ("svg" %in% formats && !requireNamespace("svglite", quietly = TRUE)) {
     stop("hairline: SVG export needs the 'svglite' package", call. = FALSE)
   }
   plot <- plot_for_size(plot, size)
   size_mm <- fitted_size_mm(plot, figure_size_mm(size, width_mm, height_mm %||% plot@meta$hairline_height_mm))
+  for (format in formats) check_raster_size(size_mm, dpi, format)
   surface <- if (identical(background, "transparent")) "transparent" else
     background %||% saved_settings(plot, size)$neutral$surface
   name <- strip_known_extension(name)

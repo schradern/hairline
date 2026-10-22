@@ -116,6 +116,52 @@
   `groups`, beside `test` and `p`, so a group named "test" or "p" no longer collides with them.
 * The README installs the package from GitHub (it is not on CRAN yet); the version is now 0.1.0.9000.
 
+## Fixes from the pre-release stress test
+
+* A host context file that is missing or broken no longer breaks every `hl_save()` ("$ operator is invalid for
+  atomic vectors"): the warning said "continuing without it", and now it does.
+* Charts that fit their height to their content measure on a device whose resolution drops for very large
+  figures, so its buffer stays small; it grew with the square of the width (a 100 m width filled the machine).
+* A PNG or TIFF beyond 600 megapixels (about an A0 poster at 600 dpi; token `export$max_megapixels`) is refused
+  before its buffer is allocated, with the size and dpi that asked for it.
+* An `hl_use()` call that fails (a base size of 0, an unknown palette) no longer comes back with every new host
+  context: its arguments are kept for re-applying only once they have been applied. Every later plot in the
+  session failed with the first call's error.
+* A host context whose `width_mm`, `base_size` or `dpi` is not a number above zero warns once and leaves that
+  value out.
+
+* The bundled font is registered when the package loads: without `hl_use()`, plots were measured and drawn in a
+  system font (Helvetica on macOS) and their layout differed from the Python package's.
+* A host context is applied without stopping anything: a `locale` like "de-DE" is read as "de", one hairline
+  lacks ("fr") warns and is left out (it stopped `library(hairline)`); a style that cannot be applied (a broken
+  `_brand.yml`) warns instead of failing to load; a context file that holds a JSON array, a `figure_dir` or
+  `design` of the wrong kind warn and are left out. The first plot after a new context already has its style,
+  and a damaged `hairline-figures.json` is replaced with a warning instead of failing every save.
+* `hl_use(background = ...)` refuses a value that is no colour; a brand's `base_size` must be a number above
+  zero; `hl_save()` checks the size preset first ("unknown size") and refuses an empty name. Brand errors about a
+  value YAML read as empty (an unquoted `#hex` is a comment) say "null" instead of having no message.
+* Infinite values are refused with the column and row in every chart that reads numbers (`hl_donut()`,
+  `hl_partition()`, `hl_sankey()`, `hl_chord()`, `hl_arcs()`, `hl_correlation()`, `hl_kaplan_meier()`,
+  `hl_spread()`, `hl_scatter()`, `hl_bars()`, `hl_timeseries()`, PRISMA counts, `hl_spread()` marks). Text in a
+  number column of `hl_bars()`, `hl_timeseries()`, `hl_scatter()` or `hl_correlation()` gets the "needs numbers"
+  message.
+* Clear messages instead of internal errors for empty data (`hl_donut()`, `hl_partition()`, `hl_bars()`), an
+  empty `order` (now: no order), `hl_kaplan_meier()` without time and event columns, `hl_risk_of_bias()` without
+  domain and judgement columns, `hl_swatches(character())`, `hl_funnel(pooled = NaN)` and standard errors so
+  large that a ratio funnel passes 1e±10, `hl_spread()` marks for groups that are not drawn, a statistic named
+  twice or fractional `digits`, timeseries events that are not dates on a date or time axis (a POSIXct axis
+  failed on every event), and `hl_bars(percent = TRUE)` with negative values.
+* `hl_bars()` and `hl_scatter()` without `by` draw no legend swatch (an empty one took a legend row, and made a
+  scatter at 75 mm too small to draw).
+* Labels that leave a panel less than 2 x the base size (token `spacing$min_panel_width`) are refused, "figure
+  too narrow". `hl_dotplot()` and `hl_forest()` keep their row pitch and the figure grows to hold every row.
+* Study: `order` without `group` is refused; numeric `order` values name groups as text; values of a numeric
+  variable that are no numbers or infinite are study errors; infinite follow-up times are refused;
+  `hl_compare()` keeps a factor's level order (it sorted the levels alphabetically); `hl_distribution()` draws
+  the groups that have values; `hl_effects()` refuses a term named twice; a variable named twice is refused
+  (it failed with "factor level is duplicated"). Numeric levels read the same in both languages (1e-04 reads
+  0.0001, -0 reads 0). Titles and sentences use the group's label and keep acronyms ("Median PFS").
+
 ## Fixes for narrow figures and installed fonts
 
 * `hl_spread()` keeps its plot on a narrow figure. The key numbers sit beside the plot while it keeps at least

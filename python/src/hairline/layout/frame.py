@@ -95,11 +95,21 @@ def panel_height(spec: FrameInput, top: float, spacing: dict, metrics: FontMetri
     return height
 
 
+def check_panel_width(spec: FrameInput, width: float, spacing: dict) -> None:
+    """Long y labels (or many columns) must leave room for the data; otherwise the panel would vanish or turn over."""
+    if width < spacing["min_panel_width"] * spec.base_size:
+        labels = f"; the y labels take {spec.y_label_width_pt:.0f} pt" if spec.y_labels else ""
+        raise HairlineLayoutError(f"hairline: figure too narrow: {spec.width_pt:.0f} pt wide leaves {width:.1f} pt "
+                                  f"per panel for {spec.panel_columns} panel columns{labels}; shorten the labels, use "
+                                  f"fewer columns or a wider size")
+
+
 def place_panels(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: dict, height: float) -> None:
     base = spec.base_size
     gap = spacing["panel_columns"] * base
     offsets = column_offsets(spec, spacing)
     width = (layout.right - layout.plot_left - gap * (spec.panel_columns - 1) - sum(offsets)) / spec.panel_columns
+    check_panel_width(spec, width, spacing)
     for row in range(spec.panel_rows):
         if row:
             stack.skip(spacing["panel_rows"] * base)

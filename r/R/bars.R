@@ -7,6 +7,7 @@ bar_table <- function(data, category, value, by, order, sort) {
   }
   check_labels(data, c(category, by), "bars")
   check_present(data, value, "bars")
+  check_numeric(data, value, "bars")
   names <- ordered_names(data[[category]], order, "bars", category)
   groups <- if (is.null(by)) "" else group_names(data[[by]])
   keys <- if (is.null(by)) as.character(data[[category]]) else
@@ -33,6 +34,11 @@ bar_frame <- function(parts, category, by, horizontal, percent) {
   table <- parts$table
   digits <- auto_digits(table$.value)
   if (percent) {
+    negative <- which(table$.value < 0)
+    if (length(negative)) {
+      stop(sprintf("hairline: bars: percent needs values of zero or more; '%s' has %s", table[[category]][negative[1]],
+                   format(table$.value[negative[1]])), call. = FALSE)
+    }
     totals <- stats::ave(table$.value, table[[category]], FUN = sum)
     empty <- table[[category]][!(totals > 0)]
     if (length(empty)) {

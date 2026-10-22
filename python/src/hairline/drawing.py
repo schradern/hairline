@@ -97,8 +97,10 @@ def content_bottom(shapes: list[dict], style: dict, measure=None) -> float:
 
 
 def fit_height(figure: HairlineFigure) -> HairlineFigure:
-    """Resize the figure so its drawn panel ends where the content ends (shorter, or taller when it overflows)."""
-    figure.figure.canvas.draw()
+    """Resize the figure so its drawn panel ends where the content ends (shorter, or taller when it overflows).
+    Only the frame is laid out, in pt: a full draw would rasterise the provisional figure, whose pixels grow with
+    the square of its width."""
+    figure.figure.get_layout_engine().execute(figure.figure)
     box = figure.plot_boxes[0]
     slack = box.y + box.height - content_bottom(figure.shapes, drawing_style(figure.settings),
                                                 measure_for(figure.settings))

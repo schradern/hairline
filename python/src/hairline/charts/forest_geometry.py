@@ -13,11 +13,15 @@ from hairline.tokens import load_tokens
 SERIES = (1, 2, 5)
 
 
+# Ratio breaks are rounded to this many decimals, so a ratio axis reaches from 10^-RATIO_PLACES to 10^RATIO_PLACES.
+RATIO_PLACES = 10
+
+
 def log_breaks(low: float, high: float, max_ticks: int = 7) -> list[float]:
     """1-2-5 breaks covering [low, high]; powers of ten only when that gives more than `max_ticks`."""
     first, last = math.floor(math.log10(low)) - 1, math.ceil(math.log10(high)) + 1
     for series in (SERIES, (1,)):
-        candidates = sorted(round(mantissa * 10 ** power, 10) for power in range(first, last + 1)
+        candidates = sorted(round(mantissa * 10 ** power, RATIO_PLACES) for power in range(first, last + 1)
                             for mantissa in series)
         start = max(value for value in candidates if value <= low * (1 + 1e-9))
         end = min(value for value in candidates if value >= high * (1 - 1e-9))
@@ -178,9 +182,8 @@ def forest_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     heading = box.y + style["cap_height"] * size
     top = heading + line - style["cap_height"] * size + rules["rule_gap"] * base
     count = len(spec["rows"]) + (1 + rules["pooled_gap"] if spec["pooled"] else 0)
-    favours = line + rules["favours_gap"] * base if spec["favours"] and spec["null"] is not None else 0.0
-    reserve = 2 * rules["axis_gap"] * base + (style["cap_height"] + style["descender"]) * size + favours
-    pitch = min(rules["row_pitch"] * line, (box.y + box.height - top - reserve) / count)
+    # Rows keep their pitch; the figure's height follows them (fit_height), so many rows never overlap.
+    pitch = rules["row_pitch"] * line
     centres, pooled_centre = row_centres(spec, top, pitch, rules)
     bottom = top + pitch * count
     shapes = table_texts(spec, columns, heading, None, style) + [rule(columns["study"], columns["weight"], top, style)]

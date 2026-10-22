@@ -10,6 +10,7 @@ from hairline import entities
 from hairline.charts.common import (
     check_columns,
     check_labels,
+    check_numeric,
     check_present,
     group_names,
     humanise,
@@ -31,6 +32,7 @@ def bar_table(data: pd.DataFrame, category: str, value: str, by: str | None, ord
     columns = list(dict.fromkeys([category] + ([by] if by else [])))
     check_labels(data, columns, "bars")
     check_present(data, value, "bars")
+    check_numeric(data, [value], "bars")
     names = ordered_names(data[category], order or None, "bars", category)
     groups = group_names(data[by]) if by else [""]
     table = data.groupby(columns, sort=False, observed=True)[value].sum().reset_index()
@@ -51,9 +53,18 @@ def bar_values(table: pd.DataFrame, category: str, value: str, by: str | None, n
     rows = table if not by else table[table[by].astype(str) == group]
     totals = table.groupby(category)[value].sum()
     if percent:
+        check_percent_values(table, category, value)
         check_percent_totals(totals, names)
     sums = rows.groupby(category)[value].sum()
     return [float(sums.get(name, 0.0)) / (float(totals[name]) if percent else 1.0) for name in names]
+
+
+def check_percent_values(table: pd.DataFrame, category: str, value: str) -> None:
+    """Shares are parts of a whole: a negative part would draw below zero and push the others past 100 %."""
+    negative = table[table[value] < 0]
+    if len(negative):
+        raise ValueError(f"hairline: bars: percent needs values of zero or more; {negative.iloc[0][category]!r} has "
+                         f"{negative.iloc[0][value]:g}")
 
 
 def check_percent_totals(totals: pd.Series, names: list[str]) -> None:

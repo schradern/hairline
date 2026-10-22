@@ -53,7 +53,11 @@ nearest_weight <- function(requested, available) {
   heavier <- sort(available[available > requested])
   candidates <- if (requested >= 400 && requested <= 500) {
     c(heavier[heavier <= 500], lighter, heavier[heavier > 500])
-  } else if (requested < 400) c(lighter, heavier) else c(heavier, lighter)
+  } else if (requested < 400) {
+    c(lighter, heavier)
+  } else {
+    c(heavier, lighter)
+  }
   candidates[1]
 }
 
@@ -66,7 +70,9 @@ family_weights <- function(family) {
   known <- hairline_state$family_weights %||% list()
   if (!is.null(known[[family]])) return(known[[family]])
   files <- names(hl_tokens()$font$files)
-  weights <- if (identical(family, hl_tokens()$font$family)) as.numeric(files[!grepl("i$", files)]) else {
+  weights <- if (identical(family, hl_tokens()$font$family)) {
+    as.numeric(files[!grepl("i$", files)])
+  } else {
     columns <- c("family", "weight", "italic")
     fonts <- rbind(as.data.frame(systemfonts::system_fonts())[columns],
                    as.data.frame(systemfonts::registry_fonts())[columns])

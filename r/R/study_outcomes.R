@@ -55,7 +55,7 @@ survival_estimates <- function(study, data, fit) {
 
 survival_text <- function(study, rows, grouped, test) {
   time <- study$roles$time
-  measured <- if (is.null(time)) "survival time" else tolower(study_label(study, time))
+  measured <- if (is.null(time)) "survival time" else study_in_sentence(study, time)
   unit <- if (is.null(time)) NULL else study_measure(study, time)
   medians <- if (grouped) listed_text(vapply(rows, function(row) paste(row[1], row[4]), character(1))) else rows[[1]][4]
   paste0("Median ", measured, if (!is.null(unit)) sprintf(" (%s)", unit), ": ", medians,
@@ -107,8 +107,8 @@ hl_survival <- function(study, fit = NULL) {
   p <- if (is.null(test) || is.na(test$p)) NULL else format_p(test$p)
   values <- c(list(groups = stats::setNames(lapply(rows, `[[`, 4), names)),
               if (!is.null(p)) list(test = "Log-rank", p = p))
-  title <- if (grouped && !is.null(study$roles$group)) paste("Survival by", gsub("_", " ", study$roles$group)) else
-    "Survival"
+  grouped_by <- grouped && !is.null(study$roles$group)
+  title <- if (grouped_by) paste("Survival by", study_in_sentence(study, study$roles$group)) else "Survival"
   x_title <- if (is.null(time)) "Time" else study_label_unit(study, time)
   key <- if (is.null(p)) character() else c(`Log-rank` = p)
   figure <- if (is.null(fit)) {
@@ -171,6 +171,11 @@ hl_effects <- function(study, model_or_table, measure = NULL, study_column = "st
   rows <- fit$table
   terms <- vapply(rows$term, function(term) if (term %in% names(study$data)) study_label(study, term) else term,
                   character(1), USE.NAMES = FALSE)
+  repeated <- unique(terms[duplicated(terms)])
+  if (length(repeated)) {
+    stop(sprintf("hairline: effects: the term '%s' is named in more than one row; give each row its own label",
+                 repeated[1]), call. = FALSE)
+  }
   prefix <- if (is.null(measure)) "" else paste0(measure, " ")
   estimates <- lapply(seq_len(nrow(rows)), function(index) {
     list(estimate = rows$estimate[index], low = rows$low[index], high = rows$high[index])

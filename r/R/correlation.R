@@ -26,6 +26,7 @@ correlation_spec <- function(data, columns = NULL, method = "pearson") {
   }
   columns <- columns %||% names(data)[vapply(data, is.numeric, logical(1))]
   check_columns(data, columns)
+  check_numeric(data, columns, "correlation")
   if (length(columns) < 2) {
     stop(sprintf("hairline: correlation needs at least two numeric columns; got %s",
                  if (length(columns)) paste(columns, collapse = ", ") else "none"), call. = FALSE)

@@ -1,10 +1,20 @@
 # compute_frame(): stacks header, legend, panels and caption using the spacing scale.
 
+# Long y labels (or many columns) must leave room for the data; otherwise the panel would vanish or turn over.
+check_panel_width <- function(spec, width, spacing) {
+  if (width >= spacing$min_panel_width * spec$base_size) return(invisible())
+  labels <- if (isTRUE(spec$y_labels)) sprintf("; the y labels take %.0f pt", spec$y_label_width_pt) else ""
+  stop(sprintf(paste0("hairline: figure too narrow: %.0f pt wide leaves %.1f pt per panel for %d panel columns%s; ",
+                      "shorten the labels, use fewer columns or a wider size"), spec$width_pt, width,
+               as.integer(spec$panel_columns), labels), call. = FALSE)
+}
+
 place_panel_rows <- function(state, spec, layout, spacing, height) {
   base <- spec$base_size
   gap <- spacing$panel_columns * base
   offsets <- column_offsets(spec, spacing)
   width <- (layout$right - layout$plot_left - gap * (spec$panel_columns - 1) - sum(offsets)) / spec$panel_columns
+  check_panel_width(spec, width, spacing)
   for (row in seq_len(spec$panel_rows)) {
     if (row > 1) state$y <- state$y + spacing$panel_rows * base
     placed <- stack_lines(state, spec$sizes$panel, header_line_count(spec, row))

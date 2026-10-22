@@ -12,11 +12,11 @@ from hairline.tokens import load_tokens
 
 def time_findings(data: pd.DataFrame, column: str, limit: int) -> list[Finding]:
     values = pd.to_numeric(data[column].where(~is_missing(data[column])), errors="coerce")
-    bad = values.isna() | (values < 0)
+    bad = values.isna() | (values < 0) | np.isinf(values)
     if not bad.any():
         return []
-    return [Finding("error", column, f"{count_text(int(bad.sum()))} follow-up times are missing, negative or not "
-                    "numbers", tuple(row_numbers(bad, limit)),
+    return [Finding("error", column, f"{count_text(int(bad.sum()))} follow-up times are missing, negative, infinite "
+                    "or not numbers", tuple(row_numbers(bad, limit)),
                     "correct or drop these rows; times count from the start of follow-up")]
 
 
@@ -59,11 +59,12 @@ def empty_groups(present: pd.Series, column: str, groups: list[str]) -> list[Fin
 
 
 def id_findings(data: pd.DataFrame, column: str, limit: int) -> list[Finding]:
-    present = data[column][~is_missing(data[column])].map(level_text)
+    ids = data[column].reset_index(drop=True)
+    present = ids[~is_missing(ids)].map(level_text)
     repeated = present.duplicated()
     if not repeated.any():
         return []
-    mask = pd.Series(False, index=data.index)
+    mask = pd.Series(False, index=ids.index)
     mask[present.index[repeated.to_numpy()]] = True
     return [Finding("warning", column, f"{count_text(int(repeated.sum()))} rows repeat an id",
                     tuple(row_numbers(mask, limit)),

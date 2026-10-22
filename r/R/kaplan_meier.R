@@ -24,7 +24,16 @@ km_delayed_entry <- function(at_risk, events, censored, total) {
 }
 
 km_from_data <- function(data, time, event, by, order) {
+  if (is.null(time) || is.null(event)) {
+    stop("hairline: kaplan_meier: name the time and event columns (time = ..., event = ...), or pass a survfit",
+         call. = FALSE)
+  }
   check_columns(data, c(time, event, by))
+  check_numeric(data, time, "kaplan_meier")
+  if (!is.numeric(data[[event]]) && !is.logical(data[[event]])) {
+    stop(sprintf("hairline: kaplan_meier: '%s' holds %s values; code events as 1 (event) and 0 (censored)", event,
+                 class(data[[event]])[1]), call. = FALSE)
+  }
   groups <- chart_groups(data, by, order, "kaplan_meier")
   lapply(groups, function(name) {
     rows <- if (is.null(by)) data else data[as.character(data[[by]]) == name, , drop = FALSE]

@@ -36,15 +36,47 @@ spread_axis <- function(lows, highs, percent, zero) {
   list(breaks = breaks, labels = labels, low = limits[1], high = limits[2])
 }
 
-spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_label = NULL,
-                        stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL, zero = FALSE,
-                        axis_title = NULL, colors = NULL) {
-  check_columns(data, c(group, value))
+# The statistics to show, each once, and decimals as a whole number.
+spread_check_options <- function(stats, digits) {
   unknown <- setdiff(stats, spread_stats)
   if (length(unknown)) {
     stop(sprintf("hairline: spread: unknown statistic '%s'; use any of %s", unknown[1],
                  paste(spread_stats, collapse = ", ")), call. = FALSE)
   }
+  repeated <- unique(stats[duplicated(stats)])
+  if (length(repeated)) {
+    stop(sprintf("hairline: spread: stats names '%s' twice; name each statistic once", repeated[1]), call. = FALSE)
+  }
+  whole <- is.numeric(digits) && length(digits) == 1 && is.finite(digits) && digits >= 0 && digits == round(digits)
+  if (!is.null(digits) && !whole) {
+    stop(sprintf("hairline: spread: digits must be a whole number of 0 or more; got %s",
+                 paste(format(digits), collapse = ", ")), call. = FALSE)
+  }
+}
+
+# Reference values for groups that are drawn, as finite numbers: a mistyped group would lose its tick.
+spread_check_marks <- function(marks, names) {
+  if (length(marks) && is.null(names(marks))) {
+    stop("hairline: spread: marks need group names, such as c(\"Unit A\" = 20)", call. = FALSE)
+  }
+  for (name in names(marks)) {
+    if (!name %in% names) {
+      stop(sprintf("hairline: spread: marks names '%s', which is not a group drawn; groups: %s", name,
+                   paste(names, collapse = ", ")), call. = FALSE)
+    }
+    value <- marks[[name]]
+    if (!is.numeric(value) || length(value) != 1 || !is.finite(value)) {
+      stop(sprintf("hairline: spread: the mark for '%s' is %s; marks are finite numbers", name,
+                   paste(format(value), collapse = ", ")), call. = FALSE)
+    }
+  }
+}
+
+spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_label = NULL,
+                        stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL, zero = FALSE,
+                        axis_title = NULL, colors = NULL) {
+  check_columns(data, c(group, value))
+  spread_check_options(stats, digits)
   check_present(data, value, "spread")
   check_numeric(data, value, "spread")
   names <- chart_groups(data, group, order, "spread")
@@ -63,6 +95,7 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   # Of whole numbers, a quantile between two of them keeps one decimal (a median of 2.5, not 3).
   numbers <- list(function(value) if (quantile_places(value, 0, whole) > 0) mean_number(value) else plain(value),
                   mean_number)
+  spread_check_marks(marks, names)
   palette <- colours_for(names, colors)
   rows <- lapply(seq_along(names), function(index) {
     limits <- density_quantiles(samples[[index]], c(0, 0.25, 0.5, 0.75, 1))

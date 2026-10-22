@@ -58,6 +58,7 @@ sankey_nodes <- function(data, columns, links, color_column, palette, digits = 0
 
 sankey_spec <- function(data, columns, value, color_by = NULL, headings = NULL, colors = NULL) {
   check_columns(data, c(columns, value))
+  check_numeric(data, value, "sankey")
   group <- if (identical(color_by, "none")) NULL else color_by %||% columns[length(columns)]
   if (!is.null(group)) check_columns(data, group)
   check_labels(data, c(columns, group), "sankey")

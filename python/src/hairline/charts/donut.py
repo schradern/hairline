@@ -7,7 +7,15 @@ from collections.abc import Mapping, Sequence
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns, check_labels, fold_other, humanise, joined, with_counts
+from hairline.charts.common import (
+    check_columns,
+    check_labels,
+    check_numeric,
+    fold_other,
+    humanise,
+    joined,
+    with_counts,
+)
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.color.tints import tints
 from hairline.figure import HairlineFigure, figure
@@ -76,7 +84,10 @@ def donut_rings(data: pd.DataFrame, label: str | None, value: str, levels: Seque
     """Segments per ring, inner to outer; children follow their parent's order and use its tints."""
     levels = list(levels) if levels else [label]
     check_columns(data, levels + [value])
+    if not levels or None in levels:
+        raise ValueError(f"hairline: {chart}: name the column that labels the segments")
     check_labels(data, levels, chart)
+    check_numeric(data, [value], chart)
     if len(levels) > load_tokens()["donut"]["max_levels"]:
         raise ValueError(f"hairline: {chart}: {len(levels)} levels given ({', '.join(levels)}); at most 3 levels fit")
     rings = [top_ring(data, levels[0], value, fold=len(levels) == 1, colors=colors, order=order)]

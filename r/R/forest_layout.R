@@ -49,9 +49,8 @@ forest_drawing <- function(spec, box, measure, style) {
   heading <- box[2] + style$cap_height * size
   top <- heading + line - style$cap_height * size + rules$rule_gap * base
   count <- length(spec$rows) + if (is.null(spec$pooled)) 0 else 1 + rules$pooled_gap
-  favours <- if (!is.null(spec$favours) && !is.null(spec$null)) line + rules$favours_gap * base else 0
-  reserve <- 2 * rules$axis_gap * base + (style$cap_height + style$descender) * size + favours
-  pitch <- min(rules$row_pitch * line, (box[2] + box[4] - top - reserve) / count)
+  # Rows keep their pitch; the figure's height follows them (hairline_fit_height), so many rows never overlap.
+  pitch <- rules$row_pitch * line
   bottom <- top + pitch * count
   sides <- if (identical(spec$marker, "dot")) rep(dot_size(style), length(spec$rows)) else
     forest_sides(spec, rules, base)

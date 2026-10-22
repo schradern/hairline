@@ -17,11 +17,17 @@ judgement_of <- function(value, study, domain) {
 risk_of_bias_spec <- function(data, study, domain = NULL, judgement = NULL, domains = NULL, overall = "Overall") {
   if (!is.null(domains)) {
     check_columns(data, c(study, domains))
+    check_labels(data, study, "risk of bias")
     table <- do.call(rbind, lapply(domains, function(name) {
       data.frame(study = data[[study]], domain = name, judgement = data[[name]])
     }))
   } else {
+    if (is.null(domain) || is.null(judgement)) {
+      stop(paste("hairline: risk of bias: name the domain and judgement columns of a long table, or the domain",
+                 "columns of a wide one with domains = c(...)"), call. = FALSE)
+    }
     check_columns(data, c(study, domain, judgement))
+    check_labels(data, c(study, domain), "risk of bias")
     table <- data.frame(study = data[[study]], domain = data[[domain]], judgement = data[[judgement]])
   }
   keys <- combination_key(table$study, table$domain)

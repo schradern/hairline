@@ -35,7 +35,7 @@ numeric_test <- function(samples) {
 test_text <- function(test) paste0(test$method, ", ", format_p(test$p))
 
 study_by_title <- function(study, label) {
-  if (is.null(study$roles$group)) label else paste(label, "by", gsub("_", " ", study$roles$group))
+  if (is.null(study$roles$group)) label else paste(label, "by", study_in_sentence(study, study$roles$group))
 }
 
 #' Distribution of one numeric variable by group
@@ -75,7 +75,8 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
   names(table) <- c("Group", "n", unname(study_stat_labels[stats]))
   data <- study_present_rows(study, variable)
   data[[variable]] <- study_as_number(data[[variable]])
-  names <- if (is.null(study$roles$group)) study_overall(study) else names(found)[-length(found)]
+  names <- if (is.null(study$roles$group)) study_overall(study) else
+    Filter(function(name) found[[name]]$n > 0, names(found)[-length(found)])
   figure <- hl_spread(data, study_group_key(study), variable, order = names,
                       title = study_by_title(study, study_label(study, variable)),
                       axis_title = study_measure(study, variable))
@@ -157,9 +158,11 @@ compare_numeric <- function(study, variable) {
 compare_categorical <- function(study, variable) {
   data <- study_present_rows(study, variable)
   label <- study_label(study, variable)
-  data[[variable]] <- level_text(data[[variable]])
-  # Categories of the compared groups only: one seen only in a group left out of the study's order is no row.
-  kinds <- study_levels(data[[variable]][data[[study_group_key(study)]] %in% study$groups])
+  values <- data[[variable]]
+  data[[variable]] <- level_text(values)
+  # Categories of the compared groups only (one seen only in a group left out of the study's order is no row), in
+  # a factor's own order.
+  kinds <- study_levels(values[data[[study_group_key(study)]] %in% study$groups])
   parts <- study_group_parts(study)
   found <- stats::setNames(lapply(parts, function(part) level_numbers(part$rows[[variable]], kinds)),
                            study_part_names(parts))

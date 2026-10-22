@@ -46,3 +46,23 @@ numbers_as_text_findings <- function(data, column) {
                                                 hl_format_percent(share, 0)),
                      integer(), "convert the column to numbers, or declare it categorical"))
 }
+
+# A numeric variable holds numbers: text that is no number ("<5") or an infinite value cannot be summarised.
+numeric_value_findings <- function(data, column, limit) {
+  raw <- data[[column]]
+  present <- !study_is_missing(raw)
+  values <- suppressWarnings(study_as_number(raw))
+  checks <- list(list(bad = present & is.na(values), problem = "are not numbers",
+                      fix = "correct them, or declare the column categorical"),
+                 list(bad = present & !is.na(values) & is.infinite(values), problem = "are infinite",
+                      fix = "correct them, or leave these rows out"))
+  findings <- list()
+  for (check in checks) {
+    if (!any(check$bad)) next
+    shown <- paste(sprintf("'%s'", unique(as.character(raw[check$bad]))), collapse = ", ")
+    problem <- sprintf("%s values %s (%s)", count_text(sum(check$bad)), check$problem, shown)
+    findings[[length(findings) + 1]] <- study_finding("error", column, problem, row_numbers(check$bad, limit),
+                                                      check$fix)
+  }
+  findings
+}

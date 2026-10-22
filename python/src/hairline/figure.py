@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import math
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -16,7 +18,7 @@ from hairline.layout.draw import FrameArtist
 from hairline.layout.engine import HairlineLayout
 from hairline.layout.legend import LegendItem, validate_items
 from hairline.layout.panels import PanelHeader
-from hairline.settings import Settings, current_settings
+from hairline.settings import Settings, check_positive, current_settings
 from hairline.style import rcparams_for
 from hairline.tokens import load_tokens
 
@@ -165,11 +167,40 @@ class HairlineFigure:
         return dict(self.report)
 
 
+RASTER_FORMATS = ("png", "tif", "tiff", "jpg", "jpeg", "webp", "raw", "rgba")
+
+
+def check_raster_size(fig: Figure, dpi: float, format_name: str) -> None:
+    """A raster beyond the pixel budget (about an A0 poster at 600 dpi) is refused before its buffer exists: its
+    memory grows with width x height x dpi², so a size in the wrong unit or a stray dpi could fill the machine."""
+    if format_name.lower() not in RASTER_FORMATS:
+        return
+    width, height = fig.get_size_inches()
+    megapixels, limit = width * height * dpi * dpi / 1e6, load_tokens()["export"]["max_megapixels"]
+    if megapixels > limit:
+        raise ValueError(f"hairline: a {width * MM_PER_INCH:.0f} x {height * MM_PER_INCH:.0f} mm figure at {dpi:g} "
+                         f"dpi is {megapixels:,.0f} megapixels, more than the {limit:,} a raster image may have; "
+                         f"lower the dpi or the size (in mm)")
+
+
+def saved_format(fname: object, format_name: str | None) -> str:
+    if format_name:
+        return format_name
+    suffix = Path(fname).suffix.lstrip(".") if isinstance(fname, str | os.PathLike) else ""
+    return suffix or matplotlib.rcParams["savefig.format"]
+
+
+def saved_dpi(fig: Figure, dpi: object) -> float:
+    dpi = matplotlib.rcParams["savefig.dpi"] if dpi is None else dpi
+    return fig.dpi if dpi == "figure" else float(dpi)
+
+
 class HostFigure(Figure):
     """A matplotlib figure that, inside a host document, hands itself to the host after each save."""
 
-    def savefig(self, *args, **kwargs):
-        result = super().savefig(*args, **kwargs)
+    def savefig(self, fname, *args, **kwargs):
+        check_raster_size(self, saved_dpi(self, kwargs.get("dpi")), saved_format(fname, kwargs.get("format")))
+        result = super().savefig(fname, *args, **kwargs)
         owner = getattr(self, "hairline_figure", None)
         if owner is not None:
             from hairline.host import hand_off
@@ -181,6 +212,9 @@ def size_settings(size: str, width_mm: float | None, height_mm: float | None) ->
     presets = load_tokens()["sizes"]
     if size not in presets:
         raise ValueError(f"hairline: unknown size {size!r}; use one of {', '.join(sorted(presets))}")
+    for value, name in ((width_mm, "width_mm"), (height_mm, "height_mm")):
+        if value is not None:
+            check_positive(value, name)
     preset, settings = presets[size], current_settings()
     from hairline.host import host_context
     context = host_context()

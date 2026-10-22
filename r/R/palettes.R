@@ -131,6 +131,10 @@ ramp_kind <- function(name) {
 swatch_rows <- function(names = NULL) {
   tokens <- hl_tokens()
   every <- c(names(tokens$palettes), purpose_sets, names(active_ramps()))
+  if (!is.null(names) && !length(names)) {
+    stop("hairline: swatches: no colour sets named; pass NULL for all of them, or names from hl_palettes()",
+         call. = FALSE)
+  }
   unknown <- setdiff(names, every)
   if (length(unknown) > 0) {
     stop(sprintf("hairline: unknown colour set '%s'; use one of %s", unknown[1], paste(every, collapse = ", ")),

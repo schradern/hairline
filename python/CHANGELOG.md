@@ -119,6 +119,55 @@
 * The README installs the development version from GitHub; the version is now 0.2.0.dev0, so a checkout is
   told apart from the 0.1.0 release on PyPI.
 
+### Fixes from the pre-release stress test
+
+* Charts that fit their height to their content (`spread`, `forest`, `dotplot`, `correlation`, `arcs`,
+  `partition`, `prisma`, `risk_of_bias`) no longer draw the provisional figure as pixels to measure it. Its memory
+  grew with the square of the width: 2.8 GB at 4 m, and a 100 m host width filled the machine. Only the frame is
+  laid out now, in pt, which is also faster.
+* A PNG or TIFF beyond 600 megapixels (about an A0 poster at 600 dpi; token `export.max_megapixels`) is refused
+  before its buffer is allocated, by `save()` and by `savefig()` on a hairline figure, with the size and dpi that
+  asked for it. matplotlib no longer limits raster sizes itself.
+* A `use()` call that fails (a base size of 0, an unknown palette) no longer comes back with every new host
+  context: its arguments are kept for re-applying only once they have been applied. Every later figure in the
+  session failed with the first call's error.
+* A host context whose `width_mm`, `base_size` or `dpi` is not a number above zero warns once and leaves that
+  value out (it reached matplotlib as it was); an explicit `width_mm` or `height_mm` of 0 or less is refused, as
+  in R, instead of falling back to the preset or failing inside matplotlib.
+
+* A host context is applied without stopping anything: a `locale` like "de-DE" is read as "de", one hairline
+  lacks ("fr") warns and is left out (it stopped `import hairline`); a style that cannot be applied (a broken
+  `_brand.yml`) warns instead of failing the import; `figure_dir` and `design` of the wrong kind warn and are
+  left out; `interactive: "false"` no longer turns HTML on. The first figure after a new context already has its
+  style (it had the previous one), and a damaged `hairline-figures.json` is replaced with a warning instead of
+  failing every save.
+* `use(background=...)` refuses a value that is no colour (it stayed in the session and failed every later
+  figure); a brand's `base_size` must be a number above zero; `save()` refuses an empty name.
+* Infinite values are refused with the column and row in every chart that reads numbers (`donut`, `partition`,
+  `sankey`, `chord`, `arcs`, `correlation`, `kaplan_meier`, `spread`, `scatter`, `bars`, `timeseries`, PRISMA
+  counts, `spread` marks): they crashed or drew NaN shapes. Text in a number column of `bars`, `timeseries`,
+  `scatter` or `correlation` gets the "needs numbers" message the other charts give.
+* Clear messages instead of internal errors: `kaplan_meier` without time and event columns, with `stats` that are
+  not (label, value) pairs, `times` that are negative, or an `order` group without a fit; `prisma` with
+  `excluded_reasons` that is not a mapping; `risk_of_bias` with a missing study or domain; `donut` without a
+  label column; `correlation` with two columns of one name; `raincloud` with no values; `spread` with `marks` for
+  a group that is not drawn or that are not finite, a statistic named twice, or `digits` that is not a whole
+  number; `funnel` on a ratio scale with standard errors so large that its limits pass ratios of 1e±10 (a model
+  with separation); timeseries bands and events that are not dates on a date axis (or numbers on a number axis);
+  `bars(percent=True)` with negative values (they drew -100 % and 200 %).
+* An empty `order` is no order. `stats="median"` is one statistic.
+* Labels that leave a panel less than 2 x the base size (token `spacing.min_panel_width`) are refused, "figure
+  too narrow", as a figure too short already was: long bar labels drew the bars into nothing.
+* `dotplot` and `forest` keep their row pitch and the figure grows to hold every row; with many rows the rows
+  were squeezed until their labels overlapped.
+* Study: `order` without `group` is refused at `study()`; numeric `order` values name groups as text
+  (`order=[2, 1]`); values of a numeric variable that are no numbers ("<5") or infinite are study errors the
+  endpoints name; follow-up times that are infinite are refused; a DataFrame with a repeated index and `id=` no
+  longer fails; `distribution()` draws the groups that have values; `effects()` refuses a term named twice (it
+  dropped one); a variable named twice is refused. Numeric levels read the same in both languages (0.1 + 0.2 and
+  0.3 are one level, 1e-4 reads 0.0001, -0 reads 0). Titles and sentences use the group's label ("by treatment
+  arm") and keep acronyms ("Median PFS", not "Median pfs").
+
 ### Fixes for narrow figures and installed fonts
 
 * `spread()` keeps its plot on a narrow figure. The key numbers sit beside the plot while it keeps at least

@@ -57,7 +57,10 @@ def active_brand() -> Brand | None:
 
 
 def current_settings() -> Settings:
-    """The settings set by the last `use()`, or hairline's defaults."""
+    """The settings set by the last `use()`, or hairline's defaults; a host context that changed since is applied
+    first, so the next figure already has its style."""
+    from hairline.host import host_context
+    host_context()
     return _state["current"] or default_settings()
 
 
@@ -82,6 +85,13 @@ def validated_sizes(sizes: Mapping[str, float] | None) -> dict[str, float]:
             raise ValueError(f"hairline: unknown text role {role!r} in sizes; use one of {', '.join(sorted(roles))}")
         check_positive(size, f"sizes[{role!r}]")
     return dict(sizes or {})
+
+
+def check_background(background: object) -> None:
+    from matplotlib.colors import is_color_like
+    if background is not None and not (isinstance(background, str) and
+                                       (background == "transparent" or is_color_like(background))):
+        raise ValueError(f"hairline: background {background!r} is not a colour; use a hex value such as '#ffffff'")
 
 
 def check_positive(value: object, name: str) -> None:
@@ -130,6 +140,7 @@ def brand_layer(base: Settings, brand: Brand | None) -> Settings:
     if brand.font:
         changes["font"] = resolve_family(brand.font)
     if brand.base_size is not None:
+        check_positive(brand.base_size, "the brand's defaults.hairline.base_size")
         changes |= {"base_size": float(brand.base_size), "base_size_explicit": True}
     if brand.locale:
         changes["locale"] = brand.locale
@@ -198,9 +209,10 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     """
     from hairline.host import host_context
     from hairline.style import rcparams_for
-    _state["arguments"] = {"font": font, "base_size": base_size, "sizes": sizes, "palette": palette,
-                           "locale": locale, "background": background, "brand": brand, "colors": colors,
-                           "output": output, "accent": accent, "scheme": scheme}
+    # Kept for reapply() once they have been applied: a call that fails must not come back with every new context.
+    arguments = {"font": font, "base_size": base_size, "sizes": sizes, "palette": palette, "locale": locale,
+                 "background": background, "brand": brand, "colors": colors, "output": output, "accent": accent,
+                 "scheme": scheme}
     context = host_context()
     if context is not None:
         locale, base_size = locale or context.locale, base_size or context.base_size
@@ -220,10 +232,11 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
     if base_size is not None:
         check_positive(base_size, "base_size")
         changes |= {"base_size": float(base_size), "base_size_explicit": True}
+    check_background(background)
     changes |= {"locale": locale or layered.locale, "background": background or layered.background}
     changes |= scheme_fields(scheme, background, accent)
     settings = Settings(**{**layered.__dict__, **changes})
-    _state["current"], _state["brand"] = settings, resolved_brand
+    _state["current"], _state["brand"], _state["arguments"] = settings, resolved_brand, arguments
     entities.configure({**(resolved_brand.entity_colors if resolved_brand else {}), **explicit})
     matplotlib.rcParams.update(rcparams_for(settings))
     return settings

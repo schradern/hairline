@@ -4,9 +4,9 @@ time_findings <- function(data, column, limit) {
   raw <- data[[column]]
   values <- if (is.numeric(raw)) raw else suppressWarnings(as.numeric(as.character(raw)))
   values[study_is_missing(raw)] <- NA
-  bad <- is.na(values) | (!is.na(values) & values < 0)
+  bad <- is.na(values) | (!is.na(values) & (values < 0 | is.infinite(values)))
   if (!any(bad)) return(list())
-  list(study_finding("error", column, sprintf("%s follow-up times are missing, negative or not numbers",
+  list(study_finding("error", column, sprintf("%s follow-up times are missing, negative, infinite or not numbers",
                                               count_text(sum(bad))),
                      row_numbers(bad, limit), "correct or drop these rows; times count from the start of follow-up"))
 }
@@ -60,7 +60,7 @@ id_findings <- function(data, column, limit) {
                      row_numbers(repeated, limit), "keep one row per id, or leave out the id role if rows are visits"))
 }
 
-run_study_checks <- function(data, roles, variables, groups) {
+run_study_checks <- function(data, roles, variables, groups, kinds) {
   limit <- hl_tokens()$study$example_rows
   named <- c(unlist(roles) %||% character(),
              stats::setNames(variables, rep("variable", length(variables))))
@@ -81,7 +81,8 @@ run_study_checks <- function(data, roles, variables, groups) {
   if (!is.null(roles$id) && roles$id %in% names(data)) findings <- c(findings, id_findings(data, roles$id, limit))
   for (name in intersect(variables, names(data))) {
     findings <- c(findings, missing_value_findings(data, name, limit), spelling_findings(data, name, limit),
-                  numbers_as_text_findings(data, name))
+                  numbers_as_text_findings(data, name),
+                  if (identical(kinds[[name]], "numeric")) numeric_value_findings(data, name, limit))
   }
   unname(findings)
 }

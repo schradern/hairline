@@ -5,32 +5,79 @@ host_environment <- "HAIRLINE_HOST_CONTEXT"
 host_manifest <- "hairline-figures.json"
 host_formats <- list(screen = "png", pdf = c("pdf", "png"), docx = c("pdf", "png"), html = c("svg", "png"))
 
+# Warns once per file and problem; returns NULL, so a caller can return it as "no context" or "no value".
 host_warn_once <- function(path, problem) {
   key <- paste(path, problem)
   if (key %in% hairline_state$host_warned) return(invisible())
   hairline_state$host_warned <- c(hairline_state$host_warned, key)
   warning(sprintf("hairline: host context %s: %s; continuing without it", path, problem), call. = FALSE)
+  invisible(NULL)
 }
 
-parse_host_context <- function(path) {
+# A context value as a warning shows it: text quoted, anything else formatted.
+host_shown <- function(value) {
+  if (is.character(value)) value <- sprintf("'%s'", value) else value <- format(value)
+  paste(value, collapse = ", ")
+}
+
+# A size or resolution from the context: a number above zero, else warned about and left out.
+host_positive <- function(path, value, key) {
+  if (is.null(value)) return(NULL)
+  if (!is.numeric(value) || length(value) != 1 || !is.finite(value) || value <= 0) {
+    return(host_warn_once(path, sprintf("%s %s must be a number above zero", key, host_shown(value))))
+  }
+  value
+}
+
+# The context's locale as hairline names it ("de-DE" and "de_AT" are "de"); one hairline lacks is warned about and
+# left out, so plots keep the session's locale.
+host_locale <- function(path, value) {
+  if (is.null(value)) return(NULL)
+  locales <- names(hl_tokens()$locales)
+  text <- is.character(value) && length(value) == 1
+  if (text && value %in% locales) return(value)
+  language <- if (text) tolower(strsplit(chartr("_", "-", value), "-")[[1]][1]) else NA
+  if (!is.na(language) && language %in% locales) return(language)
+  host_warn_once(path, sprintf("locale %s is not one of %s", host_shown(value), paste(sort(locales), collapse = ", ")))
+}
+
+# The file's content when it is a version-1 context with a known output, else NULL (warned once).
+read_host_context <- function(path) {
   if (!file.exists(path)) return(host_warn_once(path, "the file does not exist"))
   content <- tryCatch(jsonlite::read_json(path, simplifyVector = TRUE), error = function(error) {
     host_warn_once(path, paste0("not valid JSON (", conditionMessage(error), ")"))
-    NULL
   })
   if (is.null(content)) return(NULL)
-  if (!identical(as.integer(content$version), 1L)) {
-    return(host_warn_once(path, sprintf("version %s is not 1", format(content$version %||% "NULL"))))
+  version <- if (is.list(content)) content$version
+  if (!identical(as.integer(version), 1L)) {
+    return(host_warn_once(path, sprintf("version %s is not 1", format(version %||% "NULL"))))
   }
   output <- content$output %||% "screen"
   if (!output %in% names(host_formats)) {
     return(host_warn_once(path, sprintf("output '%s' must be one of %s", output,
                                         paste(names(host_formats), collapse = ", "))))
   }
-  list(host = content$host %||% "host", output = output, brand = content$brand, width_mm = content$width_mm,
-       interactive = isTRUE(content$interactive) && output == "html", locale = content$locale,
-       base_size = content$base_size, figure_dir = content$figure_dir, design = content$design %||% list(),
-       dpi = content$dpi)
+  content
+}
+
+# A context from the file; values of the wrong kind are warned about and left out, the rest applies.
+parse_host_context <- function(path) {
+  content <- read_host_context(path)
+  if (is.null(content)) return(NULL)
+  output <- content$output %||% "screen"
+  folder <- content$figure_dir
+  if (!is.null(folder) && !(is.character(folder) && length(folder) == 1)) {
+    folder <- host_warn_once(path, sprintf("figure_dir %s must be a folder path", host_shown(folder)))
+  }
+  design <- content$design
+  if (!is.null(design) && !is.list(design)) {
+    design <- host_warn_once(path, sprintf("design %s must be a mapping", host_shown(design)))
+  }
+  list(host = content$host %||% "host", output = output, brand = content$brand,
+       width_mm = host_positive(path, content$width_mm, "width_mm"),
+       interactive = isTRUE(content$interactive) && output == "html", locale = host_locale(path, content$locale),
+       base_size = host_positive(path, content$base_size, "base_size"), figure_dir = folder,
+       design = design %||% list(), dpi = host_positive(path, content$dpi, "dpi"))
 }
 
 # The current context, re-read when the variable points to another file. A new context re-applies the session's
@@ -42,7 +89,11 @@ host_context <- function() {
   if (!identical(path, hairline_state$host_path)) {
     hairline_state$host_path <- path
     hairline_state$host_context <- parse_host_context(path)
-    if (!is.null(hairline_state$host_context)) hl_reapply()
+    if (!is.null(hairline_state$host_context)) {
+      tryCatch(hl_reapply(), error = function(error) {
+        host_warn_once(path, sprintf("its style could not be applied (%s)", conditionMessage(error)))
+      })
+    }
   }
   hairline_state$host_context
 }
@@ -53,6 +104,16 @@ host_plot_key <- function(plot) {
     list(class(layer$geom)[1], vapply(layer$mapping, rlang::quo_text, character(1)))
   })
   rlang::hash(list(plot@data, plot@labels, vapply(plot@mapping, rlang::quo_text, character(1)), layers))
+}
+
+# The figures already listed; a manifest that is not a list of figures is replaced, with a warning, so one damaged
+# file does not stop every later figure.
+read_host_manifest <- function(path) {
+  if (!file.exists(path)) return(list())
+  entries <- tryCatch(jsonlite::read_json(path, simplifyVector = FALSE), error = function(error) NULL)
+  if (is.list(entries) && is.null(names(entries))) return(entries)
+  warning(sprintf("hairline: host manifest %s is not a list of figures; starting a new one", path), call. = FALSE)
+  list()
 }
 
 # Write a displayed plot to the host's folder in the formats its output needs and list it in the manifest; the
@@ -71,7 +132,7 @@ host_hand_off <- function(plot) {
     if (device > 1) grDevices::dev.set(device)
   })
   manifest_path <- file.path(context$figure_dir, host_manifest)
-  entries <- if (file.exists(manifest_path)) jsonlite::read_json(manifest_path, simplifyVector = FALSE) else list()
+  entries <- read_host_manifest(manifest_path)
   figure_id <- sprintf("figure-%d", length(entries) + 1)
   dpi <- if (context$output == "screen" && !is.null(context$dpi)) context$dpi else hl_tokens()$export$dpi
   dir.create(context$figure_dir, recursive = TRUE, showWarnings = FALSE)

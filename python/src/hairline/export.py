@@ -14,7 +14,7 @@ from pathlib import Path
 from matplotlib.figure import Figure
 from PIL import Image, TiffImagePlugin, TiffTags
 
-from hairline.figure import HairlineFigure
+from hairline.figure import HairlineFigure, check_raster_size
 from hairline.tokens import load_tokens
 
 METADATA = {
@@ -133,8 +133,12 @@ def save(figure: HairlineFigure | Figure, name: str | os.PathLike, formats: Sequ
     """Write `name.<format>` for each format; returns the paths. Parent folders are created. `background` is None
     for the figure's surface, "transparent", or any colour. Nothing is replaced until every format is written."""
     requested = validated_formats(formats)
+    if not isinstance(name, str | os.PathLike) or not str(name).strip() or Path(name).name in ("", ".", ".."):
+        raise ValueError(f"hairline: save: name must be a file path; got {name!r}")
     fig = figure.figure if isinstance(figure, HairlineFigure) else figure
     dpi, options = save_options(dpi, background)
+    for format_name in requested:
+        check_raster_size(fig, dpi, format_name)
     base = strip_known_extension(Path(name))
     base.parent.mkdir(parents=True, exist_ok=True)
     paths = [base.with_name(f"{base.name}.{format_name}") for format_name in requested]

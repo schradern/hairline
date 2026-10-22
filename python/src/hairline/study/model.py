@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 from hairline.charts.common import humanise
-from hairline.study.checks import Finding, missing_values, numbers_as_text, spellings
+from hairline.study.checks import Finding, missing_values, numbers_as_text, numeric_findings, spellings
 from hairline.study.columns import infer_type, is_missing, level_text, levels
 from hairline.study.result import Result
 from hairline.study.rules import event_findings, group_findings, id_findings, time_findings
@@ -52,6 +52,12 @@ class Study:
 
     def label(self, column: str) -> str:
         return self.labels.get(column, humanise(column))
+
+    def in_sentence(self, column: str) -> str:
+        """The label inside a sentence: "Arm type" reads "arm type"; "PFS" and "HbA1c" keep their capitals."""
+        label = self.label(column)
+        first = label.split(" ")[0]
+        return label[0].lower() + label[1:] if label and first[1:] == first[1:].lower() else label
 
     def measure(self, column: str) -> str | None:
         """The column's unit, e.g. "years" or "mmol/l"; none when the label already says it ("Months")."""
@@ -155,7 +161,8 @@ def unit_findings(roles: dict[str, str], variables: list[str], types: dict[str, 
                     "give each a unit, for example years or mmol/l, so tables and panels name it")]
 
 
-def run_checks(data: pd.DataFrame, roles: dict[str, str], variables: list[str], groups: list[str]) -> list[Finding]:
+def run_checks(data: pd.DataFrame, roles: dict[str, str], variables: list[str], groups: list[str],
+               kinds: Mapping[str, str]) -> list[Finding]:
     limit, columns = load_tokens()["study"]["example_rows"], set(data.columns)
     named = [*roles.items(), *(("variable", name) for name in variables)]
     choices = f"use one of: {', '.join(map(str, data.columns))}"
@@ -171,6 +178,7 @@ def run_checks(data: pd.DataFrame, roles: dict[str, str], variables: list[str], 
         findings += id_findings(data, roles["id"], limit)
     for name in (name for name in variables if name in columns):
         findings += missing_values(data, name, limit) + spellings(data, name, limit) + numbers_as_text(data, name)
+        findings += numeric_findings(data, name, limit) if kinds.get(name) == "numeric" else []
     return findings
 
 
@@ -189,9 +197,16 @@ def study(data: pd.DataFrame, group: str | None = None, time: str | None = None,
                                                            and infer_type(data[column]) != "date"]
     kinds = {name: (types or {}).get(name) or infer_type(data[name]) for name in names if name in data.columns}
     check_kinds(kinds)
+    repeated = next((name for name in names if names.count(name) > 1), None)
+    if repeated is not None:
+        raise ValueError(f"hairline: study: variables names '{repeated}' twice; name each variable once")
+    if order is not None and group is None:
+        raise ValueError("hairline: study: order lists groups, but no group column is given; pass group= or leave "
+                         "out order")
+    order = [level_text(name) for name in order] if order is not None else None
     check_order(order)
     groups = list(order) if order else (levels(data[group], ordered=False) if group in data.columns else [])
-    checks = run_checks(data, roles, names, groups) + unit_findings(roles, names, kinds, units or {})
+    checks = run_checks(data, roles, names, groups, kinds) + unit_findings(roles, names, kinds, units or {})
     result = Study(data, roles, names, dict(labels or {}), kinds, groups,
                    unit or load_tokens()["study"]["unit"], checks, dict(units or {}))
     if checks:

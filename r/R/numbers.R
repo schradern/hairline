@@ -2,7 +2,7 @@
 
 locale_symbols <- function(locale) {
   locales <- hl_tokens()$locales
-  locale <- locale %||% (hairline_state$settings$locale %||% hl_tokens()$default_locale)
+  locale <- locale %||% (hl_settings()$locale %||% hl_tokens()$default_locale)
   if (!locale %in% names(locales)) {
     stop(sprintf("hairline: unknown locale '%s'; available locales: %s", locale,
                  paste(sort(names(locales)), collapse = ", ")), call. = FALSE)

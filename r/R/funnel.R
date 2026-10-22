@@ -1,11 +1,22 @@
 # Funnel plot, mirroring the Python funnel(): effect against standard error with the error
 # running down from 0, pseudo 95 % limits as a band, pooled line dashed, null line solid, Egger's test.
 
+# A ratio axis covers the funnel's limits; beyond ratios of 10^+-10 the standard errors cannot be on the log scale
+# of a plausible study (a model with separation gives such errors).
+funnel_check_reach <- function(low, high, largest) {
+  reach <- ratio_places * log(10)
+  if (low >= -reach && high <= reach) return(invisible())
+  stop(sprintf(paste("hairline: funnel: a standard error of %s puts the funnel's limits beyond ratios of 1e-%d and",
+                     "1e%d; standard errors of ratios are on the log scale (check that study, e.g. a model with",
+                     "separation)"), format(largest), ratio_places, ratio_places), call. = FALSE)
+}
+
 funnel_axes <- function(effects, errors, pooled, ratio) {
   reach <- hl_tokens()$funnel$z * max(errors)
   low <- min(effects, pooled - reach, 0)
   high <- max(effects, pooled + reach, 0)
   if (ratio) {
+    funnel_check_reach(low, high, max(errors))
     breaks <- log_breaks(exp(low), exp(high), hl_tokens()$forest$max_ticks)
     labels <- vapply(breaks, function(value) hl_format_number(value, forest_decimals(value)), character(1))
     x_axis <- list(breaks = breaks, labels = labels, low = breaks[1], high = breaks[length(breaks)])
@@ -42,7 +53,7 @@ funnel_spec <- function(data, estimate, se, ratio = TRUE, pooled = NULL, x_title
   check_columns(data, c(estimate, se))
   check_numeric(data, c(estimate, se), "funnel")
   funnel_check_inputs(data[[estimate]], data[[se]], estimate, se, ratio)
-  if (!is.null(pooled) && ratio && !(pooled > 0)) {
+  if (!is.null(pooled) && !(is.numeric(pooled) && length(pooled) == 1 && is.finite(pooled) && (!ratio || pooled > 0))) {
     stop(sprintf("hairline: funnel: pooled %s is not a ratio above zero; pass ratio = FALSE for differences",
                  format(pooled)), call. = FALSE)
   }

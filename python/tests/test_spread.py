@@ -8,9 +8,9 @@ from matplotlib import font_manager
 
 import hairline as hl
 from hairline import host
+from hairline.charts.donut_geometry import line_height
 from hairline.charts.spread import spread_spec
 from hairline.charts.spread_geometry import spread_drawing, spread_layout
-from hairline.charts.donut_geometry import line_height
 from hairline.errors import HairlineLayoutError
 from hairline.fonts import installed_families
 from hairline.layout.geometry import Box

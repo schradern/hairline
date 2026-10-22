@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 import pandas as pd
 
 from hairline.numbers import format_number, format_percent
@@ -71,3 +72,20 @@ def numbers_as_text(data: pd.DataFrame, column: str) -> list[Finding]:
         return []
     return [Finding("warning", column, f"stored as text, but {format_percent(numeric, 0)} of the values are numbers",
                     (), "convert the column to numbers, or declare it categorical")]
+
+
+def numeric_findings(data: pd.DataFrame, column: str, limit: int) -> list[Finding]:
+    """A numeric variable holds numbers: text that is no number ("<5") or an infinite value cannot be summarised."""
+    series = data[column].reset_index(drop=True)
+    present = series[~is_missing(series)]
+    values = pd.to_numeric(present, errors="coerce")
+    findings = []
+    for bad, problem, fix in ((values.isna(), "are not numbers", "correct them, or declare the column categorical"),
+                              (np.isinf(values), "are infinite", "correct them, or leave these rows out")):
+        if bad.any():
+            mask = pd.Series(False, index=series.index)
+            mask[present.index[bad.to_numpy()]] = True
+            shown = ", ".join(f"'{value}'" for value in dict.fromkeys(present[bad.to_numpy()].tolist()))
+            findings.append(Finding("error", column, f"{count_text(int(bad.sum()))} values {problem} ({shown})",
+                                    tuple(row_numbers(mask, limit)), fix))
+    return findings

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import numbers
 import warnings
 from collections.abc import Mapping
@@ -26,10 +27,15 @@ def number(value: int) -> str:
 
 def check_counts(counts: Mapping) -> None:
     """Every count is a whole number of zero or more: records and reports cannot be negative or fractional."""
+    reasons = counts.get("excluded_reasons", {})
+    if not isinstance(reasons, Mapping):
+        raise ValueError(f"hairline: prisma: excluded_reasons is {reasons!r}; give a mapping of reason to count, "
+                         "such as {'Wrong population': 12}")
     named = [(key, value) for key, value in counts.items() if key != "excluded_reasons"]
-    named += [(f"excluded_reasons[{reason!r}]", value) for reason, value in counts.get("excluded_reasons", {}).items()]
+    named += [(f"excluded_reasons[{reason!r}]", value) for reason, value in reasons.items()]
     for key, value in named:
-        if isinstance(value, bool) or not isinstance(value, numbers.Real) or not value >= 0 or value != int(value):
+        if isinstance(value, bool) or not isinstance(value, numbers.Real) or not math.isfinite(value) \
+                or not value >= 0 or value != int(value):
             raise ValueError(f"hairline: prisma: {key} is {value!r}; counts must be whole numbers of 0 or more")
 
 

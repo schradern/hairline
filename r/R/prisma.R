@@ -74,7 +74,7 @@ prisma_check_counts <- function(counts) {
              stats::setNames(as.list(reasons), sprintf("excluded_reasons['%s']", names(reasons))))
   for (key in names(named)) {
     value <- named[[key]]
-    if (!is.numeric(value) || length(value) != 1 || is.na(value) || value < 0 || value != round(value)) {
+    if (!is.numeric(value) || length(value) != 1 || !is.finite(value) || value < 0 || value != round(value)) {
       stop(sprintf("hairline: prisma: %s is %s; counts must be whole numbers of 0 or more", key,
                    paste(format(value), collapse = ", ")), call. = FALSE)
     }

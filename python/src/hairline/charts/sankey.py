@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns, check_labels, humanise, joined, with_counts
+from hairline.charts.common import check_columns, check_labels, check_numeric, humanise, joined, with_counts
 from hairline.charts.sankey_geometry import sankey_drawing
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import auto_digits, format_number
@@ -58,6 +58,7 @@ def sankey_spec(data: pd.DataFrame, columns: Sequence[str], value: str, *, color
     """Nodes per column and links with colours and formatted values, ready for the geometry."""
     columns = list(columns)
     check_columns(data, columns + [value])
+    check_numeric(data, [value], "sankey")
     group = None if color_by == "none" else (color_by or columns[-1])
     if group is not None:
         check_columns(data, [group])

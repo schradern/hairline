@@ -80,7 +80,7 @@ def survival(study: Study, fit=None, size: str = "double") -> Result:
     by = study.group_key if fit is None and study.group else None
     figure = kaplan_meier(fit if fit is not None else data, roles.get("time"), roles.get("event"),
                           by=by, order=names if fit is None else None,
-                          title=f"Survival by {str(study.group).replace('_', ' ')}" if grouped and study.group
+                          title=f"Survival by {study.in_sentence(study.group)}" if grouped and study.group
                           else "Survival", x_title=time_label, size=size, test=False,
                           stats=[("Log-rank", p)] if p else ())
     # Time and event cannot be missing: the study's checks block survival() then.
@@ -98,7 +98,7 @@ def logrank_test(data: pd.DataFrame, roles: dict, key: str) -> dict:
 
 def survival_text(study: Study, rows: list, grouped: bool, test: str | None) -> str:
     time = study.roles.get("time")
-    measured = study.label(time).lower() if time else "survival time"
+    measured = study.in_sentence(time) if time else "survival time"
     unit = f" ({study.measure(time)})" if time and study.measure(time) else ""
     medians = listed([f"{row[0]} {row[3]}" for row in rows]) if grouped else rows[0][3]
     return f"Median {measured}{unit}: {medians}" + (f" (log-rank {test})." if test else ".")
@@ -138,6 +138,10 @@ def effects(study: Study, model_or_table, measure: str | None = None, size: str 
     rows = effect_rows(model_or_table, (study_column, estimate, low, high), exponentiate).reset_index(drop=True)
     prefix = f"{measure} " if measure else ""
     terms = [study.label(term) if term in study.data.columns else str(term) for term in rows["term"]]
+    repeated = next((term for term in dict.fromkeys(terms) if terms.count(term) > 1), None)
+    if repeated is not None:
+        raise ValueError(f"hairline: effects: the term '{repeated}' is named in more than one row; give each row "
+                         "its own label")
     estimates = [{"estimate": float(row.estimate), "low": float(row.low), "high": float(row.high)}
                  for row in rows.itertuples()]
     texts = [prefix + format_interval(item["estimate"], item["low"], item["high"], digits) for item in estimates]

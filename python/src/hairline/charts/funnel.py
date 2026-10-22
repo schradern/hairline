@@ -9,7 +9,7 @@ import pandas as pd
 
 from hairline.charts.common import check_columns, check_numeric, humanise
 from hairline.charts.forest import decimals
-from hairline.charts.forest_geometry import log_breaks
+from hairline.charts.forest_geometry import RATIO_PLACES, log_breaks
 from hairline.charts.funnel_geometry import funnel_drawing
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
@@ -20,11 +20,22 @@ from hairline.ticks import nice_breaks
 from hairline.tokens import load_tokens
 
 
+def check_ratio_reach(low: float, high: float, largest: float) -> None:
+    """A ratio axis covers the funnel's limits; beyond ratios of 10^±10 the standard errors cannot be on the log
+    scale of a plausible study (a model with separation gives such errors)."""
+    reach = RATIO_PLACES * math.log(10)
+    if low < -reach or high > reach:
+        raise ValueError(f"hairline: funnel: a standard error of {largest:g} puts the funnel's limits beyond ratios "
+                         f"of 1e-{RATIO_PLACES} and 1e{RATIO_PLACES}; standard errors of ratios are on the log scale "
+                         "(check that study, e.g. a model with separation)")
+
+
 def funnel_axes(effects: np.ndarray, errors: np.ndarray, pooled: float, ratio: bool, locale: str) -> tuple[dict, dict]:
     reach = load_tokens()["funnel"]["z"] * float(errors.max())
     low = min(float(effects.min()), pooled - reach, 0.0)
     high = max(float(effects.max()), pooled + reach, 0.0)
     if ratio:
+        check_ratio_reach(low, high, float(errors.max()))
         breaks = log_breaks(math.exp(low), math.exp(high), load_tokens()["forest"]["max_ticks"])
         labels = [format_number(value, decimals([value]), locale) for value in breaks]
         x_axis = {"breaks": breaks, "labels": labels, "low": breaks[0], "high": breaks[-1]}

@@ -237,7 +237,7 @@ def load_brand(path: str | os.PathLike | list, output: str | None = None) -> Bra
     source = BrandFile(brand_paths(path), output)
     palette = palette_section(source)
     names, given = categorical_section(source, palette)
-    mode, name = adapt_mode(source), source.get("meta.name")
+    mode, name = adapt_mode(source), source.get("meta.name") or source.label
     if mode == "exact" and given:
         warn_exact(name, names, given)
     register_brand_fonts(source)

@@ -147,7 +147,7 @@ def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:
         return None
     shown = parts[:-1] if study.group else parts
     names = [label for label, _ in shown]
-    title = f"Characteristics by {str(study.group).replace('_', ' ')}" if study.group else "Characteristics"
+    title = f"Characteristics by {study.in_sentence(study.group)}" if study.group else "Characteristics"
     rules = load_tokens()["study"]
     columns = min(len(numeric), rules["overview_columns"])
     rows = -(-len(numeric) // columns)

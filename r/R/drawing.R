@@ -68,12 +68,18 @@ content_bottom <- function(shapes, style, measure = NULL) {
   }, numeric(1)))
 }
 
+# Pixels the measuring device of fitted_size_mm() may hold: 72 dpi up to about A0, a lower resolution beyond.
+fit_device_megapixels <- 16
+
 # Charts drawn from shapes that set plot@meta$hairline_fit_height get a figure height that ends where their content
-# ends (shorter, or taller when it overflows), as the Python package's fit_height() does.
+# ends (shorter, or taller when it overflows), as the Python package's fit_height() does. The device only hosts the
+# layout pass (hairline measures text itself), so a very large figure gets a lower resolution, not a buffer that
+# grows with the square of its width.
 fitted_size_mm <- function(plot, size_mm) {
   if (!isTRUE(plot@meta$hairline_fit_height)) return(size_mm)
   path <- tempfile(fileext = ".png")
-  ragg::agg_png(path, width = size_mm[1], height = size_mm[2], units = "mm", res = 72)
+  res <- min(72, sqrt(fit_device_megapixels * 1e6 / prod(size_mm / 25.4)))
+  ragg::agg_png(path, width = size_mm[1], height = size_mm[2], units = "mm", res = res)
   on.exit({
     grDevices::dev.off()
     unlink(path)

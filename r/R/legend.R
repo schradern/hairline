@@ -32,6 +32,8 @@ legend_items <- function(built) {
   seen <- character()
   for (scale in built@plot@scales$scales) {
     aesthetic <- intersect(scale$aesthetics, c("colour", "fill"))[1]
+    # A scale drawn without a guide (one series, nothing to tell apart) has no legend entry.
+    if (identical(scale$guide, "none") || inherits(scale$guide, "GuideNone")) next
     if (is.na(aesthetic) || !scale$is_discrete()) {
       warn_unsupported_legend(scale)
       next

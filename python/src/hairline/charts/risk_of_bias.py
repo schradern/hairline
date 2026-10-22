@@ -6,7 +6,7 @@ from collections.abc import Sequence
 
 import pandas as pd
 
-from hairline.charts.common import check_columns
+from hairline.charts.common import check_columns, check_labels
 from hairline.charts.risk_of_bias_geometry import JUDGEMENTS, risk_of_bias_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -28,11 +28,13 @@ def long_table(data: pd.DataFrame, study: str, domain: str | None, judgement: st
                domains: Sequence[str] | None) -> pd.DataFrame:
     if domains is not None:
         check_columns(data, [study, *domains])
+        check_labels(data, [study], "risk of bias")
         return data.melt(id_vars=[study], value_vars=list(domains), var_name="_domain", value_name="_judgement")
     if domain is None or judgement is None:
         raise ValueError("hairline: risk of bias: name the domain and judgement columns of a long table, or the "
                          "domain columns of a wide one with domains=[...]")
     check_columns(data, [study, domain, judgement])
+    check_labels(data, [study, domain], "risk of bias")
     return data.rename(columns={domain: "_domain", judgement: "_judgement"})
 
 

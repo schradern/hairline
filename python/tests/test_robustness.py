@@ -1,6 +1,8 @@
 """Inputs that once changed values, misrepresented data or lost files without an error."""
 
 import base64
+import io
+import json
 import re
 import warnings
 from importlib import resources
@@ -698,3 +700,223 @@ def test_over_time_reads_a_clock_change():
                          "v": [1.0, 2.0, 3.0]})
     result = quiet_study(data, variables=["v"], types={"v": "numeric"}).over_time("t", "v", window=1)
     assert result.numbers["rows"]["analysed"] == 3
+
+
+def host_width(tmp_path, monkeypatch, **values) -> None:
+    """Point hairline at a host context with these values, re-read on the next figure."""
+    import json
+
+    from hairline import host
+    path = tmp_path / f"context-{len(list(tmp_path.glob('context-*')))}.json"
+    path.write_text(json.dumps({"version": 1, "host": "x", "output": "pdf", **values}))
+    monkeypatch.setenv(host.ENVIRONMENT, str(path))
+    host._state.update(path=None, context=None)
+
+
+def test_fitting_the_height_never_rasterises_the_figure(tmp_path, monkeypatch):
+    """A 4 m figure once took 2.8 GB to fit its height (and 100 m filled the machine): the fit drew the whole
+    provisional figure as pixels. It only needs the frame laid out."""
+    from matplotlib.backends import backend_agg
+    host_width(tmp_path, monkeypatch, width_mm=100000)
+    hl.use(brand=False)
+
+    def refuse(*_args, **_kwargs):
+        raise AssertionError("the height fit allocated a raster")
+    monkeypatch.setattr(backend_agg, "RendererAgg", refuse)
+    data = pd.DataFrame({"g": ["a"] * 8 + ["b"] * 8, "v": np.arange(16.0)})
+    figure = hl.spread(data, "g", "v")
+    assert figure.figure.get_size_inches()[0] * 25.4 == pytest.approx(100000)
+
+
+def test_a_raster_beyond_the_pixel_budget_is_refused_before_it_is_allocated(tmp_path):
+    hl.use(brand=False)
+    figure = hl.figure("Too large", width_mm=1200, height_mm=900)
+    with pytest.raises(ValueError, match="megapixels, more than the 600 a raster image may have"):
+        figure.figure.savefig(tmp_path / "x.png", dpi=600)
+    with pytest.raises(ValueError, match="1200 x 900 mm figure at 600 dpi"):
+        hl.save(figure, tmp_path / "x", formats=["pdf", "tiff"])
+    assert not list(tmp_path.iterdir())
+    assert [path.name for path in hl.save(figure, tmp_path / "x", formats=["pdf", "svg"])] == ["x.pdf", "x.svg"]
+
+
+def test_host_sizes_that_are_no_numbers_above_zero_are_left_out(tmp_path, monkeypatch):
+    for value in ("85", -50, 0, True, [85], float("inf")):
+        host_width(tmp_path, monkeypatch, width_mm=value, dpi="high")
+        with pytest.warns(UserWarning, match="must be a number above zero; continuing without it"):
+            hl.use(brand=False)
+            figure = hl.figure("Default width")
+        assert figure.figure.get_size_inches()[0] * 25.4 == pytest.approx(120)
+
+
+def test_an_explicit_size_must_be_a_number_above_zero():
+    hl.use(brand=False)
+    for width in (0, -10, float("nan")):
+        with pytest.raises(ValueError, match="width_mm must be a number above zero"):
+            hl.figure("No size", width_mm=width)
+
+
+def test_a_rejected_use_does_not_come_back_with_the_next_host_context(tmp_path, monkeypatch):
+    hl.use(brand=False)
+    with pytest.raises(ValueError, match="base_size must be a number above zero"):
+        hl.use(brand=False, base_size=-1)
+    host_width(tmp_path, monkeypatch, width_mm=85)
+    assert hl.figure("After a failed use()").figure.get_size_inches()[0] * 25.4 == pytest.approx(85)
+
+
+INF = float("inf")
+FRAME = pd.DataFrame({"g": ["a", "b", "c"], "v": [1.0, 2.0, 3.0]})
+
+
+@pytest.mark.parametrize(("draw", "message"), [
+    (lambda: hl.donut(FRAME.assign(v=[1, INF, 3]), "g", "v"), "'v' is infinite in row 2"),
+    (lambda: hl.sankey(pd.DataFrame({"a": ["x"], "b": ["y"], "n": [INF]}), ["a", "b"], "n"), "'n' is infinite"),
+    (lambda: hl.chord(pd.DataFrame({"a": ["x"], "b": ["y"], "n": [INF]}), "a", "b", "n"), "'n' is infinite"),
+    (lambda: hl.scatter(pd.DataFrame({"x": [1.0, INF, 3], "y": [1.0, 2, 3]}), "x", "y"), "'x' is infinite"),
+    (lambda: hl.spread(FRAME.assign(v=[1, 2, -INF]), "g", "v"), "'v' is infinite in row 3"),
+    (lambda: hl.kaplan_meier(pd.DataFrame({"t": [1.0, INF], "e": [1, 0]}), "t", "e"), "'t' is infinite"),
+    (lambda: hl.prisma({"identified": INF, "screened": 10, "included": 2}), "identified is inf"),
+    (lambda: hl.spread(FRAME, "g", "v", marks={"a": INF}), "the mark for 'a' is inf"),
+    (lambda: hl.spread(FRAME, "g", "v", marks={"typo": 5}), "marks names 'typo', which is not a group drawn"),
+    (lambda: hl.spread(FRAME, "g", "v", stats=["median", "median"]), "stats names 'median' twice"),
+    (lambda: hl.spread(FRAME, "g", "v", digits=1.5), "digits must be a whole number"),
+    (lambda: hl.bars(FRAME.assign(v=["1", "2", "3"]), "g", "v"), "'v' holds .* values; it needs numbers"),
+    (lambda: hl.bars(pd.DataFrame({"g": ["a", "a"], "s": ["x", "y"], "v": [-1.0, 2.0]}), "g", "v", by="s",
+                     stacked=True, percent=True), "percent needs values of zero or more"),
+    (lambda: hl.funnel(pd.DataFrame({"e": [1.0, 1.2, 1.3], "s": [20.0, 0.2, 0.3]}), "e", "s"),
+     "standard error of 20 puts the funnel's limits beyond ratios"),
+    (lambda: hl.raincloud(FRAME.assign(v=[np.nan] * 3), "g", "v"), "no values to draw"),
+    (lambda: hl.kaplan_meier(pd.DataFrame({"t": [1.0, 2.0], "e": [1, 0]})), "name the time and event columns"),
+    (lambda: hl.kaplan_meier(pd.DataFrame({"t": [1.0, 2.0], "e": [1, 0]}), "t", "e", stats=["x"]),
+     "stats are \\(label, value\\) pairs"),
+    (lambda: hl.prisma({"identified": 10, "screened": 8, "included": 2, "excluded_reasons": [1, 2]}),
+     "excluded_reasons is \\[1, 2\\]"),
+    (lambda: hl.timeseries(pd.DataFrame({"t": pd.date_range("2024-01-01", periods=5), "v": range(5)}), "t", "v",
+                           events=[{"x": 5}]), "event x 5 is not a date"),
+    (lambda: hl.swatches([]), "no colour sets named"),
+])
+def test_input_that_cannot_be_drawn_gets_a_hairline_message(draw, message):
+    hl.use(brand=False)
+    with pytest.raises(ValueError, match=message):
+        figure = draw()
+        figure.figure.savefig(io.BytesIO(), format="png", dpi=30)
+
+
+def test_an_empty_order_is_no_order():
+    hl.use(brand=False)
+    assert [text.get_text() for text in hl.bars(FRAME, "g", "v", order=[]).ax.get_xticklabels()]
+
+
+def test_labels_that_leave_no_room_for_the_panel_are_refused():
+    hl.use(brand=False)
+    data = pd.DataFrame({"g": ["Intensive care unit of the university hospital, north wing, level three", "B"],
+                         "v": [12.0, 7.0]})
+    with pytest.raises(hl.HairlineLayoutError, match="figure too narrow: .* the y labels take"):
+        figure = hl.bars(data, "g", "v", size="single")
+        figure.figure.savefig(io.BytesIO(), format="png", dpi=30)
+
+
+def test_many_dotplot_rows_grow_the_figure_instead_of_overlapping():
+    hl.use(brand=False)
+    rows = pd.DataFrame({"name": [f"Row {index}" for index in range(30)], "e": np.linspace(1, 2, 30)})
+    rows = rows.assign(low=rows.e - 0.2, high=rows.e + 0.2)
+    figure = hl.dotplot(rows, "name", "e", "low", "high")
+    names = sorted(shape["y"] for shape in figure.shapes if shape["kind"] == "text" and shape["text"].startswith("Row"))
+    assert min(b - a for a, b in zip(names, names[1:], strict=False)) > figure.settings.base_size
+
+
+def test_host_locales_follow_language_tags_and_unknown_ones_are_left_out(tmp_path, monkeypatch):
+    host_width(tmp_path, monkeypatch, locale="de-DE")
+    hl.use(brand=False)
+    assert hl.figure("Deutsch").settings.locale == "de"
+    host_width(tmp_path, monkeypatch, locale="fr")
+    with pytest.warns(UserWarning, match="locale 'fr' is not one of de, en"):
+        hl.figure("Français")
+
+
+def test_the_first_figure_after_a_new_host_context_has_its_style(tmp_path, monkeypatch):
+    hl.use(brand=False)
+    hl.figure("Before")
+    host_width(tmp_path, monkeypatch, locale="de", base_size=11)
+    figure = hl.figure("After")
+    assert (figure.settings.locale, figure.settings.base_size) == ("de", 11)
+
+
+def test_a_damaged_manifest_is_replaced_instead_of_stopping_every_figure(tmp_path, monkeypatch):
+    folder = tmp_path / "figures"
+    folder.mkdir()
+    (folder / "hairline-figures.json").write_text("{broken")
+    host_width(tmp_path, monkeypatch, figure_dir=str(folder), interactive="false", output="html")
+    hl.use(brand=False)
+    figure = hl.figure("Handed off")
+    figure.ax.plot([0, 1], [0, 1])
+    with pytest.warns(UserWarning, match="is not a list of figures; starting a new one"):
+        figure.figure.savefig(io.BytesIO(), format="png")
+    entries = json.loads((folder / "hairline-figures.json").read_text())
+    assert len(entries) == 1 and "html" not in entries[0]["files"]
+
+
+def test_a_background_that_is_no_colour_is_refused_and_leaves_the_session_as_it_was():
+    hl.use(brand=False)
+    with pytest.raises(ValueError, match="background 'notacolor' is not a colour"):
+        hl.use(brand=False, background="notacolor")
+    hl.figure("Still drawn").figure.savefig(io.BytesIO(), format="png", dpi=30)
+
+
+def test_an_empty_save_name_is_refused(tmp_path):
+    hl.use(brand=False)
+    with pytest.raises(ValueError, match="name must be a file path"):
+        hl.save(hl.figure("No name"), "")
+
+
+def study_frame() -> pd.DataFrame:
+    return pd.DataFrame({"g": ["A"] * 4 + ["B"] * 4, "x": [1.0, 2, 3, 4, 5, 6, 7, 8], "id": list("abcdefgh"),
+                         "t": [1.0, 2, 3, 4, 5, 6, 7, 8], "e": [1, 0, 1, 0, 1, 0, 1, 0]})
+
+
+def test_study_refuses_order_without_a_group_and_names_numeric_groups_as_text():
+    with pytest.raises(ValueError, match="order lists groups, but no group column is given"):
+        quiet_study(study_frame(), time="t", event="e", order=["A", "B"])
+    numeric = study_frame().assign(g=[2] * 4 + [1] * 4)
+    assert quiet_study(numeric, group="g", variables=["x"], order=[2, 1]).groups == ["2", "1"]
+
+
+def test_study_values_that_are_no_finite_numbers_are_errors_the_endpoints_name():
+    data = study_frame().assign(x=[1.0, 2, INF, 4, 5, 6, 7, 8], y=["1", "<5", "3", "4", "5", "6", "7", "8"])
+    study = quiet_study(data, group="g", variables=["x", "y"], types={"y": "numeric"})
+    with pytest.raises(ValueError, match="1 values are infinite \\('inf'\\)"):
+        study.compare("x")
+    with pytest.raises(ValueError, match="1 values are not numbers \\('<5'\\)"):
+        study.distribution("y")
+
+
+def test_a_repeated_index_with_ids_is_no_problem():
+    data = study_frame()
+    data.index = [0] * len(data)
+    data.loc[:, "id"] = list("abcdefga")
+    assert quiet_study(data, group="g", id="id", variables=["x"]).checks
+
+
+def test_distribution_draws_the_groups_that_have_values():
+    data = study_frame().assign(x=[np.nan] * 4 + [5.0, 6, 7, 8])
+    result = quiet_study(data, group="g", variables=["x"]).distribution("x")
+    assert result.figure is not None and result.table["n"].tolist()[:2] == ["0", "4"]
+
+
+def test_effects_refuse_a_term_named_twice_and_sentences_keep_acronyms():
+    table = pd.DataFrame({"study": ["Age", "Age"], "estimate": [1.1, 1.2], "low": [1.0, 1.1], "high": [1.2, 1.3]})
+    with pytest.raises(ValueError, match="the term 'Age' is named in more than one row"):
+        quiet_study(study_frame(), group="g", variables=["x"]).effects(table)
+    study = quiet_study(study_frame(), group="g", time="t", event="e", labels={"t": "PFS", "g": "Treatment arm"})
+    assert study.survival().text.startswith("Median PFS")
+    assert "by treatment arm" in study.compare("x").figure.title
+
+
+def test_numeric_levels_read_the_same_in_both_languages():
+    from hairline.study.columns import level_text
+    assert [level_text(value) for value in (0.1 + 0.2, 0.3, 1e-4, -0.0, 3.0, 2.5)] == \
+        ["0.3", "0.3", "0.0001", "0", "3", "2.5"]
+
+
+def test_study_refuses_a_variable_named_twice():
+    with pytest.raises(ValueError, match="variables names 'x' twice"):
+        quiet_study(study_frame(), group="g", variables=["x", "x"])

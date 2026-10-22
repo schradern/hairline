@@ -3,6 +3,8 @@ median as a dot, an optional reference tick, and the key numbers in a column on 
 
 from __future__ import annotations
 
+import math
+import numbers
 from collections.abc import Mapping, Sequence
 
 import numpy as np
@@ -47,6 +49,32 @@ def stats_pairs(values: np.ndarray, stats: Sequence[str], numbers: tuple, mark: 
     return pairs
 
 
+def check_options(stats: str | Sequence[str], digits: int | None) -> tuple[str, ...]:
+    """The statistics to show, each once ("median" alone is one statistic), and decimals as a whole number."""
+    stats = (stats,) if isinstance(stats, str) else tuple(stats)
+    unknown = [name for name in stats if name not in STATS]
+    if unknown:
+        raise ValueError(f"hairline: spread: unknown statistic {unknown[0]!r}; use any of {', '.join(STATS)}")
+    repeated = next((name for name in stats if stats.count(name) > 1), None)
+    if repeated:
+        raise ValueError(f"hairline: spread: stats names {repeated!r} twice; name each statistic once")
+    if digits is not None and (isinstance(digits, bool) or not isinstance(digits, int) or digits < 0):
+        raise ValueError(f"hairline: spread: digits must be a whole number of 0 or more; got {digits!r}")
+    return stats
+
+
+def checked_marks(marks: Mapping[str, float] | None, groups: list[tuple[str, np.ndarray]]) -> dict[str, float]:
+    """Reference values for groups that are drawn, as finite numbers: a mistyped group would lose its tick."""
+    marks, names = {str(name): value for name, value in (marks or {}).items()}, [name for name, _ in groups]
+    for name, value in marks.items():
+        if name not in names:
+            raise ValueError(f"hairline: spread: marks names '{name}', which is not a group drawn; groups: "
+                             f"{', '.join(names)}")
+        if isinstance(value, bool) or not isinstance(value, numbers.Real) or not math.isfinite(value):
+            raise ValueError(f"hairline: spread: the mark for '{name}' is {value!r}; marks are finite numbers")
+    return marks
+
+
 def spread_axis(lows: list[float], highs: list[float], percent: bool, zero: bool) -> dict:
     low, high = min(lows + ([0.0] if zero else [])), max(highs + ([0.0] if zero else []))
     breaks = nice_breaks(low, high)
@@ -65,9 +93,7 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
                 zero: bool = False, axis_title: str | None = None, colors: Mapping[str, str] | None = None) -> dict:
     check_columns(data, [group, value])
     check_numeric(data, [value], "spread")
-    unknown = [name for name in stats if name not in STATS]
-    if unknown:
-        raise ValueError(f"hairline: spread: unknown statistic {unknown[0]!r}; use any of {', '.join(STATS)}")
+    stats = check_options(stats, digits)
     groups = [(str(name), rows[value].dropna().astype(float).to_numpy())
               for name, rows in groups_of(data, group, order, "spread")]
     groups = [(name, values) for name, values in groups if len(values)]
@@ -80,7 +106,7 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
     whole = whole and digits is None
     # Of whole numbers, a quantile between two of them keeps one decimal (a median of 2.5, not 3).
     numbers = ((lambda value: mean_number(value) if quantile_places(value, 0, whole) else plain(value)), mean_number)
-    palette, marks = entities.colors_for([name for name, _ in groups], colors), dict(marks or {})
+    palette, marks = entities.colors_for([name for name, _ in groups], colors), checked_marks(marks, groups)
     rows = []
     for name, values in groups:
         low, q1, middle, q3, high = quantiles(values, [0, 0.25, 0.5, 0.75, 1])

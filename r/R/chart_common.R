@@ -37,7 +37,7 @@ with_counts <- function(data, value) {
   if (!is.null(value)) return(list(data = data, value = value))
   candidates <- c(count_column, "Rows", "Row count", paste(count_column, seq_len(ncol(data)) + 1L))
   name <- candidates[!candidates %in% names(data)][1]
-  data[[name]] <- 1
+  data[[name]] <- rep(1, nrow(data))
   list(data = data, value = name)
 }
 
@@ -75,7 +75,7 @@ group_names <- function(values) {
 # data order (flows need every node), otherwise they are left out.
 ordered_names <- function(values, order, chart, column, complete = FALSE) {
   names <- group_names(values)
-  if (is.null(order)) return(names)
+  if (!length(order)) return(names)
   wanted <- as.character(order)
   repeated <- unique(wanted[duplicated(wanted)])
   if (length(repeated)) {
@@ -102,6 +102,7 @@ chart_groups <- function(data, by, order, chart) {
 flow_rows <- function(data, source, target, value, chart, order) {
   check_columns(data, c(source, target, value))
   check_labels(data, c(source, target), chart)
+  check_numeric(data, value, chart)
   rows <- data[!is.na(data[[value]]), , drop = FALSE]
   negative <- which(rows[[value]] < 0)
   if (length(negative)) {
@@ -129,6 +130,18 @@ check_numeric <- function(data, columns, chart) {
       stop(sprintf("hairline: %s: '%s' holds %s values; it needs numbers", chart, column, class(data[[column]])[1]),
            call. = FALSE)
     }
+    check_finite(data, column, chart)
+  }
+}
+
+# An infinite value has no place on an axis, in a sum or a share; missing values are left out elsewhere.
+check_finite <- function(data, column, chart) {
+  values <- data[[column]]
+  if (!is.numeric(values) || inherits(values, c("Date", "POSIXt", "difftime"))) return(invisible())
+  infinite <- which(is.infinite(values))
+  if (length(infinite)) {
+    stop(sprintf("hairline: %s: '%s' is infinite in row %d; correct the value or leave the row out", chart, column,
+                 infinite[1]), call. = FALSE)
   }
 }
 

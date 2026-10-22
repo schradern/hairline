@@ -9,7 +9,7 @@ import pandas as pd
 from matplotlib.patches import Polygon, Rectangle
 
 from hairline import entities
-from hairline.charts.common import check_columns, check_numeric, humanise
+from hairline.charts.common import check_columns, check_numeric, check_present, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.fonts import families
@@ -107,6 +107,7 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p. Missing values are
     left out, and "n = …" counts the values shown."""
     check_columns(data, [group, value])
+    check_present(data, value, "raincloud")
     data = data[data[value].notna()]
     check_numeric(data, [value], "raincloud")
     groups = groups_of(data, group, order, "raincloud")

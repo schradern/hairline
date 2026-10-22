@@ -67,10 +67,20 @@ hl_study <- function(data, group = NULL, time = NULL, event = NULL, id = NULL, v
     types[[name]] %||% infer_study_type(data[[name]])
   }, character(1))
   study_check_kinds(kinds)
+  repeated <- unique(variables[duplicated(variables)])
+  if (length(repeated)) {
+    stop(sprintf("hairline: study: variables names '%s' twice; name each variable once", repeated[1]), call. = FALSE)
+  }
   has_group <- !is.null(group) && group %in% names(data)
+  if (!is.null(order) && is.null(group)) {
+    stop("hairline: study: order lists groups, but no group column is given; pass group = or leave out order",
+         call. = FALSE)
+  }
+  if (!is.null(order)) order <- level_text(order)
   study_check_order(order)
   groups <- order %||% if (has_group) study_levels(data[[group]], FALSE) else character()
-  checks <- c(run_study_checks(data, roles, variables, groups), unit_findings(roles, variables, kinds, as.list(units)))
+  checks <- c(run_study_checks(data, roles, variables, groups, as.list(kinds)),
+              unit_findings(roles, variables, kinds, as.list(units)))
   study <- structure(list(data = data, roles = roles, variables = variables, labels = as.list(labels), types = kinds,
                           groups = groups, unit = unit %||% hl_tokens()$study$unit, checks = checks,
                           units = as.list(units)),
@@ -118,6 +128,15 @@ study_overall <- function(study) {
 }
 
 study_label <- function(study, column) study$labels[[column]] %||% humanise(column)
+
+# The label inside a sentence: "Arm type" reads "arm type"; "PFS" and "HbA1c" keep their capitals.
+study_in_sentence <- function(study, column) {
+  label <- study_label(study, column)
+  first <- strsplit(label, " ", fixed = TRUE)[[1]][1]
+  rest <- substring(first, 2)
+  if (nzchar(label) && identical(rest, tolower(rest))) paste0(tolower(substr(label, 1, 1)), substring(label, 2)) else
+    label
+}
 
 # The column's unit; none when the label already says it ("Months").
 study_measure <- function(study, column) {

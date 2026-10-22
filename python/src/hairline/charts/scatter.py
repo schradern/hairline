@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from hairline import entities
-from hairline.charts.common import check_columns, humanise
+from hairline.charts.common import check_columns, check_finite, check_numeric, humanise
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import STATIC_ID, lone_color
@@ -55,6 +55,8 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
     """Points per group (entity colours) and, with `fit="linear"`, a fit over all points drawn (the groups in
     `order`, when given) with n, r and slope."""
     check_columns(data, [x, y, by])
+    check_numeric(data, [y], "scatter")
+    check_finite(data, x, "scatter")
     if fit not in ("linear", None):
         raise ValueError(f"hairline: scatter: fit {fit!r} must be 'linear' or None")
     rows = data.dropna(subset=[x, y])

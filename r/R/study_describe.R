@@ -163,7 +163,7 @@ study_overview <- function(study, parts) {
   colours <- if (is.null(study$roles$group)) stats::setNames(lone_colour(), names) else
     colours_for(names, NULL)
   title <- if (is.null(study$roles$group)) "Characteristics" else
-    paste("Characteristics by", gsub("_", " ", study$roles$group))
+    paste("Characteristics by", study_in_sentence(study, study$roles$group))
   settings <- hl_settings()
   range <- ggplot2::geom_path(data = ranges, ggplot2::aes(.data$x, .data$y, group = .data$group),
                               colour = settings$neutral$faint, lineend = "butt", inherit.aes = FALSE,

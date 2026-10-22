@@ -68,8 +68,13 @@ child_ring <- function(data, levels, value, parents, total) {
 # Segments per ring, inner to outer; children follow their parent's order and use its tints.
 donut_rings <- function(data, label, value, levels = NULL, chart = "donut", colors = NULL, order = NULL) {
   levels <- levels %||% label
+  if (!length(levels)) stop(sprintf("hairline: %s: name the column that labels the segments", chart), call. = FALSE)
   check_columns(data, c(levels, value))
   check_labels(data, levels, chart)
+  check_numeric(data, value, chart)
+  if (!any(data[[value]] > 0, na.rm = TRUE)) {
+    stop(sprintf("hairline: %s: no values above zero to draw in '%s'", chart, value), call. = FALSE)
+  }
   if (length(levels) > hl_tokens()$donut$max_levels) {
     stop(sprintf("hairline: %s: %d levels given (%s); at most 3 levels fit", chart, length(levels),
                  paste(levels, collapse = ", ")), call. = FALSE)

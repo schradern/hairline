@@ -54,6 +54,8 @@ scatter_check_fit <- function(x) {
 hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, caption = NULL, fit = "linear",
                        order = NULL, colors = NULL) {
   check_columns(data, c(x, y, by))
+  check_numeric(data, y, "scatter")
+  check_finite(data, x, "scatter")
   if (!is.null(fit) && !identical(fit, "linear")) {
     stop(sprintf("hairline: scatter: fit '%s' must be 'linear' or NULL", fit), call. = FALSE)
   }

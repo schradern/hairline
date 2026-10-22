@@ -11,8 +11,11 @@ study_is_missing <- function(values) {
 level_text <- function(values) {
   if (is.logical(values)) return(ifelse(values, "Yes", "No"))
   if (is.numeric(values)) {
-    whole <- !is.na(values) & values == round(values)
-    return(ifelse(whole, sprintf("%.0f", values), as.character(values)))
+    # 15 significant digits, never in scientific notation, and -0 is 0: the same text in both languages.
+    values[!is.na(values) & values == 0] <- 0
+    text <- trimws(formatC(values, digits = 15, format = "fg"))
+    text[is.na(values)] <- NA
+    return(text)
   }
   as.character(values)
 }

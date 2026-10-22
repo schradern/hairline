@@ -85,10 +85,17 @@ __version__ = "0.2.0.dev0"
 
 
 def _apply_host_context() -> None:
-    """Inside a host document (HAIRLINE_HOST_CONTEXT set), start from the document's context."""
+    """Inside a host document (HAIRLINE_HOST_CONTEXT set), start from the document's context; a style that cannot
+    be applied (a broken brand file) is warned about instead of stopping the import."""
+    import warnings
+
     from hairline.host import host_context
     if host_context() is not None:
-        use()
+        try:
+            use()
+        except ValueError as error:
+            warnings.warn(f"hairline: the host context's style could not be applied ({error}); using the defaults",
+                          UserWarning, stacklevel=2)
 
 
 _apply_host_context()
