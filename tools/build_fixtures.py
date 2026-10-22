@@ -458,7 +458,8 @@ def wrapping_cases() -> dict:
                            "detail": ["Alone with daily visits from the district nursing team", "With support",
                                       "Other", "Inpatient", "Outpatient", "Day clinic"], "n": [25, 16, 4, 12, 5, 3]})
     many = pd.DataFrame({"parent": [f"Parent {index // 6}" for index in range(12)],
-                         "child": [f"Child {index}" for index in range(12)], "n": [1 + index % 5 for index in range(12)]})
+                         "child": [f"Child {index}" for index in range(12)],
+                         "n": [1 + index % 5 for index in range(12)]})
     donuts = [(single, "name", None, "outside", Box(0, 0, 200, 150), None),
               (single, "name", None, "outside", Box(0, 0, 90, 150), None),
               (nested, None, ["route", "detail"], "key", Box(0, 0, 300, 160), None),

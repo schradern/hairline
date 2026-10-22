@@ -201,7 +201,7 @@ def column_lines(spec: dict, box: Box, width: float, measure: Measure, style: di
 
 def sankey_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[dict]:
     """Every shape of one Sankey diagram inside `box` (pt from the figure's top-left corner)."""
-    rules, base, count = load_tokens()["sankey"], style["base"], len(spec["nodes"])
+    rules, base = load_tokens()["sankey"], style["base"]
     line, width = line_height(style, "label"), rules["node_width"] * base
     lines, xs = column_lines(spec, box, width, measure, style, rules)
     tallest = max(len(name) for column in lines for name in column.values())

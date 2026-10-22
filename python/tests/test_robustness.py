@@ -1009,7 +1009,7 @@ def test_long_labels_wrap_inside_the_figure(chart, width_mm, tmp_path, monkeypat
     hl.use(brand=False)
     figure = long_label_charts()[chart]()
     left, top, right, bottom, width, height = drawn_extent(figure)
-    assert 0 <= left and right <= width + 0.01 and 0 <= top and bottom <= height
+    assert left >= 0 and right <= width + 0.01 and top >= 0 and bottom <= height
     assert LONG_LABEL not in [shape["text"] for shape in figure.shapes if shape["kind"] == "text"]
 
 
