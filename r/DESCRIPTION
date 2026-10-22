@@ -1,6 +1,6 @@
 Package: hairline
 Title: Clean, Predictable Figures for Medical and Data Science
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: person("Nikolas", "Schrader", email = "hi@nikolasschrader.com",
                   role = c("aut", "cre", "cph"), comment = c(ORCID = "0009-0001-4616-3804"))
 Description: A design system for 'ggplot2' figures: one frame for titles, legends,

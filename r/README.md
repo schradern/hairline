@@ -113,7 +113,7 @@ reference:
   title = {hairline: Clean, Predictable Figures for Medical and Data Science},
   author = {Nikolas Schrader},
   year = {2026},
-  note = {R package version 0.2.0},
+  note = {R package version 0.2.1},
   doi = {10.5281/zenodo.23456211},
 }
 ```

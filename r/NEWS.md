@@ -1,4 +1,4 @@
-# hairline (development version)
+# hairline 0.2.1
 
 ## Long labels
 

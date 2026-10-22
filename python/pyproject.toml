@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hairline"
-version = "0.2.0"
+version = "0.2.1"
 description = "Clean, predictable figures for medical and data science, matching the hairline R package."
 readme = "README.md"
 authors = [{ name = "Nikolas Schrader", email = "hi@nikolasschrader.com" }]

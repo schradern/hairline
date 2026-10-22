@@ -12,7 +12,7 @@ authors:
     email: hi@nikolasschrader.com
     orcid: "https://orcid.org/0009-0001-4616-3804"
 repository-code: "https://github.com/schradern/hairline"
-version: 0.2.0
+version: 0.2.1
 doi: 10.5281/zenodo.23456211
 identifiers:
   - type: doi
