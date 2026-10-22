@@ -13,7 +13,7 @@ from hairline.numbers import format_number, format_p, is_whole
 from hairline.stats.tests import contingency_test, kruskal_test, rank_sum_test
 from hairline.study.columns import is_missing, level_text, levels, numbers
 from hairline.study.describe import counted_rows, group_role, level_numbers, subsets
-from hairline.study.result import Result
+from hairline.study.result import Result, figure_for
 from hairline.study.summaries import (
     STAT_LABELS,
     check_stats,
@@ -75,12 +75,12 @@ def distribution(study: Study, variable: str, stats: Sequence[str] = ("median_iq
     names = [name for name in list(found)[:-1] if found[name]["n"]] if study.group else [study.overall]
     name = study.label(variable)
     title = f"{name} by {study.in_sentence(study.group)}" if study.group else name
-    figure = spread(data, study.group_key, variable, order=names, title=title, axis_title=study.measure(variable),
-                    size=size)
+    figure = figure_for("distribution", names, "groups", lambda: spread(
+        data, study.group_key, variable, order=names, title=title, axis_title=study.measure(variable), size=size))
     shown = rows[:-1] if study.group else rows
     counted = counted_rows(study, {"variable": variable, **group_role(study)}, in_overall=True)
     text = (f"{label}, {STAT_LABELS[stats[0]]}: {listed([f'{row[0]} {row[2]}' for row in shown])}."
-            + left_out_text(counted, study.unit, in_overall=True) + overall_only_text(counted))
+            + left_out_text(counted, study.nouns, in_overall=True) + overall_only_text(counted))
     return Result(figure, table, values, text, {"rows": counted, "groups": found})
 
 
@@ -112,13 +112,14 @@ def compare_numeric(study: Study, variable: str, size: str) -> Result:
     rows += [["Test", "", test_text(test)]] if test else []
     values = {"groups": dict(zip(names, summaries, strict=True)),
               **({"test": test["method"], "p": format_p(test["p"])} if test else {})}
-    figure = spread(data.assign(**{variable: data[variable].astype(float)}), study.group_key, variable, order=names,
-                    title=f"{study.label(variable)} by {study.in_sentence(study.group)}",
-                    subtitle=test_text(test) if test else None, axis_title=study.measure(variable), size=size)
+    figure = figure_for("compare", names, "groups", lambda: spread(
+        data.assign(**{variable: data[variable].astype(float)}), study.group_key, variable, order=names,
+        title=f"{study.label(variable)} by {study.in_sentence(study.group)}",
+        subtitle=test_text(test) if test else None, axis_title=study.measure(variable), size=size))
     parts = listed([f"{name} {summary}" for name, summary in zip(names, summaries, strict=True)])
     counted = counted_rows(study, {"variable": variable, **group_role(study)})
     text = (f"{label}, median (IQR): {parts}" + (f" ({test_text(test)})." if test else ".")
-            + left_out_text(counted, study.unit))
+            + left_out_text(counted, study.nouns))
     found = {"rows": counted, "groups": found, **({"test": test} if test else {})}
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "median (IQR)"]), values, text, found)
 
@@ -139,10 +140,11 @@ def compare_categorical(study: Study, variable: str, size: str) -> Result:
     values: dict = {"groups": {name: {row[0]: row[1 + index] for row in rows[:len(kinds)]}
                                for index, name in enumerate(names)}}
     values.update({"test": test["method"], "p": format_p(test["p"])} if test else {})
-    figure = bars(data, study.group_key, by=variable, stacked=True, percent=True, horizontal=True, order=names,
-                  title=f"{label} by {study.in_sentence(study.group)}", size=size)
+    figure = figure_for("compare", kinds, f"categories of '{variable}'", lambda: bars(
+        data, study.group_key, by=variable, stacked=True, percent=True, horizontal=True, order=names,
+        title=f"{label} by {study.in_sentence(study.group)}", size=size))
     counted = counted_rows(study, {"variable": variable, **group_role(study)})
     text = (f"{label} by {study.in_sentence(study.group)}" + (f": {test_text(test)}." if test else ".")
-            + left_out_text(counted, study.unit))
+            + left_out_text(counted, study.nouns))
     found = {"rows": counted, "groups": found, **({"test": test} if test else {})}
     return Result(figure, pd.DataFrame(rows, columns=[label, *names]), values, text, found)

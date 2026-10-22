@@ -11,6 +11,11 @@ format_finding <- function(finding) {
 
 count_text <- function(count) hl_format_number(count, 0)
 
+study_rows <- c("row", "rows")
+
+# "1 patient", "40 patients".
+counted_text <- function(count, nouns) paste(hl_format_number(count, 0), if (count == 1) nouns[1] else nouns[2])
+
 missing_value_findings <- function(data, column, limit) {
   mask <- study_is_missing(data[[column]])
   if (!any(mask)) return(list())
@@ -52,15 +57,17 @@ numeric_value_findings <- function(data, column, limit) {
   raw <- data[[column]]
   present <- !study_is_missing(raw)
   values <- suppressWarnings(study_as_number(raw))
-  checks <- list(list(bad = present & is.na(values), problem = "are not numbers",
+  checks <- list(list(bad = present & is.na(values), problems = c("is not a number", "are not numbers"),
                       fix = "correct them, or declare the column categorical"),
-                 list(bad = present & !is.na(values) & is.infinite(values), problem = "are infinite",
+                 list(bad = present & !is.na(values) & is.infinite(values), problems = c("is infinite", "are infinite"),
                       fix = "correct them, or leave these rows out"))
   findings <- list()
   for (check in checks) {
     if (!any(check$bad)) next
     shown <- paste(sprintf("'%s'", unique(as.character(raw[check$bad]))), collapse = ", ")
-    problem <- sprintf("%s values %s (%s)", count_text(sum(check$bad)), check$problem, shown)
+    count <- sum(check$bad)
+    problem <- sprintf("%s %s (%s)", counted_text(count, c("value", "values")),
+                       check$problems[if (count == 1) 1 else 2], shown)
     findings[[length(findings) + 1]] <- study_finding("error", column, problem, row_numbers(check$bad, limit),
                                                       check$fix)
   }

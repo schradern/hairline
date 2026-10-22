@@ -3,13 +3,12 @@
 # a figure too narrow for both, on a line under each row).
 
 spread_stats <- c("median", "iqr", "mean", "n", "range")
-spread_snap_digits <- 10
 
 spread_formatter <- function(values, percent, digits, extra = 0) {
   scale <- if (percent) 100 else 1
   places <- (digits %||% auto_digits(values * scale)) + extra
   suffix <- if (percent) paste0(locale_symbols(NULL)$percent_space, "%") else ""
-  function(value) paste0(hl_format_number(round(value * scale, spread_snap_digits), places), suffix)
+  function(value) paste0(hl_format_number(snap_noise(value * scale), places), suffix)
 }
 
 # Key numbers as (label, value) pairs, drawn like a panel header's key numbers.
@@ -30,7 +29,7 @@ spread_axis <- function(lows, highs, percent, zero) {
   high <- max(c(highs, if (zero) 0))
   breaks <- nice_breaks(low, high)
   limits <- axis_limits(low, high, breaks)
-  shown <- round(breaks * if (percent) 100 else 1, spread_snap_digits)
+  shown <- snap_noise(breaks * if (percent) 100 else 1)
   labels <- vapply(shown, hl_format_number, character(1), digits = forest_decimals(shown))
   if (percent) labels[length(labels)] <- paste0(labels[length(labels)], locale_symbols(NULL)$percent_space, "%")
   list(breaks = breaks, labels = labels, low = limits[1], high = limits[2])

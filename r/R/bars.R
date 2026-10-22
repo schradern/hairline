@@ -15,11 +15,15 @@ bar_table <- function(data, category, value, by, order, sort) {
   first <- !duplicated(keys)
   table <- data[first, c(category, by), drop = FALSE]
   table[[category]] <- as.character(table[[category]])
-  table$.value <- as.numeric(tapply(data[[value]], factor(keys, levels = unique(keys)), sum, na.rm = TRUE))
+  # A cell whose values are all missing stays missing (no bar, label or tooltip); for sorting and percent totals it
+  # counts as zero.
+  table$.value <- as.numeric(tapply(data[[value]], factor(keys, levels = unique(keys)), function(values) {
+    if (all(is.na(values))) NA_real_ else sum(values, na.rm = TRUE)
+  }))
   # Categories left out of `order` are not drawn.
   table <- table[table[[category]] %in% names, , drop = FALSE]
   if (identical(sort, "value") && is.null(order)) {
-    totals <- tapply(table$.value, table[[category]], sum)
+    totals <- tapply(table$.value, table[[category]], sum, na.rm = TRUE)
     names <- names[order(-totals[names], seq_along(names))]
   }
   list(table = table, names = names, groups = groups)
@@ -39,7 +43,7 @@ bar_frame <- function(parts, category, by, horizontal, percent) {
       stop(sprintf("hairline: bars: percent needs values of zero or more; '%s' has %s", table[[category]][negative[1]],
                    format(table$.value[negative[1]])), call. = FALSE)
     }
-    totals <- stats::ave(table$.value, table[[category]], FUN = sum)
+    totals <- stats::ave(table$.value, table[[category]], FUN = function(values) sum(values, na.rm = TRUE))
     empty <- table[[category]][!(totals > 0)]
     if (length(empty)) {
       stop(sprintf(paste("hairline: bars: percent needs a total above zero in every category; '%s' totals %s,",
@@ -55,7 +59,7 @@ bar_frame <- function(parts, category, by, horizontal, percent) {
                       label = if (percent) vapply(table$.value, hl_format_percent, character(1), digits = 0) else
                         vapply(table$.value, hl_format_number, character(1), digits = digits))
   attr(frame, "digits") <- digits
-  frame
+  frame[!is.na(frame$value), , drop = FALSE]
 }
 
 bar_value_mapping <- function(horizontal) {

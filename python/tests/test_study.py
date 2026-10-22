@@ -35,7 +35,7 @@ def test_checks_report_without_changing_the_data():
         study = hl.study(data, group="arm", time="months", event="died", id="id",
                          variables=["age", "sex", "sofa", "score"], units={"age": "years", "months": "months"})
     problems = [(finding.column, finding.problem) for finding in study.checks]
-    assert ("id", "1 rows repeat an id") in problems
+    assert ("id", "1 row repeats an id") in problems
     assert ("age", "1 missing (2.5%)") in problems
     assert any(column == "sex" and "'female '" in problem for column, problem in problems)
     assert any(column == "score" and problem.startswith("stored as text") for column, problem in problems)

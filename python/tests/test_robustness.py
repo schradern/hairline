@@ -884,9 +884,9 @@ def test_study_refuses_order_without_a_group_and_names_numeric_groups_as_text():
 def test_study_values_that_are_no_finite_numbers_are_errors_the_endpoints_name():
     data = study_frame().assign(x=[1.0, 2, INF, 4, 5, 6, 7, 8], y=["1", "<5", "3", "4", "5", "6", "7", "8"])
     study = quiet_study(data, group="g", variables=["x", "y"], types={"y": "numeric"})
-    with pytest.raises(ValueError, match="1 values are infinite \\('inf'\\)"):
+    with pytest.raises(ValueError, match="1 value is infinite \\('inf'\\)"):
         study.compare("x")
-    with pytest.raises(ValueError, match="1 values are not numbers \\('<5'\\)"):
+    with pytest.raises(ValueError, match="1 value is not a number \\('<5'\\)"):
         study.distribution("y")
 
 
@@ -1098,3 +1098,162 @@ def test_wrapped_labels_match_the_shared_fixture():
     for case in fixture["blocks"]:
         assert spread_blocks(case["positions"], case["heights"], case["top"], case["bottom"]) == \
             pytest.approx(case["centres"])
+
+
+# Deferred findings of the 0.2.0 stress test.
+
+def many_groups(groups: int = 10, sites: int = 12) -> pd.DataFrame:
+    rng = np.random.default_rng(1)
+    return pd.DataFrame({"arm": [f"G{index % groups}" for index in range(400)], "age": rng.normal(60, 10, 400),
+                         "site": [f"S{index % sites}" for index in range(400)],
+                         "time": rng.exponential(10, 400), "event": rng.integers(0, 2, 400)})
+
+
+@pytest.mark.parametrize("endpoint", ["describe", "compare", "compare_site", "distribution", "survival"])
+def test_study_endpoints_with_more_groups_than_colours_keep_table_values_and_text(endpoint):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        study = hl.study(many_groups(), group="arm", time="time", event="event", variables=["age", "site"],
+                         units={"age": "years", "time": "months"})
+    calls = {"describe": study.describe, "compare": lambda: study.compare("age"),
+             "compare_site": lambda: study.compare("site"), "distribution": lambda: study.distribution("age"),
+             "survival": study.survival}
+    what = "12 categories of 'site'" if endpoint == "compare_site" else "10 groups"
+    with pytest.warns(UserWarning, match=f"{what} need more colours than the 8 of palette 'daylight', so the "
+                                         "result has no figure"):
+        result = calls[endpoint]()
+    assert result.figure is None and len(result.table) and result.values and result.text
+
+
+def test_study_endpoints_draw_their_figure_within_the_palette():
+    study = hl.study(many_groups(groups=8, sites=8), group="arm", variables=["age", "site"], units={"age": "years"})
+    assert study.compare("site").figure is not None and study.describe().figure is not None
+
+
+def reference_logrank_chisq(time, event, group) -> float:
+    """The textbook loop over event times, for comparison with the counted version."""
+    time, event, group = np.asarray(time, float), np.asarray(event, float), np.asarray(group)
+    labels = list(dict.fromkeys(group))
+    difference, variance = np.zeros(len(labels)), np.zeros((len(labels), len(labels)))
+    for moment in np.unique(time[event == 1]):
+        at_risk = np.array([((group == label) & (time >= moment)).sum() for label in labels], float)
+        deaths = np.array([((group == label) & (time == moment) & (event == 1)).sum() for label in labels], float)
+        n, d = at_risk.sum(), deaths.sum()
+        share = at_risk / n
+        difference += deaths - d * share
+        if n > 1:
+            variance += d * (n - d) / (n - 1) * (np.diag(share) - np.outer(share, share))
+    return float(difference[1:] @ np.linalg.solve(variance[1:, 1:], difference[1:]))
+
+
+def test_the_log_rank_test_counts_each_group_once_and_keeps_its_value():
+    rng = np.random.default_rng(4)
+    time, event = np.round(rng.exponential(10, 600), 1), rng.integers(0, 2, 600)
+    group = rng.choice(["A", "B", "C"], 600)
+    assert logrank(time, event, group)["chisq"] == pytest.approx(reference_logrank_chisq(time, event, group),
+                                                                 rel=1e-12)
+    time, event, group = rng.exponential(10, 100_000), rng.integers(0, 2, 100_000), rng.choice(["A", "B"], 100_000)
+    assert np.isfinite(logrank(time, event, group)["chisq"])
+
+
+@pytest.mark.parametrize(("scale", "expected"), [(1e-9, "0.0000000012"), (1e-11, "0.000000000012")])
+def test_values_near_zero_keep_two_significant_digits(scale, expected):
+    from hairline.numbers import auto_digits, snap_noise
+    values = np.linspace(0.8, 1.6, 61) * scale
+    assert format_number(snap_noise(np.median(values)), auto_digits(values)) == expected
+    data = pd.DataFrame({"group": ["A"] * 61, "value": values})
+    texts = [text.get_text() for text in hl.spread(data, "group", "value", stats=["median"]).figure.findobj(
+        matplotlib.text.Text)]
+    assert expected in texts and "0.000000" not in texts
+    assert hl.study(data.assign(group=None), variables=["value"], units={"value": "mol"}).describe().table.iloc[
+        1, 1].startswith(expected)
+
+
+def test_ordinary_values_keep_their_decimals():
+    from hairline.numbers import auto_digits
+    assert [auto_digits([0.0004, 0.00041]), auto_digits([12.3, 14.1]), auto_digits([1000.2, 1000.4])] == [6, 1, 1]
+
+
+def test_a_figure_that_cannot_be_laid_out_is_a_layout_error_from_save(tmp_path):
+    figure = hl.figure("T", width_mm=60, height_mm=20, panels=3)
+    with pytest.raises(hl.HairlineLayoutError, match="figure too small"):
+        hl.save(figure, tmp_path / "small", formats=["png", "svg"], dpi=72)
+    assert list(tmp_path.iterdir()) == []
+
+
+def write_brand(tmp_path, text: str) -> Path:
+    path = tmp_path / "_brand.yml"
+    path.write_text('color:\n  palette:\n    harbor: "#0b3d6e"\n    poppy: "#f2545b"\n' + text)
+    return path
+
+
+@pytest.mark.parametrize(("text", "message"), [
+    ("typography:\n  fonts: nope\n", "typography.fonts[0]: must be a mapping with family and source; got 'nope'"),
+    ("defaults:\n  hairline:\n    colors: [harbor]\n", "defaults.hairline.colors: must map entity names"),
+    ("defaults:\n  hairline:\n    sizes: [1, 2]\n", "defaults.hairline.sizes: must map text roles to sizes in pt"),
+    ("defaults:\n  hairline:\n    outputs: [pdf]\n", "defaults.hairline.outputs: must map export types"),
+    ("defaults:\n  hairline:\n    groups: harbor\n", "defaults.hairline.groups: must map group names"),
+    ("defaults: yes\n", "defaults: must map tools to their settings"),
+    ("meta: Example\n", "meta: must map its details"),
+])
+def test_brand_sections_in_the_wrong_shape_name_the_key(tmp_path, text, message):
+    with pytest.raises(ValueError, match=re.escape(message)):
+        hl.use(brand=write_brand(tmp_path, text))
+
+
+def test_a_brand_palette_given_as_a_list_is_refused(tmp_path):
+    path = tmp_path / "_brand.yml"
+    path.write_text('color:\n  palette: ["#0b3d6e", "#f2545b"]\n')
+    with pytest.raises(ValueError, match=re.escape("color.palette: must map colour names to hex values")):
+        hl.use(brand=path)
+
+
+def test_a_brand_list_may_be_written_as_its_single_value(tmp_path):
+    brand = hl.load_brand(write_brand(tmp_path, "defaults:\n  hairline:\n    categorical: harbor\n"))
+    assert brand.names == ["harbor"] and brand.colors_given == ["#0b3d6e"]
+
+
+def test_a_brand_key_given_twice_is_refused(tmp_path):
+    path = tmp_path / "_brand.yml"
+    path.write_text('color:\n  palette:\n    harbor: "#0b3d6e"\n    harbor: "#f2545b"\n')
+    with pytest.raises(ValueError, match=re.escape("_brand.yml: line 4: key 'harbor' is given twice")):
+        hl.load_brand(path)
+
+
+def test_a_dpi_too_low_for_text_is_refused(tmp_path):
+    with pytest.raises(ValueError, match="dpi must be at least 20, below which text is smaller than a pixel"):
+        hl.save(hl.figure("T"), tmp_path / "low", formats=["png"], dpi=1)
+
+
+def test_a_bar_without_a_value_has_no_bar_label_or_tooltip():
+    data = pd.DataFrame({"name": ["Alpha", "Beta", "Gamma", "Delta"], "value": [3.0, 5.5, np.nan, 2.0]})
+    figure = hl.bars(data, "name", "value", sort="given")
+    tips = [tip["text"] for series in figure_targets(figure)["series"] for tip in series["tips"]]
+    assert [tip.split(": ")[-1] for tip in tips] == ["Alpha, 3.0", "Beta, 5.5", "Delta, 2.0"]
+    assert [text.get_text() for text in figure.ax.texts] == ["3.0", "5.5", "2.0"]
+    grouped = pd.DataFrame({"name": ["A", "A", "B", "B"], "g": ["x", "y", "x", "y"], "value": [3.0, np.nan, 2.0, 1.0]})
+    stacked = hl.bars(grouped, "name", "value", by="g", stacked=True)
+    assert [text.get_text() for text in stacked.ax.texts] == ["3", "2", "1", "3", "3"]
+
+
+def test_study_texts_count_one_row_in_the_singular():
+    data = pd.DataFrame({"arm": ["A"], "age": [61.5]})
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        study = hl.study(data, group="arm", units={"age": "years"})
+    assert study.describe().text.startswith("1 participant: 1 in A.")
+    assert str(study).startswith("Study of 1 participant: group = arm; 1 variable")
+    assert "group 'A' has 1 row" in str(study)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mice = hl.study(pd.DataFrame({"weight": [21.5, 23.0, np.nan]}), units={"weight": "g"},
+                        unit=("mouse", "mice"))
+    assert mice.describe().text.startswith("3 mice.")
+    assert hl.study(pd.DataFrame({"weight": [21.5]}), unit=("mouse", "mice")).describe().text == "1 mouse."
+    with pytest.raises(ValueError, match="unit must be a plural noun"):
+        hl.study(data, unit=3)
+
+
+def test_an_unknown_output_is_refused_without_a_brand():
+    with pytest.raises(ValueError, match="output 'epub' must be one of screen, pdf, html, docx"):
+        hl.use(output="epub", brand=False)

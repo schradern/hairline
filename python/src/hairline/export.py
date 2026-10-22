@@ -14,6 +14,7 @@ from pathlib import Path
 from matplotlib.figure import Figure
 from PIL import Image, TiffImagePlugin, TiffTags
 
+from hairline.errors import HairlineLayoutError
 from hairline.figure import HairlineFigure, check_raster_size
 from hairline.tokens import load_tokens
 
@@ -43,6 +44,10 @@ def save_options(dpi: float | None, background: str | None) -> tuple[float, dict
     dpi = load_tokens()["export"]["dpi"] if dpi is None else dpi
     if isinstance(dpi, bool) or not isinstance(dpi, numbers.Real) or not dpi > 0 or not math.isfinite(dpi):
         raise ValueError(f"hairline: save: dpi must be a number above zero; got {dpi!r}")
+    least = load_tokens()["export"]["min_dpi"]
+    if dpi < least:
+        raise ValueError(f"hairline: save: dpi must be at least {least}, below which text is smaller than a pixel; "
+                         f"got {dpi!r}")
     if background is None:
         return dpi, {}
     if background == "transparent":
@@ -152,6 +157,8 @@ def save(figure: HairlineFigure | Figure, name: str | os.PathLike, formats: Sequ
         for format_name, path, partial in zip(requested, paths, partials, strict=True):
             try:
                 write_one(fig, partial, format_name, dpi, options)
+            except HairlineLayoutError:
+                raise
             except Exception as error:
                 raise RuntimeError(f"hairline: writing {path} failed: {type(error).__name__}: {error}") from error
         move_into_place(partials, destinations)

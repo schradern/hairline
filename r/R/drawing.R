@@ -74,11 +74,9 @@ fit_device_megapixels <- 16
 # Charts drawn from shapes that set plot@meta$hairline_fit_height get a figure height that ends where their content
 # ends (shorter, or taller when it overflows), as the Python package's fit_height() does. The device only hosts the
 # layout pass (hairline measures text itself), so a very large figure gets a lower resolution, not a buffer that
-# grows with the square of its width.
+# grows with the square of its width. The frame is planned at the final size here, before any file is drawn: one that
+# cannot be laid out is a hairline_layout_error, as save() raises HairlineLayoutError in Python.
 fitted_size_mm <- function(plot, size_mm) {
-  least <- plot@meta$hairline_min_plot
-  fit <- plot@meta$hairline_fit_height
-  if (!isTRUE(fit) && !identical(fit, "grow") && is.null(least)) return(size_mm)
   path <- tempfile(fileext = ".png")
   res <- min(72, sqrt(fit_device_megapixels * 1e6 / prod(size_mm / 25.4)))
   ragg::agg_png(path, width = size_mm[1], height = size_mm[2], units = "mm", res = res)
@@ -88,8 +86,18 @@ fitted_size_mm <- function(plot, size_mm) {
   })
   frame <- ggplot2::ggplotGrob(plot)
   if (!inherits(frame, "hairline_frame")) return(size_mm)
+  tryCatch({
+    fitted <- fitted_frame_size_mm(plot, frame, size_mm)
+    plan_frame(frame$parts, fitted / 25.4 * 72)
+    fitted
+  }, error = function(error) stop(layout_error(conditionMessage(error))))
+}
+
+fitted_frame_size_mm <- function(plot, frame, size_mm) {
+  least <- plot@meta$hairline_min_plot
   if (!is.null(least)) return(kept_plot_size_mm(frame$parts, size_mm, least))
-  if (identical(fit, "grow")) return(grown_size_mm(frame$parts, size_mm))
+  if (identical(plot@meta$hairline_fit_height, "grow")) return(grown_size_mm(frame$parts, size_mm))
+  if (!isTRUE(plot@meta$hairline_fit_height)) return(size_mm)
   plan <- plan_frame(frame$parts, size_mm / 25.4 * 72)
   box <- fitted_box(plan$layout$panels[[1]], frame$parts$aspect)
   slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(frame$parts$settings),

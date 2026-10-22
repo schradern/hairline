@@ -383,6 +383,7 @@
       "html"
     ],
     "dpi": 600,
+    "min_dpi": 20,
     "max_megapixels": 600
   },
   "font": {

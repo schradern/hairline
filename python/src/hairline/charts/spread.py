@@ -17,12 +17,11 @@ from hairline.charts.spread_geometry import spread_drawing
 from hairline.charts.timeseries import groups_of
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
-from hairline.numbers import auto_digits, format_number, is_whole, locale_symbols, quantile_places
+from hairline.numbers import auto_digits, format_number, is_whole, locale_symbols, quantile_places, snap_noise
 from hairline.stats.density import quantiles
 from hairline.ticks import axis_limits, nice_breaks
 
 STATS = ("median", "iqr", "mean", "n", "range")
-SNAP_DIGITS = 10
 DASH = "–"
 
 
@@ -32,7 +31,7 @@ def number_formatter(values: np.ndarray, percent: bool, digits: int | None, extr
     scale = 100.0 if percent else 1.0
     places = (digits if digits is not None else auto_digits(values * scale)) + extra
     suffix = locale_symbols(None)["percent_space"] + "%" if percent else ""
-    return lambda value: format_number(round(float(value) * scale, SNAP_DIGITS), places) + suffix
+    return lambda value: format_number(snap_noise(float(value) * scale), places) + suffix
 
 
 def stats_pairs(values: np.ndarray, stats: Sequence[str], numbers: tuple, mark: float | None,
@@ -80,8 +79,8 @@ def spread_axis(lows: list[float], highs: list[float], percent: bool, zero: bool
     breaks = nice_breaks(low, high)
     limits = axis_limits(low, high, breaks)
     shown = [value * (100 if percent else 1) for value in breaks]
-    places = decimals([round(value, SNAP_DIGITS) for value in shown])
-    labels = [format_number(round(value, SNAP_DIGITS), places) for value in shown]
+    places = decimals([snap_noise(value) for value in shown])
+    labels = [format_number(snap_noise(value), places) for value in shown]
     if percent:
         labels[-1] += locale_symbols(None)["percent_space"] + "%"
     return {"breaks": breaks, "labels": labels, "low": limits[0], "high": limits[1]}

@@ -119,6 +119,11 @@ hl_save <- function(plot, name, formats = c("pdf", "png"), size = "onehalf", wid
                     dpi = 600, background = NULL) {
   formats <- validated_formats(formats)
   check_positive(dpi, "dpi")
+  least <- hl_tokens()$export$min_dpi
+  if (dpi < least) {
+    stop(sprintf("hairline: dpi must be at least %s, below which text is smaller than a pixel; got %s", least, dpi),
+         call. = FALSE)
+  }
   check_size_preset(size)
   if (!(is.character(name) && length(name) == 1 && nzchar(name))) {
     stop(sprintf("hairline: name must be one file path; got %s", paste(format(name), collapse = ", ")), call. = FALSE)

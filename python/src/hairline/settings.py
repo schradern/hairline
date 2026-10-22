@@ -13,7 +13,7 @@ from pathlib import Path
 import matplotlib
 
 from hairline import entities
-from hairline.brand import Brand, find_brand, load_brand
+from hairline.brand import Brand, check_output, find_brand, load_brand
 from hairline.color.ramps import diverging_ramp, sequential_ramp
 from hairline.color.space import hex_to_oklch
 from hairline.fonts import register_fonts, resolve_family
@@ -221,6 +221,7 @@ def use(font: str | None = None, base_size: float | None = None, sizes: Mapping[
         accent, scheme = accent or context.design.get("accent"), scheme or context.design.get("scheme")
     register_fonts()
     check_locale(locale)
+    check_output(output)
     explicit = validated_entity_colors(colors)
     resolved_brand = resolve_brand(brand, output)
     layered = brand_layer(default_settings(), resolved_brand)

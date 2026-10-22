@@ -11,7 +11,7 @@ from hairline.numbers import format_number, is_whole
 from hairline.study.columns import is_missing, is_text, numbers
 from hairline.study.compare import present_rows, require_values
 from hairline.study.describe import counted_rows, group_role, subsets
-from hairline.study.result import Result
+from hairline.study.result import Result, figure_for
 from hairline.study.summaries import digits_for, left_out_text, listed, mean_text, summary_numbers, summary_text
 
 if TYPE_CHECKING:
@@ -52,13 +52,17 @@ def over_time(study: Study, date: str, value: str, window: int = 7, size: str = 
     require_values(names, value, "over_time")
     rows = [[name, format_number(found[name]["n"], 0), summary_text(found[name], "mean_sd", digits, whole),
              summary_text(found[name], "median_iqr", digits, whole)] for name in names]
-    figure = timeseries(data.sort_values(date), x=date, y=value, by=key if study.group else None, order=names,
-                        window=window, title=f"{study.label(value)} over time", size=size)
-    if study.measure(value):
-        figure.y_title(study.measure(value))
+
+    def draw():
+        drawn = timeseries(data.sort_values(date), x=date, y=value, by=key if study.group else None, order=names,
+                           window=window, title=f"{study.label(value)} over time", size=size)
+        if study.measure(value):
+            drawn.y_title(study.measure(value))
+        return drawn
+    figure = figure_for("over_time", names, "groups", draw)
     means = [mean_text(found[name]["mean"], digits, whole) for name in names]
     parts = listed([f"{name} {mean}" for name, mean in zip(names, means, strict=True)])
     counted = counted_rows(study, {"variable": value, **group_role(study), "date": date})
-    text = f"{label}, mean over the period: {parts}." + left_out_text(counted, "rows")
+    text = f"{label}, mean over the period: {parts}." + left_out_text(counted, ("row", "rows"))
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "mean (SD)", "median (IQR)"]),
                   dict(zip(names, means, strict=True)), text, {"rows": counted, "groups": found})

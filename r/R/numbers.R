@@ -19,6 +19,8 @@ group_thousands <- function(integer_part, separator) {
   paste(c(integer_part, groups), collapse = separator)
 }
 rounding_tolerance <- 1e-9
+snap_digits <- 10
+snap_significant <- 6
 significant_digits <- 15
 missing_text <- "\u2013"
 
@@ -108,16 +110,35 @@ is_whole <- function(values) length(values) > 0 && all(values == round(values))
 # Decimals that give `size` (above zero) at least one unit in the last place.
 places_for <- function(size) max(0, ceiling(-log10(size) - rounding_tolerance))
 
+# `values` without float noise before they are formatted (R and numpy reach the same quantile by different
+# arithmetic): rounded to ten decimals, or to more where those would round a small value away (1e-11).
+snap_noise <- function(values) {
+  places <- rep(snap_digits, length(values))
+  small <- is.finite(values) & values != 0
+  places[small] <- pmax(snap_digits, pmax(0, ceiling(-log10(abs(values[small])) - rounding_tolerance)) +
+                          snap_significant)
+  round(values, places)
+}
+
 # Decimals that show `value` with two significant digits, at least `least` (a slope of 0.000407 is 0.00041, not
 # 0.00), up to study.max_digits.
 significant_places <- function(value, least = 2) {
   if (!is.finite(value) || value == 0) return(least)
-  min(max(least, places_for(abs(value)) + 1), hl_tokens()$study$max_digits)
+  capped_places(max(least, places_for(abs(value)) + 1), abs(value))
+}
+
+# `places` up to study.max_digits, unless the magnitude (above zero) needs that many to show at all: then two
+# significant digits of it, so values near 1e-9 read 0.0000000012, not 0.000000.
+capped_places <- function(places, magnitude) {
+  most <- hl_tokens()$study$max_digits
+  if (magnitude > 0 && places_for(magnitude) >= most) return(places_for(magnitude) + 1)
+  min(places, most)
 }
 
 # Decimals for values and their quantiles: none for whole numbers (counts, scores), otherwise by the median magnitude
 # (tokens study.digit_steps). More where the interquartile range (or, without one, the magnitude) would round away, so
-# 1000.2 +/- 0.1 and 0.0004 keep their digits, up to study.max_digits. Means take one more for whole data.
+# 1000.2 +/- 0.1 and 0.0004 keep their digits, up to study.max_digits; values too small to show within it keep two
+# significant digits. Means take one more for whole data.
 auto_digits <- function(values) {
   values <- values[is.finite(values)]
   if (!length(values) || is_whole(values)) return(0)
@@ -130,5 +151,5 @@ auto_digits <- function(values) {
   spread <- limits[2] - limits[1]
   if (spread == 0) spread <- max(values) - min(values)
   for (size in c(spread, magnitude)) if (size > 0) digits <- max(digits, places_for(size))
-  min(digits, rules$max_digits)
+  capped_places(digits, magnitude)
 }

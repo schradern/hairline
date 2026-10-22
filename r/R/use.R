@@ -104,6 +104,7 @@ hl_use <- function(font = NULL, base_size = NULL, sizes = NULL, palette = NULL, 
   }
   register_bundled_fonts()
   if (!is.null(locale)) locale_symbols(locale)
+  check_brand_output(output)
   explicit <- validated_entity_colors(colors)
   resolved_brand <- resolve_brand(brand, output)
   settings <- brand_layer(default_settings(), resolved_brand)

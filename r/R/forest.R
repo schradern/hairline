@@ -1,10 +1,16 @@
 # Forest plot: a results table with intervals, weighted squares and a pooled diamond;
 # mirrors the Python forest().
 
-# The fewest decimals that show every value exactly (axis breaks: 0.2, 0.0005), up to study.max_digits.
+exact_tolerance <- 1e-12
+
+# The fewest decimals that show every value exactly (axis breaks: 0.2, 0.0005), up to study.max_digits, or two
+# significant digits of the smallest value too small to show within it (1e-9).
 forest_decimals <- function(values) {
-  most <- hl_tokens()$study$max_digits
-  for (digits in 0:most) if (all(abs(round(values, digits) - values) < 1e-12)) return(digits)
+  shown <- abs(values[values != 0])
+  most <- capped_places(hl_tokens()$study$max_digits, if (length(shown)) min(shown) else 0)
+  for (digits in 0:most) {
+    if (all(abs(round(values, digits) - values) <= exact_tolerance * pmin(1, abs(values)))) return(digits)
+  }
   most
 }
 

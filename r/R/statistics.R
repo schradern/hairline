@@ -25,23 +25,28 @@ rank_sum_test <- function(first, second) {
 
 # As survival::survdiff, only groups with expected events take part, one of them left out of the quadratic form.
 # With fewer than two such groups, or a singular variance (every event at one time), the test is undefined: p is NA.
+# Each group's number at risk and deaths at every event time are counted from its sorted times at once, so the test
+# is linear in the rows.
 logrank_test <- function(time, event, group) {
-  labels <- unique(as.character(group))
-  member <- outer(as.character(group), labels, "==")
-  difference <- numeric(length(labels))
-  expected <- numeric(length(labels))
-  variance <- matrix(0, length(labels), length(labels))
+  group <- as.character(group)
+  labels <- unique(group)
   undefined <- list(chisq = NA_real_, df = length(labels) - 1L, p = NA_real_)
-  for (moment in sort(unique(time[event == 1]))) {
-    at_risk <- colSums(member & time >= moment)
-    deaths <- colSums(member & time == moment & event == 1)
-    n <- sum(at_risk)
-    d <- sum(deaths)
-    share <- at_risk / n
-    expected <- expected + d * share
-    difference <- difference + deaths - d * share
-    if (n > 1) variance <- variance + d * (n - d) / (n - 1) * (diag(share, length(share)) - outer(share, share))
-  }
+  moments <- sort(unique(time[event == 1]))
+  if (!length(moments)) return(undefined)
+  at_risk <- matrix(vapply(labels, function(label) {
+    times <- sort(time[group == label])
+    as.numeric(length(times) - findInterval(moments, times, left.open = TRUE))
+  }, numeric(length(moments))), nrow = length(moments))
+  deaths <- matrix(vapply(labels, function(label) {
+    as.numeric(tabulate(match(time[group == label & event == 1], moments), length(moments)))
+  }, numeric(length(moments))), nrow = length(moments))
+  n <- rowSums(at_risk)
+  d <- rowSums(deaths)
+  share <- at_risk / n
+  expected <- colSums(d * share)
+  difference <- colSums(deaths) - expected
+  weight <- ifelse(n > 1, d * (n - d) / (n - 1), 0)
+  variance <- diag(colSums(weight * share), length(labels)) - crossprod(share * weight, share)
   kept <- which(expected > 0)
   if (length(kept) < 2) return(undefined)
   used <- kept[-1]

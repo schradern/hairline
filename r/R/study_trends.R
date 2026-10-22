@@ -94,15 +94,17 @@ hl_over_time <- function(study, date, value, window = 7) {
   })
   means <- vapply(found[names], function(group) study_mean_text(group$mean, digits, whole), character(1),
                   USE.NAMES = FALSE)
-  figure <- hl_timeseries(data[order(data[[date]]), , drop = FALSE], date, value,
-                          by = if (!is.null(study$roles$group)) key, order = names, window = window,
-                          title = paste(study_label(study, value), "over time"))
   unit <- study_measure(study, value)
-  if (!is.null(unit)) figure <- figure + ggplot2::labs(y = unit)
+  figure <- study_figure("over_time", names, "groups", function() {
+    drawn <- hl_timeseries(data[order(data[[date]]), , drop = FALSE], date, value,
+                           by = if (!is.null(study$roles$group)) key, order = names, window = window,
+                           title = paste(study_label(study, value), "over time"))
+    if (is.null(unit)) drawn else drawn + ggplot2::labs(y = unit)
+  })
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "mean (SD)", "median (IQR)")
   counted <- study_counted_rows(study, c(list(variable = value), study_group_role(study), list(date = date)))
   text <- paste0(sprintf("%s, mean over the period: %s.", study_label_unit(study, value),
-                         listed_text(paste(names, means))), left_out_text(counted, "rows"))
+                         listed_text(paste(names, means))), left_out_text(counted, c("row", "rows")))
   study_result(figure, table, stats::setNames(as.list(means), names), text, list(rows = counted, groups = found))
 }

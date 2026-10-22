@@ -28,6 +28,8 @@ def group_thousands(integer_part: str, separator: str) -> str:
 
 
 ROUNDING_TOLERANCE = 1e-9
+SNAP_DIGITS = 10
+SNAP_SIGNIFICANT = 6
 SIGNIFICANT = 15
 MISSING = "–"
 
@@ -102,19 +104,38 @@ def places_for(size: float) -> int:
     return max(0, math.ceil(-math.log10(size) - ROUNDING_TOLERANCE))
 
 
+def snap_noise(value: float) -> float:
+    """`value` without float noise before it is formatted (R and numpy reach the same quantile by different
+    arithmetic): rounded to ten decimals, or to more where those would round a small value away (1e-11)."""
+    value = float(value)
+    if not value or not math.isfinite(value):
+        return value
+    return round(value, max(SNAP_DIGITS, places_for(abs(value)) + SNAP_SIGNIFICANT))
+
+
 def significant_places(value: float, least: int = 2) -> int:
     """Decimals that show `value` with two significant digits, at least `least` (a slope of 0.000407 is 0.00041,
     not 0.00), up to study.max_digits."""
     if not value or not math.isfinite(value):
         return least
-    return min(max(least, places_for(abs(value)) + 1), load_tokens()["study"]["max_digits"])
+    return capped_places(max(least, places_for(abs(value)) + 1), abs(value))
+
+
+def capped_places(places: int, magnitude: float) -> int:
+    """`places` up to study.max_digits, unless the magnitude (above zero) needs that many to show at all: then two
+    significant digits of it, so values near 1e-9 read 0.0000000012, not 0.000000."""
+    most = load_tokens()["study"]["max_digits"]
+    if magnitude > 0 and places_for(magnitude) >= most:
+        return places_for(magnitude) + 1
+    return min(places, most)
 
 
 def auto_digits(values) -> int:
     """Decimals for values and their quantiles: none for whole numbers (counts, scores), otherwise by the median
     magnitude: none from 10, one from 1, two below (tokens study.digit_steps). More where the interquartile range
     (or, without one, the magnitude) would round away, so 1000.2 ± 0.1 and 0.0004 keep their digits, up to
-    study.max_digits. Means take one more for whole data."""
+    study.max_digits; values too small to show within it keep two significant digits. Means take one more for whole
+    data."""
     import numpy as np
     array = np.asarray(values, dtype=float)
     array = array[np.isfinite(array)]
@@ -129,4 +150,4 @@ def auto_digits(values) -> int:
     for size in (spread, magnitude):
         if size > 0:
             digits = max(digits, places_for(size))
-    return min(digits, rules["max_digits"])
+    return capped_places(digits, magnitude)

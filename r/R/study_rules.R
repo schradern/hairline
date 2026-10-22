@@ -6,8 +6,9 @@ time_findings <- function(data, column, limit) {
   values[study_is_missing(raw)] <- NA
   bad <- is.na(values) | (!is.na(values) & (values < 0 | is.infinite(values)))
   if (!any(bad)) return(list())
-  list(study_finding("error", column, sprintf("%s follow-up times are missing, negative, infinite or not numbers",
-                                              count_text(sum(bad))),
+  problem <- if (sum(bad) == 1) "is missing, negative, infinite or not a number" else
+    "are missing, negative, infinite or not numbers"
+  list(study_finding("error", column, paste(counted_text(sum(bad), c("follow-up time", "follow-up times")), problem),
                      row_numbers(bad, limit), "correct or drop these rows; times count from the start of follow-up"))
 }
 
@@ -19,7 +20,10 @@ event_findings <- function(data, column, limit) {
     rep(FALSE, length(values))
   }
   if (all(valid)) return(list())
-  list(study_finding("error", column, sprintf("%s event values are not 0/1 (or TRUE/FALSE)", count_text(sum(!valid))),
+  count <- sum(!valid)
+  problem <- sprintf("%s %s not 0/1 (or TRUE/FALSE)", counted_text(count, c("event value", "event values")),
+                     if (count == 1) "is" else "are")
+  list(study_finding("error", column, problem,
                      row_numbers(!valid, limit), "code events as 1 (event) and 0 (censored)"))
 }
 
@@ -31,9 +35,8 @@ group_findings <- function(data, column, groups, limit) {
   for (name in groups) {
     size <- sum(labels == name, na.rm = TRUE)
     if (size < hl_tokens()$study$small_group) {
-      findings[[length(findings) + 1]] <- study_finding("warning", column,
-                                                        sprintf("group '%s' has %s rows", name, count_text(size)),
-                                                        integer(),
+      problem <- sprintf("group '%s' has %s", name, counted_text(size, study_rows))
+      findings[[length(findings) + 1]] <- study_finding("warning", column, problem, integer(),
                                                         "merge it with a similar group or leave it out of comparisons")
     }
   }
@@ -56,7 +59,8 @@ id_findings <- function(data, column, limit) {
   texts <- level_text(data[[column]])
   repeated <- !missing & duplicated(ifelse(missing, NA, texts), incomparables = NA)
   if (!any(repeated)) return(list())
-  list(study_finding("warning", column, sprintf("%s rows repeat an id", count_text(sum(repeated))),
+  list(study_finding("warning", column, sprintf("%s %s an id", counted_text(sum(repeated), study_rows),
+                                                if (sum(repeated) == 1) "repeats" else "repeat"),
                      row_numbers(repeated, limit), "keep one row per id, or leave out the id role if rows are visits"))
 }
 

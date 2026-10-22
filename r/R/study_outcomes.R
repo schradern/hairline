@@ -111,19 +111,21 @@ hl_survival <- function(study, fit = NULL) {
   title <- if (grouped_by) paste("Survival by", study_in_sentence(study, study$roles$group)) else "Survival"
   x_title <- if (is.null(time)) "Time" else study_label_unit(study, time)
   key <- if (is.null(p)) character() else c(`Log-rank` = p)
-  figure <- if (is.null(fit)) {
-    hl_kaplan_meier(data, time, event, by = if (!is.null(study$roles$group)) group_key, order = names,
-                    title = title, x_title = x_title, test = FALSE, stats = key)
-  } else {
-    hl_kaplan_meier(fit, title = title, x_title = x_title, stats = key)
-  }
+  figure <- study_figure("survival", names, "groups", function() {
+    if (is.null(fit)) {
+      hl_kaplan_meier(data, time, event, by = if (!is.null(study$roles$group)) group_key, order = names,
+                      title = title, x_title = x_title, test = FALSE, stats = key)
+    } else {
+      hl_kaplan_meier(fit, title = title, x_title = x_title, stats = key)
+    }
+  })
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c("Group", "n", "Events", "Median")
   # Time and event cannot be missing: the study's checks block hl_survival() then.
   found <- c(if (has_data) list(rows = study_counted_rows(study, study_group_role(study))),
              list(groups = estimated$numbers),
              if (!is.null(test)) list(test = test))
-  text <- paste0(survival_text(study, rows, grouped, p), if (has_data) left_out_text(found$rows, study$unit))
+  text <- paste0(survival_text(study, rows, grouped, p), if (has_data) left_out_text(found$rows, study_nouns(study)))
   study_result(figure, table, values, text, found)
 }
 

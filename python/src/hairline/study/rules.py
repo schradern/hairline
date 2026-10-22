@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from hairline.study.checks import Finding, count_text, missing_values, spellings
+from hairline.study.checks import ROWS, Finding, counted_text, missing_values, spellings
 from hairline.study.columns import is_missing, level_text, row_numbers
 from hairline.tokens import load_tokens
 
@@ -15,8 +15,11 @@ def time_findings(data: pd.DataFrame, column: str, limit: int) -> list[Finding]:
     bad = values.isna() | (values < 0) | np.isinf(values)
     if not bad.any():
         return []
-    return [Finding("error", column, f"{count_text(int(bad.sum()))} follow-up times are missing, negative, infinite "
-                    "or not numbers", tuple(row_numbers(bad, limit)),
+    count = int(bad.sum())
+    problem = "is missing, negative, infinite or not a number" if count == 1 else \
+        "are missing, negative, infinite or not numbers"
+    return [Finding("error", column, f"{counted_text(count, ('follow-up time', 'follow-up times'))} {problem}",
+                    tuple(row_numbers(bad, limit)),
                     "correct or drop these rows; times count from the start of follow-up")]
 
 
@@ -32,7 +35,9 @@ def event_findings(data: pd.DataFrame, column: str, limit: int) -> list[Finding]
     bad = ~data[column].map(is_event_value).astype(bool)
     if not bad.any():
         return []
-    return [Finding("error", column, f"{count_text(int(bad.sum()))} event values are not 0/1 (or TRUE/FALSE)",
+    count = int(bad.sum())
+    return [Finding("error", column, f"{counted_text(count, ('event value', 'event values'))} "
+                                     f"{'is' if count == 1 else 'are'} not 0/1 (or TRUE/FALSE)",
                     tuple(row_numbers(bad, limit)), "code events as 1 (event) and 0 (censored)")]
 
 
@@ -43,7 +48,7 @@ def group_findings(data: pd.DataFrame, column: str, groups: list[str], limit: in
     for name in groups:
         size = int((labels == name).sum())
         if size < load_tokens()["study"]["small_group"]:
-            findings.append(Finding("warning", column, f"group '{name}' has {count_text(size)} rows", (),
+            findings.append(Finding("warning", column, f"group '{name}' has {counted_text(size, ROWS)}", (),
                                     "merge it with a similar group or leave it out of comparisons"))
     return findings
 
@@ -66,6 +71,7 @@ def id_findings(data: pd.DataFrame, column: str, limit: int) -> list[Finding]:
         return []
     mask = pd.Series(False, index=ids.index)
     mask[present.index[repeated.to_numpy()]] = True
-    return [Finding("warning", column, f"{count_text(int(repeated.sum()))} rows repeat an id",
+    count = int(repeated.sum())
+    return [Finding("warning", column, f"{counted_text(count, ROWS)} {'repeats' if count == 1 else 'repeat'} an id",
                     tuple(row_numbers(mask, limit)),
                     "keep one row per id, or leave out the id role if rows are visits")]

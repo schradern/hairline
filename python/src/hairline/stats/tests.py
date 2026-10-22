@@ -53,19 +53,25 @@ def logrank(time: Sequence[float], event: Sequence[int], group: Sequence[str]) -
     fewer than two such groups, or a singular variance (every event at one time), the test is undefined: p is NaN."""
     time, event = np.asarray(time, dtype=float), np.asarray(event, dtype=float)
     labels = list(dict.fromkeys(group))
-    member = np.array([[name == label for name in group] for label in labels])
-    observed_minus_expected, variance = np.zeros(len(labels)), np.zeros((len(labels), len(labels)))
-    expected = np.zeros(len(labels))
     undefined = {"chisq": math.nan, "df": len(labels) - 1, "p": math.nan}
-    for moment in np.unique(time[event == 1]):
-        at_risk = (member & (time >= moment)).sum(axis=1).astype(float)
-        deaths = (member & (time == moment) & (event == 1)).sum(axis=1).astype(float)
-        n, d = at_risk.sum(), deaths.sum()
-        share = at_risk / n
-        expected += d * share
-        observed_minus_expected += deaths - d * share
-        if n > 1:
-            variance += d * (n - d) / (n - 1) * (np.diag(share) - np.outer(share, share))
+    moments = np.unique(time[event == 1])
+    if not len(moments):
+        return undefined
+    # Each group's number at risk and deaths at every event time, from its sorted times at once: linear in the rows.
+    names = np.asarray(list(group), dtype=object)
+    at_risk, deaths = np.zeros((len(moments), len(labels))), np.zeros((len(moments), len(labels)))
+    for column, label in enumerate(labels):
+        member = names == label
+        times = np.sort(time[member])
+        at_risk[:, column] = len(times) - np.searchsorted(times, moments, side="left")
+        dead = np.searchsorted(moments, time[member & (event == 1)])
+        deaths[:, column] = np.bincount(dead, minlength=len(moments))
+    n, d = at_risk.sum(axis=1), deaths.sum(axis=1)
+    share = at_risk / n[:, None]
+    expected = (d[:, None] * share).sum(axis=0)
+    observed_minus_expected = deaths.sum(axis=0) - expected
+    weight = np.where(n > 1, d * (n - d) / np.maximum(n - 1, 1), 0.0)
+    variance = np.diag((weight[:, None] * share).sum(axis=0)) - (share * weight[:, None]).T @ share
     kept = np.flatnonzero(expected > 0)
     if len(kept) < 2:
         return undefined

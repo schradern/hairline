@@ -21,6 +21,16 @@ from hairline.tokens import load_tokens
 ROOT_MARKERS = (".git", "_quarto.yml", "pyproject.toml", "DESCRIPTION")
 NEUTRAL_KEYS = ("muted", "faint", "grid", "axis", "band")
 OUTPUTS = ("screen", "pdf", "html", "docx")
+# The shape of each section hairline reads, one rule in both packages: a mapping names its values; a list may be
+# written as its single value (R's yaml reads `[harbor]` and `harbor` alike).
+MAPPINGS = {"meta": "its details (name: ...)", "color": "colour roles to colours",
+            "color.palette": "colour names to hex values", "typography": "its parts (fonts, base, headings)",
+            "defaults": "tools to their settings", "defaults.hairline": "settings to values",
+            "defaults.hairline.colors": "entity names to palette names or hex values",
+            "defaults.hairline.groups": "group names to their members",
+            "defaults.hairline.sizes": "text roles to sizes in pt",
+            "defaults.hairline.outputs": "export types to their settings"}
+LISTS = ("typography.fonts", "defaults.hairline.categorical")
 
 
 @dataclass(frozen=True)
@@ -57,9 +67,32 @@ def merged(base: dict, layer: dict) -> dict:
     return result
 
 
+class UniqueKeyLoader(yaml.SafeLoader):
+    """YAML that refuses a key given twice in one mapping, as R's yaml does, instead of keeping the last."""
+
+    def construct_mapping(self, node, deep=False):
+        seen = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if isinstance(key, str) and key in seen:
+                raise yaml.constructor.ConstructorError(None, None, f"key '{key}' is given twice; give each key once",
+                                                        key_node.start_mark)
+            seen.add(key if isinstance(key, str) else id(key_node))
+        return super().construct_mapping(node, deep)
+
+
+def as_list(value: Any) -> list | None:
+    """A list as given, one value as a list of one, nothing as an empty list; None for a mapping."""
+    if value is None:
+        return []
+    if isinstance(value, dict):
+        return None
+    return list(value) if isinstance(value, list) else [value]
+
+
 def read_layer(path: Path) -> dict:
     try:
-        content = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        content = yaml.load(path.read_text(encoding="utf-8"), Loader=UniqueKeyLoader) or {}
     except FileNotFoundError as error:
         raise ValueError(f"hairline: brand file {path} does not exist") from error
     except yaml.YAMLError as error:
@@ -88,18 +121,41 @@ class BrandFile:
         for layer in layers:
             content = merged(content, layer)
         self.layers, self.output = layers, output
+        self.check_shapes(content)
         self.content = self.for_output(content, output)
+        self.check_shapes(self.content)
 
     def for_output(self, content: dict, output: str | None) -> dict:
         """Apply `defaults.hairline.outputs.<output>` after all layers."""
         hairline = (content.get("defaults") or {}).get("hairline") or {}
         outputs = hairline.get("outputs") or {}
-        for name in outputs:
+        for name, override in outputs.items():
             if name not in OUTPUTS:
                 raise self.fail(f"defaults.hairline.outputs.{name}", f"must be one of {', '.join(OUTPUTS)}")
-        if output is None or output not in outputs:
+            if override is not None and not isinstance(override, dict):
+                raise self.fail(f"defaults.hairline.outputs.{name}", f"must be a mapping of settings; got {override!r}")
+        if output is None or not outputs.get(output):
             return content
         return merged(content, {"defaults": {"hairline": outputs[output]}})
+
+    def check_shapes(self, content: dict) -> None:
+        """Each section hairline reads in its shape (MAPPINGS, LISTS); a font entry is a mapping."""
+        def value_at(dotted: str) -> Any:
+            value: Any = content
+            for key in dotted.split("."):
+                value = value.get(key) if isinstance(value, dict) else None
+            return value
+        for key, what in MAPPINGS.items():
+            value = value_at(key)
+            if value is not None and not isinstance(value, dict) and value != []:
+                raise self.fail(key, f"must map {what}; got {value!r}")
+        for key in LISTS:
+            if as_list(value_at(key)) is None:
+                raise self.fail(key, f"must list its entries; got the mapping {value_at(key)!r}")
+        for index, entry in enumerate(as_list(value_at("typography.fonts")) or []):
+            if not isinstance(entry, dict):
+                raise self.fail(f"typography.fonts[{index}]", f"must be a mapping with family and source; got "
+                                                             f"{entry!r}")
 
     def get(self, dotted: str, default: Any = None) -> Any:
         value: Any = self.content
@@ -133,6 +189,7 @@ def resolve_color(source: BrandFile, key: str, value: Any, palette: dict[str, st
 
 def categorical_section(source: BrandFile, palette: dict[str, str]) -> tuple[list[str], list[str]]:
     entries = source.get("defaults.hairline.categorical")
+    entries = None if entries is None else as_list(entries)
     if entries is None:
         entries = [source.get(f"color.{role}") for role in ("primary", "secondary", "tertiary")]
         entries = [entry for entry in entries if entry is not None]
@@ -176,8 +233,8 @@ def neutral_section(source: BrandFile, palette: dict[str, str]) -> dict[str, str
 
 
 def register_brand_fonts(source: BrandFile) -> None:
-    for index, entry in enumerate(source.get("typography.fonts", []) or []):
-        kind = entry.get("source", "system") if isinstance(entry, dict) else "system"
+    for index, entry in enumerate(as_list(source.get("typography.fonts")) or []):
+        kind = entry.get("source", "system")
         if kind == "file":
             for file_index, file_entry in enumerate(entry.get("files", []) or []):
                 file_path = file_entry.get("path") if isinstance(file_entry, dict) else file_entry
@@ -229,11 +286,16 @@ def brand_paths(path: str | os.PathLike | list) -> list[Path]:
     return paths
 
 
+def check_output(output: str | None) -> None:
+    """An export type hairline knows, with or without a brand: a mistyped one would apply no overrides silently."""
+    if output is not None and output not in OUTPUTS:
+        raise ValueError(f"hairline: output {output!r} must be one of {', '.join(OUTPUTS)}")
+
+
 def load_brand(path: str | os.PathLike | list, output: str | None = None) -> Brand:
     """Parse a `_brand.yml` file, or layers from institution to document (later layers override earlier ones);
     `output` applies that export type's overrides. Raises ValueError naming the file, key and value."""
-    if output is not None and output not in OUTPUTS:
-        raise ValueError(f"hairline: output {output!r} must be one of {', '.join(OUTPUTS)}")
+    check_output(output)
     source = BrandFile(brand_paths(path), output)
     palette = palette_section(source)
     names, given = categorical_section(source, palette)

@@ -48,6 +48,7 @@ def grouped_entities(colors: dict[str, str], groups: dict, fail) -> dict[str, st
         key = f"defaults.hairline.groups.{group}"
         if group not in colors:
             raise fail(key, f"group {group!r} needs a colour in defaults.hairline.colors")
+        members = [members] if isinstance(members, (str, int, float)) else members
         if not isinstance(members, list) or not members:
             raise fail(key, "must list the group's members")
         for member, shade in zip(members, tints(colors[group], len(members)), strict=True):

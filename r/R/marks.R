@@ -4,11 +4,14 @@ series_colors <- function(categories, palette_name = NULL) {
   stats::setNames(hl_palette(palette_name, n = length(categories)), categories)
 }
 
+# Checked once per distinct colour: built layer data repeats a series' colour on every row.
 is_light_colour <- function(colours, surface) {
   limit <- hl_tokens()$checks$contrast_light_slot
-  vapply(colours, function(colour) {
+  distinct <- unique(colours)
+  light <- vapply(distinct, function(colour) {
     !is.na(colour) && grepl("^#[0-9a-fA-F]{6}$", colour) && contrast_ratio(colour, surface) < limit
   }, logical(1))
+  stats::setNames(light[match(colours, distinct)], colours)
 }
 
 surface_colour <- function(settings) {
@@ -64,7 +67,9 @@ adjust_point_layer <- function(data, light, layer, plot) {
   default_shape <- data$shape %in% c(16, 19)
   targets <- default_shape & light
   surface <- surface_colour(hl_settings())
-  data$colour[targets] <- vapply(data$colour[targets], point_fill, character(1), surface = surface)
+  distinct <- unique(data$colour[targets])
+  fills <- vapply(distinct, point_fill, character(1), surface = surface)
+  data$colour[targets] <- fills[match(data$colour[targets], distinct)]
   data$fill[default_shape] <- data$colour[default_shape]
   data$stroke[default_shape] <- 0
   data$shape[default_shape] <- 16

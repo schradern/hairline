@@ -77,14 +77,15 @@ hl_distribution <- function(study, variable, stats = "median_iqr") {
   data[[variable]] <- study_as_number(data[[variable]])
   names <- if (is.null(study$roles$group)) study_overall(study) else
     Filter(function(name) found[[name]]$n > 0, names(found)[-length(found)])
-  figure <- hl_spread(data, study_group_key(study), variable, order = names,
-                      title = study_by_title(study, study_label(study, variable)),
-                      axis_title = study_measure(study, variable))
+  figure <- study_figure("distribution", names, "groups", function() {
+    hl_spread(data, study_group_key(study), variable, order = names,
+              title = study_by_title(study, study_label(study, variable)), axis_title = study_measure(study, variable))
+  })
   shown <- if (is.null(study$roles$group)) rows else rows[-length(rows)]
   counted <- study_counted_rows(study, c(list(variable = variable), study_group_role(study)), in_overall = TRUE)
   text <- paste0(sprintf("%s, %s: %s.", label, study_stat_labels[[stats[1]]],
                          listed_text(vapply(shown, function(row) paste(row[1], row[3]), character(1)))),
-                 left_out_text(counted, study$unit, in_overall = TRUE), overall_only_text(counted))
+                 left_out_text(counted, study_nouns(study), in_overall = TRUE), overall_only_text(counted))
   values <- list(groups = stats::setNames(lapply(rows, `[[`, 3), vapply(rows, `[[`, character(1), 1)))
   study_result(figure, table, values, text, list(rows = counted, groups = found))
 }
@@ -145,12 +146,15 @@ compare_numeric <- function(study, variable) {
   values <- c(list(groups = stats::setNames(as.list(summaries), names)),
               if (!is.null(test)) list(test = test$method, p = format_p(test$p)))
   data[[variable]] <- study_as_number(data[[variable]])
-  figure <- hl_spread(data, study_group_key(study), variable, order = names,
-                      title = study_by_title(study, study_label(study, variable)),
-                      subtitle = if (!is.null(test)) test_text(test), axis_title = study_measure(study, variable))
+  figure <- study_figure("compare", names, "groups", function() {
+    hl_spread(data, study_group_key(study), variable, order = names,
+              title = study_by_title(study, study_label(study, variable)),
+              subtitle = if (!is.null(test)) test_text(test), axis_title = study_measure(study, variable))
+  })
   counted <- study_counted_rows(study, c(list(variable = variable), study_group_role(study)))
   text <- paste0(label, ", median (IQR): ", listed_text(paste(names, summaries)),
-                 if (!is.null(test)) sprintf(" (%s).", test_text(test)) else ".", left_out_text(counted, study$unit))
+                 if (!is.null(test)) sprintf(" (%s).", test_text(test)) else ".",
+                 left_out_text(counted, study_nouns(study)))
   study_result(figure, table, values, text,
                c(list(rows = counted, groups = found), if (!is.null(test)) list(test = test)))
 }
@@ -185,11 +189,13 @@ compare_categorical <- function(study, variable) {
   }
   table <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
   names(table) <- c(label, names)
-  figure <- hl_bars(data, study_group_key(study), by = variable, stacked = TRUE, percent = TRUE, horizontal = TRUE,
-                    order = names, title = study_by_title(study, label))
+  figure <- study_figure("compare", kinds, sprintf("categories of '%s'", variable), function() {
+    hl_bars(data, study_group_key(study), by = variable, stacked = TRUE, percent = TRUE, horizontal = TRUE,
+            order = names, title = study_by_title(study, label))
+  })
   counted <- study_counted_rows(study, c(list(variable = variable), study_group_role(study)))
   text <- paste0(study_by_title(study, label), if (!is.null(test)) sprintf(": %s.", test_text(test)) else ".",
-                 left_out_text(counted, study$unit))
+                 left_out_text(counted, study_nouns(study)))
   study_result(figure, table, values, text,
                c(list(rows = counted, groups = found), if (!is.null(test)) list(test = test)))
 }

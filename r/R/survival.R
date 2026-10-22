@@ -22,32 +22,29 @@ km_check_inputs <- function(time, event) {
   }
 }
 
+# The band per time; undefined (NA) where the survival reached 0 or the variance is infinite.
 km_band <- function(survival, variance) {
-  if (survival <= 0 || is.infinite(variance)) return(c(NA_real_, NA_real_))
   spread <- stats::qnorm(0.975) * sqrt(variance)
-  c(survival * exp(-spread), min(1, survival * exp(spread)))
+  undefined <- survival <= 0 | is.infinite(variance)
+  list(low = ifelse(undefined, NA_real_, survival * exp(-spread)),
+       high = ifelse(undefined, NA_real_, pmin(1, survival * exp(spread))))
 }
 
+# One row per distinct time, counted in one pass over the sorted times (linear in the rows, as in Python).
 km_estimate <- function(time, event) {
   time <- as.numeric(time)
   event <- as.numeric(event)
   km_check_inputs(time, event)
-  survival <- 1
-  variance <- 0
-  rows <- list()
-  for (moment in sort(unique(time))) {
-    at_risk <- sum(time >= moment)
-    events <- sum(time == moment & event == 1)
-    if (events > 0) {
-      survival <- survival * (1 - events / at_risk)
-      variance <- variance + if (at_risk > events) events / (at_risk * (at_risk - events)) else Inf
-    }
-    limits <- km_band(survival, variance)
-    rows[[length(rows) + 1]] <- data.frame(time = moment, at_risk = at_risk, events = events,
-                                           censored = sum(time == moment & event == 0), survival = survival,
-                                           low = limits[1], high = limits[2])
-  }
-  do.call(rbind, rows)
+  moments <- sort(unique(time))
+  position <- match(time, moments)
+  leaving <- tabulate(position, length(moments))
+  events <- tabulate(position[event == 1], length(moments))
+  at_risk <- length(time) - c(0, utils::head(cumsum(leaving), -1))
+  survival <- cumprod(ifelse(events > 0, 1 - events / at_risk, 1))
+  variance <- cumsum(ifelse(events == 0, 0, ifelse(at_risk > events, events / (at_risk * (at_risk - events)), Inf)))
+  limits <- km_band(survival, variance)
+  data.frame(time = moments, at_risk = at_risk, events = events, censored = leaving - events, survival = survival,
+             low = limits$low, high = limits$high)
 }
 
 median_tolerance <- sqrt(.Machine$double.eps)

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -16,14 +17,13 @@ from matplotlib.container import BarContainer
 
 from hairline.fonts import face_weight
 from hairline.marks import FIXED_WIDTH_IDS, SECONDARY_ID, STATIC_ID
-from hairline.numbers import auto_digits, format_number, format_percent
+from hairline.numbers import auto_digits, format_number, format_percent, snap_noise
 from hairline.settings import role_size
 from hairline.tokens import load_tokens
 
 if TYPE_CHECKING:
     from hairline.figure import HairlineFigure
 
-SNAP_DIGITS = 10
 
 
 def number_texts(values, percent: bool, digits: int | None = None, locale: str | None = None) -> list[str]:
@@ -32,9 +32,9 @@ def number_texts(values, percent: bool, digits: int | None = None, locale: str |
     array = np.asarray(values, dtype=float)
     if percent:
         digits = auto_digits(array * 100) if digits is None else digits
-        return [format_percent(round(float(value), SNAP_DIGITS), digits, locale) for value in array]
+        return [format_percent(snap_noise(value), digits, locale) for value in array]
     digits = auto_digits(array) if digits is None else digits
-    return [format_number(round(float(value), SNAP_DIGITS), digits, locale) for value in array]
+    return [format_number(snap_noise(value), digits, locale) for value in array]
 
 
 def axis_number_texts(figure: HairlineFigure, index: int, which: str, values) -> list[str]:
@@ -154,7 +154,10 @@ def bar_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         horizontal = getattr(container, "orientation", "vertical") == "horizontal"
         name = series_name(container.get_label(), figure, index)
         marks, tips, values = [], [], []
-        for patch in container.patches:
+        # A missing bar (all its values missing) is not drawn and gets no tooltip.
+        patches = [patch for patch in container.patches
+                   if math.isfinite(patch.get_width() if horizontal else patch.get_height())]
+        for patch in patches:
             low, high = to_pt(ax, (patch.get_x(), patch.get_y() + patch.get_height())), to_pt(
                 ax, (patch.get_x() + patch.get_width(), patch.get_y()))
             # A negative bar runs the other way; the target is the same box with its corners in order.
@@ -164,12 +167,12 @@ def bar_targets(figure: HairlineFigure, index: int, ax, to_pt) -> list[dict]:
         axis = "x" if horizontal else "y"
         texts = axis_number_texts(figure, index, axis, values)
         centres = [patch.get_y() + patch.get_height() / 2 if horizontal else patch.get_x() + patch.get_width() / 2
-                   for patch in container.patches]
+                   for patch in patches]
         labels = category_texts(figure, index, "y" if horizontal else "x", centres)
         for mark, label, value in zip(marks, labels, texts, strict=True):
             x, y, width, height = mark["rect"]
             tips.append({"at": [x + width / 2, y], "text": tip_text(name, f"{label}, {value}")})
-        found.append({"name": name, "color": to_hex(container.patches[0].get_facecolor()) if marks else "#000000",
+        found.append({"name": name, "color": to_hex(patches[0].get_facecolor()) if marks else "#000000",
                       "marks": marks, "tips": tips})
     return found
 

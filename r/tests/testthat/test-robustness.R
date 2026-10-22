@@ -727,8 +727,8 @@ test_that("study refuses order without a group, numbers values that are no numbe
   expect_error(suppressWarnings(hl_study(data, time = "t", event = "e", order = c("A", "B"))),
                "order lists groups, but no group column is given")
   study <- suppressWarnings(hl_study(data, group = "g", variables = c("x", "y"), types = c(y = "numeric")))
-  expect_error(hl_compare(study, "x"), "1 values are infinite \\('Inf'\\)")
-  expect_error(hl_distribution(study, "y"), "1 values are not numbers \\('<5'\\)")
+  expect_error(hl_compare(study, "x"), "1 value is infinite \\('Inf'\\)")
+  expect_error(hl_distribution(study, "y"), "1 value is not a number \\('<5'\\)")
   numeric <- transform(data, g = rep(c(2, 1), each = 4))
   expect_equal(suppressWarnings(hl_study(numeric, group = "g", variables = "t", order = c(2, 1)))$groups, c("2", "1"))
   factors <- data.frame(g = rep(c("A", "B"), each = 6),
@@ -905,4 +905,138 @@ test_that("a nested donut key with many rows grows the figure", {
   extent <- drawn_extent(hl_donut(data, levels = c("p", "c")), 120)
   expect_gte(extent$top, extent$box[2] - 0.01)
   expect_lte(extent$bottom, extent$size[2])
+})
+
+# Deferred findings of the 0.2.0 stress test.
+
+many_groups <- function(groups = 10, sites = 12) {
+  set.seed(1)
+  data.frame(arm = paste0("G", (0:399) %% groups), age = stats::rnorm(400, 60, 10),
+             site = paste0("S", (0:399) %% sites), time = stats::rexp(400, 0.1), event = stats::rbinom(400, 1, 0.5))
+}
+
+test_that("study endpoints with more groups than colours keep table, values and text", {
+  hl_use(brand = FALSE)
+  study <- suppressWarnings(hl_study(many_groups(), group = "arm", time = "time", event = "event",
+                                     variables = c("age", "site"), units = c(age = "years", time = "months")))
+  calls <- list(function() hl_describe(study), function() hl_compare(study, "age"),
+                function() hl_distribution(study, "age"), function() hl_survival(study))
+  for (call in calls) {
+    expect_warning(result <- call(), "10 groups need more colours than the 8 of palette 'daylight', so the result")
+    expect_null(result$figure)
+    expect_gt(nrow(result$table), 0)
+    expect_true(length(result$values) > 0 && nzchar(result$text))
+  }
+  expect_warning(result <- hl_compare(study, "site"), "12 categories of 'site' need more colours than the 8")
+  expect_null(result$figure)
+  narrow <- hl_study(many_groups(8, 8), group = "arm", variables = c("age", "site"), units = c(age = "years"))
+  expect_false(is.null(hl_compare(narrow, "site")$figure))
+})
+
+test_that("Kaplan-Meier and the log-rank test count each group once and keep their values", {
+  set.seed(4)
+  data <- data.frame(time = round(stats::rexp(100000, 0.1), 1), event = stats::rbinom(100000, 1, 0.6),
+                     arm = sample(c("A", "B", "C"), 100000, TRUE))
+  elapsed <- system.time({
+    found <- logrank_test(data$time, data$event, data$arm)
+    table <- km_estimate(data$time[data$arm == "A"], data$event[data$arm == "A"])
+  })[["elapsed"]]
+  expect_lt(elapsed, 10)
+  expect_equal(found$chisq, survival::survdiff(survival::Surv(time, event) ~ arm, data)$chisq, tolerance = 1e-9)
+  fit <- survival::survfit(survival::Surv(time, event) ~ 1, data[data$arm == "A", ])
+  expect_equal(table$survival, fit$surv, tolerance = 1e-12)
+  expect_equal(table$at_risk, fit$n.risk)
+  expect_equal(table$low, fit$lower, tolerance = 1e-12)
+})
+
+test_that("values near zero keep two significant digits", {
+  hl_use(brand = FALSE)
+  for (case in list(list(1e-9, "0.0000000012"), list(1e-11, "0.000000000012"))) {
+    values <- seq(0.8, 1.6, length.out = 61) * case[[1]]
+    expect_equal(hl_format_number(snap_noise(stats::median(values)), auto_digits(values)), case[[2]])
+    study <- hl_study(data.frame(value = values), units = c(value = "mol"))
+    expect_true(startsWith(hl_describe(study)$table[2, 2], case[[2]]))
+    plot <- hl_spread(data.frame(group = "A", value = values), "group", "value", stats = "median")
+    path <- withr::local_tempfile()
+    svg <- paste(readLines(hl_save(plot, path, formats = "svg")), collapse = "")
+    expect_match(svg, case[[2]], fixed = TRUE)
+    expect_false(grepl(">0.000000<", svg, fixed = TRUE))
+  }
+  expect_equal(c(auto_digits(c(0.0004, 0.00041)), auto_digits(c(12.3, 14.1)), auto_digits(c(1000.2, 1000.4))),
+               c(6, 1, 1))
+})
+
+test_that("a figure that cannot be laid out is a layout error from hl_save", {
+  hl_use(brand = FALSE)
+  plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
+    ggplot2::facet_wrap(~cyl, ncol = 1) + ggplot2::labs(title = "T") + theme_hairline()
+  folder <- withr::local_tempdir()
+  error <- tryCatch(hl_save(plot, file.path(folder, "small"), formats = c("png", "svg"), width_mm = 60,
+                            height_mm = 20, dpi = 72), error = function(error) error)
+  expect_s3_class(error, "hairline_layout_error")
+  expect_match(conditionMessage(error), "figure too small")
+  expect_length(list.files(folder, all.files = TRUE, no.. = TRUE), 0)
+})
+
+robustness_brand <- function(text) {
+  path <- withr::local_tempfile(fileext = ".yml", .local_envir = parent.frame())
+  writeLines(c("color:", "  palette:", "    harbor: \"#0b3d6e\"", "    poppy: \"#f2545b\"", text), path)
+  path
+}
+
+test_that("brand sections in the wrong shape name the key", {
+  cases <- list(c("typography:\n  fonts: nope", "typography.fonts[0]: must be a mapping with family and source"),
+                c("defaults:\n  hairline:\n    colors: [harbor]", "defaults.hairline.colors: must map entity names"),
+                c("defaults:\n  hairline:\n    sizes: [1, 2]", "defaults.hairline.sizes: must map text roles to sizes"),
+                c("defaults:\n  hairline:\n    outputs: [pdf]", "defaults.hairline.outputs: must map export types"),
+                c("defaults:\n  hairline:\n    groups: harbor", "defaults.hairline.groups: must map group names"),
+                c("defaults: yes", "defaults: must map tools to their settings"),
+                c("meta: Example", "meta: must map its details"))
+  for (case in cases) expect_error(hl_use(brand = robustness_brand(case[1])), case[2], fixed = TRUE)
+  path <- withr::local_tempfile(fileext = ".yml")
+  writeLines(c("color:", "  palette: [\"#0b3d6e\", \"#f2545b\"]"), path)
+  expect_error(hl_use(brand = path), "color.palette: must map colour names to hex values", fixed = TRUE)
+  brand <- hl_load_brand(robustness_brand("defaults:\n  hairline:\n    categorical: harbor"))
+  expect_equal(brand$names, "harbor")
+  writeLines(c("color:", "  palette:", "    harbor: \"#0b3d6e\"", "    harbor: \"#f2545b\""), path)
+  expect_error(hl_load_brand(path), "key 'harbor' is given twice; give each key once", fixed = TRUE)
+})
+
+test_that("a dpi too low for text is refused", {
+  plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() + theme_hairline()
+  expect_error(hl_save(plot, withr::local_tempfile(), formats = "png", dpi = 1),
+               "dpi must be at least 20, below which text is smaller than a pixel")
+})
+
+test_that("a bar without a value has no bar, label or tooltip", {
+  hl_use(brand = FALSE)
+  data <- data.frame(name = c("Alpha", "Beta", "Gamma", "Delta"), value = c(3, 5.5, NA, 2))
+  path <- hl_save(hl_bars(data, "name", "value", sort = "given"), withr::local_tempfile(), formats = "html")
+  html <- paste(readLines(path, warn = FALSE), collapse = "")
+  expect_false(grepl("Gamma, ", html, fixed = TRUE))
+  expect_match(html, "Delta, 2.0", fixed = TRUE)
+  built <- ggplot2::ggplot_build(hl_bars(data, "name", "value", sort = "given"))
+  labels <- unlist(lapply(built@data, function(layer) layer$label))
+  expect_equal(sort(labels), sort(c("3.0", "5.5", "2.0")))
+  grouped <- data.frame(name = c("A", "A", "B", "B"), g = c("x", "y", "x", "y"), value = c(3, NA, 2, 1))
+  stacked <- ggplot2::ggplot_build(hl_bars(grouped, "name", "value", by = "g", stacked = TRUE))
+  labels <- unlist(lapply(stacked@data, function(layer) layer$label))
+  expect_equal(sort(labels[nzchar(labels)]), sort(c("3", "2", "1", "3", "3")))
+})
+
+test_that("study texts count one row in the singular", {
+  study <- suppressWarnings(hl_study(data.frame(arm = "A", age = 61.5), group = "arm", units = c(age = "years")))
+  expect_true(startsWith(hl_describe(study)$text, "1 participant: 1 in A."))
+  printed <- utils::capture.output(print(study))
+  expect_true(startsWith(printed[1], "Study of 1 participant: group = arm; 1 variable"))
+  expect_true(any(grepl("group 'A' has 1 row.", printed, fixed = TRUE)))
+  mice <- suppressWarnings(hl_study(data.frame(weight = c(21.5, 23, NA)), units = c(weight = "g"),
+                                    unit = c("mouse", "mice")))
+  expect_true(startsWith(hl_describe(mice)$text, "3 mice."))
+  expect_equal(hl_describe(hl_study(data.frame(weight = 21.5), unit = c("mouse", "mice")))$text, "1 mouse.")
+  expect_error(hl_study(data.frame(weight = 21.5), unit = 3), "unit must be a plural noun")
+})
+
+test_that("an unknown output is refused without a brand", {
+  expect_error(hl_use(output = "epub", brand = FALSE), "output 'epub' must be one of screen, pdf, html, docx")
 })

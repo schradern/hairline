@@ -10,10 +10,10 @@ static_layer <- function(layer) {
 interactive_numbers <- function(values, percent, digits = NULL) {
   if (percent) {
     digits <- digits %||% auto_digits(values * 100)
-    return(vapply(values, function(value) hl_format_percent(round(value, 10), digits), character(1)))
+    return(vapply(values, function(value) hl_format_percent(snap_noise(value), digits), character(1)))
   }
   digits <- digits %||% auto_digits(values)
-  vapply(values, function(value) hl_format_number(round(value, 10), digits), character(1))
+  vapply(values, function(value) hl_format_number(snap_noise(value), digits), character(1))
 }
 
 is_percent_scale <- function(scale) isTRUE(scale$hairline$percent)

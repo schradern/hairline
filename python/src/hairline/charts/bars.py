@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 
 import pandas as pd
@@ -28,14 +29,15 @@ from hairline.tokens import load_tokens
 
 def bar_table(data: pd.DataFrame, category: str, value: str, by: str | None, order: Sequence[str] | None,
               sort: str) -> tuple[pd.DataFrame, list[str], list[str]]:
-    """Sums per category (and group), the category order and the group order."""
+    """Sums per category (and group), the category order and the group order. A cell whose values are all missing
+    stays missing (no bar, label or tooltip); for sorting and percent totals it counts as zero."""
     columns = list(dict.fromkeys([category] + ([by] if by else [])))
     check_labels(data, columns, "bars")
     check_present(data, value, "bars")
     check_numeric(data, [value], "bars")
     names = ordered_names(data[category], order or None, "bars", category)
     groups = group_names(data[by]) if by else [""]
-    table = data.groupby(columns, sort=False, observed=True)[value].sum().reset_index()
+    table = data.groupby(columns, sort=False, observed=True)[value].sum(min_count=1).reset_index()
     table[category] = table[category].astype(str)
     if sort == "value" and not order:
         totals = table.groupby(category, sort=False)[value].sum()
@@ -55,8 +57,13 @@ def bar_values(table: pd.DataFrame, category: str, value: str, by: str | None, n
     if percent:
         check_percent_values(table, category, value)
         check_percent_totals(totals, names)
-    sums = rows.groupby(category)[value].sum()
+    sums = rows.groupby(category)[value].sum(min_count=1)
     return [float(sums.get(name, 0.0)) / (float(totals[name]) if percent else 1.0) for name in names]
+
+
+def without_missing(heights: list[float]) -> list[float]:
+    """Heights for stacking and reach: a missing bar takes no room."""
+    return [0.0 if math.isnan(height) else height for height in heights]
 
 
 def check_percent_values(table: pd.DataFrame, category: str, value: str) -> None:
@@ -118,7 +125,7 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
         {"linewidth": 0}
     options = {**options, "largest": max_total(table, category, value, by, names, groups, options),
                "digits": auto_digits(table[value].to_numpy(dtype=float))}
-    ends = 0.0
+    ends, present = 0.0, [False] * len(names)
     for index, group in enumerate(groups):
         heights = bar_values(table, category, value, by, names, group, options["percent"])
         step = (len(groups) - 1) / 2 - index if horizontal else index - (len(groups) - 1) / 2
@@ -129,17 +136,21 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
         base = [up if height >= 0 else down for up, down, height in zip(ups, downs, heights, strict=True)] \
             if stacked else [0.0] * len(names)
         draw(where, heights, single * 0.92, base, color=color, label=group if by else "_nolegend_", **edge)
-        ends = max([ends, *heights])
+        ends = max([ends, *without_missing(heights)])
+        present = [shown or not math.isnan(height) for shown, height in zip(present, heights, strict=True)]
         if stacked and options["labels"]:
             stacked_labels(ax, where, base, heights, color, options)
         elif options["labels"]:
             for spot, height in zip(where, heights, strict=True):
-                value_label(ax, height, (height, spot) if horizontal else (spot, height), horizontal,
-                            options["percent"], digits=options["digits"])
-        ups = [up + max(height, 0.0) for up, height in zip(ups, heights, strict=True)]
-        downs = [down + min(height, 0.0) for down, height in zip(downs, heights, strict=True)]
+                if not math.isnan(height):
+                    value_label(ax, height, (height, spot) if horizontal else (spot, height), horizontal,
+                                options["percent"], digits=options["digits"])
+        ups = [up + max(height, 0.0) for up, height in zip(ups, without_missing(heights), strict=True)]
+        downs = [down + min(height, 0.0) for down, height in zip(downs, without_missing(heights), strict=True)]
     if stacked and options["labels"] and not options["percent"]:
-        stacked_totals(ax, positions, ups, downs, horizontal, options["digits"])
+        shown = [index for index, value in enumerate(present) if value]
+        stacked_totals(ax, [positions[index] for index in shown], [ups[index] for index in shown],
+                       [downs[index] for index in shown], horizontal, options["digits"])
     if options["labels"] and not (stacked and options["percent"]):
         reach = (max(ups) if stacked else ends) * (1 + rules["label_headroom"])
         ax.update_datalim([(reach, positions[0])] if horizontal else [(positions[0], reach)])

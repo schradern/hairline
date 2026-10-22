@@ -461,7 +461,7 @@
   {
    "level": "warning",
    "column": "id",
-   "problem": "1 rows repeat an id",
+   "problem": "1 row repeats an id",
    "rows": [
     40
    ],
@@ -504,7 +504,7 @@
   {
    "level": "error",
    "column": "died",
-   "problem": "1 event values are not 0/1 (or TRUE/FALSE)",
+   "problem": "1 event value is not 0/1 (or TRUE/FALSE)",
    "rows": [
     1
    ],
@@ -1322,9 +1322,9 @@
    },
    "test": {
     "method": "Log-rank",
-    "statistic": 0.03215488344942139,
+    "statistic": 0.03215488344942123,
     "df": 1,
-    "p": 0.857688148988426
+    "p": 0.8576881489884264
    }
   }
  },

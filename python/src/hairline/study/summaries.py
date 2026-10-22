@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import math
+import re
+from collections.abc import Sequence
 
 import numpy as np
 
-from hairline.numbers import auto_digits, format_number, format_percent, quantile_places
+from hairline.numbers import auto_digits, format_number, format_percent, quantile_places, snap_noise
 from hairline.stats.density import quantiles
+from hairline.study.checks import counted_text
 from hairline.tokens import load_tokens
 
 STAT_LABELS = {"median_iqr": "median (IQR)", "mean_sd": "mean (SD)", "range": "range", "n_missing": "missing"}
 EMPTY = "–"
-SNAP_DIGITS = 10
 STAT_KEYS = {"median_iqr": ("median", "q1", "q3"), "mean_sd": ("mean", "sd"), "range": ("min", "max"),
              "n_missing": ()}
 
@@ -51,7 +53,7 @@ def mean_text(mean: float, digits: int, whole: bool) -> str:
     """The mean, with one more decimal when the variable holds whole numbers."""
     if math.isnan(mean):
         return EMPTY
-    return format_number(round(mean, SNAP_DIGITS), digits + (1 if whole else 0))
+    return format_number(snap_noise(mean), digits + (1 if whole else 0))
 
 
 def summary_text(found: dict, stat: str, digits: int, whole: bool = False) -> str:
@@ -64,12 +66,12 @@ def summary_text(found: dict, stat: str, digits: int, whole: bool = False) -> st
 
     def number(value: float) -> str:
         # Snap away float noise first: R and numpy reach the same quantile by different arithmetic.
-        return format_number(round(value, SNAP_DIGITS), quantile_places(value, digits, whole))
+        return format_number(snap_noise(value), quantile_places(value, digits, whole))
     if stat == "median_iqr":
         return f"{number(found['median'])} ({number(found['q1'])}{EMPTY}{number(found['q3'])})"
     if stat == "mean_sd":
         places = digits + (1 if whole else 0)
-        return f"{mean_text(found['mean'], digits, whole)} ({format_number(round(found['sd'], SNAP_DIGITS), places)})"
+        return f"{mean_text(found['mean'], digits, whole)} ({format_number(snap_noise(found['sd']), places)})"
     return f"{number(found['min'])}{EMPTY}{number(found['max'])}"
 
 
@@ -93,13 +95,25 @@ def listed(items: list[str]) -> str:
 OTHER_GROUPS = "in groups not named in order"
 
 
-def left_out_text(rows: dict, unit: str, in_overall: bool = False) -> str:
+def unit_nouns(unit: str | Sequence[str]) -> tuple[str, str]:
+    """What a row is, (singular, plural): a pair as given, or one plural noun whose singular drops a final s
+    ('patients': '1 patient', '2 patients')."""
+    if isinstance(unit, str) and unit:
+        return (unit[:-1] if re.search(r"[^s]s$", unit) else unit), unit
+    if not isinstance(unit, str) and isinstance(unit, Sequence) and len(unit) == 2 \
+            and all(isinstance(noun, str) and noun for noun in unit):
+        return unit[0], unit[1]
+    raise ValueError(f"hairline: study: unit must be a plural noun ('patients') or a singular and plural pair "
+                     f"(('mouse', 'mice')); got {unit!r}")
+
+
+def left_out_text(rows: dict, nouns: tuple[str, str], in_overall: bool = False) -> str:
     """' 39 of 40 participants; 1 without a value was left out.' from a result's rows; empty when none were. With
     `in_overall`, rows without a group or in other groups are not left out (they count in Overall)."""
     counts = [(count, f"without {MISSING_NOUNS[role]}") for role, count in rows["missing"].items()
               if not (in_overall and role == "group")]
     counts.append((0 if in_overall else rows.get("other_groups", 0), OTHER_GROUPS))
-    return parts_text(counts, f" {format_number(rows['analysed'], 0)} of {format_number(rows['total'], 0)} {unit};",
+    return parts_text(counts, f" {format_number(rows['analysed'], 0)} of {counted_text(rows['total'], nouns)};",
                       ("was", "were"), "left out")
 
 

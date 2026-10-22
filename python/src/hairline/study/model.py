@@ -13,6 +13,7 @@ from hairline.study.checks import Finding, missing_values, numbers_as_text, nume
 from hairline.study.columns import infer_type, is_missing, level_text, levels
 from hairline.study.result import Result
 from hairline.study.rules import event_findings, group_findings, id_findings, time_findings
+from hairline.study.summaries import counted_text, unit_nouns
 from hairline.tokens import load_tokens
 
 ROLES = ("group", "time", "event", "id")
@@ -29,6 +30,12 @@ class Study:
     unit: str
     checks: list[Finding] = field(default_factory=list)
     units: dict[str, str] = field(default_factory=dict)
+    unit_one: str = ""
+
+    @property
+    def nouns(self) -> tuple[str, str]:
+        """What a row is, singular and plural: 'patient', 'patients'."""
+        return self.unit_one or unit_nouns(self.unit)[0], self.unit
 
     @property
     def group(self) -> str | None:
@@ -98,7 +105,8 @@ class Study:
 
     def __str__(self) -> str:
         roles = ", ".join(f"{role} = {column}" for role, column in self.roles.items())
-        lines = [f"Study of {len(self.data)} {self.unit}: {roles or 'no roles'}; {len(self.variables)} variables"]
+        lines = [f"Study of {counted_text(len(self.data), self.nouns)}: {roles or 'no roles'}; "
+                 f"{counted_text(len(self.variables), ('variable', 'variables'))}"]
         return "\n".join(lines + [f"- {finding}" for finding in self.checks] or ["- no problems found"])
 
     def describe(self, stats: Sequence[str] = ("median_iqr",), size: str = "double") -> Result:
@@ -185,10 +193,12 @@ def run_checks(data: pd.DataFrame, roles: dict[str, str], variables: list[str], 
 def study(data: pd.DataFrame, group: str | None = None, time: str | None = None, event: str | None = None,
           id: str | None = None, variables: Sequence[str] | None = None, *, labels: Mapping[str, str] | None = None,
           types: Mapping[str, str] | None = None, order: Sequence[str] | None = None,
-          unit: str | None = None, units: Mapping[str, str] | None = None) -> Study:
+          unit: str | Sequence[str] | None = None, units: Mapping[str, str] | None = None) -> Study:
     """Describe a dataset once: the comparison `group`, follow-up `time` and `event`, the `id` (describe, compare
     and distribution refuse a variable with more than one row per id), the `variables` to characterise (default:
-    every other column) and their `units` ({"age": "years"}). Checks run now; print the study to read them."""
+    every other column) and their `units` ({"age": "years"}). `unit` is what a row is in the texts: a plural noun
+    ("patients"; one reads "1 patient") or a singular and plural pair (("mouse", "mice")). Checks run now; print the
+    study to read them."""
     if not len(data):
         raise ValueError("hairline: study: the data has no rows")
     roles = {role: column for role, column in zip(ROLES, (group, time, event, id), strict=True) if column is not None}
@@ -207,8 +217,8 @@ def study(data: pd.DataFrame, group: str | None = None, time: str | None = None,
     check_order(order)
     groups = list(order) if order else (levels(data[group], ordered=False) if group in data.columns else [])
     checks = run_checks(data, roles, names, groups, kinds) + unit_findings(roles, names, kinds, units or {})
-    result = Study(data, roles, names, dict(labels or {}), kinds, groups,
-                   unit or load_tokens()["study"]["unit"], checks, dict(units or {}))
+    one, many = unit_nouns(load_tokens()["study"]["unit"] if unit is None else unit)
+    result = Study(data, roles, names, dict(labels or {}), kinds, groups, many, checks, dict(units or {}), one)
     if checks:
         errors = sum(finding.level == "error" for finding in checks)
         warnings.warn(f"hairline: study: {errors} errors, {len(checks) - errors} warnings; print the study to read "

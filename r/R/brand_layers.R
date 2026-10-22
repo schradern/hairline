@@ -4,6 +4,41 @@ brand_outputs <- c("screen", "pdf", "html", "docx")
 
 is_mapping <- function(value) is.list(value) && !is.null(names(value)) && all(nzchar(names(value)))
 
+# The shape of each section hairline reads, one rule in both packages: a mapping names its values; a list may be
+# written as its single value (yaml reads `[harbor]` and `harbor` alike).
+brand_mappings <- c(meta = "its details (name: ...)", color = "colour roles to colours",
+                    color.palette = "colour names to hex values", typography = "its parts (fonts, base, headings)",
+                    defaults = "tools to their settings", defaults.hairline = "settings to values",
+                    defaults.hairline.colors = "entity names to palette names or hex values",
+                    defaults.hairline.groups = "group names to their members",
+                    defaults.hairline.sizes = "text roles to sizes in pt",
+                    defaults.hairline.outputs = "export types to their settings")
+brand_lists <- c("typography.fonts", "defaults.hairline.categorical")
+
+# An empty mapping or list (`{}`, `[]`) holds nothing, which every section may.
+is_brand_mapping <- function(value) is_mapping(value) || (is.list(value) && !length(value))
+
+brand_shown <- function(value) if (is.list(value)) "a list" else brand_value(value)
+
+check_brand_shapes <- function(content, label) {
+  for (key in names(brand_mappings)) {
+    value <- brand_get(content, key)
+    if (!is.null(value) && !is_brand_mapping(value)) {
+      brand_fail(label, key, sprintf("must map %s; got %s", brand_mappings[[key]], brand_shown(value)))
+    }
+  }
+  for (key in brand_lists) {
+    if (is_mapping(brand_get(content, key))) brand_fail(label, key, "must list its entries; got a mapping")
+  }
+  fonts <- brand_get(content, "typography.fonts")
+  for (index in seq_along(fonts)) {
+    if (!is_mapping(fonts[[index]])) {
+      brand_fail(label, sprintf("typography.fonts[%d]", index - 1),
+                 sprintf("must be a mapping with family and source; got %s", brand_shown(fonts[[index]])))
+    }
+  }
+}
+
 # `layer` over `base`: mappings merge key by key, everything else (sequences included) is replaced.
 merge_brand <- function(base, layer) {
   for (key in names(layer)) {
@@ -28,15 +63,20 @@ read_brand_layers <- function(paths, output) {
   font_dir <- dirname(paths[if (length(with_fonts)) max(with_fonts) else length(paths)])
   content <- list()
   for (layer in layers) content <- merge_brand(content, layer)
+  check_brand_shapes(content, label)
   outputs <- brand_get(content, "defaults.hairline.outputs") %||% list()
   for (name in names(outputs)) {
+    key <- paste0("defaults.hairline.outputs.", name)
     if (!name %in% brand_outputs) {
-      brand_fail(label, paste0("defaults.hairline.outputs.", name),
-                 sprintf("must be one of %s", paste(brand_outputs, collapse = ", ")))
+      brand_fail(label, key, sprintf("must be one of %s", paste(brand_outputs, collapse = ", ")))
+    }
+    if (!is.null(outputs[[name]]) && !is_brand_mapping(outputs[[name]])) {
+      brand_fail(label, key, sprintf("must be a mapping of settings; got %s", brand_shown(outputs[[name]])))
     }
   }
-  if (!is.null(output) && !is.null(outputs[[output]])) {
+  if (!is.null(output) && length(outputs[[output]])) {
     content <- merge_brand(content, list(defaults = list(hairline = outputs[[output]])))
+    check_brand_shapes(content, label)
   }
   list(content = content, label = label, font_dir = font_dir, path = paths[length(paths)], layers = layers,
        paths = normalizePath(paths), output = output)

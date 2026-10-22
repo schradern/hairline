@@ -77,7 +77,7 @@ study_counted_rows <- function(study, columns, in_overall = FALSE) {
 }
 
 describe_text <- function(study, parts, counts) {
-  total <- paste(counts[length(counts)], study$unit)
+  total <- counted_text(nrow(parts[[length(parts)]]$rows), study_nouns(study))
   if (is.null(study$roles$group)) return(paste0(total, "."))
   groups <- paste(counts[-length(counts)], "in", study_part_names(parts[-length(parts)]))
   paste0(total, ": ", listed_text(groups), ".")
@@ -136,7 +136,9 @@ hl_describe <- function(study, stats = "median_iqr") {
   names(table) <- c("Characteristic", names)
   text <- paste0(describe_text(study, parts, counts), overall_only_text(found$rows),
                  describe_missing_text(study, found))
-  study_result(study_overview(study, parts), table, values, text, found)
+  groups <- if (is.null(study$roles$group)) character() else utils::head(names, -1)
+  study_result(study_figure("describe", groups, "groups", function() study_overview(study, parts)), table, values,
+               text, found)
 }
 
 study_overview <- function(study, parts) {

@@ -17,6 +17,39 @@
   y = -455 pt), and donut, chord and Venn labels that need more height than the panel make it taller. These charts
   never shrink: at normal widths they keep the size they had.
 
+## Fixes from the 0.2.0 stress test
+
+* Study endpoints with more groups than the palette has colours (nine groups on an eight-slot palette), or a
+  categorical variable with more categories than that, return their table, values and text with `figure = NULL`
+  and a warning that says why, instead of failing. `hl_describe()`, `hl_compare()`, `hl_distribution()`,
+  `hl_survival()` and `hl_over_time()` follow the same rule.
+* `hl_survival()`, `hl_kaplan_meier()` and the log-rank test count the number at risk, events and deaths per
+  group from sorted times at once instead of rescanning every row at every time: 100,000 rows take a fraction of a
+  second instead of about 85 seconds. Results are unchanged and match `survival::survdiff()` and
+  `survival::survfit()`.
+* Saving a chart with many points checks each distinct colour for the light-slot treatment once instead of once
+  per point: a Kaplan–Meier figure of 100,000 rows saves about five times faster.
+* Values too small to show within six decimals keep two significant digits: a median near 1e-9 reads
+  0.0000000012 in tables, texts, spread key numbers, tooltips and axis labels, not 0.000000. Float noise is snapped
+  away relative to the value, so values near 1e-11 keep their digits too.
+* `hl_save()` refuses a figure whose frame cannot be laid out with an error of class `hairline_layout_error`, as the
+  Python package raises `HairlineLayoutError`, instead of saving the plot without the hairline frame. Drawing
+  through ggplot2 itself (printing, `ggsave()`, a viewer window that can still be resized) keeps the fallback and
+  its warning.
+* Brand files follow one rule for the shape of every section hairline reads: `color`, `color.palette`,
+  `typography`, `defaults.hairline`, its `colors`, `groups`, `sizes` and `outputs`, and `meta` are mappings; a list
+  (`typography.fonts`, `categorical`, a group's members) may be written as its single value
+  (`categorical: harbor`); each font entry is a mapping. Anything else is an error naming the file, the key and
+  what it holds, instead of "$ operator is invalid for atomic vectors" or a list taken as a palette. A key given
+  twice reads "key 'harbor' is given twice".
+* `hl_save()` refuses a dpi below 20, at which text is smaller than a pixel.
+* A bar whose values are all missing draws no bar, no value label and no tooltip, instead of a bar labelled 0.
+  For sorting and percent totals it counts as zero, as before.
+* Study texts count one row in the singular: "1 participant", "1 row repeats an id", "1 value is infinite",
+  "1 variable". `hl_study(unit = ...)` takes a plural noun, whose singular drops a final s, or a singular and plural
+  pair such as `c("mouse", "mice")`.
+* `hl_use(output = ...)` refuses an unknown export type with `brand = FALSE` too.
+
 # hairline 0.2.0
 
 * Study results carry `numbers`: the unrounded quantities their table, values and text are formatted from. Per

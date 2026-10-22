@@ -14,7 +14,7 @@ from hairline.stats.survival import km_median, median_digits
 from hairline.stats.tests import logrank
 from hairline.study.columns import is_missing, level_text
 from hairline.study.describe import counted_rows, group_role
-from hairline.study.result import Result
+from hairline.study.result import Result, figure_for
 from hairline.study.summaries import left_out_text, listed
 from hairline.tokens import load_tokens
 
@@ -78,15 +78,15 @@ def survival(study: Study, fit=None, size: str = "double") -> Result:
     values = {"groups": {row[0]: row[3] for row in rows}, **({"test": "Log-rank", "p": p} if p else {})}
     time_label = study.label_unit(roles["time"]) if "time" in roles else "Time"
     by = study.group_key if fit is None and study.group else None
-    figure = kaplan_meier(fit if fit is not None else data, roles.get("time"), roles.get("event"),
-                          by=by, order=names if fit is None else None,
-                          title=f"Survival by {study.in_sentence(study.group)}" if grouped and study.group
-                          else "Survival", x_title=time_label, size=size, test=False,
-                          stats=[("Log-rank", p)] if p else ())
+    figure = figure_for("survival", names, "groups", lambda: kaplan_meier(
+        fit if fit is not None else data, roles.get("time"), roles.get("event"), by=by,
+        order=names if fit is None else None,
+        title=f"Survival by {study.in_sentence(study.group)}" if grouped and study.group else "Survival",
+        x_title=time_label, size=size, test=False, stats=[("Log-rank", p)] if p else ()))
     # Time and event cannot be missing: the study's checks block survival() then.
     found = {**({"rows": counted_rows(study, group_role(study))} if has_data else {}), "groups": groups,
              **({"test": test} if test else {})}
-    text = survival_text(study, rows, grouped, p) + (left_out_text(found["rows"], study.unit) if has_data else "")
+    text = survival_text(study, rows, grouped, p) + (left_out_text(found["rows"], study.nouns) if has_data else "")
     return Result(figure, pd.DataFrame(rows, columns=["Group", "n", "Events", "Median"]), values, text, found)
 
 

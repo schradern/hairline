@@ -139,6 +139,13 @@ warn_dropped <- function(plan) {
   }
 }
 
+# The R twin of the Python HairlineLayoutError: the figure cannot be laid out as requested.
+layout_error <- function(message) {
+  structure(class = c("hairline_layout_error", "error", "condition"), list(message = message, call = NULL))
+}
+
+# hl_save() refuses a frame that cannot be laid out before it draws (fitted_size_mm()); drawn by ggplot2 itself
+# (print, ggsave, a viewer window that can still be resized) the plot is drawn without the frame, with a warning.
 #' @export
 makeContent.hairline_frame <- function(x) {
   alias_base_device_fonts(x$parts$settings$font)

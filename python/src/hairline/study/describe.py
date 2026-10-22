@@ -14,11 +14,12 @@ from hairline.marks import FIXED_ID, STATIC_ID, lone_color
 from hairline.numbers import format_number, is_whole
 from hairline.stats.density import quantiles
 from hairline.study.columns import is_missing, level_text, levels, numbers
-from hairline.study.result import Result
+from hairline.study.result import Result, figure_for
 from hairline.study.summaries import (
     STAT_LABELS,
     check_stats,
     count_share,
+    counted_text,
     digits_for,
     listed,
     overall_only_text,
@@ -107,12 +108,15 @@ def describe(study: Study, stats: Sequence[str] = ("median_iqr",), size: str = "
         table += rows
         values.update(shown)
     frame = pd.DataFrame(table, columns=["Characteristic", *[label for label, _ in parts]])
-    text = counts_text(study, parts, counts) + overall_only_text(found["rows"]) + missing_text(study, found)
-    return Result(overview(study, parts, size), frame, values, text, found)
+    text = (counts_text(study, parts, counts, found["n"][study.overall]) + overall_only_text(found["rows"])
+            + missing_text(study, found))
+    names = [label for label, _ in parts[:-1]]
+    return Result(figure_for("describe", names, "groups", lambda: overview(study, parts, size)), frame, values, text,
+                  found)
 
 
-def counts_text(study: Study, parts: list, counts: list[str]) -> str:
-    total = f"{counts[-1]} {study.unit}"
+def counts_text(study: Study, parts: list, counts: list[str], total_rows: int) -> str:
+    total = counted_text(total_rows, study.nouns)
     if not study.group:
         return f"{total}."
     groups = [f"{count} in {label}" for (label, _), count in zip(parts[:-1], counts[:-1], strict=True)]

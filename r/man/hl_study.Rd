@@ -36,7 +36,8 @@ refuse a variable with more than one row per id.}
 
 \item{order}{Group order; default order of first appearance.}
 
-\item{unit}{What a row is, for the texts; default "participants".}
+\item{unit}{What a row is, for the texts: a plural noun (default "participants"; one reads "1 participant") or a
+singular and plural pair, e.g. \code{c("mouse", "mice")}.}
 
 \item{units}{Named units of numeric columns, e.g. \code{c(age = "years", lactate = "mmol/l")}; tables, panel
 headers and texts name them.}

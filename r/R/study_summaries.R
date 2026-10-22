@@ -2,7 +2,6 @@
 
 study_stat_labels <- c(median_iqr = "median (IQR)", mean_sd = "mean (SD)", range = "range", n_missing = "missing")
 study_empty <- "\u2013"
-study_snap_digits <- 10
 
 check_study_stats <- function(stats) {
   if (!length(stats)) {
@@ -46,7 +45,7 @@ summary_text <- function(found, stat, digits, whole = FALSE) {
   if (!found$n) return(study_empty)
   # Snap away float noise first: R and numpy reach the same quantile by different arithmetic.
   number <- function(value) {
-    hl_format_number(round(value, study_snap_digits), quantile_places(value, digits, whole))
+    hl_format_number(snap_noise(value), quantile_places(value, digits, whole))
   }
   if (stat == "median_iqr") {
     return(sprintf("%s (%s%s%s)", number(found$median), number(found$q1), study_empty, number(found$q3)))
@@ -54,7 +53,7 @@ summary_text <- function(found, stat, digits, whole = FALSE) {
   if (stat == "mean_sd") {
     places <- digits + if (whole) 1 else 0
     return(sprintf("%s (%s)", study_mean_text(found$mean, digits, whole),
-                   hl_format_number(round(found$sd, study_snap_digits), places)))
+                   hl_format_number(snap_noise(found$sd), places)))
   }
   paste0(number(found$min), study_empty, number(found$max))
 }
@@ -73,7 +72,7 @@ share_of <- function(count, total) if (total) count / total else NA_real_
 # The mean, with one more decimal when the variable holds whole numbers.
 study_mean_text <- function(mean, digits, whole) {
   if (is.na(mean)) return(study_empty)
-  hl_format_number(round(mean, study_snap_digits), digits + if (whole) 1 else 0)
+  hl_format_number(snap_noise(mean), digits + if (whole) 1 else 0)
 }
 
 study_missing_nouns <- c(variable = "a value", group = "a group", date = "a date")
@@ -82,11 +81,22 @@ study_other_groups <- "in groups not named in order"
 
 # " 39 of 40 participants; 1 without a value was left out." from a result's rows; empty when none were. With
 # `in_overall`, rows without a group or in other groups are not left out (they count in Overall).
-left_out_text <- function(rows, unit, in_overall = FALSE) {
+# What a row is, c(singular, plural): a pair as given, or one plural noun whose singular drops a final s ("patients":
+# "1 patient", "2 patients").
+unit_nouns <- function(unit) {
+  if (is.character(unit) && length(unit) == 2 && all(!is.na(unit) & nzchar(unit))) return(unit)
+  if (is.character(unit) && length(unit) == 1 && !is.na(unit) && nzchar(unit)) {
+    return(c(if (grepl("[^s]s$", unit)) sub("s$", "", unit) else unit, unit))
+  }
+  stop(sprintf(paste("hairline: study: unit must be a plural noun (\"patients\") or a singular and plural pair",
+                     "(c(\"mouse\", \"mice\")); got %s"), paste(format(unit), collapse = ", ")), call. = FALSE)
+}
+
+left_out_text <- function(rows, nouns, in_overall = FALSE) {
   roles <- setdiff(names(rows$missing), if (in_overall) "group")
   counts <- c(vapply(roles, function(role) rows$missing[[role]], numeric(1), USE.NAMES = FALSE),
               if (in_overall) 0 else rows$other_groups %||% 0)
-  lead <- sprintf(" %s of %s %s;", hl_format_number(rows$analysed, 0), hl_format_number(rows$total, 0), unit)
+  lead <- sprintf(" %s of %s;", hl_format_number(rows$analysed, 0), counted_text(rows$total, nouns))
   parts_text(counts, c(paste("without", study_missing_nouns[roles]), study_other_groups), lead, c("was", "were"),
              "left out")
 }

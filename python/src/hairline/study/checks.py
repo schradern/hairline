@@ -31,6 +31,14 @@ def count_text(count: int) -> str:
     return format_number(count, 0)
 
 
+ROWS = ("row", "rows")
+
+
+def counted_text(count: int, nouns: tuple[str, str]) -> str:
+    """'1 patient', '40 patients'."""
+    return f"{format_number(count, 0)} {nouns[0] if count == 1 else nouns[1]}"
+
+
 def missing_values(data: pd.DataFrame, column: str, limit: int) -> list[Finding]:
     mask = is_missing(data[column])
     if not mask.any():
@@ -80,12 +88,16 @@ def numeric_findings(data: pd.DataFrame, column: str, limit: int) -> list[Findin
     present = series[~is_missing(series)]
     values = pd.to_numeric(present, errors="coerce")
     findings = []
-    for bad, problem, fix in ((values.isna(), "are not numbers", "correct them, or declare the column categorical"),
-                              (np.isinf(values), "are infinite", "correct them, or leave these rows out")):
+    for bad, problems, fix in ((values.isna(), ("is not a number", "are not numbers"),
+                                "correct them, or declare the column categorical"),
+                               (np.isinf(values), ("is infinite", "are infinite"),
+                                "correct them, or leave these rows out")):
         if bad.any():
             mask = pd.Series(False, index=series.index)
             mask[present.index[bad.to_numpy()]] = True
             shown = ", ".join(f"'{value}'" for value in dict.fromkeys(present[bad.to_numpy()].tolist()))
-            findings.append(Finding("error", column, f"{count_text(int(bad.sum()))} values {problem} ({shown})",
+            count = int(bad.sum())
+            problem = problems[0] if count == 1 else problems[1]
+            findings.append(Finding("error", column, f"{counted_text(count, ('value', 'values'))} {problem} ({shown})",
                                     tuple(row_numbers(mask, limit)), fix))
     return findings

@@ -15,17 +15,21 @@ from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
-from hairline.numbers import auto_digits, format_interval, format_number, format_percent
+from hairline.numbers import auto_digits, capped_places, format_interval, format_number, format_percent
 from hairline.settings import current_settings
 from hairline.ticks import axis_limits, nice_breaks
 from hairline.tokens import load_tokens
 
+EXACT = 1e-12
+
 
 def decimals(values: Sequence[float]) -> int:
-    """The fewest decimals that show every value exactly (axis breaks: 0.2, 0.0005), up to study.max_digits."""
-    most = load_tokens()["study"]["max_digits"]
+    """The fewest decimals that show every value exactly (axis breaks: 0.2, 0.0005), up to study.max_digits, or two
+    significant digits of the smallest value too small to show within it (1e-9)."""
+    smallest = min((abs(value) for value in values if value), default=0.0)
+    most = capped_places(load_tokens()["study"]["max_digits"], smallest)
     return next((digits for digits in range(most + 1)
-                 if all(abs(round(value, digits) - value) < 1e-12 for value in values)), most)
+                 if all(abs(round(value, digits) - value) <= EXACT * min(1.0, abs(value)) for value in values)), most)
 
 
 def default_digits(data: pd.DataFrame, columns: Sequence[str]) -> int:

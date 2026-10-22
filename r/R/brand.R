@@ -19,9 +19,15 @@ brand_get <- function(content, dotted) {
 read_brand_yaml <- function(path) {
   if (!file.exists(path)) stop(sprintf("hairline: brand file %s does not exist", path), call. = FALSE)
   content <- tryCatch(yaml::read_yaml(path), error = function(error) {
-    line <- regmatches(conditionMessage(error), regexpr("line [0-9]+", conditionMessage(error)))
-    stop(sprintf("hairline: %s: %s: %s", basename(path), if (length(line)) line else "unknown position",
-                 conditionMessage(error)), call. = FALSE)
+    message <- conditionMessage(error)
+    repeated <- regmatches(message, regexec("Duplicate map key: '(.*)'", message))[[1]]
+    if (length(repeated)) {
+      stop(sprintf("hairline: %s: key '%s' is given twice; give each key once", basename(path), repeated[2]),
+           call. = FALSE)
+    }
+    line <- regmatches(message, regexpr("line [0-9]+", message))
+    stop(sprintf("hairline: %s: %s: %s", basename(path), if (length(line)) line else "unknown position", message),
+         call. = FALSE)
   })
   if (is.null(content)) content <- list()
   if (!is.list(content) || is.null(names(content)) && length(content) > 0) {

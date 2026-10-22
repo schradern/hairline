@@ -41,7 +41,8 @@ study_kind <- function(study, column, endpoint) {
 #' @param labels Named display names, e.g. `c(sofa = "SOFA score")`.
 #' @param types Named types overriding the inference, e.g. `c(score = "categorical")`.
 #' @param order Group order; default order of first appearance.
-#' @param unit What a row is, for the texts; default "participants".
+#' @param unit What a row is, for the texts: a plural noun (default "participants"; one reads "1 participant") or a
+#'   singular and plural pair, e.g. `c("mouse", "mice")`.
 #' @param units Named units of numeric columns, e.g. `c(age = "years", lactate = "mmol/l")`; tables, panel
 #'   headers and texts name them.
 #' @return A `hairline_study`.
@@ -81,8 +82,9 @@ hl_study <- function(data, group = NULL, time = NULL, event = NULL, id = NULL, v
   groups <- order %||% if (has_group) study_levels(data[[group]], FALSE) else character()
   checks <- c(run_study_checks(data, roles, variables, groups, as.list(kinds)),
               unit_findings(roles, variables, kinds, as.list(units)))
+  nouns <- unit_nouns(unit %||% hl_tokens()$study$unit)
   study <- structure(list(data = data, roles = roles, variables = variables, labels = as.list(labels), types = kinds,
-                          groups = groups, unit = unit %||% hl_tokens()$study$unit, checks = checks,
+                          groups = groups, unit = nouns[2], unit_one = nouns[1], checks = checks,
                           units = as.list(units)),
                      class = "hairline_study")
   if (length(checks)) {
@@ -96,7 +98,8 @@ hl_study <- function(data, group = NULL, time = NULL, event = NULL, id = NULL, v
 #' @export
 print.hairline_study <- function(x, ...) {
   roles <- if (length(x$roles)) paste(names(x$roles), "=", unlist(x$roles), collapse = ", ") else "no roles"
-  cat(sprintf("Study of %d %s: %s; %d variables\n", nrow(x$data), x$unit, roles, length(x$variables)))
+  cat(sprintf("Study of %s: %s; %s\n", counted_text(nrow(x$data), study_nouns(x)), roles,
+              counted_text(length(x$variables), c("variable", "variables"))))
   lines <- if (length(x$checks)) vapply(x$checks, format_finding, character(1)) else "no problems found"
   cat(paste0("- ", lines, "\n"), sep = "")
   invisible(x)
@@ -182,10 +185,25 @@ study_require_one_row <- function(study, endpoint) {
   }
 }
 
+# What a row is, singular and plural: "patient", "patients".
+study_nouns <- function(study) c(study$unit_one %||% unit_nouns(study$unit)[1], study$unit)
+
 # The formatted table, values and text, and the unrounded numbers they are formatted from.
 study_result <- function(figure, table, values, text, numbers) {
   structure(list(figure = figure, table = table, values = values, text = text, numbers = numbers),
             class = "hairline_result")
+}
+
+# The endpoint's figure, or NULL with a warning when its `what` (groups, or a variable's categories) need more colours
+# than the palette has: the table, values and text need none.
+study_figure <- function(endpoint, names, what, draw) {
+  settings <- hl_settings()
+  slots <- length(settings$palette)
+  if (length(names) <= slots) return(draw())
+  warning(sprintf(paste("hairline: %s: %d %s need more colours than the %d of %s, so the result has no figure; its",
+                        "table, values and text are complete. Fold small %s into 'Other' to draw it"),
+                  endpoint, length(names), what, slots, settings$palette_label, what), call. = FALSE)
+  NULL
 }
 
 #' @export
