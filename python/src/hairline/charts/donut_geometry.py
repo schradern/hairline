@@ -7,9 +7,10 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 
-from hairline.charts.labels import spread_labels
 from hairline.charts.tips import tagged
+from hairline.charts.wrapping import TOLERANCE, fit_lines, spread_blocks, widest_line, wrap_words
 from hairline.color.vision import contrast
+from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -78,17 +79,25 @@ def baseline_for(centre: float, style: dict, role: str) -> float:
     return centre + style["cap_height"] * style["sizes"][role] / 2
 
 
-def label_pair(segment: dict, x: float, y: float, side: str, measure: Measure, style: dict, rules: dict) -> list:
-    """Name in ink, share in muted, reading left to right, aligned away from the donut."""
-    size, neutral = style["sizes"]["label"], style["neutral"]
-    space, baseline = rules["label_space"] * size, baseline_for(y, style, "label")
+def label_pair(segment: dict, x: float, y: float, side: str, measure: Measure, style: dict, rules: dict,
+               lines: list[str] | None = None) -> list:
+    """Name in ink, share in muted, reading left to right, aligned away from the donut. A wrapped name takes
+    `lines`, the first centred on `y`; the share follows the last, or stands alone after an empty last line."""
+    size, neutral, line = style["sizes"]["label"], style["neutral"], line_height(style, "label")
+    lines = lines or [segment["name"]]
+    space, baseline = rules["label_space"] * size, baseline_for(y + (len(lines) - 1) * line, style, "label")
+    shapes = [text(x, baseline_for(y + index * line, style, "label"), content, "label", neutral["ink"],
+                   "left" if side == "right" else "right") for index, content in enumerate(lines[:-1])]
+    if not lines[-1]:
+        return shapes + [text(x, baseline, segment["share_text"], "label", neutral["muted"],
+                              "left" if side == "right" else "right")]
     if side == "right":
-        name_width = measure(segment["name"], "label")
-        return [text(x, baseline, segment["name"], "label", neutral["ink"]),
-                text(x + name_width + space, baseline, segment["share_text"], "label", neutral["muted"])]
+        name_width = measure(lines[-1], "label")
+        return shapes + [text(x, baseline, lines[-1], "label", neutral["ink"]),
+                         text(x + name_width + space, baseline, segment["share_text"], "label", neutral["muted"])]
     share_width = measure(segment["share_text"], "label")
-    return [text(x - share_width - space, baseline, segment["name"], "label", neutral["ink"], "right"),
-            text(x, baseline, segment["share_text"], "label", neutral["muted"], "right")]
+    return shapes + [text(x - share_width - space, baseline, lines[-1], "label", neutral["ink"], "right"),
+                     text(x, baseline, segment["share_text"], "label", neutral["muted"], "right")]
 
 
 def outside_width(ring: list[dict], measure: Measure, style: dict, rules: dict) -> float:
@@ -96,6 +105,16 @@ def outside_width(ring: list[dict], measure: Measure, style: dict, rules: dict) 
     widest = max((measure(segment["name"], "label") + space + measure(segment["share_text"], "label")
                   for segment in ring), default=0.0)
     return (rules["leader_elbow"] + rules["leader_run"] + rules["label_gap"]) * style["base"] + widest
+
+
+def outside_lines(ring: list[dict], box: Box, radius: float, measure: Measure, style: dict, rules: dict,
+                  chart: str) -> list[list[str]]:
+    """Each label's lines: one while the labels fit beside the ring, wrapped into the room beside a ring of the
+    minimum radius otherwise."""
+    room = box.width / 2 - radius - (rules["leader_elbow"] + rules["leader_run"] + rules["label_gap"]) * style["base"]
+    space = rules["label_space"] * style["sizes"]["label"]
+    return [fit_lines(segment["name"], room, measure, chart, "the label", measure(segment["share_text"], "label"),
+                      space) for segment in ring]
 
 
 def leader_entries(ring: list[dict], cx: float, cy: float, radius: float, style: dict, rules: dict,
@@ -111,32 +130,58 @@ def leader_entries(ring: list[dict], cx: float, cy: float, radius: float, style:
 
 
 def outside_labels(ring: list[dict], cx: float, cy: float, radius: float, box: Box, measure: Measure,
-                   style: dict, rules: dict, spans: list[tuple[float, float]] | None = None) -> list[dict]:
+                   style: dict, rules: dict, spans: list[tuple[float, float]] | None = None,
+                   lines: list[list[str]] | None = None) -> list[dict]:
+    """Labels beside the ring on leader lines that meet their first line; labels taller than the panel run on
+    below it (the figure grows to hold them)."""
     line, base = line_height(style, "label"), style["base"]
     reach = radius + (rules["leader_elbow"] + rules["leader_run"]) * base
     primitives = []
     entries = leader_entries(ring, cx, cy, radius, style, rules, spans)
+    for entry, entry_lines in zip(entries, lines or [[segment["name"]] for segment in ring], strict=True):
+        entry["lines"] = entry_lines
     for side, direction in (("left", -1), ("right", 1)):
         group = [entry for entry in entries if entry["side"] == side]
-        ys = spread_labels([entry["knee"][1] for entry in group], line, box.y + line / 2,
-                           box.y + box.height - line / 2)
-        for entry, y in zip(group, ys, strict=True):
-            end_x = cx + direction * reach
+        lifts = [(len(entry["lines"]) - 1) * line / 2 for entry in group]
+        centres = spread_blocks([entry["knee"][1] + lift for entry, lift in zip(group, lifts, strict=True)],
+                                [len(entry["lines"]) * line for entry in group], box.y, box.y + box.height)
+        for entry, centre, lift in zip(group, centres, lifts, strict=True):
+            y, end_x = centre - lift, cx + direction * reach
             primitives.append({"kind": "line", "points": [entry["anchor"], [entry["knee"][0], y], [end_x, y]],
                                "color": style["neutral"]["axis"], "width": style["leader_width"]})
             primitives += label_pair(entry["segment"], end_x + direction * rules["label_gap"] * base, y, side,
-                                     measure, style, rules)
+                                     measure, style, rules, entry["lines"])
     return primitives
 
 
-def centre_total(total: str | None, label: str | None, cx: float, cy: float, style: dict) -> list[dict]:
+def total_lines(label: str, hole: float, measure: Measure, style: dict) -> list[str]:
+    """The total's label in as few lines as the hole allows: the block of value and lines fits inside the circle."""
+    panel, caption, count = line_height(style, "panel"), line_height(style, "caption"), 1
+    while (panel + count * caption) / 2 < hole:
+        room = 2 * math.sqrt(hole ** 2 - ((panel + count * caption) / 2) ** 2)
+        lines = wrap_words(label, room + TOLERANCE, measure, "caption")
+        if widest_line(lines, measure, "caption") > room + TOLERANCE:
+            break
+        if len(lines) <= count:
+            return lines
+        count += 1
+    words = max(label.split() or [label], key=lambda word: measure(word, "caption"))
+    raise HairlineLayoutError(f"hairline: donut: total_label {label!r} does not fit the hole, {2 * hole:.0f} pt "
+                              f"across ({words!r} alone needs {measure(words, 'caption'):.0f} pt). Shorten it, "
+                              "leave it out, or use a wider size")
+
+
+def centre_total(total: str | None, label: str | None, cx: float, cy: float, style: dict,
+                 lines: list[str] | None = None) -> list[dict]:
     if total is None:
         return []
     neutral, caption_line = style["neutral"], line_height(style, "caption")
-    value_baseline = baseline_for(cy, style, "panel") - (caption_line / 2 if label else 0.0)
+    lines = lines or ([label] if label else [])
+    value_baseline = baseline_for(cy, style, "panel") - len(lines) * caption_line / 2
     primitives = [text(cx, value_baseline, total, "panel", neutral["ink"], "center")]
-    if label:
-        primitives.append(text(cx, value_baseline + caption_line, label, "caption", neutral["muted"], "center"))
+    for index, content in enumerate(lines):
+        primitives.append(text(cx, value_baseline + (index + 1) * caption_line, content, "caption", neutral["muted"],
+                               "center"))
     return primitives
 
 
@@ -169,23 +214,40 @@ def key_right(rows: list[tuple[int, dict]], x: float, right: float, measure: Mea
     return min(right, x + (style["swatch"] + style["swatch_text"] + rules["key_gap"]) * base + names + shares)
 
 
+def key_lines(rows: list[tuple[int, dict]], x: float, right: float, measure: Measure, style: dict,
+              rules: dict) -> list[list[str]]:
+    """Each key name's lines: one while names and shares fit the panel, wrapped before the share column
+    otherwise."""
+    base = style["base"]
+    shares = max(measure(segment["share_text"], "label") for _, segment in rows)
+    text_left = (style["swatch"] + style["swatch_text"]) * base
+    return [fit_lines(segment["name"], right - shares - rules["key_gap"] * base - x - depth * rules["key_indent"]
+                      * base - text_left, measure, "donut", "the key name") for depth, segment in rows]
+
+
 def square(x: float, y: float, side: float, fill: str) -> dict:
     return {"kind": "polygon", "points": [[x, y], [x + side, y], [x + side, y + side], [x, y + side]], "fill": fill}
 
 
-def hierarchical_key(rings: list[list[dict]], x: float, right: float, cy: float, measure: Measure, style: dict,
+def hierarchical_key(rings: list[list[dict]], x: float, box: Box, cy: float, measure: Measure, style: dict,
                      rules: dict) -> list[dict]:
+    """Rows centred beside the donut; a name wraps before the share column, which stays on its first line. Rows
+    taller than the panel start at its top and run on below it (the figure grows to hold them)."""
     base, neutral, rows = style["base"], style["neutral"], key_rows(rings)
-    right = key_right(rows, x, right, measure, style, rules)
-    pitch, side = line_height(style, "label") + rules["key_row_gap"] * base, style["swatch"] * base
-    top, primitives = cy - pitch * len(rows) / 2, []
-    for row, (depth, segment) in enumerate(rows):
-        centre, left = top + pitch * (row + 0.5), x + depth * rules["key_indent"] * base
+    right = key_right(rows, x, box.x + box.width, measure, style, rules)
+    lines = key_lines(rows, x, right, measure, style, rules)
+    line, side = line_height(style, "label"), style["swatch"] * base
+    pitches = [len(name) * line + rules["key_row_gap"] * base for name in lines]
+    top, primitives = max(box.y, cy - sum(pitches) / 2), []
+    for (depth, segment), name, pitch in zip(rows, lines, pitches, strict=True):
+        centre, left = top + (line + rules["key_row_gap"] * base) / 2, x + depth * rules["key_indent"] * base
         baseline = baseline_for(centre, style, "label")
-        primitives += [square(left, centre - side / 2, side, segment["color"]),
-                       text(left + side + style["swatch_text"] * base, baseline, segment["name"], "label",
-                            neutral["ink"]),
-                       text(right, baseline, segment["share_text"], "label", neutral["muted"], "right")]
+        primitives += [square(left, centre - side / 2, side, segment["color"])]
+        primitives += [text(left + side + style["swatch_text"] * base, baseline_for(centre + index * line, style,
+                                                                                   "label"), content, "label",
+                            neutral["ink"]) for index, content in enumerate(name)]
+        primitives.append(text(right, baseline, segment["share_text"], "label", neutral["muted"], "right"))
+        top += pitch
     return primitives
 
 
@@ -253,10 +315,12 @@ def donut_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[d
     radii = ring_radii(len(rings), radius, hole, rules["gap_pt"])
     primitives = segment_shapes(rings, cx, cy, radii, rules)
     if spec["labels"] == "outside":
-        primitives += outside_labels(rings[0], cx, cy, radius, box, measure, style, rules)
+        primitives += outside_labels(rings[0], cx, cy, radius, box, measure, style, rules,
+                                     lines=outside_lines(rings[0], box, radius, measure, style, rules, "donut"))
     elif spec["labels"] == "key":
-        primitives += hierarchical_key(rings, cx + radius + rules["key_gap"] * base, box.x + box.width, cy, measure,
-                                       style, rules)
+        primitives += hierarchical_key(rings, cx + radius + rules["key_gap"] * base, box, cy, measure, style, rules)
     else:
         primitives += ring_labels(rings, radii, cx, cy, measure, style, rules)
-    return primitives + centre_total(spec["total"], spec["total_label"], cx, cy, style)
+    label = spec["total_label"]
+    lines = total_lines(label, radii[0][0], measure, style) if spec["total"] is not None and label else None
+    return primitives + centre_total(spec["total"], label, cx, cy, style, lines)

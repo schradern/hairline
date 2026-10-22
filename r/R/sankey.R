@@ -113,5 +113,6 @@ hl_sankey <- function(data, columns, value = NULL, title = NULL, subtitle = NULL
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
     theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) sankey_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- "grow"
   plot
 }

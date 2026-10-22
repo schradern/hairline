@@ -1,12 +1,15 @@
 """Venn diagram geometry in pt: two or three circles at fixed schematic positions (or, for two sets, areas
-proportional to the counts), each region's count inside it and the set names outside. Pure."""
+proportional to the counts), each region's count inside it and the set names outside. Names wrap when the circles
+would fall below the minimum radius; a diagram taller than the panel starts at its top and the figure grows. Pure."""
 
 from __future__ import annotations
 
 import math
 
-from hairline.charts.donut_geometry import Measure, arc, baseline_for, text
+from hairline.charts.donut_geometry import Measure, arc, baseline_for, line_height, text
 from hairline.charts.tips import tagged
+from hairline.charts.wrapping import pair_lines, pair_width
+from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.marks import point_fill
 from hairline.tokens import load_tokens
@@ -65,30 +68,36 @@ def region_point(members: list[int], circles: list[tuple[float, float, float]]) 
     return (sum(edges) / 2, 0.0)
 
 
-def name_label(entry: dict, circle: tuple[float, float, float], angle: float, scale: float, origin: tuple,
-               measure: Measure, style: dict, rules: dict) -> list[dict]:
-    """Name in ink and size in muted, set off the circle in the direction of `angle`."""
+def name_label(entry: dict, lines: list[str], circle: tuple[float, float, float], angle: float, scale: float,
+               origin: tuple, measure: Measure, style: dict, rules: dict) -> list[dict]:
+    """Name in ink and size in muted, set off the circle in the direction of `angle`; a wrapped name takes
+    `lines`, aligned away from the circle, with the size after the last (alone after an empty last line)."""
     cos, sin = math.cos(math.radians(angle)), math.sin(math.radians(angle))
     gap, size, neutral = rules["label_gap"] * style["base"], style["sizes"]["label"], style["neutral"]
     x = origin[0] + (circle[0] + cos * circle[2]) * scale + cos * gap
     y = origin[1] - (circle[1] + sin * circle[2]) * scale - sin * gap
-    space = load_tokens()["donut"]["label_space"] * size
-    name_width = measure(entry["name"], "label")
-    width = name_width + space + measure(entry["value_text"], "label")
+    space, line, count = load_tokens()["donut"]["label_space"] * size, line_height(style, "label"), len(lines)
+    value = measure(entry["value_text"], "label")
+    widths = [measure(content, "label") for content in lines]
+    widths[-1] = widths[-1] + space + value if lines[-1] else value
     cutoff = rules["side_cutoff"]
-    start = x - width if cos < -cutoff else x if cos > cutoff else x - width / 2
     if sin > cutoff:
-        baseline = y - style["descender"] * size
+        first = y - style["descender"] * size - (count - 1) * line
     elif sin < -cutoff:
-        baseline = y + style["cap_height"] * size
+        first = y + style["cap_height"] * size
     else:
-        baseline = baseline_for(y, style, "label")
-    return [text(start, baseline, entry["name"], "label", neutral["ink"]),
-            text(start + name_width + space, baseline, entry["value_text"], "label", neutral["muted"])]
+        first = baseline_for(y - (count - 1) * line / 2, style, "label")
+    shapes = []
+    for index, (content, width) in enumerate(zip(lines, widths, strict=True)):
+        start = x - width if cos < -cutoff else x if cos > cutoff else x - width / 2
+        if content:
+            shapes.append(text(start, first + index * line, content, "label", neutral["ink"]))
+    return shapes + [text(start + width - value, first + (count - 1) * line, entry["value_text"], "label",
+                          neutral["muted"])]
 
 
 def venn_shapes(spec: dict, circles: list, scale: float, origin: tuple, measure: Measure, style: dict,
-                rules: dict) -> list[dict]:
+                rules: dict, names: list[list[str]] | None = None) -> list[dict]:
     fills, outlines, labels = [], [], []
     for entry, (x, y, radius) in zip(spec["sets"], circles, strict=True):
         points = arc(origin[0] + x * scale, origin[1] - y * scale, radius * scale, 90.0, -270.0, rules["arc_step"])
@@ -103,8 +112,9 @@ def venn_shapes(spec: dict, circles: list, scale: float, origin: tuple, measure:
         x, y = region_point(region["sets"], circles)
         labels.append(text(origin[0] + x * scale, baseline_for(origin[1] - y * scale, style, "label"),
                            region["value_text"], "label", style["neutral"]["ink"], "center"))
-    for entry, circle, angle in zip(spec["sets"], circles, NAME_ANGLES, strict=False):
-        labels += name_label(entry, circle, angle, scale, origin, measure, style, rules)
+    names = names or [[entry["name"]] for entry in spec["sets"]]
+    for entry, lines, circle, angle in zip(spec["sets"], names, circles, NAME_ANGLES, strict=False):
+        labels += name_label(entry, lines, circle, angle, scale, origin, measure, style, rules)
     return fills + outlines + labels
 
 
@@ -123,22 +133,61 @@ def shape_bounds(shapes: list[dict], measure: Measure, style: dict) -> tuple[flo
     return min(xs), min(ys), max(xs), max(ys)
 
 
+def wrapped_names(spec: dict, width: float, measure: Measure, style: dict) -> list[list[str]]:
+    """Set names wrapped so that each line, the last with its size, is at most `width` wide."""
+    space = load_tokens()["donut"]["label_space"] * style["sizes"]["label"]
+    return [pair_lines(entry["name"], width, measure, measure(entry["value_text"], "label"), space)
+            for entry in spec["sets"]]
+
+
+def name_lines(spec: dict, fits, measure: Measure, style: dict, rules: dict) -> list[list[str]] | None:
+    """One line per name while the diagram is narrow enough with circles of the minimum radius (`fits`);
+    otherwise the widest wrap that is, or None when even a word per line is too wide."""
+    space = load_tokens()["donut"]["label_space"] * style["sizes"]["label"]
+    names = [[entry["name"]] for entry in spec["sets"]]
+    if fits(names):
+        return names
+    narrowest = wrapped_names(spec, 0.0, measure, style)
+    if not fits(narrowest):
+        return None
+    low = max(pair_width(lines, measure, measure(entry["value_text"], "label"), space)
+              for entry, lines in zip(spec["sets"], narrowest, strict=True))
+    high = max(pair_width(lines, measure, measure(entry["value_text"], "label"), space)
+               for entry, lines in zip(spec["sets"], names, strict=True))
+    for _ in range(rules["iterations"]):
+        middle = (low + high) / 2
+        low, high = (middle, high) if fits(wrapped_names(spec, middle, measure, style)) else (low, middle)
+    return wrapped_names(spec, low, measure, style)
+
+
 def venn_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[dict]:
     rules = load_tokens()["venn"]
     circles = unit_circles(spec, rules)
 
-    def bounds(scale: float) -> tuple[float, float, float, float]:
-        return shape_bounds(venn_shapes(spec, circles, scale, (0.0, 0.0), measure, style, rules), measure, style)
+    def bounds(scale: float, names: list[list[str]]) -> tuple[float, float, float, float]:
+        return shape_bounds(venn_shapes(spec, circles, scale, (0.0, 0.0), measure, style, rules, names), measure,
+                            style)
 
-    def fits(scale: float) -> bool:
-        left, top, right, bottom = bounds(scale)
+    def narrow(scale: float, names: list[list[str]]) -> bool:
+        left, _, right, _ = bounds(scale, names)
+        return right - left <= box.width
+
+    def fits(scale: float, names: list[list[str]]) -> bool:
+        left, top, right, bottom = bounds(scale, names)
         return right - left <= box.width and bottom - top <= box.height
 
     low, high = load_tokens()["donut"]["min_radius"] * style["base"], max(box.width, box.height)
-    if fits(low):
+    names = name_lines(spec, lambda lines: narrow(low, lines), measure, style, rules)
+    if names is None:
+        left, _, right, _ = bounds(low, wrapped_names(spec, 0.0, measure, style))
+        raise HairlineLayoutError(f"hairline: venn: the set names need {right - left:.0f} pt across beside circles "
+                                  f"of the smallest size, but the figure leaves {box.width:.0f} pt. Shorten the set "
+                                  "names or use a wider size")
+    if fits(low, names):
         for _ in range(rules["iterations"]):
             middle = (low + high) / 2
-            low, high = (middle, high) if fits(middle) else (low, middle)
-    left, top, right, bottom = bounds(low)
-    origin = (box.x + (box.width - (right - left)) / 2 - left, box.y + (box.height - (bottom - top)) / 2 - top)
-    return venn_shapes(spec, circles, low, origin, measure, style, rules)
+            low, high = (middle, high) if fits(middle, names) else (low, middle)
+    left, top, right, bottom = bounds(low, names)
+    origin = (box.x + (box.width - (right - left)) / 2 - left,
+              box.y + max(0.0, box.height - (bottom - top)) / 2 - top)
+    return venn_shapes(spec, circles, low, origin, measure, style, rules, names)

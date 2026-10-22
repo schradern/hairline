@@ -18,6 +18,7 @@ from hairline.charts.common import (
 )
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.color.tints import tints
+from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import context_color
 from hairline.numbers import auto_digits, format_number, format_percent
@@ -119,4 +120,4 @@ def donut(data: pd.DataFrame, label: str | None = None, value: str | None = None
     spec = {"rings": rings, "labels": mode, "total": amount if total else None, "total_label": total_label}
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: donut_drawing(spec, box, measure, style))
-    return result
+    return fit_height(result, shrink=False)

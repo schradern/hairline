@@ -1,11 +1,13 @@
 """Sankey geometry in pt: nodes stacked on one scale, later columns ordered by the barycentre of their sources,
 links ordered at both ends by the node at the other end, labels outside the outer columns and above the middle
-nodes on a surface halo. Pure, like the donut geometry."""
+nodes on a surface halo. Labels wrap when the links would keep less than `min_plot`; the gap between nodes holds the
+tallest label, and a column with more nodes than the panel holds runs on below it. Pure, like the donut geometry."""
 
 from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, baseline_for, label_pair, line_height, text
 from hairline.charts.tips import amount_text, tagged
+from hairline.charts.wrapping import fit_lines, pair_width
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -103,33 +105,67 @@ def as_segment(node: dict) -> dict:
     return {"name": node["name"], "share_text": node["value_text"]}
 
 
-def middle_label(node: dict, top: float, centre: float, measure: Measure, style: dict, rules: dict) -> list[dict]:
-    """Name and value centred above the node, on a surface halo so links behind stay quiet."""
-    size, base, neutral = style["sizes"]["label"], style["base"], style["neutral"]
-    space = load_tokens()["donut"]["label_space"] * size
-    name, value = measure(node["name"], "label"), measure(node["value_text"], "label")
-    start, baseline = centre - (name + space + value) / 2, top - rules["label_pad"] * base - style["descender"] * size
-    pad, end = rules["halo_pad"] * base, centre + (name + space + value) / 2
-    upper, lower = baseline - style["cap_height"] * size - pad, baseline + style["descender"] * size + pad
-    return [{"kind": "polygon", "points": [[start - pad, upper], [end + pad, upper], [end + pad, lower],
-                                           [start - pad, lower]], "fill": neutral["surface"], "role": "halo"},
-            text(start, baseline, node["name"], "label", neutral["ink"]),
-            text(start + name + space, baseline, node["value_text"], "label", neutral["muted"])]
+def label_space(style: dict) -> float:
+    return load_tokens()["donut"]["label_space"] * style["sizes"]["label"]
+
+
+def node_lines(nodes: list[dict], room: float, measure: Measure, style: dict) -> dict[str, list[str]]:
+    """Each node's name in lines no wider than `room`, its value following the last."""
+    return {node["name"]: fit_lines(node["name"], room, measure, "sankey", "the label",
+                                    measure(node["value_text"], "label"), label_space(style)) for node in nodes}
+
+
+def block_width(node: dict, lines: list[str], measure: Measure, style: dict) -> float:
+    return pair_width(lines, measure, measure(node["value_text"], "label"), label_space(style))
+
+
+def outer_rooms(left: float, right: float, room: float) -> tuple[float, float]:
+    """Widths of the two outer label columns: their labels' widths while both fit `room`; otherwise a column
+    narrower than half keeps its width and the other takes the rest, or each takes half."""
+    if left + right <= room:
+        return left, right
+    if left <= room / 2:
+        return left, room - left
+    if right <= room / 2:
+        return room - right, right
+    return room / 2, room / 2
+
+
+def middle_label(node: dict, lines: list[str], top: float, centre: float, measure: Measure, style: dict,
+                 rules: dict) -> list[dict]:
+    """Name and value centred above the node, on a surface halo so links behind stay quiet; a wrapped name stacks
+    its lines upwards from the node, the value after the last."""
+    size, base, neutral, line = style["sizes"]["label"], style["base"], style["neutral"], line_height(style, "label")
+    space, value = label_space(style), measure(node["value_text"], "label")
+    widths = [measure(content, "label") for content in lines]
+    widths[-1] = widths[-1] + space + value if lines[-1] else value
+    baseline = top - rules["label_pad"] * base - style["descender"] * size
+    first, pad, half = baseline - (len(lines) - 1) * line, rules["halo_pad"] * base, max(widths) / 2
+    upper, lower = first - style["cap_height"] * size - pad, baseline + style["descender"] * size + pad
+    shapes = [{"kind": "polygon", "points": [[centre - half - pad, upper], [centre + half + pad, upper],
+                                             [centre + half + pad, lower], [centre - half - pad, lower]],
+               "fill": neutral["surface"], "role": "halo"}]
+    shapes += [text(centre - width / 2, first + index * line, content, "label", neutral["ink"])
+               for index, (content, width) in enumerate(zip(lines, widths, strict=True)) if content]
+    return shapes + [text(centre - widths[-1] / 2 + widths[-1] - value, baseline, node["value_text"], "label",
+                          neutral["muted"])]
 
 
 def label_shapes(ordered: list[list[dict]], positions: list[dict], xs: list[float], width: float, measure: Measure,
-                 style: dict, rules: dict) -> list[dict]:
+                 style: dict, rules: dict, lines: list[dict[str, list[str]]]) -> list[dict]:
     shapes, gap, donut = [], rules["label_gap"] * style["base"], load_tokens()["donut"]
+    line = line_height(style, "label")
     for index, (nodes, places, x) in enumerate(zip(ordered, positions, xs, strict=True)):
         for node in nodes:
             top, bottom = places[node["name"]]
+            name = lines[index][node["name"]]
+            first = (top + bottom) / 2 - (len(name) - 1) * line / 2
             if index == 0:
-                shapes += label_pair(as_segment(node), x - gap, (top + bottom) / 2, "left", measure, style, donut)
+                shapes += label_pair(as_segment(node), x - gap, first, "left", measure, style, donut, name)
             elif index == len(ordered) - 1:
-                shapes += label_pair(as_segment(node), x + width + gap, (top + bottom) / 2, "right", measure, style,
-                                     donut)
+                shapes += label_pair(as_segment(node), x + width + gap, first, "right", measure, style, donut, name)
             else:
-                shapes += middle_label(node, top, x + width / 2, measure, style, rules)
+                shapes += middle_label(node, name, top, x + width / 2, measure, style, rules)
     return shapes
 
 
@@ -146,15 +182,35 @@ def outer_width(nodes: list[dict], measure: Measure, style: dict, rules: dict) -
     return widest + rules["label_gap"] * style["base"]
 
 
+def column_lines(spec: dict, box: Box, width: float, measure: Measure, style: dict,
+                 rules: dict) -> tuple[list[dict[str, list[str]]], list[float]]:
+    """Every node's label lines and the x of each column: the outer labels share what the links leave them at
+    `min_plot`, the middle labels the space between columns."""
+    nodes, count, gap = spec["nodes"], len(spec["nodes"]), rules["label_gap"] * style["base"]
+    rooms = outer_rooms(outer_width(nodes[0], measure, style, rules), outer_width(nodes[-1], measure, style, rules),
+                        box.width - width - rules["min_plot"] * style["base"])
+    outer = [node_lines(nodes[0], rooms[0] - gap, measure, style), node_lines(nodes[-1], rooms[1] - gap, measure,
+                                                                              style)]
+    left, right = (max(block_width(node, lines[node["name"]], measure, style) for node in column) + gap
+                   for column, lines in zip((nodes[0], nodes[-1]), outer, strict=True))
+    first, last = box.x + left, box.x + box.width - right - width
+    xs = [first + (last - first) * index / (count - 1) for index in range(count)]
+    middle = [node_lines(column, (last - first) / (count - 1) - 2 * gap, measure, style) for column in nodes[1:-1]]
+    return [outer[0], *middle, outer[1]], xs
+
+
 def sankey_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[dict]:
     """Every shape of one Sankey diagram inside `box` (pt from the figure's top-left corner)."""
     rules, base, count = load_tokens()["sankey"], style["base"], len(spec["nodes"])
     line, width = line_height(style, "label"), rules["node_width"] * base
-    first = box.x + outer_width(spec["nodes"][0], measure, style, rules)
-    last = box.x + box.width - outer_width(spec["nodes"][-1], measure, style, rules) - width
-    xs = [first + (last - first) * index / (count - 1) for index in range(count)]
-    top = box.y + line + rules["heading_gap"] * base + (line if count > 2 else 0.0)
-    ordered, positions, scale = place_nodes(spec, top, box.y + box.height - top, line + rules["node_gap"] * base)
+    lines, xs = column_lines(spec, box, width, measure, style, rules)
+    tallest = max(len(name) for column in lines for name in column.values())
+    raised = max((len(name) for column in lines[1:-1] for name in column.values()), default=0)
+    gap = tallest * line + rules["node_gap"] * base
+    top = box.y + line + rules["heading_gap"] * base + raised * line
+    most = max(len(column) for column in spec["nodes"])
+    height = max(box.y + box.height - top, (most - 1) * gap + most * line)
+    ordered, positions, scale = place_nodes(spec, top, height, gap)
     return (link_shapes(spec, positions, xs, width, scale, rules) + node_shapes(ordered, positions, xs, width)
-            + label_shapes(ordered, positions, xs, width, measure, style, rules)
+            + label_shapes(ordered, positions, xs, width, measure, style, rules, lines)
             + heading_shapes(spec["headings"], xs, width, baseline_for(box.y + line / 2, style, "label"), style))

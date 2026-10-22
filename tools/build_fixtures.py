@@ -45,6 +45,7 @@ from hairline.charts.sankey_geometry import sankey_drawing
 from hairline.charts.swatches_geometry import swatches_drawing
 from hairline.charts.venn import venn_spec
 from hairline.charts.venn_geometry import venn_drawing
+from hairline.charts.wrapping import spread_blocks
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
 from hairline.color.ramps import diverging_ramp, sequential_ramp
@@ -52,6 +53,7 @@ from hairline.color.space import hex_to_oklch
 from hairline.color.tints import tints
 from hairline.color.vision import contrast, delta_e, simulate
 from hairline.entities import assign_colors, chart_colors
+from hairline.errors import HairlineLayoutError
 from hairline.fonts import nearest_weight
 from hairline.layout.frame import compute_frame
 from hairline.layout.geometry import Box, frame_input_from_dict, load_font_metrics
@@ -435,6 +437,71 @@ def flow_cases() -> dict:
                      for data, spec in zip((transfers, crowded), arc_specs, strict=True)]}
 
 
+LONG_LABEL = "An exceptionally long category label that keeps going for seventy chars"
+
+
+def drawn(chart: str, spec: dict, box: Box, draw) -> dict:
+    """A narrow-box case: the shapes, or the layout error's message."""
+    case = {"chart": chart, "spec": spec, "box": [box.x, box.y, box.width, box.height]}
+    try:
+        return {**case, "shapes": draw(spec, box, fake_measure, DRAWING_STYLE)}
+    except HairlineLayoutError as error:
+        return {**case, "error": str(error)}
+
+
+def wrapping_cases() -> dict:
+    """Labels that meet the edge of their room in every chart: wrapped into the room a chart's minimum size leaves,
+    refused with the room needed, or running on below a panel too short for them."""
+    use(brand=False)
+    single = pd.DataFrame({"name": [LONG_LABEL, "Home", "Care home", "Rehabilitation"], "n": [40, 30, 20, 10]})
+    nested = pd.DataFrame({"route": ["Home"] * 3 + ["Rehabilitation"] * 3,
+                           "detail": ["Alone with daily visits from the district nursing team", "With support",
+                                      "Other", "Inpatient", "Outpatient", "Day clinic"], "n": [25, 16, 4, 12, 5, 3]})
+    many = pd.DataFrame({"parent": [f"Parent {index // 6}" for index in range(12)],
+                         "child": [f"Child {index}" for index in range(12)], "n": [1 + index % 5 for index in range(12)]})
+    donuts = [(single, "name", None, "outside", Box(0, 0, 200, 150), None),
+              (single, "name", None, "outside", Box(0, 0, 90, 150), None),
+              (nested, None, ["route", "detail"], "key", Box(0, 0, 300, 160), None),
+              (many, None, ["parent", "child"], "key", Box(0, 0, 400, 80), None),
+              (single.iloc[1:], "name", None, "ring", Box(0, 0, 140, 140), "patients discharged home in 2025")]
+    cases = []
+    for data, label, levels, mode, box, total_label in donuts:
+        spec = {"rings": donut_rings(data, label, "n", levels), "labels": mode, "total": "731",
+                "total_label": total_label}
+        cases.append(drawn("donut", spec, box, donut_drawing))
+    referrals = pd.DataFrame({"origin": [LONG_LABEL, "ED", "Ward"], "destination": ["ICU", "Ward", LONG_LABEL],
+                              "patients": [4, 5, 6]})
+    cases.append(drawn("chord", chord_spec(referrals, "origin", "destination", "patients"), Box(0, 0, 210, 200),
+                       chord_drawing))
+    for sets, box in (({LONG_LABEL: [1, 2, 3], "Hypertension": [2, 3, 4]}, Box(0, 0, 200, 60)),
+                      ({"Diabetes": [1, 2], "Hypertension": [2, 3], "Obesity": [3, 4]}, Box(0, 0, 300, 50)),
+                      ({"Supercalifragilisticexpialidocious": [1, 2], "B": [2, 3]}, Box(0, 0, 120, 200))):
+        cases.append(drawn("venn", venn_spec(sets), box, venn_drawing))
+    wide = pd.DataFrame({"study": list("ABC"), LONG_LABEL: ["Low", "High", "Low"], "Missing": ["Low", "Low", "Some"]})
+    spec = risk_of_bias_spec(wide, "study", domains=[LONG_LABEL, "Missing"],
+                             overall="Overall judgement across every domain")
+    cases.append(drawn("risk_of_bias", spec, Box(0, 0, 200, 200), risk_of_bias_drawing))
+    trials = pd.DataFrame({"study": ["Adams 2019", "Baker 2020"], "est": [0.62, 1.05], "low": [0.41, 0.70],
+                           "high": [0.94, 1.58]})
+    spec = forest_spec(trials, "study", "est", "low", "high", color="#2474cf",
+                       favours=["Favours the experimental treatment arm", "Favours the usual care control arm"])
+    cases.append(drawn("forest", spec, Box(20, 60, 240, 260), forest_drawing))
+    budget = pd.DataFrame({"source": ["Salary", "Salary", "Benefits"], "account": ["Joint", LONG_LABEL, "Joint"],
+                           "category": ["Rent", LONG_LABEL, "Food"], "amount": [5, 3, 2]})
+    sources = pd.DataFrame({"source": [f"Source {index}" for index in range(8) for _ in range(2)],
+                            "category": ["Rent", "Food"] * 8, "amount": [1 + index % 4 for index in range(16)]})
+    for spec, box in ((sankey_spec(budget, ["source", "category"], "amount"), Box(0, 0, 260, 160)),
+                      (sankey_spec(budget, ["source", "account", "category"], "amount"), Box(0, 0, 460, 200)),
+                      (sankey_spec(sources, ["source", "category"], "amount"), Box(0, 0, 300, 80)),
+                      (sankey_spec(budget, ["source", "category"], "amount"), Box(0, 0, 90, 160))):
+        cases.append(drawn("sankey", spec, box, sankey_drawing))
+    blocks = [([10.0, 12.0, 30.0], [5.0, 10.0, 5.0], 0.0, 100.0), ([50.0, 50.0], [20.0, 20.0], 0.0, 30.0),
+              ([90.0, 5.0, 40.0], [8.0, 16.0, 8.0], 0.0, 100.0), ([], [], 0.0, 10.0)]
+    return {"style": DRAWING_STYLE, "cases": cases,
+            "blocks": [{"positions": positions, "heights": heights, "top": top, "bottom": bottom,
+                        "centres": spread_blocks(positions, heights, top, bottom)}
+                       for positions, heights, top, bottom in blocks]}
+
 def chart_colour_cases() -> list[dict]:
     daylight = load_tokens()["palettes"]["daylight"]
     inputs = [({}, {}, {}, ["Female", "Male"]), ({}, {"Surgical": daylight[0]}, {}, ["Female", "Male"]),
@@ -530,6 +597,7 @@ def main() -> int:
     write("swatches.json", swatch_cases())
     write("brand_ramps.json", brand_ramp_cases())
     write("weights.json", weight_cases())
+    write("wrapping.json", wrapping_cases())
     return 0
 
 

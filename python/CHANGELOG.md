@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+### Long labels
+
+* Long labels wrap instead of running off the figure, by one rule in every chart: a label keeps one line while the
+  chart keeps its minimum size, and otherwise wraps into the room that size leaves. Donut and chord labels wrap
+  beside a ring of the minimum radius, Venn set names beside circles of the minimum radius, risk-of-bias domains
+  (and the `overall` row) beside bars of `risk_of_bias.min_plot`, Sankey labels beside links of `sankey.min_plot`
+  (new tokens), and the forest plot's `favours` labels between the null line and the panel's edge. A value that no
+  longer fits after the last line takes a line of its own.
+* A word wider than its room is a `HairlineLayoutError` that names the label, the room it needs and the room the
+  figure leaves, as the forest and spread layouts do.
+* The donut's `total_label` wraps inside the hole, and is refused with the hole's width when a word does not fit.
+* Labels taller than the panel grow the figure instead of piling up: a Sankey diagram keeps a line of height per
+  node on average and a gap between nodes that holds the tallest label (40 sources at 120 mm lost a node above the
+  panel), a nested donut's key starts at the top of the panel and runs on below it (80 children started at
+  y = -455 pt), and donut, chord and Venn labels that need more height than the panel make it taller. These charts
+  never shrink: at normal widths they keep the size they had.
+
 ## 0.2.0
 
 * Study results carry `numbers`: the unrounded quantities their table, values and text are formatted from. Per

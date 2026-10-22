@@ -96,5 +96,6 @@ hl_venn <- function(data, columns = NULL, title = NULL, subtitle = NULL, caption
     ggplot2::labs(title = title %||% paste("Overlap of", label), subtitle = subtitle, caption = caption, x = NULL,
                   y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) venn_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- "grow"
   plot
 }

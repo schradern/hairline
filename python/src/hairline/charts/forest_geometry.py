@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
+from hairline.charts.wrapping import fit_lines
 from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -171,7 +172,22 @@ def diamond(pooled: dict, centre: float, scale, half: float, style: dict) -> dic
     return {"kind": "polygon", "points": points, "fill": style["neutral"]["ink"], "role": "diamond"}
 
 
-def axis_shapes(spec: dict, scale, plot: tuple[float, float], y: float, style: dict, rules: dict) -> list[dict]:
+def favours_shapes(spec: dict, null: float, baseline: float, box: Box, measure: Measure, style: dict,
+                   rules: dict) -> list[dict]:
+    """The favours labels either side of the null line, each wrapped into the room between it and the panel's
+    edge, lines running down."""
+    gap, line, muted = rules["favours_gap"] * style["base"], line_height(style, "label"), style["neutral"]["muted"]
+    shapes = []
+    for label, x, room, align in ((spec["favours"][0], null - gap, null - gap - box.x, "right"),
+                                  (spec["favours"][1], null + gap, box.x + box.width - null - gap, "left")):
+        shapes += [{**text(x, baseline + index * line, content, "label", muted, align), "part": "favours"}
+                   for index, content in enumerate(fit_lines(label, room, measure, "forest", "the favours label"))]
+    return shapes
+
+
+def axis_shapes(spec: dict, scale, plot: tuple[float, float], y: float, style: dict, rules: dict,
+                box: Box | None = None, measure: Measure | None = None) -> list[dict]:
+    """Axis line and ticks; with `favours` (which needs `box` and `measure`), the labels either side of null."""
     base, size, neutral = style["base"], style["sizes"]["label"], style["neutral"]
     shapes = [{"kind": "line", "points": [[plot[0], y], [plot[1], y]], "color": neutral["axis"],
                "width": style["axis_width"]}]
@@ -179,12 +195,8 @@ def axis_shapes(spec: dict, scale, plot: tuple[float, float], y: float, style: d
     for value, label in zip(spec["axis"]["breaks"], spec["axis"]["labels"], strict=True):
         shapes.append({**text(scale(value), tick_baseline, label, "label", neutral["muted"], "center"), "part": "tick"})
     if spec["favours"] and spec["null"] is not None:
-        gap, null = rules["favours_gap"] * base, scale(spec["null"])
-        baseline = tick_baseline + line_height(style, "label") + gap
-        shapes += [{**text(null - gap, baseline, spec["favours"][0], "label", neutral["muted"], "right"),
-                    "part": "favours"},
-                   {**text(null + gap, baseline, spec["favours"][1], "label", neutral["muted"], "left"),
-                    "part": "favours"}]
+        baseline = tick_baseline + line_height(style, "label") + rules["favours_gap"] * base
+        shapes += favours_shapes(spec, scale(spec["null"]), baseline, box, measure, style, rules)
     return shapes
 
 
@@ -225,4 +237,5 @@ def forest_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
                        "color": style["neutral"]["muted"], "width": style["leader_width"], "part": "null"})
     if spec["pooled"]:
         shapes += pooled_shapes(spec, columns, top, bottom, pitch, pooled_centre, scale, style, rules)
-    return shapes + axis_shapes(spec, scale, columns["plot"], bottom + rules["axis_gap"] * base, style, rules)
+    return shapes + axis_shapes(spec, scale, columns["plot"], bottom + rules["axis_gap"] * base, style, rules, box,
+                                measure)

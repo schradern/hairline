@@ -80,12 +80,31 @@ risk_segments <- function(counts, left, right, top, height, colours, measure, st
   shapes
 }
 
+# Each domain's lines and the width of the label column: one line while the bars keep `min_plot`, wrapped into the
+# room that leaves otherwise.
+risk_domain_lines <- function(names, overall, box, measure, style, rules) {
+  gap <- rules$label_gap * style$base
+  least <- rules$min_plot * style$base
+  labels <- max(vapply(names, measure, numeric(1), role = "label")) + gap
+  if (box[3] - labels >= least) return(list(lines = as.list(names), labels = labels))
+  weights <- lapply(seq_along(names), function(index) if (index == overall) 600 else NULL)
+  lines <- lapply(seq_along(names), function(index) {
+    fit_lines(names[index], box[3] - least - gap, measure, "risk of bias", "the domain", weight = weights[[index]])
+  })
+  widest <- max(vapply(seq_along(lines), function(index) {
+    widest_line(lines[[index]], measure, weight = weights[[index]])
+  }, numeric(1)))
+  list(lines = lines, labels = widest + gap)
+}
+
+# Rows from the top; a wrapped domain makes its row as tall as its lines, its bar centred beside them.
 risk_of_bias_drawing <- function(spec, box, measure, style) {
   rules <- hl_tokens()$risk_of_bias
   base <- style$base
   names <- unlist(spec$domains)
   overall <- if (is.null(spec$overall)) 0 else spec$overall + 1
-  labels <- max(vapply(names, measure, numeric(1), role = "label")) + rules$label_gap * base
+  line <- line_height(style, "label")
+  column <- risk_domain_lines(names, overall, box, measure, style, rules)
   extra <- if (overall > 0) rules$overall_gap * base else 0
   height <- min(rules$max_bar * base, (box[4] - extra - (length(names) - 1) * rules$row_gap * base) / length(names))
   shapes <- list()
@@ -98,11 +117,18 @@ risk_of_bias_drawing <- function(spec, box, measure, style) {
                                            width = style$leader_width, part = "rule")
       top <- top + extra
     }
-    shapes[[length(shapes) + 1]] <- shape_text(box[1], baseline_for(top + height / 2, style, "label"), names[index],
-                                               "label", style$neutral$ink, "left", if (index == overall) 600 else NULL)
-    shapes <- c(shapes, risk_segments(as.numeric(unlist(spec$counts[[index]])), box[1] + labels, box[1] + box[3], top,
-                                      height, spec$colors, measure, style, rules$gap_pt, spec$domains[[index]]))
-    top <- top + height + rules$row_gap * base
+    lines <- column$lines[[index]]
+    row <- if (length(lines) == 1) height else max(height, length(lines) * line)
+    first <- top + row / 2 - (length(lines) - 1) * line / 2
+    for (number in seq_along(lines)) {
+      shapes[[length(shapes) + 1]] <- shape_text(box[1], baseline_for(first + (number - 1) * line, style, "label"),
+                                                 lines[number], "label", style$neutral$ink, "left",
+                                                 if (index == overall) 600 else NULL)
+    }
+    shapes <- c(shapes, risk_segments(as.numeric(unlist(spec$counts[[index]])), box[1] + column$labels,
+                                      box[1] + box[3], top + (row - height) / 2, height, spec$colors, measure, style,
+                                      rules$gap_pt, spec$domains[[index]]))
+    top <- top + row + rules$row_gap * base
   }
   shapes
 }

@@ -774,3 +774,135 @@ test_that("a survival plot in one column grows taller instead of failing", {
   expect_equal(narrow$panels[[1]][4], hl_tokens()$survival$min_plot * hl_settings()$base_size, tolerance = 0.5)
   expect_equal(fitted_size_mm(plot, c(120, 84))[2], 84)
 })
+
+long_label <- "An exceptionally long category label that keeps going for seventy chars"
+
+# Numbers in a JSON spec that R reads as integers, as doubles (as the chart specs hold them).
+as_doubles <- function(value) {
+  if (is.list(value)) return(lapply(value, as_doubles))
+  if (is.integer(value)) as.numeric(value) else value
+}
+
+wrapping_spec <- function(case) {
+  spec <- as_doubles(case$spec)
+  if (case$chart == "forest") {
+    spec$axis$breaks <- as.numeric(unlist(spec$axis$breaks))
+    spec$axis$labels <- as.character(unlist(spec$axis$labels))
+  }
+  if (case$chart == "sankey") spec$groups <- as.character(unlist(spec$groups))
+  spec
+}
+
+test_that("wrapped labels match the shared fixture", {
+  fixture <- read_fixture("wrapping.json")
+  measure <- function(text, role, weight = NULL) 0.5 * fixture$style$sizes[[role]] * nchar(text)
+  flat <- function(items) unlist(lapply(items, function(shape) {
+    if (shape$kind == "text") c(shape$x, shape$y) else as.numeric(t(shape_points(shape)))
+  }))
+  texts <- function(items) vapply(Filter(function(shape) shape$kind == "text", items), `[[`, character(1), "text")
+  drawings <- list(donut = donut_drawing, chord = chord_drawing, venn = venn_drawing,
+                   risk_of_bias = risk_of_bias_drawing, forest = forest_drawing, sankey = sankey_drawing)
+  for (case in fixture$cases) {
+    draw <- function() {
+      drawings[[case$chart]](wrapping_spec(case), as.numeric(unlist(case$box)), measure, fixture$style)
+    }
+    if (!is.null(case$error)) {
+      expect_error(draw(), case$error, fixed = TRUE, info = case$chart)
+      next
+    }
+    shapes <- draw()
+    expect_equal(texts(shapes), texts(case$shapes), info = case$chart)
+    expect_equal(flat(shapes), flat(case$shapes), tolerance = 1e-6, info = case$chart)
+  }
+  for (case in fixture$blocks) {
+    expect_equal(spread_blocks(as.numeric(unlist(case$positions)), as.numeric(unlist(case$heights)), case$top,
+                               case$bottom), as.numeric(unlist(case$centres)), tolerance = 1e-9)
+  }
+})
+
+drawn_extent <- function(plot, width_mm) {
+  size_mm <- fitted_size_mm(plot, figure_size_mm("onehalf", width_mm, NULL))
+  framed <- frame_plan(plot, "onehalf", width_mm)
+  measure <- measure_for(framed$parts$settings)
+  xs <- ys <- numeric()
+  for (shape in framed$plan$shapes) {
+    if (shape$kind == "text") {
+      width <- measure(shape$text, shape$role, shape$weight)
+      left <- shape$x - switch(shape$align, left = 0, center = width / 2, right = width)
+      xs <- c(xs, left, left + width)
+      ys <- c(ys, shape$y)
+    } else {
+      points <- shape_points(shape)
+      xs <- c(xs, points[, 1])
+      ys <- c(ys, points[, 2])
+    }
+  }
+  texts <- Filter(function(shape) shape$kind == "text", framed$plan$shapes)
+  list(left = min(xs), top = min(ys), right = max(xs), bottom = max(ys), size = size_mm / 25.4 * 72,
+       box = framed$plan$layout$panels[[1]], texts = vapply(texts, `[[`, character(1), "text"))
+}
+
+long_label_charts <- function() {
+  single <- data.frame(name = c(long_label, "Home", "Rehab", "Care home"), n = c(40, 30, 20, 10))
+  referrals <- data.frame(origin = c(long_label, "ED", "Ward"), destination = c("ICU", "Ward", long_label),
+                          patients = c(4, 5, 6))
+  judged <- data.frame(study = c("A", "B", "C"), x = c("Low", "High", "Low"), Missing = c("Low", "Low", "Some"))
+  names(judged)[2] <- long_label
+  trials <- data.frame(study = c("A", "B"), est = c(0.8, 1.2), low = c(0.6, 0.9), high = c(1.1, 1.5))
+  flows <- data.frame(a = c("Salary", "Salary", "Benefits"), b = c("Rent", long_label, "Food"), v = c(5, 3, 2))
+  list(donut = function() hl_donut(single, "name", "n"),
+       chord = function() hl_chord(referrals, "origin", "destination", "patients"),
+       venn = function() hl_venn(stats::setNames(list(1:3, 2:4), c(long_label, "Hypertension"))),
+       risk_of_bias = function() {
+         hl_risk_of_bias(judged, "study", domains = c(long_label, "Missing"),
+                         overall = "Overall judgement across every domain of the tool")
+       },
+       forest = function() {
+         hl_forest(trials, "study", "est", "low", "high", favours = c("Favours the experimental treatment arm strongly",
+                                                                    "Favours the control arm of the randomised trial"))
+       },
+       sankey = function() hl_sankey(flows, c("a", "b"), "v"))
+}
+
+test_that("long labels wrap inside the figure", {
+  for (width_mm in c(120, 75)) {
+    for (chart in names(long_label_charts())) {
+      hl_use(brand = FALSE)
+      extent <- drawn_extent(long_label_charts()[[chart]](), width_mm)
+      info <- paste(chart, width_mm)
+      expect_gte(extent$left, 0)
+      expect_lte(extent$right, extent$size[1] + 0.01)
+      expect_gte(extent$top, 0)
+      expect_lte(extent$bottom, extent$size[2])
+      expect_false(long_label %in% extent$texts, info = info)
+    }
+  }
+})
+
+test_that("a word wider than the room names the room it needs", {
+  hl_use(brand = FALSE)
+  single <- data.frame(name = c("Supercalifragilisticexpialidocious", "Home"), n = c(3, 1))
+  expect_error(hl_layout_report(hl_donut(single, "name", "n"), width_mm = 45),
+               "donut: the label 'Supercalifragilisticexpialidocious' needs \\d+ pt, but the figure leaves \\d+ pt")
+  expect_error(hl_layout_report(hl_donut(transform(single, name = c("A", "B")), "name", "n", labels = "ring",
+                                         total_label = "Supercalifragilisticexpialidocious"), width_mm = 45),
+               "total_label .* does not fit the hole")
+})
+
+test_that("a sankey with many nodes grows instead of losing them", {
+  hl_use(brand = FALSE)
+  data <- data.frame(a = rep(paste("Source", 0:39), each = 3), b = rep(c("X", "Y", "Z"), 40),
+                     v = 1 + (0:119) %% 5)
+  extent <- drawn_extent(hl_sankey(data, c("a", "b"), "v"), 120)
+  expect_gte(extent$top, extent$box[2] - 0.01)
+  expect_lte(extent$bottom, extent$size[2])
+  expect_gt(extent$size[2], 238)
+})
+
+test_that("a nested donut key with many rows grows the figure", {
+  hl_use(brand = FALSE)
+  data <- data.frame(p = paste("Parent", (0:79) %/% 20), c = paste("Child", 0:79), n = 1 + (0:79) %% 7)
+  extent <- drawn_extent(hl_donut(data, levels = c("p", "c")), 120)
+  expect_gte(extent$top, extent$box[2] - 0.01)
+  expect_lte(extent$bottom, extent$size[2])
+})

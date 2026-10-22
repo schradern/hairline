@@ -3,7 +3,7 @@ each pair with the pair's value at both ends, labels outside with leader lines (
 
 from __future__ import annotations
 
-from hairline.charts.donut_geometry import Measure, arc, line_height, outside_labels, outside_width
+from hairline.charts.donut_geometry import Measure, arc, line_height, outside_labels, outside_lines, outside_width
 from hairline.charts.tips import amount_text, tagged
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -83,5 +83,6 @@ def chord_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[d
         shapes.append(tagged({"kind": "polygon", "role": "node", "name": node["name"], "span": start - end,
                               "fill": node["color"], "points": outline},
                              node["name"], f"{node['name']}: {node['value_text']}"))
-    return shapes + outside_labels(segments, cx, cy, radius, box, measure, style, donut, spans)
+    return shapes + outside_labels(segments, cx, cy, radius, box, measure, style, donut, spans,
+                                   outside_lines(segments, box, radius, measure, style, donut, "chord"))
 

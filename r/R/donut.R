@@ -133,5 +133,6 @@ hl_donut <- function(data, label = NULL, value = NULL, levels = NULL, title = NU
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +
     theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) donut_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- "grow"
   plot
 }

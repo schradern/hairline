@@ -33,28 +33,46 @@ key_right <- function(rows, x, right, measure, style, rules) {
   min(right, x + (style$swatch + style$swatch_text + rules$key_gap) * base + names + shares)
 }
 
+# Each key name's lines: one while names and shares fit the panel, wrapped before the share column otherwise.
+key_lines <- function(rows, x, right, measure, style, rules) {
+  base <- style$base
+  shares <- max(vapply(rows, function(row) measure(row$segment$share_text, "label"), numeric(1)))
+  text_left <- (style$swatch + style$swatch_text) * base
+  lapply(rows, function(row) {
+    fit_lines(row$segment$name, right - shares - rules$key_gap * base - x - row$depth * rules$key_indent * base -
+                text_left, measure, "donut", "the key name")
+  })
+}
+
 key_square <- function(x, y, side, fill) {
   list(kind = "polygon", points = rbind(c(x, y), c(x + side, y), c(x + side, y + side), c(x, y + side)), fill = fill)
 }
 
-hierarchical_key <- function(rings, x, right, cy, measure, style, rules) {
+# Rows centred beside the donut; a name wraps before the share column, which stays on its first line. Rows taller
+# than the panel start at its top and run on below it (the figure grows to hold them).
+hierarchical_key <- function(rings, x, box, cy, measure, style, rules) {
   base <- style$base
   rows <- key_rows(rings)
-  right <- key_right(rows, x, right, measure, style, rules)
-  pitch <- line_height(style, "label") + rules$key_row_gap * base
+  right <- key_right(rows, x, box[1] + box[3], measure, style, rules)
+  lines <- key_lines(rows, x, right, measure, style, rules)
+  line <- line_height(style, "label")
   side <- style$swatch * base
-  top <- cy - pitch * length(rows) / 2
+  pitches <- vapply(lines, length, integer(1)) * line + rules$key_row_gap * base
+  top <- max(box[2], cy - sum(pitches) / 2)
   shapes <- list()
   for (index in seq_along(rows)) {
     row <- rows[[index]]
-    centre <- top + pitch * (index - 0.5)
+    centre <- top + (line + rules$key_row_gap * base) / 2
     left <- x + row$depth * rules$key_indent * base
-    baseline <- baseline_for(centre, style, "label")
-    shapes <- c(shapes, list(key_square(left, centre - side / 2, side, row$segment$color),
-                             shape_text(left + side + style$swatch_text * base, baseline, row$segment$name, "label",
-                                        style$neutral$ink),
-                             shape_text(right, baseline, row$segment$share_text, "label", style$neutral$muted,
-                                        "right")))
+    shapes[[length(shapes) + 1]] <- key_square(left, centre - side / 2, side, row$segment$color)
+    for (number in seq_along(lines[[index]])) {
+      shapes[[length(shapes) + 1]] <- shape_text(left + side + style$swatch_text * base,
+                                                 baseline_for(centre + (number - 1) * line, style, "label"),
+                                                 lines[[index]][number], "label", style$neutral$ink)
+    }
+    shapes[[length(shapes) + 1]] <- shape_text(right, baseline_for(centre, style, "label"), row$segment$share_text,
+                                               "label", style$neutral$muted, "right")
+    top <- top + pitches[index]
   }
   shapes
 }
@@ -130,9 +148,13 @@ donut_drawing <- function(spec, box, measure, style) {
   radii <- ring_radii(length(rings), radius, if (length(rings) == 1) rules$hole else rules$hole_nested, rules$gap_pt)
   shapes <- segment_shapes(rings, cx, cy, radii, rules)
   labels <- switch(spec$labels,
-                   outside = outside_labels(rings[[1]], cx, cy, radius, box, measure, style, rules),
-                   key = hierarchical_key(rings, cx + radius + rules$key_gap * base, box[1] + box[3], cy, measure,
-                                          style, rules),
+                   outside = outside_labels(rings[[1]], cx, cy, radius, box, measure, style, rules,
+                                            lines = outside_lines(rings[[1]], box, radius, measure, style, rules,
+                                                                  "donut")),
+                   key = hierarchical_key(rings, cx + radius + rules$key_gap * base, box, cy, measure, style, rules),
                    ring_labels(rings, radii, cx, cy, measure, style, rules))
-  c(shapes, labels, centre_total(spec$total, spec$total_label, cx, cy, style))
+  label <- spec$total_label
+  labelled <- !is.null(spec$total) && !is.null(label) && nzchar(label)
+  lines <- if (labelled) total_lines(label, radii[[1]][1], measure, style) else NULL
+  c(shapes, labels, centre_total(spec$total, label, cx, cy, style, lines))
 }

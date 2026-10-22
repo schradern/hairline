@@ -96,16 +96,26 @@ def content_bottom(shapes: list[dict], style: dict, measure=None) -> float:
     return max(bottoms)
 
 
-def fit_height(figure: HairlineFigure) -> HairlineFigure:
+# Passes of a grow-only fit: a taller panel can move content (a larger donut moves its key), so it is fitted again.
+GROW_PASSES = 4
+# Overflow in pt a grow-only fit ignores: a donut's lowest arc point may sit a rounding error past its panel.
+GROW_SLACK = 0.01
+
+
+def fit_height(figure: HairlineFigure, shrink: bool = True) -> HairlineFigure:
     """Resize the figure so its drawn panel ends where the content ends (shorter, or taller when it overflows).
+    With `shrink` False the figure only grows, for charts that fill their panel unless their labels need more.
     Only the frame is laid out, in pt: a full draw would rasterise the provisional figure, whose pixels grow with
     the square of its width."""
-    figure.figure.get_layout_engine().execute(figure.figure)
-    box = figure.plot_boxes[0]
-    slack = box.y + box.height - content_bottom(figure.shapes, drawing_style(figure.settings),
-                                                measure_for(figure.settings))
-    width, height = figure.figure.get_size_inches()
-    figure.figure.set_size_inches(width, height - slack / 72)
+    for _ in range(1 if shrink else GROW_PASSES):
+        figure.figure.get_layout_engine().execute(figure.figure)
+        box = figure.plot_boxes[0]
+        slack = box.y + box.height - content_bottom(figure.shapes, drawing_style(figure.settings),
+                                                    measure_for(figure.settings))
+        if not shrink and slack > -GROW_SLACK:
+            break
+        width, height = figure.figure.get_size_inches()
+        figure.figure.set_size_inches(width, height - slack / 72)
     return figure
 
 

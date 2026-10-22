@@ -120,7 +120,8 @@ chord_drawing <- function(spec, box, measure, style) {
     shapes[[length(shapes) + 1]] <- tagged_shape(node, names[index],
                                                  paste0(names[index], ": ", spec$nodes[[index]]$value_text))
   }
-  c(shapes, outside_labels(segments, cx, cy, radius, box, measure, style, donut, spans))
+  c(shapes, outside_labels(segments, cx, cy, radius, box, measure, style, donut, spans,
+                           outside_lines(segments, box, radius, measure, style, donut, "chord")))
 }
 
 #' Chord diagram
@@ -149,5 +150,6 @@ hl_chord <- function(data, source, target, value = NULL, title = NULL, subtitle 
     ggplot2::labs(title = title %||% paste(label, "between", gsub("_", " ", source), "and", gsub("_", " ", target)),
                   subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) chord_drawing(spec, box, measure, style)
+  plot@meta$hairline_fit_height <- "grow"
   plot
 }

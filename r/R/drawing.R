@@ -77,7 +77,8 @@ fit_device_megapixels <- 16
 # grows with the square of its width.
 fitted_size_mm <- function(plot, size_mm) {
   least <- plot@meta$hairline_min_plot
-  if (!isTRUE(plot@meta$hairline_fit_height) && is.null(least)) return(size_mm)
+  fit <- plot@meta$hairline_fit_height
+  if (!isTRUE(fit) && !identical(fit, "grow") && is.null(least)) return(size_mm)
   path <- tempfile(fileext = ".png")
   res <- min(72, sqrt(fit_device_megapixels * 1e6 / prod(size_mm / 25.4)))
   ragg::agg_png(path, width = size_mm[1], height = size_mm[2], units = "mm", res = res)
@@ -88,11 +89,31 @@ fitted_size_mm <- function(plot, size_mm) {
   frame <- ggplot2::ggplotGrob(plot)
   if (!inherits(frame, "hairline_frame")) return(size_mm)
   if (!is.null(least)) return(kept_plot_size_mm(frame$parts, size_mm, least))
+  if (identical(fit, "grow")) return(grown_size_mm(frame$parts, size_mm))
   plan <- plan_frame(frame$parts, size_mm / 25.4 * 72)
   box <- fitted_box(plan$layout$panels[[1]], frame$parts$aspect)
   slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(frame$parts$settings),
                                             measure_for(frame$parts$settings))
   c(size_mm[1], size_mm[2] - slack / 72 * 25.4)
+}
+
+# Passes of a grow-only fit: a taller panel can move content (a larger donut moves its key), so it is fitted again.
+grow_passes <- 4
+# Overflow in pt a grow-only fit ignores: a donut's lowest arc point may sit a rounding error past its panel.
+grow_slack <- 0.01
+
+# Charts that fill their panel unless their labels need more (plot@meta$hairline_fit_height <- "grow") get a taller
+# figure when their content runs past the panel, never a shorter one, as the Python package's
+# fit_height(shrink=False) does.
+grown_size_mm <- function(parts, size_mm) {
+  for (pass in seq_len(grow_passes)) {
+    plan <- plan_frame(parts, size_mm / 25.4 * 72)
+    box <- fitted_box(plan$layout$panels[[1]], parts$aspect)
+    slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(parts$settings), measure_for(parts$settings))
+    if (slack > -grow_slack) break
+    size_mm <- c(size_mm[1], size_mm[2] - slack / 72 * 25.4)
+  }
+  size_mm
 }
 
 # A plot whose frame (title, legend, header, axis, table) would leave a panel less than `least` x the base size high

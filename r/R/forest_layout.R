@@ -1,6 +1,25 @@
 # Forest plot axis, pooled row and the entry point forest_drawing().
 
-forest_axis_shapes <- function(spec, scale, plot, y, style, rules) {
+# The favours labels either side of the null line, each wrapped into the room between it and the panel's edge,
+# lines running down.
+forest_favours_shapes <- function(spec, null, baseline, box, measure, style, rules) {
+  gap <- rules$favours_gap * style$base
+  line <- line_height(style, "label")
+  sides <- list(list(label = spec$favours[[1]], x = null - gap, room = null - gap - box[1], align = "right"),
+                list(label = spec$favours[[2]], x = null + gap, room = box[1] + box[3] - null - gap, align = "left"))
+  shapes <- list()
+  for (side in sides) {
+    lines <- fit_lines(side$label, side$room, measure, "forest", "the favours label")
+    for (index in seq_along(lines)) {
+      shapes[[length(shapes) + 1]] <- c(shape_text(side$x, baseline + (index - 1) * line, lines[index], "label",
+                                                   style$neutral$muted, side$align), part = "favours")
+    }
+  }
+  shapes
+}
+
+# Axis line and ticks; with `favours` (which needs `box` and `measure`), the labels either side of null.
+forest_axis_shapes <- function(spec, scale, plot, y, style, rules, box = NULL, measure = NULL) {
   base <- style$base
   muted <- style$neutral$muted
   shapes <- list(list(kind = "line", points = rbind(c(plot[1], y), c(plot[2], y)), color = style$neutral$axis,
@@ -12,13 +31,8 @@ forest_axis_shapes <- function(spec, scale, plot, y, style, rules) {
     shapes[[length(shapes) + 1]] <- c(tick, part = "tick")
   }
   if (!is.null(spec$favours) && !is.null(spec$null)) {
-    gap <- rules$favours_gap * base
-    null <- scale(spec$null)
-    baseline <- tick_baseline + line_height(style, "label") + gap
-    shapes <- c(shapes, list(c(shape_text(null - gap, baseline, spec$favours[[1]], "label", muted, "right"),
-                               part = "favours"),
-                             c(shape_text(null + gap, baseline, spec$favours[[2]], "label", muted, "left"),
-                               part = "favours")))
+    baseline <- tick_baseline + line_height(style, "label") + rules$favours_gap * base
+    shapes <- c(shapes, forest_favours_shapes(spec, scale(spec$null), baseline, box, measure, style, rules))
   }
   shapes
 }
@@ -74,5 +88,6 @@ forest_drawing <- function(spec, box, measure, style) {
     centre <- top + pitch * length(spec$rows) + line_pitch / 2 + rules$pooled_gap * pitch
     shapes <- c(shapes, forest_pooled_shapes(spec, columns, top, bottom, pitch, centre, scale, style, rules))
   }
-  c(shapes, forest_axis_shapes(spec, scale, columns$plot, bottom + rules$axis_gap * base, style, rules))
+  c(shapes, forest_axis_shapes(spec, scale, columns$plot, bottom + rules$axis_gap * base, style, rules, box,
+                               measure))
 }

@@ -531,6 +531,7 @@
   },
   "sankey": {
     "node_width": 0.45,
+    "min_plot": 4,
     "node_gap": 0.5,
     "label_gap": 0.4,
     "link_opacity": 0.35,
@@ -612,6 +613,7 @@
   },
   "risk_of_bias": {
     "max_bar": 2.4,
+    "min_plot": 8,
     "row_gap": 0.6,
     "label_gap": 1.0,
     "overall_gap": 1.0,

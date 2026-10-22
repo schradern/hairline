@@ -16,39 +16,77 @@ sankey_node_shapes <- function(ordered, positions, xs, width) {
   shapes
 }
 
-sankey_middle_label <- function(node, top, centre, measure, style, rules) {
+sankey_label_space <- function(style) hl_tokens()$donut$label_space * style$sizes$label
+
+# Each node's name in lines no wider than `room`, its value following the last; a list by node name.
+sankey_node_lines <- function(nodes, room, measure, style) {
+  lines <- lapply(nodes, function(node) {
+    fit_lines(node$name, room, measure, "sankey", "the label", measure(node$value_text, "label"),
+              sankey_label_space(style))
+  })
+  stats::setNames(lines, vapply(nodes, `[[`, character(1), "name"))
+}
+
+sankey_block_width <- function(node, lines, measure, style) {
+  pair_width(lines, measure, measure(node$value_text, "label"), sankey_label_space(style))
+}
+
+# Widths of the two outer label columns: their labels' widths while both fit `room`; otherwise a column narrower
+# than half keeps its width and the other takes the rest, or each takes half.
+sankey_outer_rooms <- function(left, right, room) {
+  if (left + right <= room) return(c(left, right))
+  if (left <= room / 2) return(c(left, room - left))
+  if (right <= room / 2) return(c(room - right, right))
+  c(room / 2, room / 2)
+}
+
+# Name and value centred above the node, on a surface halo so links behind stay quiet; a wrapped name stacks its
+# lines upwards from the node, the value after the last.
+sankey_middle_label <- function(node, lines, top, centre, measure, style, rules) {
   size <- style$sizes$label
   base <- style$base
   neutral <- style$neutral
-  space <- hl_tokens()$donut$label_space * size
-  name <- measure(node$name, "label")
+  line <- line_height(style, "label")
+  count <- length(lines)
+  space <- sankey_label_space(style)
   value <- measure(node$value_text, "label")
-  start <- centre - (name + space + value) / 2
-  end <- centre + (name + space + value) / 2
+  widths <- vapply(lines, measure, numeric(1), role = "label", USE.NAMES = FALSE)
+  widths[count] <- if (nzchar(lines[count])) widths[count] + space + value else value
   baseline <- top - rules$label_pad * base - style$descender * size
+  first <- baseline - (count - 1) * line
   pad <- rules$halo_pad * base
-  upper <- baseline - style$cap_height * size - pad
+  half <- max(widths) / 2
+  upper <- first - style$cap_height * size - pad
   lower <- baseline + style$descender * size + pad
-  list(list(kind = "polygon", fill = neutral$surface, role = "halo",
-            points = rbind(c(start - pad, upper), c(end + pad, upper), c(end + pad, lower), c(start - pad, lower))),
-       shape_text(start, baseline, node$name, "label", neutral$ink),
-       shape_text(start + name + space, baseline, node$value_text, "label", neutral$muted))
+  shapes <- list(list(kind = "polygon", fill = neutral$surface, role = "halo",
+                      points = rbind(c(centre - half - pad, upper), c(centre + half + pad, upper),
+                                     c(centre + half + pad, lower), c(centre - half - pad, lower))))
+  for (index in seq_len(count)) {
+    if (!nzchar(lines[index])) next
+    shapes[[length(shapes) + 1]] <- shape_text(centre - widths[index] / 2, first + (index - 1) * line, lines[index],
+                                               "label", neutral$ink)
+  }
+  c(shapes, list(shape_text(centre - widths[count] / 2 + widths[count] - value, baseline, node$value_text, "label",
+                            neutral$muted)))
 }
 
-sankey_label_shapes <- function(ordered, positions, xs, width, measure, style, rules) {
+sankey_label_shapes <- function(ordered, positions, xs, width, measure, style, rules, lines) {
   gap <- rules$label_gap * style$base
+  line <- line_height(style, "label")
   donut <- hl_tokens()$donut
   shapes <- list()
   for (index in seq_along(ordered)) {
     for (node in ordered[[index]]) {
       span <- positions[[index]][[node$name]]
+      name <- lines[[index]][[node$name]]
+      first <- mean(span) - (length(name) - 1) * line / 2
       segment <- list(name = node$name, share_text = node$value_text)
       shapes <- c(shapes, if (index == 1) {
-        label_pair(segment, xs[index] - gap, mean(span), "left", measure, style, donut)
+        label_pair(segment, xs[index] - gap, first, "left", measure, style, donut, name)
       } else if (index == length(ordered)) {
-        label_pair(segment, xs[index] + width + gap, mean(span), "right", measure, style, donut)
+        label_pair(segment, xs[index] + width + gap, first, "right", measure, style, donut, name)
       } else {
-        sankey_middle_label(node, span[1], xs[index] + width / 2, measure, style, rules)
+        sankey_middle_label(node, name, span[1], xs[index] + width / 2, measure, style, rules)
       })
     }
   }
@@ -70,20 +108,48 @@ sankey_outer_width <- function(nodes, measure, style, rules) {
              numeric(1))) + rules$label_gap * style$base
 }
 
+# Every node's label lines and the x of each column: the outer labels share what the links leave them at
+# `min_plot`, the middle labels the space between columns.
+sankey_column_lines <- function(spec, box, width, measure, style, rules) {
+  nodes <- spec$nodes
+  count <- length(nodes)
+  gap <- rules$label_gap * style$base
+  rooms <- sankey_outer_rooms(sankey_outer_width(nodes[[1]], measure, style, rules),
+                              sankey_outer_width(nodes[[count]], measure, style, rules),
+                              box[3] - width - rules$min_plot * style$base)
+  outer <- list(sankey_node_lines(nodes[[1]], rooms[1] - gap, measure, style),
+                sankey_node_lines(nodes[[count]], rooms[2] - gap, measure, style))
+  column_width <- function(column, lines) {
+    max(vapply(column, function(node) sankey_block_width(node, lines[[node$name]], measure, style), numeric(1))) + gap
+  }
+  first <- box[1] + column_width(nodes[[1]], outer[[1]])
+  last <- box[1] + box[3] - column_width(nodes[[count]], outer[[2]]) - width
+  xs <- first + (last - first) * (seq_len(count) - 1) / (count - 1)
+  middle <- lapply(nodes[-c(1, count)], function(column) {
+    sankey_node_lines(column, (last - first) / (count - 1) - 2 * gap, measure, style)
+  })
+  list(lines = c(outer[1], middle, outer[2]), xs = xs)
+}
+
+# Labels wrap when the links would keep less than `min_plot`; the gap between nodes holds the tallest label, and a
+# column with more nodes than the panel holds runs on below it (the figure grows).
 sankey_drawing <- function(spec, box, measure, style) {
   rules <- hl_tokens()$sankey
   base <- style$base
   count <- length(spec$nodes)
   line <- line_height(style, "label")
   width <- rules$node_width * base
-  first <- box[1] + sankey_outer_width(spec$nodes[[1]], measure, style, rules)
-  last <- box[1] + box[3] - sankey_outer_width(spec$nodes[[count]], measure, style, rules) - width
-  xs <- first + (last - first) * (seq_len(count) - 1) / (count - 1)
-  top <- box[2] + line + rules$heading_gap * base + if (count > 2) line else 0
-  placed <- sankey_place(spec, top, box[2] + box[4] - top, line + rules$node_gap * base)
+  columns <- sankey_column_lines(spec, box, width, measure, style, rules)
+  counts <- lapply(columns$lines, function(column) vapply(column, length, integer(1)))
+  tallest <- max(unlist(counts))
+  raised <- max(c(0, unlist(counts[-c(1, count)])))
+  gap <- tallest * line + rules$node_gap * base
+  top <- box[2] + line + rules$heading_gap * base + raised * line
+  most <- max(vapply(spec$nodes, length, integer(1)))
+  placed <- sankey_place(spec, top, max(box[2] + box[4] - top, (most - 1) * gap + most * line), gap)
   heading <- baseline_for(box[2] + line / 2, style, "label")
-  c(sankey_link_shapes(spec, placed$positions, xs, width, placed$scale, rules),
-    sankey_node_shapes(placed$ordered, placed$positions, xs, width),
-    sankey_label_shapes(placed$ordered, placed$positions, xs, width, measure, style, rules),
-    sankey_heading_shapes(spec$headings, xs, width, heading, style))
+  c(sankey_link_shapes(spec, placed$positions, columns$xs, width, placed$scale, rules),
+    sankey_node_shapes(placed$ordered, placed$positions, columns$xs, width),
+    sankey_label_shapes(placed$ordered, placed$positions, columns$xs, width, measure, style, rules, columns$lines),
+    sankey_heading_shapes(spec$headings, columns$xs, width, heading, style))
 }

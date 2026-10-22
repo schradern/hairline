@@ -958,3 +958,143 @@ def test_a_survival_plot_in_one_column_grows_taller_instead_of_failing(tmp_path,
     least = load_tokens()["survival"]["min_plot"] * narrow.settings.base_size
     assert narrow.plot_boxes[0].height == pytest.approx(least, abs=0.5)
     assert narrow.figure.get_size_inches()[1] * 25.4 > 75 * 0.7
+
+
+LONG_LABEL = "An exceptionally long category label that keeps going for seventy chars"
+
+
+def drawn_extent(figure) -> tuple[float, float, float, float, float, float]:
+    """Left, top, right and bottom of every drawn shape (texts by their measured width), and the figure's size."""
+    from hairline.drawing import measure_for
+    measure, xs, ys = measure_for(figure.settings), [], []
+    for shape in figure.shapes:
+        if shape["kind"] == "text":
+            width = measure(shape["text"], shape["role"], shape.get("weight"))
+            left = shape["x"] - {"left": 0.0, "center": width / 2, "right": width}[shape["align"]]
+            xs += [left, left + width]
+            ys.append(shape["y"])
+        else:
+            xs += [point[0] for point in shape["points"]]
+            ys += [point[1] for point in shape["points"]]
+    width, height = figure.figure.get_size_inches() * 72
+    return min(xs), min(ys), max(xs), max(ys), width, height
+
+
+def long_label_charts() -> dict:
+    single = pd.DataFrame({"name": [LONG_LABEL, "Home", "Rehab", "Care home"], "n": [40, 30, 20, 10]})
+    referrals = pd.DataFrame({"origin": [LONG_LABEL, "ED", "Ward"], "destination": ["ICU", "Ward", LONG_LABEL],
+                              "patients": [4, 5, 6]})
+    judged = pd.DataFrame({"study": list("ABC"), LONG_LABEL: ["Low", "High", "Low"], "Missing": ["Low", "Low", "Some"]})
+    trials = pd.DataFrame({"study": ["A", "B"], "est": [0.8, 1.2], "low": [0.6, 0.9], "high": [1.1, 1.5]})
+    flows = pd.DataFrame({"a": ["Salary", "Salary", "Benefits"], "b": ["Rent", LONG_LABEL, "Food"], "v": [5, 3, 2]})
+    return {
+        "donut": lambda: hl.donut(single, "name", "n"),
+        "chord": lambda: hl.chord(referrals, "origin", "destination", "patients"),
+        "venn": lambda: hl.venn({LONG_LABEL: [1, 2, 3], "Hypertension": [2, 3, 4]}),
+        "risk of bias": lambda: hl.risk_of_bias(judged, "study", domains=[LONG_LABEL, "Missing"],
+                                                overall="Overall judgement across every domain of the tool"),
+        "forest": lambda: hl.forest(trials, "study", "est", "low", "high",
+                                    favours=["Favours the experimental treatment arm strongly",
+                                             "Favours the control arm of the randomised trial"]),
+        "sankey": lambda: hl.sankey(flows, ["a", "b"], "v"),
+    }
+
+
+@pytest.mark.parametrize("width_mm", [120, 75])
+@pytest.mark.parametrize("chart", list(long_label_charts()))
+def test_long_labels_wrap_inside_the_figure(chart, width_mm, tmp_path, monkeypatch):
+    """A 70-character label ran off the figure (a donut label to 411 pt of 340, sankey links from x = -152); it
+    wraps into the room the chart's minimum size leaves, and the figure grows when the lines need the height."""
+    host_width(tmp_path, monkeypatch, width_mm=width_mm)
+    hl.use(brand=False)
+    figure = long_label_charts()[chart]()
+    left, top, right, bottom, width, height = drawn_extent(figure)
+    assert 0 <= left and right <= width + 0.01 and 0 <= top and bottom <= height
+    assert LONG_LABEL not in [shape["text"] for shape in figure.shapes if shape["kind"] == "text"]
+
+
+def test_a_word_wider_than_the_room_names_the_room_it_needs(tmp_path, monkeypatch):
+    host_width(tmp_path, monkeypatch, width_mm=45)
+    hl.use(brand=False)
+    single = pd.DataFrame({"name": ["Supercalifragilisticexpialidocious", "Home"], "n": [3, 1]})
+    with pytest.raises(hl.HairlineLayoutError, match=r"donut: the label 'Supercalifragilisticexpialidocious' needs "
+                                                     r"\d+ pt, but the figure leaves \d+ pt"):
+        hl.donut(single, "name", "n", size="onehalf")
+    hl.use(brand=False)
+    with pytest.raises(hl.HairlineLayoutError, match=r"total_label .* does not fit the hole"):
+        hl.donut(single.assign(name=["A", "B"]), "name", "n", labels="ring",
+                 total_label="Supercalifragilisticexpialidocious")
+
+
+def test_a_label_as_wide_as_its_room_keeps_one_line():
+    from hairline.charts.wrapping import fit_lines, pair_lines
+
+    def measure(text, role="label", weight=None):
+        return 0.1 * len(text) + 0.2
+
+    assert fit_lines("Care home", measure("Care home") + 0.3 + 0.4, measure, "donut", "the label", 0.4,
+                     0.3) == ["Care home"]
+    assert pair_lines("Care home", measure("home") + 0.05, measure, 0.4, 0.3) == ["Care", "home", ""]
+
+
+def test_a_sankey_with_many_nodes_grows_instead_of_losing_them():
+    """40 sources at 120 mm: a node sat above the panel and labels collided (shapes to y = 306 of 238 pt)."""
+    hl.use(brand=False)
+    data = pd.DataFrame({"a": [f"Source {index}" for index in range(40) for _ in range(3)], "b": ["X", "Y", "Z"] * 40,
+                         "v": [1 + index % 5 for index in range(120)]})
+    figure = hl.sankey(data, ["a", "b"], "v")
+    left, top, right, bottom, width, height = drawn_extent(figure)
+    assert top >= figure.plot_boxes[0].y - 0.01 and bottom <= height and height > 238
+    nodes = sorted((shape["points"][0][1], shape["points"][2][1]) for shape in figure.shapes
+                   if shape.get("role") == "node" and shape["points"][0][0] < width / 2)
+    assert len(nodes) == 40 and all(upper[1] < lower[0] for upper, lower in zip(nodes, nodes[1:], strict=False))
+    baselines = sorted(shape["y"] for shape in figure.shapes if shape["kind"] == "text"
+                       and shape["text"].startswith("Source"))
+    line = figure.settings.base_size * load_tokens()["type"]["roles"]["label"]["factor"]
+    assert min(b - a for a, b in zip(baselines, baselines[1:], strict=False)) >= line
+
+
+def test_a_nested_donut_key_with_many_rows_grows_the_figure():
+    """80 children started the key at y = -455 pt; the key now starts in the panel and the figure grows."""
+    hl.use(brand=False)
+    data = pd.DataFrame({"p": [f"Parent {index // 20}" for index in range(80)],
+                         "c": [f"Child {index}" for index in range(80)], "n": [1 + index % 7 for index in range(80)]})
+    figure = hl.donut(data, levels=["p", "c"])
+    left, top, right, bottom, width, height = drawn_extent(figure)
+    assert top >= figure.plot_boxes[0].y - 0.01 and bottom <= height and right <= width
+
+
+def flat_points(shapes: list[dict]) -> list[float]:
+    return [value for shape in shapes for value in ([shape["x"], shape["y"]] if shape["kind"] == "text" else
+                                                    [number for point in shape["points"] for number in point])]
+
+
+def test_wrapped_labels_match_the_shared_fixture():
+    from hairline.charts.chord_geometry import chord_drawing
+    from hairline.charts.donut_geometry import donut_drawing
+    from hairline.charts.forest_geometry import forest_drawing
+    from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
+    from hairline.charts.sankey_geometry import sankey_drawing
+    from hairline.charts.venn_geometry import venn_drawing
+    from hairline.charts.wrapping import spread_blocks
+    from hairline.layout.geometry import Box
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "wrapping.json").read_text())
+    style = fixture["style"]
+    drawings = {"donut": donut_drawing, "chord": chord_drawing, "venn": venn_drawing,
+                "risk_of_bias": risk_of_bias_drawing, "forest": forest_drawing, "sankey": sankey_drawing}
+
+    def measure(text, role, weight=None):
+        return 0.5 * style["sizes"][role] * len(text)
+    for case in fixture["cases"]:
+        box = Box(*case["box"])
+        if "error" in case:
+            with pytest.raises(hl.HairlineLayoutError) as error:
+                drawings[case["chart"]](case["spec"], box, measure, style)
+            assert str(error.value) == case["error"]
+        else:
+            shapes = drawings[case["chart"]](case["spec"], box, measure, style)
+            assert [shape.get("text") for shape in shapes] == [shape.get("text") for shape in case["shapes"]]
+            assert flat_points(shapes) == pytest.approx(flat_points(case["shapes"]))
+    for case in fixture["blocks"]:
+        assert spread_blocks(case["positions"], case["heights"], case["top"], case["bottom"]) == \
+            pytest.approx(case["centres"])
