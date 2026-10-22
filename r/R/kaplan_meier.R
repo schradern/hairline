@@ -98,7 +98,9 @@ km_layers <- function(layers, colours, median_line) {
 #'
 #' Step curves per group with 95 % bands (Greenwood, log scale) and censor
 #' ticks, a dotted 50 % line, medians and your statistics in the panel
-#' header, and the number at risk under the x-axis aligned to its ticks.
+#' header, and the number at risk under the x-axis aligned to its ticks. A
+#' figure whose frame would leave the curves less than 8 x the base size high
+#' (a narrow figure with a number-at-risk table) grows taller.
 #'
 #' @param data A data frame, or a `survival::survfit` object.
 #' @param time,event Columns with follow-up time and event (1 = event, 0 = censored); unused for `survfit`.
@@ -166,5 +168,7 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
     })
     plot@meta$hairline_table <- list(heading = "Number at risk", rows = rows)
   }
+  # A narrow figure (one column of a two-column page) grows taller rather than squeezing the curves away.
+  plot@meta$hairline_min_plot <- hl_tokens()$survival$min_plot
   plot
 }

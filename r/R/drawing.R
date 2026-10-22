@@ -76,7 +76,8 @@ fit_device_megapixels <- 16
 # layout pass (hairline measures text itself), so a very large figure gets a lower resolution, not a buffer that
 # grows with the square of its width.
 fitted_size_mm <- function(plot, size_mm) {
-  if (!isTRUE(plot@meta$hairline_fit_height)) return(size_mm)
+  least <- plot@meta$hairline_min_plot
+  if (!isTRUE(plot@meta$hairline_fit_height) && is.null(least)) return(size_mm)
   path <- tempfile(fileext = ".png")
   res <- min(72, sqrt(fit_device_megapixels * 1e6 / prod(size_mm / 25.4)))
   ragg::agg_png(path, width = size_mm[1], height = size_mm[2], units = "mm", res = res)
@@ -86,9 +87,23 @@ fitted_size_mm <- function(plot, size_mm) {
   })
   frame <- ggplot2::ggplotGrob(plot)
   if (!inherits(frame, "hairline_frame")) return(size_mm)
+  if (!is.null(least)) return(kept_plot_size_mm(frame$parts, size_mm, least))
   plan <- plan_frame(frame$parts, size_mm / 25.4 * 72)
   box <- fitted_box(plan$layout$panels[[1]], frame$parts$aspect)
   slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(frame$parts$settings),
                                             measure_for(frame$parts$settings))
   c(size_mm[1], size_mm[2] - slack / 72 * 25.4)
+}
+
+# A plot whose frame (title, legend, header, axis, table) would leave a panel less than `least` x the base size high
+# gets a taller figure, as the Python package's keep_plot_height() does: the frame keeps its size, the plot its room.
+# The frame is planned at a probe height tall enough for any frame of this width.
+kept_plot_size_mm <- function(parts, size_mm, least) {
+  least_pt <- least * parts$settings$base_size
+  size_pt <- size_mm / 25.4 * 72
+  probe <- c(size_pt[1], 2 * size_pt[2] + least_pt)
+  panels <- plan_frame(parts, probe)$layout$panels
+  rows <- length(unique(vapply(panels, `[`, numeric(1), 2)))
+  frame <- probe[2] - rows * min(vapply(panels, `[`, numeric(1), 4))
+  c(size_mm[1], max(size_mm[2], (frame + rows * least_pt) / 72 * 25.4))
 }

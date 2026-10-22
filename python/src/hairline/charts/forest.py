@@ -170,7 +170,8 @@ def forest(data, study: str = "study", estimate: str = "estimate", low: str = "l
            exponentiate: bool | None = None, size: str = "onehalf", **options) -> HairlineFigure:
     """Forest plot from a results table or a fitted model (its terms, without the intercept). For a model,
     `exponentiate` (default: on for logistic, Poisson and Cox models) turns log odds or log hazards into ratios.
-    `options` as for forest_spec (study_heading, effect_heading, digits, marker, null)."""
+    `options` as for forest_spec (study_heading, effect_heading, digits, marker, null). On a figure too narrow for
+    the columns beside the intervals (one column of a two-column page), they sit on a line under each study."""
     if hasattr(data, "params") and hasattr(data, "conf_int"):
         exponentiate = ratio_model(data) if exponentiate is None else exponentiate
         data, study, estimate, low, high = model_table(data, exponentiate), "term", "estimate", "low", "high"

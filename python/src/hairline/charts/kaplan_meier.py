@@ -13,6 +13,7 @@ import pandas as pd
 from hairline import entities
 from hairline.charts.common import check_columns, check_numeric
 from hairline.charts.timeseries import groups_of, reference_style
+from hairline.drawing import keep_plot_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
 from hairline.numbers import auto_digits, format_number, format_p
@@ -142,7 +143,8 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
                  size: str = "onehalf") -> HairlineFigure:
     """Survival curves per group from time and event (1 = event, 0 = censored) columns, or from fitted
     Kaplan–Meier objects (one lifelines KaplanMeierFitter, or a mapping of group to one); with groups in raw data
-    and `test`, the log-rank p joins the key numbers."""
+    and `test`, the log-rank p joins the key numbers. A figure whose frame would leave the curves less than 8 x the
+    base size high (a narrow figure with a number-at-risk table) grows taller."""
     check_options(stats, times)
     estimates = estimates_from(data, time, event, by, order)
     if not estimates:
@@ -168,7 +170,8 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
                     median_line, grouped)
     if at_risk:
         result.table(rows, heading="Number at risk")
-    return result
+    # A narrow figure (one column of a two-column page) grows taller rather than squeezing the curves away.
+    return keep_plot_height(result, load_tokens()["survival"]["min_plot"] * result.settings.base_size)
 
 
 def finish_survival(result: HairlineFigure, estimates: list, stats, endpoint: str, x_title: str, median_line: bool,

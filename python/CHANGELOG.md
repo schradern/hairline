@@ -170,6 +170,13 @@
 
 ### Fixes for narrow figures and installed fonts
 
+* `forest()` and `dotplot()` fit one column of a two-column page (75 mm): when the columns beside the intervals
+  (effect, weight, extra columns) would leave the plot less than `forest.min_plot`, they move to a line under each
+  study, aligned in columns under a two-line heading, as `spread()` does with its numbers. A 5-study forest failed
+  at 75 and 85 mm; one too narrow even for that is refused with the room it needs.
+* `kaplan_meier()` grows the figure when its frame (title, legend, header, axis, number-at-risk table) would leave
+  the curves less than 8 x the base size high (token `survival.min_plot`): at 75 and 85 mm the curves had -7 and
+  13 pt and the figure failed. Wider figures keep their size.
 * `spread()` keeps its plot on a narrow figure. The key numbers sit beside the plot while it keeps at least
   8 × the base size (token `spread.min_plot`, as the forest plot has); on a narrower figure, such as one column of
   a two-column page (75 mm), they move to a line under each row, so no statistic is dropped. The plot had shrunk

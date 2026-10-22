@@ -95,7 +95,7 @@ test_that("a count column in the data stays a category", {
 test_that("a long study label is refused rather than reversing the axis", {
   data <- data.frame(study = "Early mobilisation plus physiotherapy versus standard rehabilitation", estimate = 1,
                      low = 0.5, high = 2)
-  expect_error(hl_layout_report(hl_forest(data), size = "onehalf"), "leave [0-9]+ pt for the intervals")
+  expect_error(hl_layout_report(hl_forest(data), size = "onehalf"), "forest: the figure leaves [0-9]+ pt for the table")
 })
 
 test_that("rolling means skip missing values and refuse invalid windows", {
@@ -746,4 +746,31 @@ test_that("numeric levels read the same in both languages; sentences keep acrony
   expect_match(hl_survival(study)$text, "^Median PFS")
   table <- data.frame(study = c("Age", "Age"), estimate = c(1.1, 1.2), low = c(1, 1.1), high = c(1.2, 1.3))
   expect_error(hl_effects(study, table), "the term 'Age' is named in more than one row")
+})
+
+narrow_studies <- data.frame(study = c("Andersen 2019", "Baker 2020", "Chen 2021", "Diaz 2022", "Evans 2023"),
+                             est = c(0.72, 0.85, 0.64, 0.91, 0.78), low = c(0.55, 0.62, 0.45, 0.70, 0.60),
+                             high = c(0.94, 1.16, 0.91, 1.18, 1.01), w = c(22, 18, 15, 25, 20))
+
+test_that("a forest in one column puts its columns under each study", {
+  hl_use(brand = FALSE)
+  report <- hl_layout_report(hl_forest(narrow_studies, "study", "est", "low", "high", weight = "w"), width_mm = 75)
+  expect_gte(report$panels[[1]][4], 100)
+  style <- read_fixture("forest.json")$style
+  measure <- function(text, role, weight = NULL) 0.5 * style$sizes[[role]] * nchar(text)
+  spec <- forest_spec(narrow_studies, "study", "est", "low", "high", weight = "w", colour = "#2474cf")
+  columns <- forest_columns(spec, c(20, 60, 200, 260), measure, hl_tokens()$forest, style$base)
+  expect_true(columns$under)
+  expect_equal(columns$plot[2], 220)
+})
+
+test_that("a survival plot in one column grows taller instead of failing", {
+  hl_use(brand = FALSE)
+  set.seed(7)
+  data <- data.frame(arm = sample(c("Control", "Low dose", "High dose"), 150, TRUE),
+                     months = round(stats::rexp(150, 1 / 20), 1) + 0.1, died = stats::rbinom(150, 1, 0.5))
+  plot <- hl_kaplan_meier(data, "months", "died", "arm")
+  narrow <- hl_layout_report(plot, width_mm = 75)
+  expect_equal(narrow$panels[[1]][4], hl_tokens()$survival$min_plot * hl_settings()$base_size, tolerance = 0.5)
+  expect_equal(fitted_size_mm(plot, c(120, 84))[2], 84)
 })

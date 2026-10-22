@@ -26,6 +26,7 @@ from hairline.interactive import figure_targets
 from hairline.numbers import format_number, format_p
 from hairline.stats.distributions import chi2_sf, t_quantile
 from hairline.stats.tests import kruskal, logrank, rank_sum
+from hairline.tokens import load_tokens
 
 
 @pytest.mark.parametrize(("value", "digits", "expected"), [
@@ -128,7 +129,7 @@ def test_a_count_column_in_the_data_stays_a_category():
 def test_a_long_study_label_is_refused_rather_than_reversing_the_axis():
     data = pd.DataFrame({"study": ["Early mobilisation plus physiotherapy versus standard rehabilitation"],
                          "estimate": [1.0], "low": [0.5], "high": [2.0]})
-    with pytest.raises(hl.HairlineLayoutError, match="leave 0 pt for the intervals"):
+    with pytest.raises(hl.HairlineLayoutError, match="forest: the figure leaves .* pt for the table"):
         hl.forest(data)
     hl.forest(data, size="double")
 
@@ -920,3 +921,40 @@ def test_numeric_levels_read_the_same_in_both_languages():
 def test_study_refuses_a_variable_named_twice():
     with pytest.raises(ValueError, match="variables names 'x' twice"):
         quiet_study(study_frame(), group="g", variables=["x", "x"])
+
+
+def narrow_studies() -> pd.DataFrame:
+    return pd.DataFrame({"study": ["Andersen 2019", "Baker 2020", "Chen 2021", "Diaz 2022", "Evans 2023"],
+                         "est": [0.72, 0.85, 0.64, 0.91, 0.78], "low": [0.55, 0.62, 0.45, 0.70, 0.60],
+                         "high": [0.94, 1.16, 0.91, 1.18, 1.01], "w": [22.0, 18, 15, 25, 20]})
+
+
+def test_a_forest_in_one_column_puts_its_columns_under_each_study(tmp_path, monkeypatch):
+    """At 75 mm the effect and weight columns left 1 pt for the intervals; they move under the study label."""
+    host_width(tmp_path, monkeypatch, width_mm=75)
+    hl.use(brand=False)
+    figure = hl.forest(narrow_studies(), "study", "est", "low", "high", weight="w")
+    texts = {shape["text"]: shape for shape in figure.shapes if shape["kind"] == "text"}
+    study, effect = texts["Andersen 2019"], texts["0.72 [0.55; 0.94]"]
+    assert effect["y"] > study["y"] and effect["x"] < figure.plot_boxes[0].x + figure.plot_boxes[0].width / 2
+    ticks = [shape["x"] for shape in figure.shapes if shape.get("part") == "tick"]
+    assert ticks[-1] - ticks[0] >= load_tokens()["forest"]["min_plot"] * figure.settings.base_size
+    wide = hl.forest(narrow_studies(), "study", "est", "low", "high", weight="w", size="onehalf")
+    assert wide.figure.get_size_inches()[0] * 25.4 == pytest.approx(75)
+
+
+def test_a_survival_plot_in_one_column_grows_taller_instead_of_failing(tmp_path, monkeypatch):
+    """At 75 mm the at-risk table left the curves -7 pt; the figure grows until the plot keeps 8 x the base."""
+    generator = np.random.default_rng(7)
+    data = pd.DataFrame({"arm": generator.choice(["Control", "Low dose", "High dose"], 150),
+                         "months": generator.exponential(20, 150).round(1) + 0.1,
+                         "died": generator.integers(0, 2, 150)})
+    hl.use(brand=False)
+    wide = hl.kaplan_meier(data, "months", "died", "arm")
+    assert wide.figure.get_size_inches()[1] * 25.4 == pytest.approx(84, abs=0.1)
+    host_width(tmp_path, monkeypatch, width_mm=75)
+    narrow = hl.kaplan_meier(data, "months", "died", "arm")
+    narrow.figure.savefig(io.BytesIO(), format="png", dpi=30)
+    least = load_tokens()["survival"]["min_plot"] * narrow.settings.base_size
+    assert narrow.plot_boxes[0].height == pytest.approx(least, abs=0.5)
+    assert narrow.figure.get_size_inches()[1] * 25.4 > 75 * 0.7

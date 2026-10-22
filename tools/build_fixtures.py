@@ -308,10 +308,12 @@ def forest_cases() -> dict:
              forest_spec(differences, "study", "est", "low", "high", ratio=False, color="#2474cf"),
              forest_spec(data.assign(low=data["est"], high=data["est"]), "study", "est", "low", "high", ratio=False,
                          color="#2474cf", marker="dot", interval=False, null=None)]
-    box = Box(20, 60, 460, 230)
+    # The last box is too narrow for the columns beside the intervals: they move under each row.
+    boxes = [Box(20, 60, 460, 230)] * len(specs) + [Box(20, 60, 240, 260)]
     return {"breaks": [{"low": low, "high": high, "breaks": log_breaks(low, high)} for low, high in LOG_RANGES],
             "cases": [{"spec": spec, "box": [box.x, box.y, box.width, box.height],
-                       "shapes": forest_drawing(spec, box, fake_measure, DRAWING_STYLE)} for spec in specs]}
+                       "shapes": forest_drawing(spec, box, fake_measure, DRAWING_STYLE)}
+                      for spec, box in zip([*specs, specs[0]], boxes, strict=True)]}
 
 
 def density_cases() -> dict:

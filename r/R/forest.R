@@ -152,7 +152,8 @@ forest_from_rma <- function(fit) {
 #' A results table (study, extra columns, effect with 95 % interval, weight)
 #' beside the intervals: squares sized by weight, a pooled diamond, a solid
 #' null line, a dashed pooled line, a log axis for ratios and "favours"
-#' labels under it. Heterogeneity goes into the caption.
+#' labels under it. Heterogeneity goes into the caption. On a figure too narrow
+#' for the columns beside the intervals, they sit on a line under each study.
 #'
 #' @param data A data frame of results, a fitted `lm`, `glm` or `survival::coxph` model, or a `metafor::rma`
 #'   object.

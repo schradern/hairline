@@ -55,7 +55,8 @@ A ggplot with the hairline frame.
 A results table (study, extra columns, effect with 95 \% interval, weight)
 beside the intervals: squares sized by weight, a pooled diamond, a solid
 null line, a dashed pooled line, a log axis for ratios and "favours"
-labels under it. Heterogeneity goes into the caption.
+labels under it. Heterogeneity goes into the caption. On a figure too narrow
+for the columns beside the intervals, they sit on a line under each study.
 }
 \examples{
 trials <- data.frame(study = c("Trial A", "Trial B", "Trial C"), or = c(0.62, 0.81, 0.47),

@@ -32,7 +32,7 @@ forest_pooled_shapes <- function(spec, columns, top, bottom, pitch, centre, scal
   diamond <- list(kind = "polygon", fill = style$neutral$ink, role = "diamond",
                   points = rbind(c(scale(pooled$low), centre), c(x, centre - half), c(scale(pooled$high), centre),
                                  c(x, centre + half)))
-  c(list(forest_rule(columns$study, columns$weight, divider, style),
+  c(list(forest_rule(columns$study, columns$right, divider, style),
          list(kind = "line", points = rbind(c(x, top), c(x, bottom)), color = style$neutral$faint,
               width = style$leader_width, dash = rules$pooled_dash),
          diamond),
@@ -45,19 +45,22 @@ forest_drawing <- function(spec, box, measure, style) {
   size <- style$sizes$label
   line <- line_height(style, "label")
   columns <- forest_columns(spec, box, measure, rules, base)
+  columns$lead <- if (columns$under) line else 0
   scale <- forest_scale(spec$axis, isTRUE(spec$ratio), columns$plot[1], columns$plot[2])
   heading <- box[2] + style$cap_height * size
-  top <- heading + line - style$cap_height * size + rules$rule_gap * base
+  top <- heading + line - style$cap_height * size + rules$rule_gap * base + columns$lead
   count <- length(spec$rows) + if (is.null(spec$pooled)) 0 else 1 + rules$pooled_gap
-  # Rows keep their pitch; the figure's height follows them (hairline_fit_height), so many rows never overlap.
-  pitch <- rules$row_pitch * line
+  # Rows keep their pitch; the figure's height follows them (hairline_fit_height), so many rows never overlap. A row
+  # whose columns sit under it is a line taller, and its interval stays on its first line.
+  line_pitch <- rules$row_pitch * line
+  pitch <- line_pitch + columns$lead
   bottom <- top + pitch * count
   sides <- if (identical(spec$marker, "dot")) rep(dot_size(style), length(spec$rows)) else
     forest_sides(spec, rules, base)
   shapes <- c(forest_table_texts(spec, columns, heading, NULL, style),
-              list(forest_rule(columns$study, columns$weight, top, style)))
+              list(forest_rule(columns$study, columns$right, top, style)))
   for (index in seq_along(spec$rows)) {
-    centre <- top + pitch * (index - 0.5)
+    centre <- top + pitch * (index - 1) + line_pitch / 2
     shapes <- c(shapes, forest_table_texts(spec, columns, baseline_for(centre, style, "label"), spec$rows[[index]],
                                            style),
                 forest_marks(spec$rows[[index]], centre, scale, columns$plot, sides[index], spec, style))
@@ -68,7 +71,7 @@ forest_drawing <- function(spec, box, measure, style) {
                                          color = style$neutral$muted, width = style$leader_width, part = "null")
   }
   if (!is.null(spec$pooled)) {
-    centre <- top + pitch * (length(spec$rows) + 0.5) + rules$pooled_gap * pitch
+    centre <- top + pitch * length(spec$rows) + line_pitch / 2 + rules$pooled_gap * pitch
     shapes <- c(shapes, forest_pooled_shapes(spec, columns, top, bottom, pitch, centre, scale, style, rules))
   }
   c(shapes, forest_axis_shapes(spec, scale, columns$plot, bottom + rules$axis_gap * base, style, rules))

@@ -58,7 +58,9 @@ A ggplot with the hairline frame.
 \description{
 Step curves per group with 95 \% bands (Greenwood, log scale) and censor
 ticks, a dotted 50 \% line, medians and your statistics in the panel
-header, and the number at risk under the x-axis aligned to its ticks.
+header, and the number at risk under the x-axis aligned to its ticks. A
+figure whose frame would leave the curves less than 8 x the base size high
+(a narrow figure with a number-at-risk table) grows taller.
 }
 \examples{
 set.seed(1)
