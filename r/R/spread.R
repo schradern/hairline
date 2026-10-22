@@ -1,5 +1,6 @@
 # Spread rows, mirroring the Python spread(): per group the range as a thin line, the interquartile range as a band
-# in the group's colour, the median as a dot, an optional reference tick, and the key numbers on the right.
+# in the group's colour, the median as a dot, an optional reference tick, and the key numbers on the right (or, on
+# a figure too narrow for both, on a line under each row).
 
 spread_stats <- c("median", "iqr", "mean", "n", "range")
 spread_snap_digits <- 10
@@ -100,18 +101,50 @@ spread_pair_width <- function(pair, measure) {
   measure(paste0(pair[1], " "), "label") + measure(pair[2], "label", hl_tokens()$type$value_weight)
 }
 
-# Left edges of the key-number columns, the block ending at `right`: one column per statistic, so labels line up
-# from row to row; columns are separated like a panel header's key numbers.
-spread_stat_columns <- function(spec, right, measure, style) {
-  gap <- hl_tokens()$spacing$stats_pair * style$base
+# Width of each key-number column: one column per statistic, so labels line up from row to row.
+spread_stat_widths <- function(spec, measure) {
   count <- max(vapply(spec$rows, function(row) length(row$pairs), integer(1)))
-  widths <- vapply(seq_len(count), function(index) {
+  vapply(seq_len(count), function(index) {
     max(c(0, unlist(lapply(spec$rows, function(row) {
       if (index <= length(row$pairs)) spread_pair_width(row$pairs[[index]], measure)
     }))))
   }, numeric(1))
-  start <- right - sum(widths) - gap * (count - 1)
-  start + c(0, cumsum(widths + gap))[seq_len(count)]
+}
+
+# Left edges of the key-number columns from `start`, separated like a panel header's key numbers.
+spread_stat_columns <- function(widths, start, gap) {
+  start + c(0, cumsum(widths + gap))[seq_along(widths)]
+}
+
+# Under the rows, a line of key numbers and a row of name and plot must each fit the width.
+spread_check_room <- function(width, block, least, names, gap) {
+  need <- max(block, names + gap + least)
+  if (width >= need) return(invisible())
+  stop(sprintf(paste("hairline: spread: the figure leaves %.0f pt for the rows, which need at least %.0f pt: the key",
+                     "numbers take %.0f pt in one line, the group names %.0f pt beside a plot of %.0f pt. Shorten",
+                     "the group names, show fewer stats, or use a wider size"), width, need, block, names, least),
+       call. = FALSE)
+}
+
+# The plot span and the key-number columns. The numbers sit right-aligned beside the plot while it keeps at least
+# `min_plot`; on a narrower figure they move to a line under each row, from the row's left edge, and the plot spans
+# the width the names leave. No statistic is dropped.
+spread_layout <- function(spec, box, measure, style, rules) {
+  pair_gap <- hl_tokens()$spacing$stats_pair * style$base
+  gap <- rules$column_gap * style$base
+  least <- rules$min_plot * style$base
+  widths <- spread_stat_widths(spec, measure)
+  block <- if (length(widths)) sum(widths) + pair_gap * (length(widths) - 1) else 0
+  names <- max(vapply(spec$rows, function(row) measure(row$name, "label"), numeric(1)))
+  left <- box[1] + names + gap
+  right <- box[1] + box[3]
+  if (!length(widths)) return(list(plot = c(left, right), lefts = numeric(), under = FALSE))
+  if (right - block - gap - left >= least) {
+    return(list(plot = c(left, right - block - gap), lefts = spread_stat_columns(widths, right - block, pair_gap),
+                under = FALSE))
+  }
+  spread_check_room(box[3], block, least, names, gap)
+  list(plot = c(left, right), lefts = spread_stat_columns(widths, box[1], pair_gap), under = TRUE)
 }
 
 # Label in faint, value in muted at the value weight: the panel header's key-number style.
@@ -133,20 +166,16 @@ spread_title_shape <- function(spec, right, axis_y, style, rules) {
   list(c(shape_text(right, baseline, spec$axis_title, "label", style$neutral$muted, "right"), part = "title"))
 }
 
+# Rows keep their pitch (the figure's height follows them); a row whose numbers sit under it is a line taller.
 spread_drawing <- function(spec, box, measure, style) {
   rules <- hl_tokens()$spread
-  base <- style$base
-  size <- style$sizes$label
-  gap <- rules$column_gap * base
-  lefts <- spread_stat_columns(spec, box[1] + box[3], measure, style)
-  left <- box[1] + max(vapply(spec$rows, function(row) measure(row$name, "label"), numeric(1))) + gap
-  right <- lefts[1] - gap
+  layout <- spread_layout(spec, box, measure, style, rules)
+  left <- layout$plot[1]
+  right <- layout$plot[2]
+  lead <- line_height(style, "label")
   scale <- forest_scale(spec$axis, FALSE, left, right)
-  reserve <- rules$axis_gap * base + (style$cap_height + style$descender) * size
-  if (!is.null(spec$axis_title)) {
-    reserve <- reserve + hl_tokens()$spacing$x_title * base + (style$cap_height + style$descender) * size
-  }
-  pitch <- min(rules$row_pitch * line_height(style, "label"), (box[4] - reserve) / length(spec$rows))
+  line <- rules$row_pitch * lead
+  pitch <- line + if (layout$under) lead else 0
   bottom <- box[2] + pitch * length(spec$rows)
   shapes <- lapply(spec$axis$breaks, function(value) {
     list(kind = "line", points = rbind(c(scale(value), box[2]), c(scale(value), bottom)), color = style$neutral$grid,
@@ -154,11 +183,11 @@ spread_drawing <- function(spec, box, measure, style) {
   })
   for (index in seq_along(spec$rows)) {
     row <- spec$rows[[index]]
-    centre <- box[2] + pitch * (index - 0.5)
+    centre <- box[2] + pitch * (index - 1) + line / 2
     baseline <- baseline_for(centre, style, "label")
-    shapes <- c(shapes, spread_row_shapes(row, centre, pitch, scale, style, rules),
+    shapes <- c(shapes, spread_row_shapes(row, centre, line, scale, style, rules),
                 list(shape_text(box[1], baseline, row$name, "label", style$neutral$ink)),
-                spread_pair_texts(row$pairs, lefts, baseline, measure, style))
+                spread_pair_texts(row$pairs, layout$lefts, baseline + if (layout$under) lead else 0, measure, style))
   }
   axis <- list(axis = spec$axis, favours = NULL, null = NULL)
   c(shapes, forest_axis_shapes(axis, scale, c(left, right), bottom, style, rules),
@@ -169,7 +198,8 @@ spread_drawing <- function(spec, box, measure, style) {
 #'
 #' Per group, first on top: the range as a thin line, the interquartile range
 #' as a band in the group's colour, the median as a dot, an optional reference
-#' tick, and the key numbers right-aligned.
+#' tick, and the key numbers right-aligned. On a figure too narrow for the
+#' numbers beside the plot, they sit on a line under each row.
 #'
 #' @param data A data frame.
 #' @param group,value Grouping column and numeric column.

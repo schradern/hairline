@@ -9,7 +9,8 @@ text_element <- function(settings, role, colour = NULL, face = NULL, ...) {
   definition <- hl_tokens()$type$roles[[role]]
   ggplot2::element_text(family = settings$font, size = role_size(settings, role),
                         colour = colour %||% settings$neutral[[definition$color]],
-                        face = face %||% if (definition$weight >= 600) "bold" else "plain", ...)
+                        face = face %||% if (face_weight(settings$font, definition$weight) >= 600) "bold" else "plain",
+                        ...)
 }
 
 frame_text_elements <- function(settings) {

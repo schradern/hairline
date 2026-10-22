@@ -116,6 +116,18 @@
   `groups`, beside `test` and `p`, so a group named "test" or "p" no longer collides with them.
 * The README installs the package from GitHub (it is not on CRAN yet); the version is now 0.1.0.9000.
 
+## Fixes for narrow figures and installed fonts
+
+* `hl_spread()` keeps its plot on a narrow figure. The key numbers sit beside the plot while it keeps at least
+  8 × the base size (token `spread$min_plot`, as the forest plot has); on a narrower figure, such as one column of
+  a two-column page (75 mm), they move to a line under each row, so no statistic is dropped. The plot had shrunk
+  to nothing and its axis ran backwards, the tick labels piled on one another. A figure too narrow even for that
+  is refused with the room it needs. Rows keep their pitch and the figure grows to hold them, instead of rows
+  squeezed into the default height; `stats = character()` draws the plot to the right edge instead of failing.
+* Text is measured and drawn in a weight the font has: a requested weight resolves to the nearest face of the
+  family, as browsers match fonts (600 of a family with 400 and 700 is 700), as the Python package does. HTML
+  output embeds the faces actually drawn.
+
 # hairline 0.1.0
 
 * First release.

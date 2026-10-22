@@ -100,7 +100,7 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
            colors: Mapping[str, str] | None = None, size: str = "onehalf") -> HairlineFigure:
     """Distributions per group compared on one axis, first group on top; `marks` adds a reference tick per group
     (a capacity, a target), `mark_label` names it in the numbers column; `axis_title` (e.g. the unit) goes under
-    the axis numbers."""
+    the axis numbers. On a figure too narrow for the numbers beside the plot, they sit on a line under each row."""
     spec = spread_spec(data, group, value, order=order, marks=marks, mark_label=mark_label, stats=stats,
                        percent=percent, digits=digits, zero=zero, axis_title=axis_title, colors=colors)
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,

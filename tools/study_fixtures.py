@@ -110,7 +110,8 @@ def repeated_message(checked) -> str:
 
 
 def spread_cases(style: dict, measure) -> dict:
-    """Spread rows: whole counts with reference ticks, and shares on a percent axis from zero."""
+    """Spread rows: whole counts with reference ticks, shares on a percent axis from zero, and the counts on a box
+    too narrow for the numbers beside the plot, which puts them under each row."""
     from hairline.charts.spread import spread_spec
     from hairline.charts.spread_geometry import spread_drawing
     from hairline.layout.geometry import Box
@@ -119,12 +120,14 @@ def spread_cases(style: dict, measure) -> dict:
               "beds": [int(value) for value in np.concatenate([generator.poisson(mean, 30) for mean in (12, 9, 7)])]}
     shares = {"group": counts["group"],
               "share": [round(float(value), 3) for value in generator.beta(6, 2, 90)]}
-    box = Box(20, 60, 440, 200)
+    wide, narrow = Box(20, 60, 440, 200), Box(20, 60, 240, 200)
     cases = []
-    for data, value, options in ((counts, "beds", {"marks": {"A": 16, "B": 12}, "mark_label": "Beds"}),
-                                 (shares, "share", {"percent": True, "zero": True, "axis_title": "Share",
-                                                    "stats": ["median", "iqr", "n"]})):
+    for data, value, options, box in ((counts, "beds", {"marks": {"A": 16, "B": 12}, "mark_label": "Beds"}, wide),
+                                      (shares, "share", {"percent": True, "zero": True, "axis_title": "Share",
+                                                         "stats": ["median", "iqr", "n"]}, wide),
+                                      (counts, "beds", {"marks": {"A": 16, "B": 12}, "mark_label": "Beds"}, narrow)):
         spec = spread_spec(pd.DataFrame(data), "group", value, **options)
         cases.append({"data": data, "value": value, "options": options, "spec": spec,
+                      "box": [box.x, box.y, box.width, box.height],
                       "shapes": spread_drawing(spec, box, measure, style)})
-    return {"box": [box.x, box.y, box.width, box.height], "style": style, "cases": cases}
+    return {"style": style, "cases": cases}

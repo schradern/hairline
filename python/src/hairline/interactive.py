@@ -14,6 +14,7 @@ from matplotlib.collections import PathCollection
 from matplotlib.colors import to_hex
 from matplotlib.container import BarContainer
 
+from hairline.fonts import face_weight
 from hairline.marks import FIXED_WIDTH_IDS, SECONDARY_ID, STATIC_ID
 from hairline.numbers import auto_digits, format_number, format_percent
 from hairline.settings import role_size
@@ -265,11 +266,11 @@ def bundled_font_files() -> list[tuple[list[int], str, bytes]]:
 
 
 def installed_font_files(family: str) -> list[tuple[list[int], str, bytes]]:
-    """The files matplotlib draws `family` with, per weight (one file may serve several); a collection (.ttc)
-    cannot be embedded and is left to the reader's installed fonts."""
+    """The files matplotlib draws `family` with, per weight of the faces it has (one file may serve several); a
+    collection (.ttc) cannot be embedded and is left to the reader's installed fonts."""
     from matplotlib.font_manager import FontProperties, findfont
     weights: dict[Path, list[int]] = {}
-    for weight in FACE_WEIGHTS:
+    for weight in sorted({face_weight(family, weight) for weight in FACE_WEIGHTS}):
         try:
             path = Path(findfont(FontProperties(family=family, weight=weight), fallback_to_default=False))
         except ValueError:

@@ -33,9 +33,11 @@ wrap_text <- function(text, style, max_width) {
   lines
 }
 
+# Family, size, weight and colour of a text role; the weight is that of a face the family has.
 role_style <- function(settings, role, weight = NULL, colour = NULL) {
   definition <- hl_tokens()$type$roles[[role]]
-  list(family = settings$font, size = role_size(settings, role), weight = weight %||% definition$weight,
+  list(family = settings$font, size = role_size(settings, role),
+       weight = face_weight(settings$font, weight %||% definition$weight),
        colour = colour %||% settings$neutral[[definition$color]])
 }
 

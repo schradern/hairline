@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import logging
 import warnings
+from collections.abc import Sequence
 from importlib import resources
 
 from matplotlib import font_manager
 
 from hairline.tokens import load_tokens
 
-_state = {"registered": False, "warned": set()}
+_state = {"registered": False, "warned": set(), "weights": {}}
+UPRIGHT = ("normal",)
 
 
 def register_fonts() -> None:
@@ -41,6 +43,37 @@ def resolve_family(requested: str | None) -> str:
         _state["warned"].add(requested)
         warnings.warn(f"hairline: font '{requested}' is not installed; using '{bundled}'", UserWarning, stacklevel=3)
     return bundled
+
+
+def nearest_weight(requested: int, available: Sequence[int]) -> int:
+    """The weight a browser takes from `available` for `requested` (CSS font matching): from 400 to 500 the
+    requested weight up to 500, then lighter, then heavier; below 400 lighter first; above 500 heavier first.
+    Weight 600 of a family with 400 and 700 is 700."""
+    if not available or requested in available:
+        return requested
+    lighter = sorted((weight for weight in available if weight < requested), reverse=True)
+    heavier = sorted(weight for weight in available if weight > requested)
+    if 400 <= requested <= 500:
+        up_to_500 = [weight for weight in heavier if weight <= 500]
+        return (up_to_500 + lighter + [weight for weight in heavier if weight > 500])[0]
+    return (lighter + heavier)[0] if requested < 400 else (heavier + lighter)[0]
+
+
+def family_weights(family: str) -> list[int]:
+    """Weights of the upright faces matplotlib knows for `family`, read once per family and font list."""
+    register_fonts()
+    entries = font_manager.fontManager.ttflist
+    key = (family, len(entries))
+    if key not in _state["weights"]:
+        _state["weights"][key] = sorted({font_manager.weight_dict.get(entry.weight, entry.weight) for entry in entries
+                                         if entry.name == family and entry.style in UPRIGHT})
+    return _state["weights"][key]
+
+
+def face_weight(family: str, requested: int) -> int:
+    """The weight of the face `family` has for `requested`, so text is measured and drawn in a face that exists
+    and matplotlib never falls back on its own (a semibold title in Helvetica Neue is its bold)."""
+    return nearest_weight(requested, family_weights(family))
 
 
 class FallbackWeightFilter(logging.Filter):

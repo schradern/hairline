@@ -683,6 +683,7 @@
     "band_opacity": 0.35,
     "mark": 1.0,
     "column_gap": 1.5,
+    "min_plot": 8,
     "axis_gap": 0.3
   },
   "interactive": {

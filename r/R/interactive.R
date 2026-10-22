@@ -263,15 +263,17 @@ bundled_font_files <- function() {
              high = unname(weights[sub("\\..*$", "", sub("^[^-]*-", "", files))]))
 }
 
-# The files the system draws `family` with, per weight (one file may serve several); a collection (.ttc) cannot be
-# embedded and is left to the reader's installed fonts, as is a family that is not installed.
+# The files the system draws `family` with, per weight of the faces it has (one file may serve several); a
+# collection (.ttc) cannot be embedded and is left to the reader's installed fonts, as is a family that is not
+# installed.
 installed_font_files <- function(family) {
   if (!font_available(family)) return(data.frame(path = character(), low = numeric(), high = numeric()))
-  paths <- systemfonts::match_fonts(family, weight = face_weights)$path
+  weights <- sort(unique(vapply(face_weights, face_weight, numeric(1), family = family)))
+  paths <- systemfonts::match_fonts(family, weight = weights)$path
   usable <- grepl("\\.(ttf|otf)$", paths, ignore.case = TRUE, useBytes = TRUE)
   found <- unique(paths[usable])
-  data.frame(path = found, low = vapply(found, function(path) min(face_weights[paths == path]), numeric(1)),
-             high = vapply(found, function(path) max(face_weights[paths == path]), numeric(1)))
+  data.frame(path = found, low = vapply(found, function(path) min(weights[paths == path]), numeric(1)),
+             high = vapply(found, function(path) max(weights[paths == path]), numeric(1)))
 }
 
 # The figure's font as data URIs under its own name, so the page renders with the font the layout was measured

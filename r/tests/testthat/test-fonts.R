@@ -27,3 +27,18 @@ test_that("loading the package points fontconfig at the bundled font outside Win
   expect_true(any(grepl(system.file("fonts", package = "hairline"), readLines(Sys.getenv("FONTCONFIG_FILE")),
                         fixed = TRUE)))
 })
+
+test_that("requested weights resolve to the face a family has, as the shared fixture says", {
+  for (case in read_fixture("weights.json")) {
+    expect_equal(nearest_weight(case$requested, unlist(case$available)), case$result, info = paste(case$requested, "of", paste(unlist(case$available), collapse = ", ")))
+  }
+})
+
+test_that("the bundled family keeps its semibold; a family without one draws its bold", {
+  family <- hl_tokens()$font$family
+  expect_equal(family_weights(family), c(400, 500, 600))
+  expect_equal(face_weight(family, 600), 600)
+  skip_if_not("Helvetica Neue" %in% systemfonts::system_fonts()$family, "needs Helvetica Neue, which has no semibold")
+  expect_equal(face_weight("Helvetica Neue", 600), 700)
+  expect_equal(face_weight("Helvetica Neue", 500), 500)
+})

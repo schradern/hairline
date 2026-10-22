@@ -53,7 +53,8 @@ A ggplot with the hairline frame.
 \description{
 Per group, first on top: the range as a thin line, the interquartile range
 as a band in the group's colour, the median as a dot, an optional reference
-tick, and the key numbers right-aligned.
+tick, and the key numbers right-aligned. On a figure too narrow for the
+numbers beside the plot, they sit on a line under each row.
 }
 \examples{
 set.seed(1)

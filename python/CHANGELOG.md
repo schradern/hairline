@@ -119,6 +119,18 @@
 * The README installs the development version from GitHub; the version is now 0.2.0.dev0, so a checkout is
   told apart from the 0.1.0 release on PyPI.
 
+### Fixes for narrow figures and installed fonts
+
+* `spread()` keeps its plot on a narrow figure. The key numbers sit beside the plot while it keeps at least
+  8 × the base size (token `spread.min_plot`, as the forest plot has); on a narrower figure, such as one column of
+  a two-column page (75 mm), they move to a line under each row, so no statistic is dropped. The plot had shrunk
+  to nothing and its axis ran backwards, the tick labels piled on one another. A figure too narrow even for that
+  is refused with the room it needs. Rows keep their pitch and the figure grows to hold them, instead of rows
+  squeezed into the default height; `stats=[]` draws the plot to the right edge instead of failing.
+* Text is drawn in a weight the font has: a requested weight resolves to the nearest face of the family, as
+  browsers match fonts (600 of a family with 400 and 700 is 700). A title in Helvetica Neue no longer makes
+  matplotlib log "findfont: Failed to find font weight 600"; HTML output embeds the faces actually drawn.
+
 ## 0.1.0
 
 * First release.

@@ -52,6 +52,7 @@ from hairline.color.space import hex_to_oklch
 from hairline.color.tints import tints
 from hairline.color.vision import contrast, delta_e, simulate
 from hairline.entities import assign_colors, chart_colors
+from hairline.fonts import nearest_weight
 from hairline.layout.frame import compute_frame
 from hairline.layout.geometry import Box, frame_input_from_dict, load_font_metrics
 from hairline.marks import point_fill, point_step
@@ -487,6 +488,14 @@ def brand_ramp_cases() -> dict:
             "explicit": {name: list(colors) for name, colors in explicit.items()}}
 
 
+def weight_cases() -> list[dict]:
+    """Requested weights against the faces a family has: the face that is drawn instead of a missing weight."""
+    families = [[400, 700], [400, 500, 600], [100, 300, 400, 500, 700, 900], [400], [300, 700], [600, 800], [],
+                [450, 700]]
+    return [{"requested": requested, "available": available, "result": nearest_weight(requested, available)}
+            for available in families for requested in (100, 300, 400, 450, 500, 600, 700, 900)]
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -518,6 +527,7 @@ def main() -> int:
     write("spread.json", spread_cases(DRAWING_STYLE, fake_measure))
     write("swatches.json", swatch_cases())
     write("brand_ramps.json", brand_ramp_cases())
+    write("weights.json", weight_cases())
     return 0
 
 

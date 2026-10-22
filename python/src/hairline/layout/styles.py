@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+from hairline.fonts import face_weight
 from hairline.settings import Settings, role_size
 from hairline.tokens import load_tokens
 
 
 def role_style(settings: Settings, role: str, weight: int | None = None, color: str | None = None) -> dict:
+    """Family, size, weight and colour of a text role; the weight is that of a face the family has."""
     definition = load_tokens()["type"]["roles"][role]
-    return {"family": settings.font, "size": role_size(settings, role), "weight": weight or definition["weight"],
+    return {"family": settings.font, "size": role_size(settings, role),
+            "weight": face_weight(settings.font, weight or definition["weight"]),
             "color": color or settings.neutral[definition["color"]]}
 
 

@@ -1,0 +1,522 @@
+[
+ {
+  "requested": 100,
+  "available": [
+   400,
+   700
+  ],
+  "result": 400
+ },
+ {
+  "requested": 300,
+  "available": [
+   400,
+   700
+  ],
+  "result": 400
+ },
+ {
+  "requested": 400,
+  "available": [
+   400,
+   700
+  ],
+  "result": 400
+ },
+ {
+  "requested": 450,
+  "available": [
+   400,
+   700
+  ],
+  "result": 400
+ },
+ {
+  "requested": 500,
+  "available": [
+   400,
+   700
+  ],
+  "result": 400
+ },
+ {
+  "requested": 600,
+  "available": [
+   400,
+   700
+  ],
+  "result": 700
+ },
+ {
+  "requested": 700,
+  "available": [
+   400,
+   700
+  ],
+  "result": 700
+ },
+ {
+  "requested": 900,
+  "available": [
+   400,
+   700
+  ],
+  "result": 700
+ },
+ {
+  "requested": 100,
+  "available": [
+   400,
+   500,
+   600
+  ],
+  "result": 400
+ },
+ {
+  "requested": 300,
+  "available": [
+   400,
+   500,
+   600
+  ],
+  "result": 400
+ },
+ {
+  "requested": 400,
+  "available": [
+   400,
+   500,
+   600
+  ],
+  "result": 400
+ },
+ {
+  "requested": 450,
+  "available": [
+   400,
+   500,
+   600
+  ],
+  "result": 500
+ },
+ {
+  "requested": 500,
+  "available": [
+   400,
+   500,
+   600
+  ],
+  "result": 500
+ },
+ {
+  "requested": 600,
+  "available": [
+   400,
+   500,
+   600
+  ],
+  "result": 600
+ },
+ {
+  "requested": 700,
+  "available": [
+   400,
+   500,
+   600
+  ],
+  "result": 600
+ },
+ {
+  "requested": 900,
+  "available": [
+   400,
+   500,
+   600
+  ],
+  "result": 600
+ },
+ {
+  "requested": 100,
+  "available": [
+   100,
+   300,
+   400,
+   500,
+   700,
+   900
+  ],
+  "result": 100
+ },
+ {
+  "requested": 300,
+  "available": [
+   100,
+   300,
+   400,
+   500,
+   700,
+   900
+  ],
+  "result": 300
+ },
+ {
+  "requested": 400,
+  "available": [
+   100,
+   300,
+   400,
+   500,
+   700,
+   900
+  ],
+  "result": 400
+ },
+ {
+  "requested": 450,
+  "available": [
+   100,
+   300,
+   400,
+   500,
+   700,
+   900
+  ],
+  "result": 500
+ },
+ {
+  "requested": 500,
+  "available": [
+   100,
+   300,
+   400,
+   500,
+   700,
+   900
+  ],
+  "result": 500
+ },
+ {
+  "requested": 600,
+  "available": [
+   100,
+   300,
+   400,
+   500,
+   700,
+   900
+  ],
+  "result": 700
+ },
+ {
+  "requested": 700,
+  "available": [
+   100,
+   300,
+   400,
+   500,
+   700,
+   900
+  ],
+  "result": 700
+ },
+ {
+  "requested": 900,
+  "available": [
+   100,
+   300,
+   400,
+   500,
+   700,
+   900
+  ],
+  "result": 900
+ },
+ {
+  "requested": 100,
+  "available": [
+   400
+  ],
+  "result": 400
+ },
+ {
+  "requested": 300,
+  "available": [
+   400
+  ],
+  "result": 400
+ },
+ {
+  "requested": 400,
+  "available": [
+   400
+  ],
+  "result": 400
+ },
+ {
+  "requested": 450,
+  "available": [
+   400
+  ],
+  "result": 400
+ },
+ {
+  "requested": 500,
+  "available": [
+   400
+  ],
+  "result": 400
+ },
+ {
+  "requested": 600,
+  "available": [
+   400
+  ],
+  "result": 400
+ },
+ {
+  "requested": 700,
+  "available": [
+   400
+  ],
+  "result": 400
+ },
+ {
+  "requested": 900,
+  "available": [
+   400
+  ],
+  "result": 400
+ },
+ {
+  "requested": 100,
+  "available": [
+   300,
+   700
+  ],
+  "result": 300
+ },
+ {
+  "requested": 300,
+  "available": [
+   300,
+   700
+  ],
+  "result": 300
+ },
+ {
+  "requested": 400,
+  "available": [
+   300,
+   700
+  ],
+  "result": 300
+ },
+ {
+  "requested": 450,
+  "available": [
+   300,
+   700
+  ],
+  "result": 300
+ },
+ {
+  "requested": 500,
+  "available": [
+   300,
+   700
+  ],
+  "result": 300
+ },
+ {
+  "requested": 600,
+  "available": [
+   300,
+   700
+  ],
+  "result": 700
+ },
+ {
+  "requested": 700,
+  "available": [
+   300,
+   700
+  ],
+  "result": 700
+ },
+ {
+  "requested": 900,
+  "available": [
+   300,
+   700
+  ],
+  "result": 700
+ },
+ {
+  "requested": 100,
+  "available": [
+   600,
+   800
+  ],
+  "result": 600
+ },
+ {
+  "requested": 300,
+  "available": [
+   600,
+   800
+  ],
+  "result": 600
+ },
+ {
+  "requested": 400,
+  "available": [
+   600,
+   800
+  ],
+  "result": 600
+ },
+ {
+  "requested": 450,
+  "available": [
+   600,
+   800
+  ],
+  "result": 600
+ },
+ {
+  "requested": 500,
+  "available": [
+   600,
+   800
+  ],
+  "result": 600
+ },
+ {
+  "requested": 600,
+  "available": [
+   600,
+   800
+  ],
+  "result": 600
+ },
+ {
+  "requested": 700,
+  "available": [
+   600,
+   800
+  ],
+  "result": 800
+ },
+ {
+  "requested": 900,
+  "available": [
+   600,
+   800
+  ],
+  "result": 800
+ },
+ {
+  "requested": 100,
+  "available": [],
+  "result": 100
+ },
+ {
+  "requested": 300,
+  "available": [],
+  "result": 300
+ },
+ {
+  "requested": 400,
+  "available": [],
+  "result": 400
+ },
+ {
+  "requested": 450,
+  "available": [],
+  "result": 450
+ },
+ {
+  "requested": 500,
+  "available": [],
+  "result": 500
+ },
+ {
+  "requested": 600,
+  "available": [],
+  "result": 600
+ },
+ {
+  "requested": 700,
+  "available": [],
+  "result": 700
+ },
+ {
+  "requested": 900,
+  "available": [],
+  "result": 900
+ },
+ {
+  "requested": 100,
+  "available": [
+   450,
+   700
+  ],
+  "result": 450
+ },
+ {
+  "requested": 300,
+  "available": [
+   450,
+   700
+  ],
+  "result": 450
+ },
+ {
+  "requested": 400,
+  "available": [
+   450,
+   700
+  ],
+  "result": 450
+ },
+ {
+  "requested": 450,
+  "available": [
+   450,
+   700
+  ],
+  "result": 450
+ },
+ {
+  "requested": 500,
+  "available": [
+   450,
+   700
+  ],
+  "result": 450
+ },
+ {
+  "requested": 600,
+  "available": [
+   450,
+   700
+  ],
+  "result": 700
+ },
+ {
+  "requested": 700,
+  "available": [
+   450,
+   700
+  ],
+  "result": 700
+ },
+ {
+  "requested": 900,
+  "available": [
+   450,
+   700
+  ],
+  "result": 700
+ }
+]
