@@ -15,8 +15,12 @@ language: one frame for titles, legends, panels and captions, one type scale, co
 and files ready for a journal, a report or a slide. You choose the data and the chart; hairline makes the
 hundred small layout decisions, the same way every time.
 
-- **One call per chart.** Nineteen chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
-  and PRISMA diagrams, each from a data frame and its column names.
+- **One call per chart.** Twenty-three chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
+  and PRISMA diagrams, lanes and staffing levels over the day, and tables for documents, each from a data frame
+  and its column names.
+- **Report-ready by default.** Facets with their own scale, incomplete periods drawn lighter, n per group,
+  minimum n, clipped outliers and coarser colour groups are one argument each, and the caption says in the
+  figure's locale what was left out or drawn differently.
 - **The same figure in Python and R.** Both packages read one set of design tokens; a check runs every gallery
   figure in both languages and compares their layouts point by point.
 - **Results, not only plots.** `study()` checks a data set once and returns a cohort description, group
@@ -133,6 +137,7 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 
 <table>
 <tr><td width="33%" valign="top"><a href="gallery/python/bars_admissions.py"><img src="docs/images/gallery/bars_admissions.png" alt="Bar chart"></a><br><sub>Bar chart</sub></td><td width="33%" valign="top"><a href="gallery/python/bars_stacked.py"><img src="docs/images/gallery/bars_stacked.png" alt="Stacked bars"></a><br><sub>Stacked bars</sub></td><td width="33%" valign="top"><a href="gallery/python/bars_percent.py"><img src="docs/images/gallery/bars_percent.png" alt="100 % stacked bars"></a><br><sub>100 % stacked bars</sub></td></tr>
+<tr><td width="33%" valign="top"><a href="gallery/python/bars_facets.py"><img src="docs/images/gallery/bars_facets.png" alt="Facets with their own scale"></a><br><sub>Facets with their own scale</sub></td><td width="33%" valign="top"><a href="gallery/python/spread_doses.py"><img src="docs/images/gallery/spread_doses.png" alt="Spread rows on discrete levels"></a><br><sub>Spread rows on discrete levels</sub></td><td width="33%" valign="top"><a href="gallery/python/table_characteristics.py"><img src="docs/images/gallery/table_characteristics.png" alt="Table for documents"></a><br><sub>Table for documents</sub></td></tr>
 <tr><td width="33%" valign="top"><a href="gallery/python/dotplot_rates.py"><img src="docs/images/gallery/dotplot_rates.png" alt="Dot plot with intervals"></a><br><sub>Dot plot with intervals</sub></td><td width="33%" valign="top"><a href="gallery/python/spread_occupancy.py"><img src="docs/images/gallery/spread_occupancy.png" alt="Spread rows"></a><br><sub>Spread rows</sub></td><td width="33%" valign="top"><a href="gallery/python/raincloud_stay.py"><img src="docs/images/gallery/raincloud_stay.png" alt="Raincloud"></a><br><sub>Raincloud</sub></td></tr>
 <tr><td width="33%" valign="top"><a href="gallery/python/ridgeline_ages.py"><img src="docs/images/gallery/ridgeline_ages.png" alt="Ridgeline"></a><br><sub>Ridgeline</sub></td><td width="33%" valign="top"><a href="gallery/python/scatter_fit.py"><img src="docs/images/gallery/scatter_fit.png" alt="Scatter with fit"></a><br><sub>Scatter with fit</sub></td><td width="33%" valign="top"><a href="gallery/python/correlation_patients.py"><img src="docs/images/gallery/correlation_patients.png" alt="Correlation heatmap"></a><br><sub>Correlation heatmap</sub></td></tr>
 </table>
@@ -156,7 +161,7 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 
 <table>
 <tr><td width="33%" valign="top"><a href="gallery/python/occupancy_rows.py"><img src="docs/images/gallery/occupancy_rows.png" alt="Time series, two levels of detail"></a><br><sub>Time series, two levels of detail</sub></td><td width="33%" valign="top"><a href="gallery/python/grid_panels.py"><img src="docs/images/gallery/grid_panels.png" alt="Small multiples"></a><br><sub>Small multiples</sub></td><td width="33%" valign="top"><a href="gallery/python/study_describe.py"><img src="docs/images/gallery/study_describe.png" alt="Study: cohort overview"></a><br><sub>Study: cohort overview</sub></td></tr>
-<tr><td width="33%" valign="top"><a href="gallery/python/brand_example.py"><img src="docs/images/gallery/brand_example.png" alt="Brand file"></a><br><sub>Brand file</sub></td></tr>
+<tr><td width="33%" valign="top"><a href="gallery/python/unit_day.py"><img src="docs/images/gallery/unit_day.png" alt="Lanes and staffing over the day"></a><br><sub>Lanes and staffing over the day</sub></td><td width="33%" valign="top"><a href="gallery/python/swimlanes_day.py"><img src="docs/images/gallery/swimlanes_day.png" alt="Swimlanes for one day"></a><br><sub>Swimlanes for one day</sub></td><td width="33%" valign="top"><a href="gallery/python/brand_example.py"><img src="docs/images/gallery/brand_example.png" alt="Brand file"></a><br><sub>Brand file</sub></td></tr>
 </table>
 
 ## The same figure in Python and R

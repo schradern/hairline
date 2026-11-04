@@ -33,3 +33,15 @@ def test_dot_marker_in_the_geometry():
     spec = forest_spec(units(), "unit", "mortality", "low", "high", ratio=False, color="#2474cf", marker="dot")
     shapes = forest_drawing(spec, Box(0, 0, 400, 160), fake_measure, FOREST_STYLE)
     assert any(shape.get("role") == "dot" for shape in shapes)
+
+
+def test_dotplot_writes_each_rows_n_after_its_label():
+    import pandas as pd
+
+    import hairline as hl
+    hl.use(brand=False)
+    data = pd.DataFrame({"unit": ["Medical", "Burns"], "rate": [0.13, 0.14], "patients": [1010, 64]})
+    figure = hl.dotplot(data, "unit", "rate", n="patients")
+    figure.figure.canvas.draw()
+    texts = [shape["text"] for shape in figure.shapes if shape["kind"] == "text"]
+    assert "Medical (n = 1,010)" in texts and "Burns (n = 64)" in texts

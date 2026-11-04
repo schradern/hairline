@@ -14,8 +14,11 @@ from matplotlib.patches import Patch
 
 from hairline.layout.draw import add_line, add_rect, add_text
 from hairline.layout.measure import text_width
+from hairline.tokens import load_tokens
 
 KINDS = ("line", "thin", "dash", "band", "dot", "square")
+# A key's title: text without a swatch (the binned colour key of legend_ramp()).
+TITLE = "title"
 
 
 @dataclass(frozen=True)
@@ -23,6 +26,7 @@ class LegendItem:
     kind: str
     color: str
     label: str
+    outline: bool = False
 
 
 @dataclass(frozen=True)
@@ -71,29 +75,52 @@ def validate_items(items: Sequence[tuple[str, str, str]]) -> list[LegendItem]:
 
 
 def swatch_width(kind: str, base: float, spacing: dict) -> float:
+    if kind == TITLE:
+        return 0.0
     factor = spacing["legend_swatch_square"] if kind in ("dot", "square") else spacing["legend_swatch_line"]
     return factor * base
 
 
-def pack_rows(items: Sequence[LegendItem], left: float, right: float, style: dict, spacing: dict) -> list[PlacedItem]:
-    """Place items left to right; start a new row when the next item would cross `right`."""
+def item_width(item: LegendItem, style: dict, spacing: dict) -> float:
+    """Swatch, gap and label; a title is its text alone."""
+    base, label = style["base"], text_width(item.label, style["family"], style["size"])
+    if item.kind == TITLE:
+        return label
+    return swatch_width(item.kind, base, spacing) + spacing["legend_swatch_text"] * base + label
+
+
+def pack_rows(items: Sequence[LegendItem], left: float, right: float, style: dict, spacing: dict,
+              key: Sequence[LegendItem] = ()) -> list[PlacedItem]:
+    """Place items left to right; start a new row when the next item would cross `right`. The `key` (a binned
+    colour key) sits right-aligned on the first row, and the items keep clear of it there."""
     base, placed, row, cursor = style["base"], [], 0, left
+    gap = spacing["legend_item"] * base
+    widths = [item_width(item, style, spacing) for item in key]
+    key_width = sum(widths) + gap * (len(widths) - 1) if widths else 0.0
     for item in items:
-        width = (swatch_width(item.kind, base, spacing) + spacing["legend_swatch_text"] * base
-                 + text_width(item.label, style["family"], style["size"]))
-        if cursor > left and cursor + width > right:
+        width = item_width(item, style, spacing)
+        edge = right - key_width - gap if row == 0 and key_width else right
+        if cursor > left and cursor + width > edge:
             row, cursor = row + 1, left
         placed.append(PlacedItem(item, row, cursor, cursor + width))
-        cursor += width + spacing["legend_item"] * base
+        cursor += width + gap
+    x = right - key_width
+    for item, width in zip(key, widths, strict=True):
+        placed.append(PlacedItem(item, 0, x, x + width))
+        x += width + gap
     return placed
 
 
 def draw_swatch(fig: Figure, item: LegendItem, x: float, center: float, base: float, spacing: dict,
                 lines: dict) -> list:
     width = swatch_width(item.kind, base, spacing)
+    if item.kind == TITLE:
+        return []
     if item.kind in ("square", "dot", "band"):
         side = width if item.kind != "band" else swatch_width("square", base, spacing)
-        return [add_rect(fig, x, center - side / 2, width if item.kind == "band" else side, side, item.color)]
+        edge = load_tokens()["legend_ramp"]["outline"] * base if item.outline else 0.0
+        return [add_rect(fig, x, center - side / 2, width if item.kind == "band" else side, side, item.color,
+                         lines.get("outline_color") if item.outline else None, edge)]
     style = {"color": item.color, "width": lines["data"] * base}
     if item.kind == "thin":
         style = {"color": item.color, "width": lines["secondary"] * base * 2, "alpha": lines["secondary_opacity"] + 0.2}
@@ -110,5 +137,16 @@ def draw_legend(fig: Figure, placed: Sequence[PlacedItem], centers: Sequence[flo
         center = centers[entry.row]
         artists += draw_swatch(fig, entry.item, entry.x, center, base, spacing, lines)
         text_x = entry.x + swatch_width(entry.item.kind, base, spacing) + spacing["legend_swatch_text"] * base
+        if entry.item.kind == TITLE:
+            text_x = entry.x
         artists.append(add_text(fig, text_x, center + style["size"] * cap / 2, entry.item.label, style))
     return artists
+
+
+def ramp_key_items(key: dict | None) -> list[LegendItem]:
+    """The binned colour key as legend items: its title, then one outlined square per step."""
+    if key is None:
+        return []
+    items = [LegendItem(TITLE, "#000000", key["title"])] if key.get("title") else []
+    return items + [LegendItem("square", color, label, outline=True)
+                    for color, label in zip(key["colors"], key["labels"], strict=True)]

@@ -117,3 +117,29 @@ def test_chart_colours_rule():
     assert chart_colors(DAYLIGHT, "palette", {"F": "#000000"}, {"R": DAYLIGHT[1]}, {"O": "#ffffff"},
                         ["O", "F", "R", "N1", "N2"]) == {"O": "#ffffff", "F": "#000000", "R": DAYLIGHT[1],
                                                          "N1": DAYLIGHT[0], "N2": DAYLIGHT[2]}
+
+
+def test_a_second_dimension_keeps_off_the_slots_the_first_holds():
+    hl.use()
+    procedures = hl.palette(n=4)
+    found = hl_entities.colors_for(["GA", "RA", "Sedation", "Combined"], dimension="procedure")
+    assert list(found.values()) == procedures
+    patterns = hl_entities.colors_for(["single bolus", "repeated", "infusion"], dimension="pattern")
+    assert list(patterns.values()) == DAYLIGHT[4:7]
+
+
+def test_scope_gives_charts_inside_their_dimension():
+    hl.use()
+    hl.bars(pd.DataFrame({"procedure": ["GA", "RA"], "n": [1, 2]}), "procedure", "n", by="procedure",
+            dimension="procedure")
+    with hl.scope("pattern"):
+        figure = hl.bars(pd.DataFrame({"pattern": ["bolus", "infusion"], "n": [3, 4]}), "pattern", "n", by="pattern")
+    figure.figure.canvas.draw()
+    assert hl.color("bolus") == DAYLIGHT[2] and hl.color("infusion") == DAYLIGHT[3]
+
+
+def test_a_full_palette_names_both_dimensions():
+    hl.use(palette=["#112233", "#445566", "#778899"])
+    hl_entities.colors_for(["a", "b"], dimension="procedure")
+    with pytest.raises(ValueError, match="held by dimension 'procedure' and 2 categories of dimension 'pattern'"):
+        hl_entities.colors_for(["x", "y"], dimension="pattern")

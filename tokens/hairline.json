@@ -338,7 +338,37 @@
           "power": 12,
           "suffix": "tn"
         }
-      ]
+      ],
+      "words": {
+        "decision": "Enough on {share} of days",
+        "typical_line": "Typical day (median)",
+        "people": "Count",
+        "total": "Total",
+        "n_equals": "n = {n}",
+        "other": "Other",
+        "levels": "Levels",
+        "partial": "Incomplete, drawn lighter: {items}.",
+        "not_shown": "Not shown (under {n}): {items}.",
+        "clipped": "{values} {where} not drawn; {stats}.",
+        "value_one": "1 value",
+        "value_many": "{n} values",
+        "above": "above {limit}",
+        "below": "below {limit}",
+        "outside": "outside {low}–{high}",
+        "stats_every": "the statistics use every value",
+        "stats_drawn": "the statistics use the values drawn",
+        "levels_note": "Quantiles on the data's own levels.",
+        "move": "Move",
+        "share_of_days": "Share of days",
+        "up_to": "Up to",
+        "typical": "Typical",
+        "days": "{n} days",
+        "weekdays": "Weekdays",
+        "weekends": "Weekends",
+        "all_days": "All days",
+        "figure": "Figure",
+        "table": "Table"
+      }
     },
     "de": {
       "decimal": ",",
@@ -368,7 +398,37 @@
           "power": 12,
           "suffix": "Bio."
         }
-      ]
+      ],
+      "words": {
+        "decision": "Ausreichend an {share} der Tage",
+        "typical_line": "Typischer Tag (Median)",
+        "people": "Anzahl",
+        "total": "Gesamt",
+        "n_equals": "n = {n}",
+        "other": "Übrige",
+        "levels": "Stufen",
+        "partial": "Unvollständig, heller: {items}.",
+        "not_shown": "Nicht dargestellt (unter {n}): {items}.",
+        "clipped": "{values} {where} nicht dargestellt; {stats}.",
+        "value_one": "1 Wert",
+        "value_many": "{n} Werte",
+        "above": "über {limit}",
+        "below": "unter {limit}",
+        "outside": "außerhalb {low}–{high}",
+        "stats_every": "die Kennzahlen nutzen alle Werte",
+        "stats_drawn": "die Kennzahlen nutzen die dargestellten Werte",
+        "levels_note": "Quantile auf den Stufen der Daten.",
+        "move": "Wechsel",
+        "share_of_days": "Anteil der Tage",
+        "up_to": "Bis",
+        "typical": "Typisch",
+        "days": "{n} Tage",
+        "weekdays": "Werktage",
+        "weekends": "Wochenenden",
+        "all_days": "Alle Tage",
+        "figure": "Abbildung",
+        "table": "Tabelle"
+      }
     }
   },
   "numbers": {
@@ -716,12 +776,78 @@
     "mark": 1.0,
     "column_gap": 1.5,
     "min_plot": 8,
-    "axis_gap": 0.3
+    "axis_gap": 0.3,
+    "discrete_share": 0.2,
+    "discrete_min_n": 10,
+    "levels_shown": 2
   },
   "interactive": {
     "veil": 0.75,
     "hit_pt": 8,
     "fonts": ["HairlineSans-Regular.ttf", "HairlineSans-Medium.ttf", "HairlineSans-SemiBold.ttf"]
+  },
+  "partial": {
+    "opacity": 0.45
+  },
+  "legend_ramp": {
+    "outline": 0.045,
+    "steps": [
+      0.25,
+      0.5,
+      0.75,
+      1
+    ]
+  },
+  "time_axis": {
+    "margin_hours": 1,
+    "steps": [
+      1,
+      2,
+      3,
+      4,
+      6,
+      12
+    ],
+    "target": 7,
+    "label_gap": 0.3
+  },
+  "lanes": {
+    "row_pitch": 1.5,
+    "bin": 15,
+    "cell": 0.8,
+    "group_gap": 0.6,
+    "flow_width": 0.055,
+    "flow_floor": 0.05,
+    "label_gap": 1.0
+  },
+  "levels": {
+    "row_pitch": 1.6,
+    "min_rows": 3,
+    "decision_width": 0.1,
+    "typical_dash": [
+      3,
+      2.5
+    ],
+    "quantile": 0.9,
+    "fill_opacity": 0.9
+  },
+  "swimlanes": {
+    "row_pitch": 1.6,
+    "bar": 0.72,
+    "inner": 0.22,
+    "label_pad": 0.35,
+    "gap_pt": 0.6,
+    "group_gap": 0.6,
+    "label_gap": 1.0
+  },
+  "table": {
+    "row_pitch": 1.7,
+    "column_gap": 1.5,
+    "rule": 0.065,
+    "header_weight": 600,
+    "title_gap": 0.6,
+    "footnote_gap": 0.7,
+    "min_column": 4
   },
   "neutral_dark": {
     "ink": "#e9ebee",

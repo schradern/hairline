@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and
+the staffing of a surgical unit over the day. Existing calls keep their output, with one exception: the
+correlation heatmap's key moved to the right of the legend row as outlined squares.
+
+### For reports
+
+* `bars(facet=, scales=, columns=)`: one panel per facet value, each with its own value axis or one shared
+  axis, the facet's total in its panel header. `top=` and `other=` keep the largest categories per panel and
+  fold the rest into one bar.
+* `partial=` on `bars()` and `timeseries()`: incomplete periods are drawn lighter and named in the caption, in
+  the locale ("Unvollständig, heller: 2021 (2 Monate)").
+* `show_n=` on `bars()`, `spread()` and `ridgeline()`, `n=` on `dotplot()`: the n after the label or in the
+  numbers column, formatted in the locale; colours and `order` keep keying on the bare group.
+* `min_n=` on `spread()`, `ridgeline()` and `raincloud()`, `clip=` (a quantile or `(low, high)`) and
+  `clip_stats=` on those and `scatter()`: groups and values left out are counted in the caption.
+* `normalize=` on `bars()`: shares from counts, the n of each category kept in its label.
+* `color_by=` on every chart with groups: groups coloured by a coarser column, which the legend lists and the
+  palette check counts. `dimension=` and `hl.scope()` keep the categories of one dimension off the slots another
+  dimension holds, with an error naming both when the palette is full.
+* `spread(stats=("levels", ...), discrete=True)`: the most frequent values with their shares, and quantiles on
+  the data's own levels, each level written as given (12.5 mg, 50 mg). `spread()` and `describe()` warn when a
+  median falls between two levels that each hold more than 20 % of the values.
+* `table()`: any frame in hairline's typography, numbers in the locale, wrapped headings, indents kept,
+  `bold_rows=` and `footnotes=`; `save()` writes it as PDF, PNG, SVG and as a real HTML `<table>`.
+* `report()`: figures and tables numbered in the locale, in one self-contained Markdown or HTML file.
+
+### Over the time of day
+
+* `lanes()`, `levels()` and `swimlanes()`, with `days=` (weekdays, weekends, a list), `hours=`, `spans=` and
+  `into=` / `panel=` to draw into a composed figure on one time axis.
+* `figure(heights=, sharex=, sharey=)`: panel rows sized by content; rows with `heights` share y only when asked.
+* `HairlineFigure.time_axis()`, `integer_axis()`, `row_blocks()`, `legend_ramp()` and `hover()` for hand-built
+  figures. `legend_ramp()` draws a binned colour key with hairline outlines, right-aligned in the legend row.
+* Quantiles of whole people (`levels()`, `spread(discrete=True)`) use the inverted empirical CDF (R's type 1):
+  the 0.9 quantile of daily peaks is the count that is enough on at least 9 of 10 days.
+
+
 ## 0.2.1
 
 ### Long labels

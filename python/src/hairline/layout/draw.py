@@ -66,9 +66,11 @@ def add_line(fig: Figure, x0: float, y0: float, x1: float, y1: float, style: dic
     return line
 
 
-def add_rect(fig: Figure, x: float, y: float, width: float, height: float, color: str) -> Rectangle:
+def add_rect(fig: Figure, x: float, y: float, width: float, height: float, color: str, edge: str | None = None,
+             edge_width: float = 0.0) -> Rectangle:
+    """A filled rectangle; with `edge`, a hairline outline (a binned colour key's lightest step stays visible)."""
     rect = Rectangle((x, y + height), width, -height, transform=pt_transform(fig), facecolor=color,
-                     edgecolor="none", linewidth=0)
+                     edgecolor=edge or "none", linewidth=edge_width if edge else 0)
     rect.set_figure(fig)
     rect.set_in_layout(False)
     return rect

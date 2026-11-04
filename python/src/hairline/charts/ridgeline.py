@@ -8,8 +8,19 @@ import numpy as np
 import pandas as pd
 from matplotlib.patches import Polygon
 
-from hairline import entities
-from hairline.charts.common import check_columns, check_numeric, check_present, humanise
+from hairline.charts.common import (
+    check_columns,
+    check_numeric,
+    check_present,
+    clip_caption,
+    clip_limits,
+    drop_small,
+    humanise,
+    labels_with_n,
+    series_colors,
+    with_caption,
+    within,
+)
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import STATIC_ID
@@ -35,53 +46,72 @@ def draw_ridge(ax, curve: tuple[list[float], list[float]], base: float, scale: f
             label="_nolegend_", gid=STATIC_ID)
 
 
-def draw_median(ax, values: pd.Series, curve: tuple[list[float], list[float]], base: float, scale: float,
+def draw_median(ax, values: np.ndarray, curve: tuple[list[float], list[float]], base: float, scale: float,
                 layer: float) -> None:
     settings = current_settings()
-    middle = quantiles(values, [0.5])[0]
+    middle = min(max(quantiles(values, [0.5])[0], curve[0][0]), curve[0][-1])
     top = base + float(np.interp(middle, curve[0], curve[1])) * scale
     ax.plot([middle, middle], [base, top], color=settings.neutral["ink"], zorder=layer + 0.003,
             linewidth=load_tokens()["reference"]["width"] * settings.base_size, gid=MEDIAN_ID, label="_nolegend_")
 
 
-def draw_spikes(ax, values: pd.Series, base: float, color: str, layer: float) -> None:
+def draw_spikes(ax, values: np.ndarray, base: float, color: str, layer: float) -> None:
     """A group too small or too uniform for a density (one value, or all alike) shows each value as a spike, so
     its row is never empty."""
     settings = current_settings()
     height = load_tokens()["ridgeline"]["spike"]
-    for value in sorted(set(values.astype(float))):
+    for value in sorted(set(np.asarray(values, dtype=float))):
         ax.plot([value, value], [base, base + height], color=color, zorder=layer + 0.002, label="_nolegend_",
                 linewidth=load_tokens()["lines"]["data"] * settings.base_size, gid=STATIC_ID)
 
 
-def draw_ridges(ax, groups: list, curves: list, scale: float, value: str, medians: bool) -> None:
+def draw_ridges(ax, groups: list, curves: list, scale: float, medians: bool, palette: dict[str, str],
+                statistics: list) -> None:
     """Top row first, so each lower ridge is drawn in front of the one above."""
-    for index, ((name, rows), curve) in enumerate(zip(groups, curves, strict=True)):
+    for index, ((name, values), curve, (_, counted)) in enumerate(zip(groups, curves, statistics, strict=True)):
         base, layer = float(len(groups) - 1 - index), 1 + index * 0.01
         if curve is None:
-            draw_spikes(ax, rows[value].dropna(), base, entities.color(name), layer)
+            draw_spikes(ax, values, base, palette[name], layer)
             continue
-        draw_ridge(ax, curve, base, scale, entities.color(name), layer)
+        draw_ridge(ax, curve, base, scale, palette[name], layer)
         if medians:
-            draw_median(ax, rows[value].dropna(), curve, base, scale, layer)
+            draw_median(ax, counted, curve, base, scale, layer)
 
 
 def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
               caption: str | None = None, order: Sequence[str] | None = None, medians: bool = True,
-              colors: Mapping[str, str] | None = None, size: str = "onehalf") -> HairlineFigure:
-    """Distributions per group as overlapping ridges, the first group on top; all ridges share one height scale."""
-    check_columns(data, [group, value])
+              colors: Mapping[str, str] | None = None, size: str = "onehalf", show_n: bool = False,
+              min_n: int | None = None, clip: float | tuple[float | None, float | None] | None = None,
+              clip_stats: bool = False, color_by: str | None = None,
+              dimension: str | None = None) -> HairlineFigure:
+    """Distributions per group as overlapping ridges, the first group on top; all ridges share one height scale.
+    `show_n` writes each group's n after its name; `min_n`, `clip`, `color_by` and `dimension` work as in
+    `spread()`: groups too small are named in the caption, and so are the values clipped off."""
+    check_columns(data, [group, value, color_by])
     check_present(data, value, "ridgeline")
     check_numeric(data, [value], "ridgeline")
-    rules, groups = load_tokens()["ridgeline"], groups_of(data, group, order, "ridgeline")
-    curves = [density(rows[value].dropna()) for _, rows in groups]
+    locale = current_settings().locale
+    rules = load_tokens()["ridgeline"]
+    groups = [(name, rows[value].dropna().astype(float).to_numpy())
+              for name, rows in groups_of(data, group, order, "ridgeline")]
+    groups, small = drop_small(groups, min_n, "ridgeline", locale)
+    every = np.concatenate([values for _, values in groups])
+    limits = clip_limits(every, clip, "ridgeline")
+    drawn = [(name, within(values, limits)) for name, values in groups]
+    curves = [density(values) for _, values in drawn]
     peak = max((max(curve[1]) for curve in curves if curve), default=1.0)
     scale = (1 + rules["overlap"]) / peak
+    notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None]
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
-                    caption=caption, size=size)
-    with entities.chart([name for name, _ in groups], colors):
-        draw_ridges(result.ax, groups, curves, scale, value, medians)
-    result.categories(0, [name for name, _ in reversed(groups)], "y")
+                    caption=with_caption(caption, *notes), size=size)
+    names = [name for name, _ in groups]
+    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "ridgeline")
+    draw_ridges(result.ax, drawn, curves, scale, medians, palette, drawn if clip_stats else groups)
+    labels = labels_with_n(names, {name: len(values) for name, values in groups}, locale) if show_n else names
+    result.categories(0, list(reversed(labels)), "y")
     result.ax.set_ylim(0, len(groups) + rules["overlap"] + rules["headroom"])
     result.x_title(humanise(value))
+    if color_by:
+        result.legend([("square", color, label) for label, color in
+                       dict.fromkeys((coarse[name], palette[name]) for name in names)])
     return result

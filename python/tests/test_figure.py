@@ -204,3 +204,50 @@ def test_edge_tick_labels_align_inward():
     alignments = [tick.label1.get_horizontalalignment() for tick in ticks]
     assert alignments[0] == "left" and alignments[-1] == "right"
     assert set(alignments[1:-1]) == {"center"}
+
+
+def test_heights_size_the_panel_rows_by_content():
+    figure = hl.figure("Cause above effect", panels=3, heights=(9, 3, 4), sharex=True, size="double", height_mm=160)
+    figure.figure.canvas.draw()
+    heights = [box[3] for box in figure.layout_report()["panels"]]
+    assert heights[0] / heights[1] == pytest.approx(3, rel=1e-3)
+    assert heights[2] / heights[1] == pytest.approx(4 / 3, rel=1e-3)
+    assert figure.sharex and not figure.sharey
+
+
+def test_heights_need_one_value_per_row():
+    with pytest.raises(ValueError, match="heights names 2 rows, but 3 panels"):
+        hl.figure("x", panels=3, heights=(1, 2))
+
+
+def test_a_figure_too_short_for_its_smallest_row_names_the_height_that_fits():
+    with pytest.raises(hl.HairlineLayoutError, match="make it at least"):
+        figure = hl.figure("x", panels=2, heights=(20, 1), height_mm=30, layout="compose", columns=1)
+        figure.bare(0)
+        figure.bare(1)
+        figure.figure.canvas.draw()
+
+
+def test_legend_ramp_draws_outlined_squares_right_aligned_in_the_legend_row():
+    figure = hl.figure("Key", size="double")
+    figure.ax.plot([0, 1], [0, 1], label="Series")
+    figure.legend()
+    figure.legend_ramp("blues", title="Share of days")
+    figure.figure.canvas.draw()
+    report = figure.layout_report()
+    assert report["legend_labels"] == ["Series", "Share of days", "25%", "50%", "75%", "100%"]
+    assert report["legend_item_rights"][-1] == pytest.approx(report["right"])
+    edges = [artist for artist in figure.frame_artist.children if getattr(artist, "get_linewidth", None)
+             and type(artist).__name__ == "Rectangle" and artist.get_linewidth() > 0]
+    assert len(edges) == 4
+
+
+def test_time_axis_labels_hours_and_crops_to_the_data():
+    figure = hl.figure("Day", size="double")
+    figure.ax.plot([7.5, 15.25], [1, 2])
+    figure.time_axis(0, spans={"Regular hours": (7, 16)})
+    figure.legend()
+    figure.figure.canvas.draw()
+    assert figure.ax.get_xlim() == (6.0, 17.0)
+    assert [label.get_text() for label in figure.ax.get_xticklabels()] == [f"{hour:02d}" for hour in range(6, 18, 2)]
+    assert figure.layout_report()["legend_labels"] == ["Regular hours"]

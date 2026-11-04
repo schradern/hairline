@@ -40,3 +40,35 @@ def density(values: Sequence[float], points: int = 128) -> tuple[list[float], li
 def jitter_offsets(count: int) -> list[float]:
     """Offsets in [-0.5, 0.5] from the golden-ratio sequence: spread evenly, the same on every run."""
     return [((index + 1) * GOLDEN) % 1 - 0.5 for index in range(count)]
+
+
+def level_quantiles(values: Sequence[float], probabilities: Sequence[float]) -> list[float]:
+    """Quantiles that stay on the data's levels (R's type 1, numpy's inverted_cdf): the smallest value reached by
+    at least that share of the values. Of daily peaks, the 0.9 quantile is the staffing that is enough on 9 of 10
+    days; of counts of people, the median is a whole person."""
+    data = np.asarray(values, dtype=float)
+    return [float(value) for value in np.quantile(data, probabilities, method="inverted_cdf")]
+
+
+def median_gap(values: Sequence[float], share: float, least: int = 10) -> tuple[float, float] | None:
+    """The two levels a median falls between when it matches neither and each holds more than `share` of the
+    values (doses of 25 and 50 mg, median 35); None otherwise, and for fewer than `least` values, whose median
+    falls between two of them by chance."""
+    data = np.asarray(values, dtype=float)
+    if len(data) < least:
+        return None
+    middle = float(np.median(data))
+    below, above = data[data < middle], data[data > middle]
+    if not len(below) or not len(above) or (data == middle).any():
+        return None
+    low, high = float(below.max()), float(above.min())
+    if (data == low).mean() > share and (data == high).mean() > share:
+        return low, high
+    return None
+
+
+def top_levels(values: Sequence[float], count: int) -> list[tuple[float, float]]:
+    """The `count` most frequent values with their shares, most frequent first (ties: the smaller value first)."""
+    levels, counts = np.unique(np.asarray(values, dtype=float), return_counts=True)
+    ranked = sorted(zip(levels, counts, strict=True), key=lambda pair: (-pair[1], pair[0]))[:count]
+    return [(float(level), float(found) / len(values)) for level, found in ranked]

@@ -5,9 +5,11 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from matplotlib.ticker import FixedFormatter, FixedLocator
+from matplotlib.ticker import FixedFormatter, FixedLocator, FuncFormatter
 
 from hairline.layout.axes_style import configure_ticks, data_interval
+from hairline.numbers import format_number
+from hairline.tokens import load_tokens
 
 if TYPE_CHECKING:
     from hairline.figure import HairlineFigure
@@ -45,6 +47,47 @@ def set_categories(ax, which: str, names: list[str]) -> list[str]:
     return names
 
 
+def hour_breaks(low: float, high: float, target: int) -> list[float]:
+    """Whole hours in [low, high] at the smallest step of `time_axis.steps` that gives at most `target` ticks."""
+    for step in load_tokens()["time_axis"]["steps"]:
+        breaks = [float(hour) for hour in range(math.ceil(low / step) * step, math.floor(high) + 1, step)]
+        if len(breaks) <= target:
+            return breaks
+    return [low, high]
+
+
+def hour_label(value: float, _position: object = None) -> str:
+    """'06', '18', and past midnight '02' again."""
+    return f"{int(round(value)) % 24:02d}"
+
+
+def time_window(figure: HairlineFigure, index: int) -> tuple[float, float]:
+    """The hours shown: the panel's own, else its data plus a margin; panels sharing x share the widest."""
+    from hairline.charts.time_of_day import hour_window
+    panels = [key for key in figure.time_hours if figure.sharex or key == index]
+    given = [figure.time_hours[key] for key in panels if figure.time_hours[key] is not None]
+    if given:
+        return min(low for low, _ in given), max(high for _, high in given)
+    low, high = data_interval([figure.axes[key] for key in panels], "x")
+    return hour_window([low], [high], load_tokens()["time_axis"]["margin_hours"])
+
+
+def configure_time_ticks(figure: HairlineFigure, index: int) -> list[str]:
+    ax, (low, high) = figure.axes[index], time_window(figure, index)
+    ax.set_xlim(low, high, auto=False)
+    breaks = hour_breaks(low, high, {1: load_tokens()["time_axis"]["target"], 2: 5}.get(figure.columns, 4))
+    ax.xaxis.set_major_locator(FixedLocator(breaks))
+    ax.xaxis.set_major_formatter(FuncFormatter(hour_label))
+    return [hour_label(value) for value in breaks]
+
+
+def integer_breaks(low: float, high: float) -> list[float]:
+    """Whole-number ticks from the lowest to the highest whole number in range, at most six of them."""
+    first, last = math.ceil(low - 1e-9), math.floor(high + 1e-9)
+    step = next(step for step in (1, 2, 5, 10, 20, 50, 100, 200, 500, 1000) if (last - first) / step <= 5)
+    return [float(value) for value in range(first, last + 1, step)]
+
+
 def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
     labels = []
     for index, ax in enumerate(figure.axes):
@@ -52,6 +95,20 @@ def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
             labels.append([])
             continue
         for which in ("y", "x"):
+            if which == "x" and index in figure.time_hours:
+                configure_time_ticks(figure, index)
+                figure.applied_limits[(index, which)] = current_limits(ax, which)
+                continue
+            if (index, which) in figure.integer_axes:
+                low, high = current_limits(ax, which)
+                axis = ax.yaxis if which == "y" else ax.xaxis
+                axis.set_major_locator(FixedLocator(integer_breaks(low, high)))
+                axis.set_major_formatter(FuncFormatter(lambda value, _position=None: format_number(
+                    value, 0, figure.settings.locale)))
+                if which == "y":
+                    labels.append([format_number(value, 0, figure.settings.locale)
+                                   for value in integer_breaks(low, high)])
+                continue
             if (index, which) in figure.category_axes:
                 result = set_categories(ax, which, figure.category_axes[(index, which)])
                 if which == "y":

@@ -129,3 +129,10 @@ def quiet_study(data, **roles):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         return hl.study(data, **roles)
+
+
+def test_describe_warns_when_a_median_matches_no_dose_level():
+    data = pd.DataFrame({"arm": ["A"] * 26, "dose": [10] + [25] * 12 + [50] * 12 + [100]})
+    study = hl.study(data, group="arm", variables=["dose"])
+    with pytest.warns(UserWarning, match="the median of Dose in A lies between 25 and 50"):
+        study.describe()

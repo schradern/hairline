@@ -20,10 +20,11 @@ from hairline.tokens import load_tokens
 # Chart and study functions load on first use, so a figure drawn with figure() and save() never imports pandas.
 LAZY_NAMES = {
     **{name: f"hairline.charts.{name}" for name in (
-        "arcs", "bars", "chord", "correlation", "donut", "dotplot", "forest", "funnel", "kaplan_meier", "partition",
-        "prisma", "raincloud", "ridgeline", "risk_of_bias", "sankey", "scatter", "spread", "swatches", "timeseries",
-        "venn")},
+        "arcs", "bars", "chord", "correlation", "donut", "dotplot", "forest", "funnel", "kaplan_meier", "lanes",
+        "levels", "partition", "prisma", "raincloud", "ridgeline", "risk_of_bias", "sankey", "scatter", "spread",
+        "swatches", "swimlanes", "table", "timeseries", "venn")},
     "Result": "hairline.study", "Study": "hairline.study", "study": "hairline.study",
+    "Report": "hairline.report", "report": "hairline.report", "scope": "hairline.entities",
 }
 
 if TYPE_CHECKING:
@@ -36,6 +37,8 @@ if TYPE_CHECKING:
     from hairline.charts.forest import forest
     from hairline.charts.funnel import funnel
     from hairline.charts.kaplan_meier import kaplan_meier
+    from hairline.charts.lanes import lanes
+    from hairline.charts.levels import levels
     from hairline.charts.partition import partition
     from hairline.charts.prisma import prisma
     from hairline.charts.raincloud import raincloud
@@ -45,8 +48,12 @@ if TYPE_CHECKING:
     from hairline.charts.scatter import scatter
     from hairline.charts.spread import spread
     from hairline.charts.swatches import swatches
+    from hairline.charts.swimlanes import swimlanes
+    from hairline.charts.table import table
     from hairline.charts.timeseries import timeseries
     from hairline.charts.venn import venn
+    from hairline.entities import scope
+    from hairline.report import Report, report
     from hairline.study import Result, Study, study
 
 
@@ -74,12 +81,12 @@ class HairlineModule(types.ModuleType):
 sys.modules[__name__].__class__ = HairlineModule
 
 __all__ = [
-    "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Result", "Settings", "Study", "arcs", "bars",
+    "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Report", "Result", "Settings", "Study", "arcs", "bars",
     "brand_report", "check_palette", "chord", "citation", "color", "colormap", "colors", "correlation",
     "current_settings", "donut", "dotplot", "figure", "forest", "format_interval", "format_number", "format_percent",
-    "frame", "funnel", "kaplan_meier", "load_brand", "load_tokens", "palette", "palettes", "partition", "prisma",
-    "raincloud", "ramp", "ridgeline", "risk_of_bias", "sankey", "save", "scatter", "spread", "study", "swatches",
-    "timeseries", "use", "venn",
+    "frame", "funnel", "kaplan_meier", "lanes", "levels", "load_brand", "load_tokens", "palette", "palettes",
+    "partition", "prisma", "raincloud", "ramp", "report", "ridgeline", "risk_of_bias", "sankey", "save", "scatter",
+    "scope", "spread", "study", "swatches", "swimlanes", "table", "timeseries", "use", "venn",
 ]
 __version__ = "0.2.1"
 

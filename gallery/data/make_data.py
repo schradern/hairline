@@ -228,6 +228,88 @@ def cohort_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+PROCEDURES = [("General anaesthesia", 2000), ("Combined", 360), ("Sedation", 130), ("Regional, no ventilation", 54)]
+YEAR_MONTHS = [(2021, 2), (2022, 12), (2023, 12), (2024, 12), (2025, 12), (2026, 10)]
+
+
+def procedure_rows(rng: np.random.Generator) -> list[dict]:
+    """Cases of a perioperative drug per procedure, year and age group: four groups of very different size, the
+    first and last year incomplete (2 and 10 months)."""
+    rows = []
+    for procedure, per_year in PROCEDURES:
+        for year, months in YEAR_MONTHS:
+            for age, share in (("Children", 0.28), ("Adults", 0.72)):
+                expected = per_year * months / 12 * share * (1 + 0.04 * (year - 2023))
+                rows.append({"procedure": procedure, "year": str(year), "age": age,
+                             "cases": int(rng.poisson(expected))})
+    return rows
+
+
+DOSE_GROUPS = [("General anaesthesia", 640, (25, 50, 75), (0.45, 0.4, 0.15)),
+               ("Combined", 180, (25, 50), (0.55, 0.45)), ("Sedation", 90, (12.5, 25), (0.7, 0.3)),
+               ("Local anaesthetic", 1, (50,), (1.0,))]
+
+
+def dose_rows(rng: np.random.Generator) -> list[dict]:
+    """Single doses in mg, documented on round levels, with a few implausible entries (units mistyped)."""
+    rows = []
+    for group, count, levels, shares in DOSE_GROUPS:
+        doses = rng.choice(levels, count, p=shares).astype(float)
+        if count > 100:
+            doses[rng.choice(count, 2, replace=False)] *= 100
+        rows += [{"procedure": group, "dose_mg": float(dose)} for dose in doses]
+    return rows
+
+
+UNIT = [("Induction", 2), ("Theatre", 2), ("Emergence", 1), ("Recovery", 4)]
+UNIT_DAYS = 182
+
+
+def unit_rows(rng: np.random.Generator) -> tuple[list[dict], list[dict]]:
+    """Half a year of one surgical unit: patients move induction, theatre, emergence, recovery (a few hold in
+    recovery first), each to the first place of the section free; the moves between places."""
+    stays, moves = [], []
+    start_day = np.datetime64("2026-01-05")
+    for offset in range(UNIT_DAYS):
+        day = start_day + np.timedelta64(offset, "D")
+        weekend = (offset % 7) >= 5
+        if weekend and rng.random() < 0.7:
+            continue
+        free = {f"{name} {index + 1}": 0.0 for name, count in UNIT for index in range(count)}
+        patients = int(rng.integers(1, 3)) if weekend else int(rng.integers(5, 10))
+        arrival = 7.25
+        for patient in range(patients):
+            path = [("Recovery", rng.uniform(15, 35))] if rng.random() < 0.1 else []
+            path += [("Induction", rng.uniform(15, 30)), ("Theatre", rng.uniform(35, 120)),
+                     ("Emergence", rng.uniform(8, 18)), ("Recovery", rng.uniform(35, 90))]
+            clock, previous = arrival + rng.uniform(0, 0.4), None
+            for section, minutes in path:
+                place = min((name for name in free if name.startswith(section)), key=lambda name: free[name])
+                clock = max(clock, free[place])
+                end = clock + minutes / 60
+                stays.append({"place": place, "section": section, "patient": f"P{patient + 1}", "day": str(day),
+                              "start": stamp(day, clock), "end": stamp(day, end)})
+                if previous:
+                    moves.append({"from": previous, "to": place, "time": stamp(day, clock)})
+                free[place], previous, clock = end, place, end
+            arrival += rng.uniform(0.6, 1.1)
+    return stays, moves
+
+
+def stamp(day: np.datetime64, hours: float) -> str:
+    return str(day + np.timedelta64(int(round(hours * 60)), "m")).replace("T", " ")
+
+
+def staff_rows(stays: list[dict]) -> list[dict]:
+    """The people needed at once: a doctor for each induction, theatre and emergence, a nurse for every place."""
+    rows = []
+    for stay in stays:
+        if stay["section"] != "Recovery":
+            rows.append({"role": "Doctors", "start": stay["start"], "end": stay["end"]})
+        rows.append({"role": "Nurses", "start": stay["start"], "end": stay["end"]})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -255,6 +337,12 @@ def main() -> None:
     write("transfers.csv", transfer_rows(rng))
     write("comorbidities.csv", comorbidity_rows(rng))
     write("cohort.csv", cohort_rows(rng))
+    write("procedures.csv", procedure_rows(rng))
+    write("doses.csv", dose_rows(rng))
+    stays, moves = unit_rows(rng)
+    write("unit_stays.csv", stays)
+    write("unit_moves.csv", moves)
+    write("unit_staff.csv", staff_rows(stays))
 
 
 if __name__ == "__main__":

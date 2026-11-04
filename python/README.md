@@ -56,8 +56,8 @@ measurements are not counted as separate patients.
 
 Each chart is one call with the data and its column names, and returns a figure in the hairline frame:
 `bars`, `scatter`, `timeseries`, `spread`, `raincloud`, `ridgeline`, `kaplan_meier`, `forest`, `dotplot`,
-`funnel`, `correlation`, `donut`, `partition`, `sankey`, `chord`, `arcs`, `venn`, `prisma` and
-`risk_of_bias`.
+`funnel`, `correlation`, `donut`, `partition`, `sankey`, `chord`, `arcs`, `venn`, `prisma`, `risk_of_bias`,
+`lanes`, `levels`, `swimlanes` and `table`.
 
 ```python
 admissions = pd.DataFrame({"diagnosis": ["Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac"],
@@ -74,6 +74,59 @@ figure.ax.plot([0, 1, 2, 3], [4.1, 3.2, 2.6, 2.2], label="All patients")
 figure.y_title("mmol/l")
 hl.save(figure, "lactate")
 ```
+
+## For reports
+
+What a real report needs is one argument on the chart, and the caption says in the figure's locale what was
+left out or drawn differently ("Unvollständig, heller: 2021 (2 Monate)", "Not shown (under 10): …").
+
+```python
+hl.bars(cases, "year", "cases", facet="procedure", scales="free", columns=2,   # one panel per procedure
+        partial={"2021": "2 months", "2026": "10 months"})                     # incomplete years drawn lighter
+hl.bars(locations, "place", facet="procedure", top=6)                          # the rest as one "Other" bar
+hl.bars(patterns, "procedure", by="pattern", stacked=True, normalize=True)     # shares from counts, n kept
+hl.spread(doses, "procedure", "mg", show_n=True, min_n=10, clip=0.99,          # n, small groups out, outliers
+          stats=("median", "levels"), discrete=True)                           # the frequent doses, on levels
+hl.bars(cases, "year", by="row", color_by="procedure")                         # 12 rows, 4 colours
+with hl.scope("pattern"):                                                      # off the procedures' slots
+    hl.bars(patterns, "pattern")
+```
+
+- **`facet=`, `scales=`, `columns=`** on `bars`: one panel per value, each with its own value axis or one
+  shared axis, the panel header with the facet's total. `top=` and `other=` fold the smallest categories.
+- **`partial=`** on `bars` and `timeseries`: incomplete periods drawn lighter, named in the caption.
+- **`show_n=`** on `bars`, `spread` and `ridgeline` (`n=` column on `dotplot`): the n after the label or in the
+  numbers column; colours and `order` keep keying on the bare group.
+- **`min_n=`** on `spread`, `ridgeline` and `raincloud`; **`clip=`** (a quantile, or `(low, high)`) on those and
+  `scatter`. The statistics use every value unless `clip_stats=True`.
+- **`color_by=`** on every chart with groups, **`dimension=`** or `hl.scope()` across figures.
+- **`stats=("levels", …)`** and **`discrete=True`** on `spread`: the most frequent values with their shares, and
+  quantiles on the data's own levels. `spread()` and `describe()` warn when a median falls between two large
+  levels and matches neither.
+- **`hl.table(frame, …)`**: any frame (or `describe().table`) in hairline's typography, numbers in the locale,
+  `bold_rows=`, `footnotes=`, saved as PDF, PNG, SVG and as a real HTML table.
+- **`hl.report()`**: figures and tables numbered in the locale ("Abbildung 1", "Tabelle 2") in one Markdown or
+  HTML file with the images embedded.
+
+### Over the time of day
+
+```python
+figure = hl.figure("Occupancy and staffing", panels=3, heights=(9, 3, 4), sharex=True, size="double")
+hl.lanes(stays, "place", "start", "end", group="section", days="weekdays", flows=moves,
+         spans={"Regular hours": (7, 16)}, into=figure, panel=0)
+hl.levels(staff, "start", end="end", by="role", days="weekdays", into=figure, panel=1)
+hl.save(figure, "unit_day")
+```
+
+- **`lanes()`**: one row per place, each 15-minute cell coloured by the share of days it was occupied, in its
+  section's ramp, binned as the key in the legend row (`HairlineFigure.legend_ramp()`); `flows=` adds the moves
+  between rows as faint connectors.
+- **`levels()`**: whole counts of people as steps: how often exactly 1, 2, 3 … were needed, the typical day and
+  the count that is enough on 9 of 10 days, on the data's levels (R's quantile type 1).
+- **`swimlanes()`**: one real day, a bar per interval with its label inside where it fits, an inner interval as a
+  darker band, and `assign="first_free"` to turn tasks into rows of people.
+- **`figure(heights=, sharex=, sharey=)`** sizes panel rows by content on one x axis; `time_axis()` labels the
+  hours ("06", "08") cropped to the data, with named `spans`.
 
 ## Colours
 

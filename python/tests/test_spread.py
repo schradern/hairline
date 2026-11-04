@@ -124,3 +124,55 @@ def test_a_family_without_semibold_draws_its_bold_without_a_fallback_notice(capl
     with caplog.at_level(logging.INFO, logger="matplotlib.font_manager"):
         hl.spread(nights(), "Night", "speed", title="Response speed by night")
     assert not [record for record in caplog.records if "Failed to find font weight" in record.getMessage()]
+
+
+def doses() -> pd.DataFrame:
+    """Doses on round levels, a group documented once, and two implausible values."""
+    values = [25.0] * 12 + [50.0] * 12 + [5000.0, 7500.0]
+    return pd.DataFrame({"group": ["Ward"] * len(values) + ["Local anaesthetic"], "mg": values + [10.0]})
+
+
+def test_min_n_leaves_small_groups_out_and_names_them():
+    hl.use(brand=False, locale="de")
+    result = spread_spec(doses(), "group", "mg", min_n=10)
+    assert [row["name"] for row in result["rows"]] == ["Ward"]
+    assert result["notes"] == ["Nicht dargestellt (unter 10): Local anaesthetic."]
+
+
+def test_clip_hides_values_above_the_quantile_and_says_so():
+    hl.use(brand=False)
+    result = spread_spec(doses(), "group", "mg", min_n=10, clip=(None, 1000), stats=("median", "range", "n"))
+    row = result["rows"][0]
+    assert row["high"] == 50.0
+    assert row["pairs"][-1] == ["n", "26"] and row["pairs"][1] == ["Range", "25–7,500"]
+    assert result["notes"][-1] == "2 values above 1,000 not drawn; the statistics use every value."
+    drawn = spread_spec(doses(), "group", "mg", min_n=10, clip=(None, 1000), clip_stats=True, stats=("n",))
+    assert drawn["rows"][0]["pairs"] == [["n", "24"]]
+    assert drawn["notes"][-1].endswith("the statistics use the values drawn.")
+
+
+def test_a_quantile_clip_takes_the_limit_from_every_value():
+    hl.use(brand=False)
+    data = pd.DataFrame({"group": ["a"] * 100, "value": list(range(100))})
+    result = spread_spec(data, "group", "value", clip=0.95)
+    assert result["rows"][0]["high"] == 94.0
+    assert result["notes"] == ["5 values above 94 not drawn; the statistics use every value."]
+
+
+def test_a_median_between_two_large_levels_is_warned_about_and_levels_show_them():
+    hl.use(brand=False)
+    with pytest.warns(UserWarning, match="the median of 'Ward', 37.5, lies between 25 and 50"):
+        result = spread_spec(doses().iloc[:24], "group", "mg", stats=("median", "levels"))
+    assert result["rows"][0]["pairs"][1] == ["Levels", "25 (50%) · 50 (50%)"]
+
+
+def test_discrete_quantiles_stay_on_the_levels_and_the_caption_says_so():
+    hl.use(brand=False)
+    result = spread_spec(doses().iloc[:24], "group", "mg", discrete=True, stats=("median", "iqr"))
+    assert result["rows"][0]["pairs"][0] == ["Median", "25"]
+    assert result["notes"] == ["Quantiles on the data's own levels."]
+
+
+def test_show_n_adds_the_n_to_the_numbers_column():
+    hl.use(brand=False)
+    assert spec(show_n=True)["rows"][0]["pairs"][-1] == ["n", "40"]

@@ -113,6 +113,10 @@ def write_html(fig: Figure, path: Path, options: dict) -> None:
     owner = getattr(fig, "hairline_figure", None)
     if owner is None:
         raise ValueError("hairline: html export needs a figure made with hairline.figure() or a chart function")
+    if owner.table_data is not None:
+        from hairline.charts.table import table_html
+        path.write_text(page(owner.title, table_html(owner), owner.settings.neutral["surface"]), encoding="utf-8")
+        return
     buffer = io.StringIO()
     fig.savefig(buffer, format="svg", metadata=METADATA["svg"], **options)
     targets = figure_targets(owner)

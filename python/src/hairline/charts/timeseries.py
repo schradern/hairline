@@ -6,10 +6,19 @@ import math
 import numbers
 from collections.abc import Mapping, Sequence
 
+import numpy as np
 import pandas as pd
 
-from hairline import entities
-from hairline.charts.common import check_columns, check_labels, check_numeric, check_present, humanise, ordered_names
+from hairline.charts.common import (
+    check_columns,
+    check_labels,
+    check_numeric,
+    check_present,
+    humanise,
+    ordered_names,
+    partial_caption,
+    with_caption,
+)
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
 from hairline.fonts import families
@@ -144,6 +153,29 @@ def draw_marks(ax, bands: Sequence[Mapping], events: Sequence[Mapping], name: st
                 caption_note(ax, event["label"], as_x(event["x"], is_date, "event x"), settings)
 
 
+def partial_span(key: object, is_date: bool) -> tuple[object, object]:
+    """An incomplete period on the x axis: a year ("2021") or a date on a date axis, a number otherwise; it reaches
+    to the next year, day or number."""
+    if not is_date:
+        start = as_x(float(key) if isinstance(key, str) else key, False, "partial")
+        return start - 0.5, start + 0.5
+    text = str(key)
+    if text.isdigit() and len(text) == 4:
+        return pd.Timestamp(f"{text}-01-01"), pd.Timestamp(f"{int(text) + 1}-01-01")
+    start = as_x(key, True, "partial")
+    return start, start + np.timedelta64(1, "D")
+
+
+def draw_partial(ax, partial: Mapping[str, str], is_date: bool) -> None:
+    """Incomplete periods drawn lighter: a veil of the surface colour over the data there, as bars of an
+    incomplete year are drawn lighter."""
+    settings = current_settings()
+    for key in partial:
+        start, end = partial_span(key, is_date)
+        ax.axvspan(start, end, color=settings.neutral["surface"], alpha=1 - load_tokens()["partial"]["opacity"],
+                   zorder=2.5, linewidth=0, label="_nolegend_")
+
+
 def legend_items(raw: bool, period_mean: bool, bands: Sequence[Mapping], labels: Mapping[str, str | None]) -> list:
     neutral = current_settings().neutral
     items = [("thin", neutral["ink"], labels["raw"])] if raw else []
@@ -165,9 +197,14 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
                qualifiers: Mapping[str, str] | None = None, bands: Sequence[Mapping] = (),
                events: Sequence[Mapping] = (), order: Sequence[str] | None = None, raw_label: str = "Raw values",
                mean_label: str | None = None, colors: Mapping[str, str] | None = None,
-               size: str = "double") -> HairlineFigure:
-    """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers."""
-    check_columns(data, [x, y, by])
+               size: str = "double", partial: Mapping[str, str] | None = None, color_by: str | None = None,
+               dimension: str | None = None) -> HairlineFigure:
+    """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers.
+    `partial` names incomplete periods ({"2021": "2 months"}: a year, a date, or an x value) and what they hold:
+    they are drawn lighter and the caption says so. `color_by` colours the panels by a coarser column;
+    `dimension` keeps their colours off another dimension's slots."""
+    from hairline.charts.common import series_colors
+    check_columns(data, [x, y, by, color_by])
     check_window(window)
     check_present(data, y, "timeseries")
     check_numeric(data, [y], "timeseries")
@@ -175,11 +212,13 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     data = with_iso_dates(data, x)
     title = title or (f"{humanise(y)} by {str(by).replace('_', ' ')}" if by else f"{humanise(y)} over time")
     groups = groups_of(data, by, order, "timeseries")
+    caption = with_caption(caption, partial_caption(partial, current_settings().locale))
     result = figure(title, subtitle=subtitle, caption=caption, size=size, panels=len(groups), layout="rows")
     is_date = pd.api.types.is_datetime64_any_dtype(data[x])
     share_label = share_label or f"≥ {formatter(percent)(threshold, 0) if threshold is not None else ''}"
     labels = {"share_above": share_label, **STAT_LABELS}
-    palette = entities.colors_for([name for name, _ in groups], colors) if by else {}
+    palette = series_colors([name for name, _ in groups], data, by, color_by, colors, dimension,
+                            "timeseries")[0] if by else {}
     for index, (name, rows) in enumerate(groups):
         ax = result.axes[index]
         draw_series(ax, rows, x, y, palette.get(name, lone_color()), window, raw)
@@ -187,6 +226,7 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
             ax.axhline(rows[y].mean(), **{**reference_style(), "color": current_settings().neutral["muted"],
                                           "linestyle": (0, (3, 2.5))})
         draw_marks(ax, bands, events, name, is_date)
+        draw_partial(ax, partial or {}, is_date)
         if percent:
             result.percent_axis(index)
         emphasise = key is not None and (key_panels is None or name in key_panels)

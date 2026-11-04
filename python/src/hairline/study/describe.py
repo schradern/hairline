@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -11,8 +12,8 @@ from matplotlib.patches import Rectangle
 from hairline import entities
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import FIXED_ID, STATIC_ID, lone_color
-from hairline.numbers import format_number, is_whole
-from hairline.stats.density import quantiles
+from hairline.numbers import format_number, format_percent, is_whole
+from hairline.stats.density import median_gap, quantiles
 from hairline.study.columns import is_missing, level_text, levels, numbers
 from hairline.study.result import Result, figure_for
 from hairline.study.summaries import (
@@ -63,10 +64,27 @@ def counted_rows(study: Study, columns: dict[str, str], in_overall: bool = False
     return found
 
 
+def warn_median_gaps(study: Study, name: str, parts: list, digits: int) -> None:
+    """A median between two levels that each hold a large share matches neither (doses of 25 and 50 mg, median
+    35); the table would need a footnote, so say so."""
+    share, least = load_tokens()["spread"]["discrete_share"], load_tokens()["spread"]["discrete_min_n"]
+    for label, rows in parts:
+        values = numbers(rows[name])
+        gap = median_gap(values, share, least) if len(values) else None
+        if gap is not None:
+            low, high = (format_number(level, digits) for level in gap)
+            warnings.warn(f"hairline: describe: the median of {study.label(name)} in {label} lies between {low} and "
+                          f"{high}, which each hold more than {format_percent(share, 0)} of the values, and matches "
+                          f"neither; give the shares of the levels in the text or a footnote", UserWarning,
+                          stacklevel=4)
+
+
 def numeric_rows(study: Study, name: str, parts: list, stats: Sequence[str]) -> tuple[list[list[str]], dict, dict]:
     digits, whole = digits_for(numbers(study.data[name])), is_whole(numbers(study.data[name]))
     found = {label: summary_numbers(numbers(rows_[name]), tuple(stats), int(is_missing(rows_[name]).sum()))
              for label, rows_ in parts}
+    if "median_iqr" in stats:
+        warn_median_gaps(study, name, parts, digits)
     rows = [[f"{study.label_unit(name)}, {STAT_LABELS[stat]}",
              *[summary_text(found[label], stat, digits, whole) for label, _ in parts]] for stat in stats]
     return rows, {name: dict(zip(found, rows[0][1:], strict=True))}, found

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 import os
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
@@ -70,6 +70,14 @@ class HairlineFigure:
     table_keys: list[str] = field(default_factory=list)
     min_plot: float | None = None
     fitted_height: str | None = None
+    row_heights: tuple[float, ...] = ()
+    ramp_key: dict | None = None
+    time_hours: dict[int, tuple[float, float]] = field(default_factory=dict)
+    table_data: dict | None = None
+    blocks: dict[int, list[tuple[str, str, int]]] = field(default_factory=dict)
+    integer_axes: set[tuple[int, str]] = field(default_factory=set)
+    hover_marks: list[dict] = field(default_factory=list)
+    inside_labels: list[tuple] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)
@@ -138,6 +146,74 @@ class HairlineFigure:
         self.collect_legend = items is None
         self.legend_items = None if items is None else validate_items(items)
 
+    def legend_ramp(self, ramp: str | Sequence[str] | None = None, steps: Sequence[float] | None = None,
+                    title: str | None = None, format: str = "percent", limits: tuple[float, float] = (0.0, 1.0),
+                    digits: int | None = None) -> None:
+        """A binned colour key in the legend row, right-aligned beside the series items: `title`, then one small
+        outlined square per step (its value formatted as a percentage or, with `format="number"`, a number with
+        `digits` decimals). `ramp` is a ramp name or its colours; `steps` are values within `limits`, by default
+        25 %, 50 %, 75 % and 100 % of a share. Charts with a ramp (lanes, levels, correlation) add it themselves."""
+        from hairline.numbers import format_number, format_percent
+        from hairline.palettes import ramp as ramp_colors
+        if format not in ("percent", "number"):
+            raise ValueError(f"hairline: legend_ramp: format {format!r} must be 'percent' or 'number'")
+        colors = ramp_colors(ramp) if ramp is None or isinstance(ramp, str) else [str(color) for color in ramp]
+        steps = [float(step) for step in (steps if steps is not None else load_tokens()["legend_ramp"]["steps"])]
+        # Colours given one per step are the bins themselves (lanes, levels); a ramp is read at each step.
+        binned = not (ramp is None or isinstance(ramp, str)) and len(colors) == len(steps)
+        low, high = limits
+        if not high > low:
+            raise ValueError(f"hairline: legend_ramp: limits need low below high; got {limits!r}")
+        outside = [step for step in steps if not low <= step <= high]
+        if outside:
+            raise ValueError(f"hairline: legend_ramp: step {outside[0]:g} lies outside the limits {low:g} to {high:g}")
+        locale = self.settings.locale
+        places = [digits if digits is not None else exact_places(step * (100 if format == "percent" else 1))
+                  for step in steps]
+        labels = [format_percent(step, count, locale) if format == "percent" else format_number(step, count, locale)
+                  for step, count in zip(steps, places, strict=True)]
+        self.ramp_key = {"title": title, "labels": labels,
+                         "colors": colors if binned else [colors[round((step - low) / (high - low) * (len(colors) - 1))]
+                                                          for step in steps]}
+
+    def time_axis(self, index: int, hours: tuple[float, float] | None = None,
+                  spans: Mapping[str, tuple[float, float]] | None = None) -> None:
+        """Label panel `index`'s x axis (in hours since midnight) as the time of day: "06", "08" …, from `hours`
+        or cropped to the hours with data plus `time_axis.margin_hours`. Panels sharing x share one window.
+        `spans` shades named periods ({"Regular hours": (7, 16)}), each named in the legend row."""
+        self.check_index(index)
+        if hours is not None:
+            low, high = hours
+            if not 0 <= low < high <= 48:
+                raise ValueError(f"hairline: time_axis: hours must run from low to high within 0 to 48; got {hours!r}")
+        self.time_hours[index] = None if hours is None else (float(hours[0]), float(hours[1]))
+        from hairline.layout.legend import LegendItem
+        band = self.settings.neutral["band"]
+        for name, (start, end) in (spans or {}).items():
+            self.axes[index].axvspan(start, end, color=band, zorder=0, linewidth=0, label="_nolegend_")
+            # An explicit legend row takes the span's name too; a collected one gets it with the references.
+            items = self.legend_items if self.legend_items is not None else self.extra_legend_items
+            if str(name) not in [item.label for item in items]:
+                items.append(LegendItem("band", band, str(name)))
+
+    def integer_axis(self, index: int, which: str = "y") -> None:
+        """Ticks on whole numbers only (counts of people or places): no 1.5 people on the axis."""
+        self.check_index(index)
+        self.integer_axes.add((index, which))
+
+    def row_blocks(self, index: int, blocks: Sequence[tuple[str, str, Sequence[str]]]) -> None:
+        """Rows of panel `index` (top first) as named blocks: each block's name once, in its colour, left of its
+        rows' own labels (1, 2, …). The chart draws the rows at y positions n-1 … 0, top first."""
+        self.check_index(index)
+        labels = [str(label) for _, _, rows in blocks for label in rows]
+        self.categories(index, list(reversed(labels)), "y")
+        self.blocks[index] = [(str(name), color, len(rows)) for name, color, rows in blocks]
+
+    def hover(self, index: int, name: str, color: str, box: tuple[float, float, float, float], text: str) -> None:
+        """A tooltip target for interactive HTML: a box (x0, y0, x1, y1 in panel `index`'s data) of series
+        `name`, which a reader hovers to read `text`."""
+        self.hover_marks.append({"index": index, "name": str(name), "color": color, "box": box, "text": text})
+
     def percent_axis(self, index: int, which: str = "y", digits: int | None = None) -> None:
         """Treat panel `index`'s values on axis `which` ("y" or "x") as shares and label them as percentages.
 
@@ -185,6 +261,12 @@ class HairlineFigure:
 
 
 RASTER_FORMATS = ("png", "tif", "tiff", "jpg", "jpeg", "webp", "raw", "rgba")
+
+
+def exact_places(value: float) -> int:
+    """The fewest decimals that write `value` exactly (0.5, 25), up to MAX_AXIS_DIGITS."""
+    return next((places for places in range(MAX_AXIS_DIGITS) if math.isclose(round(value, places), value,
+                                                                             abs_tol=1e-12)), MAX_AXIS_DIGITS)
 
 
 def check_raster_size(fig: Figure, dpi: float, format_name: str) -> None:
@@ -242,15 +324,31 @@ def size_settings(size: str, width_mm: float | None, height_mm: float | None) ->
     return width, height, settings
 
 
-def grid_shape(panels: int, layout: str, columns: int | None) -> tuple[int, bool, bool]:
+def grid_shape(panels: int, layout: str, columns: int | None, sharex: bool | None = None,
+               sharey: bool | None = None) -> tuple[int, bool, bool]:
+    """Columns and axis sharing of a layout; `sharex` and `sharey` given override the layout's own."""
     if layout not in LAYOUTS:
         raise ValueError(f"hairline: unknown layout {layout!r}; use one of {', '.join(LAYOUTS)}")
     if panels < 1:
         raise ValueError(f"hairline: a figure needs at least one panel, got panels={panels}")
     shapes = {"rows": (1, True, True), "pair": (2, False, True), "grid": (math.ceil(math.sqrt(panels)), True, True),
               "compose": (min(panels, 2), False, False)}
-    default_columns, sharex, sharey = shapes[layout]
-    return (columns or default_columns), sharex, sharey
+    default_columns, shared_x, shared_y = shapes[layout]
+    return (columns or default_columns), shared_x if sharex is None else bool(sharex), \
+        shared_y if sharey is None else bool(sharey)
+
+
+def row_weights(heights: Sequence[float] | None, panels: int, columns: int) -> tuple[float, ...]:
+    """Relative heights of the panel rows (`heights=(9, 3, 4)`: rows sized by content), one per row, above zero."""
+    if heights is None:
+        return ()
+    rows, weights = math.ceil(panels / columns), tuple(heights)
+    if len(weights) != rows:
+        raise ValueError(f"hairline: heights names {len(weights)} rows, but {panels} panels in {columns} column(s) "
+                         f"make {rows} rows; give one height per row")
+    for weight in weights:
+        check_positive(weight, "heights")
+    return tuple(float(weight) for weight in weights)
 
 
 def create_axes(fig: Figure, panels: int, sharex: bool, sharey: bool) -> list[Axes]:
@@ -264,16 +362,24 @@ def create_axes(fig: Figure, panels: int, sharex: bool, sharey: bool) -> list[Ax
 
 def figure(title: str, subtitle: str | None = None, caption: str | None = None, size: str = "onehalf",
            width_mm: float | None = None, height_mm: float | None = None, panels: int = 1, layout: str = "rows",
-           columns: int | None = None, panel_letters: bool = False) -> HairlineFigure:
-    """Create a figure whose title, legend row, panels and caption follow hairline's frame."""
+           columns: int | None = None, panel_letters: bool = False, sharex: bool | None = None,
+           sharey: bool | None = None, heights: Sequence[float] | None = None) -> HairlineFigure:
+    """Create a figure whose title, legend row, panels and caption follow hairline's frame.
+
+    `layout` sets the columns and which axes the panels share ("rows": one column sharing both; "pair": two
+    columns sharing y; "grid": a square grid sharing both; "compose": two columns sharing none); `sharex` and
+    `sharey` override that. `heights` sizes the panel rows by content (`heights=(9, 3, 4)` for three rows), so a
+    cause can sit above its effect on one shared x axis, labelled once at the bottom; rows of different content do
+    not share y unless `sharey=True` says so."""
     register_fonts()
-    columns, sharex, sharey = grid_shape(panels, layout, columns)
+    sharey = False if heights is not None and sharey is None else sharey
+    columns, sharex, sharey = grid_shape(panels, layout, columns, sharex, sharey)
     width, height, settings = size_settings(size, width_mm, height_mm)
     matplotlib.rcParams.update(rcparams_for(settings))
     fig = plt.figure(figsize=(width / MM_PER_INCH, height / MM_PER_INCH), FigureClass=HostFigure)
     axes = create_axes(fig, panels, sharex, sharey)
     hairline_figure = HairlineFigure(fig, axes, settings, title, subtitle, caption, columns, sharex, sharey,
-                                     panel_letters)
+                                     panel_letters, row_heights=row_weights(heights, panels, columns))
     fig.hairline_figure = hairline_figure
     fig.set_layout_engine(HairlineLayout(hairline_figure))
     return hairline_figure
