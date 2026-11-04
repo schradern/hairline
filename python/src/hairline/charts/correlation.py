@@ -66,6 +66,7 @@ def correlation(data: pd.DataFrame, columns: Sequence[str] | None = None, *, met
     spec = correlation_spec(data, columns, method)
     result = figure(title or f"{method.title()} correlations", subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: correlation_drawing(spec, box, measure, style))
-    result.legend_ramp(ramp(default_ramp("diverging")), load_tokens()["correlation"]["key"], format="number",
-                       limits=(-1.0, 1.0))
+    locale = current_settings().locale
+    result.legend([("square", ramp_color(value), format_number(value, 0 if value == int(value) else 1, locale))
+                   for value in load_tokens()["correlation"]["key"]])
     return fit_height(result)

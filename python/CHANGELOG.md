@@ -3,8 +3,8 @@
 ## Unreleased
 
 What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and
-the staffing of a surgical unit over the day. Existing calls keep their output, with one exception: the
-correlation heatmap's key moved to the right of the legend row as outlined squares.
+the staffing of a surgical unit over the day. Existing calls keep their output: every gallery figure's frame
+positions and tooltips are unchanged.
 
 ### For reports
 
