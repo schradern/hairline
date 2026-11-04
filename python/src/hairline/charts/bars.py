@@ -13,37 +13,73 @@ from hairline.charts.common import (
     check_labels,
     check_numeric,
     check_present,
+    coarse_groups,
     group_names,
     humanise,
+    labels_with_n,
     ordered_names,
+    partial_caption,
+    with_caption,
     with_counts,
 )
 from hairline.charts.correlation_geometry import text_color
+from hairline.charts.timeseries import groups_of
 from hairline.drawing import measure_for
-from hairline.figure import HairlineFigure, figure
+from hairline.figure import MM_PER_INCH, HairlineFigure, figure, size_settings
 from hairline.fonts import families
 from hairline.marks import lone_color
-from hairline.numbers import auto_digits, format_compact, format_percent, number_unit
+from hairline.numbers import auto_digits, format_compact, format_number, format_percent, number_unit, word
 from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
 
+SCALES = ("free", "shared")
+
 
 def bar_table(data: pd.DataFrame, category: str, value: str, by: str | None, order: Sequence[str] | None,
-              sort: str) -> tuple[pd.DataFrame, list[str], list[str]]:
-    """Sums per category (and group), the category order and the group order. A cell whose values are all missing
-    stays missing (no bar, label or tooltip); for sorting and percent totals it counts as zero."""
+              sort: str, groups: list[str] | None = None) -> tuple[pd.DataFrame, list[str], list[str]]:
+    """Sums per category (and group), the category order and the group order (`groups` given: the order of every
+    facet). A cell whose values are all missing stays missing (no bar, label or tooltip); for sorting and percent
+    totals it counts as zero."""
     columns = list(dict.fromkeys([category] + ([by] if by else [])))
     check_labels(data, columns, "bars")
     check_present(data, value, "bars")
     check_numeric(data, [value], "bars")
     names = ordered_names(data[category], order or None, "bars", category)
-    groups = group_names(data[by]) if by else [""]
+    groups = groups if groups is not None else group_names(data[by]) if by else [""]
     table = data.groupby(columns, sort=False, observed=True)[value].sum(min_count=1).reset_index()
     table[category] = table[category].astype(str)
+    if by:
+        table[by] = table[by].astype(str)
     if sort == "value" and not order:
         totals = table.groupby(category, sort=False)[value].sum()
         names = sorted(names, key=lambda name: -totals[name])
     return table, names, groups
+
+
+def fold_top(table: pd.DataFrame, names: list[str], top: int | None, other: str, category: str, value: str,
+             by: str | None) -> tuple[pd.DataFrame, list[str]]:
+    """The `top` largest categories (by their totals) keep their order; the rest sum into one bar named `other`,
+    drawn last. A category already named `other` joins the rest."""
+    if top is None or len(names) <= top:
+        return table, names
+    totals = table.groupby(category, sort=False)[value].sum()
+    ranked = sorted(names, key=lambda name: (-float(totals.get(name, 0.0)), names.index(name)))[:top]
+    kept = [name for name in names if name in ranked and name != other]
+    folded = table.assign(**{category: table[category].where(table[category].isin(kept), other)})
+    columns = list(dict.fromkeys([category] + ([by] if by else [])))
+    folded = folded.groupby(columns, sort=False)[value].sum(min_count=1).reset_index()
+    return folded, kept + [other]
+
+
+def check_top(top: object, scales: str, partial: Mapping | None, names: Sequence[str]) -> None:
+    if top is not None and (isinstance(top, bool) or not isinstance(top, int) or top < 1):
+        raise ValueError(f"hairline: bars: top must be a whole number of 1 or more; got {top!r}")
+    if scales not in SCALES:
+        raise ValueError(f"hairline: bars: scales {scales!r} must be one of {', '.join(SCALES)}")
+    unknown = [str(name) for name in (partial or {}) if str(name) not in names]
+    if unknown:
+        raise ValueError(f"hairline: bars: partial names {unknown[0]!r}, which is not a category; categories: "
+                         f"{', '.join(names)}")
 
 
 def is_long(names: Sequence[str]) -> bool:
@@ -90,13 +126,16 @@ def bar_numbers(table: pd.DataFrame, category: str, value: str, by: str | None, 
         (auto_digits(table[value].to_numpy(dtype=float)), None)
 
 
-def is_horizontal(table: pd.DataFrame, names: list[str], groups: list[str], options: dict, result) -> bool:
-    """Many or long labels lie down, and so do labels too wide for upright bars at this figure's width."""
-    if is_long(names):
+def is_horizontal(panels: list[dict], groups: list[str], options: dict, width: float, columns: int,
+                  settings) -> bool:
+    """Many or long labels (as drawn, with their n) lie down, and so do labels too wide for upright bars at this
+    figure's width (shared by the panel columns); one decision for every panel of the figure."""
+    if any(is_long(panel["labels"]) for panel in panels):
         return True
-    values = upright_values(table, options["category"], options["value"], options["by"], names, groups, options)
-    width = result.figure.get_size_inches()[0] * 72
-    return not fits_upright(names, values, 1 if options["stacked"] else len(groups), width, result.settings)
+    per_slot = 1 if options["stacked"] else len(groups)
+    return not all(fits_upright(panel["labels"], upright_values(panel["table"], options["category"], options["value"],
+                                                                options["by"], panel["names"], groups, options),
+                                per_slot, width / columns, settings) for panel in panels)
 
 
 def bar_values(table: pd.DataFrame, category: str, value: str, by: str | None, names: list[str], group: str,
@@ -180,12 +219,14 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
         heights = bar_values(table, category, value, by, names, group, options["percent"])
         step = (len(groups) - 1) / 2 - index if horizontal else index - (len(groups) - 1) / 2
         offset = 0.0 if stacked else step * single
-        color = entities.color(group) if by else lone_color()
+        color = options["palette"][group] if by else lone_color()
         where = [position + offset for position in positions]
         draw = ax.barh if horizontal else ax.bar
         base = [up if height >= 0 else down for up, down, height in zip(ups, downs, heights, strict=True)] \
             if stacked else [0.0] * len(names)
-        draw(where, heights, single * 0.92, base, color=color, label=group if by else "_nolegend_", **edge)
+        container = draw(where, heights, single * 0.92, base, color=color,
+                         label=options["series"][group] if by else "_nolegend_", **edge)
+        lighten_partial(container, names, options["partial"])
         ends = max([ends, *without_missing(heights)])
         present = [shown or not math.isnan(height) for shown, height in zip(present, heights, strict=True)]
         if stacked and options["labels"]:
@@ -204,6 +245,14 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
     if options["labels"] and not (stacked and options["percent"]):
         reach = (max(ups) if stacked else ends) * (1 + rules["label_headroom"])
         ax.update_datalim([(reach, positions[0])] if horizontal else [(positions[0], reach)])
+
+
+def lighten_partial(container, names: list[str], partial: Sequence[str]) -> None:
+    """Bars of incomplete periods (two months of a year) are drawn lighter, so they are not read as a drop."""
+    opacity = load_tokens()["partial"]["opacity"]
+    for patch, name in zip(container.patches, names, strict=True):
+        if name in partial:
+            patch.set_alpha(opacity)
 
 
 def stacked_totals(ax, positions: list[float], ups: list[float], downs: list[float], horizontal: bool,
@@ -225,35 +274,104 @@ def max_total(table: pd.DataFrame, category: str, value: str, by: str | None, na
     return float(table[value].max())
 
 
+def category_n(table: pd.DataFrame, category: str, value: str, names: list[str]) -> dict[str, float]:
+    """Each category's total across the groups: the n a share chart would otherwise lose."""
+    totals = table.groupby(category, sort=False)[value].sum()
+    return {name: float(totals.get(name, 0.0)) for name in names}
+
+
+def bar_sharing(scales: str, horizontal: bool) -> tuple[bool, bool]:
+    """Facets share the value axis when `scales` is shared; the category axis is each panel's own."""
+    shared = scales == "shared"
+    return (shared, False) if horizontal else (False, shared)
+
+
+def facet_panels(frames: list[tuple[str, pd.DataFrame]], options: dict, order: Sequence[str] | None, sort: str,
+                 groups: list[str]) -> list[dict]:
+    """Per facet: its table (the smallest categories folded into `other`), category order and n per category."""
+    category, value, by = options["category"], options["value"], options["by"]
+    panels = []
+    for name, rows in frames:
+        table, names, _ = bar_table(rows, category, value, by, order, sort, groups)
+        table, names = fold_top(table, names, options["top"], options["other"], category, value, by)
+        panels.append({"name": name, "table": table, "names": names, "n": category_n(table, category, value, names),
+                       "total": float(table[value].sum())})
+    return panels
+
+
 def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | None = None, *,
          title: str | None = None, subtitle: str | None = None, caption: str | None = None, stacked: bool = False,
          percent: bool = False, horizontal: bool | None = None, sort: str | None = None,
          order: Sequence[str] | None = None, labels: bool = True, colors: Mapping[str, str] | None = None,
-         size: str = "onehalf") -> HairlineFigure:
+         size: str = "onehalf", facet: str | None = None, scales: str = "free", columns: int | None = None,
+         top: int | None = None, other: str | None = None, partial: Mapping[str, str] | None = None,
+         show_n: bool = False, normalize: bool = False, color_by: str | None = None,
+         dimension: str | None = None) -> HairlineFigure:
     """Bars per category; without `value` rows are counted. Long or many labels, or labels too wide for upright
     bars at the figure's width, turn the bars horizontal; single series are sorted by value unless `order` or
-    `sort="given"` says otherwise."""
+    `sort="given"` says otherwise.
+
+    `facet` draws one panel per value of that column, each with its own value axis (`scales="free"`) or one shared
+    axis, in `columns` columns, the facet's name and total in its panel header. `top` keeps the n largest
+    categories per panel and folds the rest into one bar named `other` (the locale's "Other"). `partial` names
+    incomplete periods and what they hold ({"2021": "2 months"}): their bars are drawn lighter and the caption
+    says so. `show_n` writes each category's n after its label; `normalize` draws shares of each category's total
+    (as `percent`) and keeps the n in the labels. `color_by` colours the groups of `by` by a coarser column, with
+    that column's values in the legend; `dimension` keeps their colours off the slots another dimension holds."""
     data, value = with_counts(data, value)
-    check_columns(data, [category, value, by])
+    check_columns(data, [category, value, by, facet, color_by])
     stacked = stacked and by is not None
+    percent, show_n = percent or normalize, show_n or normalize
     if (sort or "value") not in ("value", "given"):
         raise ValueError(f"hairline: bars: sort {sort!r} must be 'value' or 'given'")
-    table, names, groups = bar_table(data, category, value, by, order,
-                                     sort or ("given" if by and not stacked else "value"))
+    if color_by is not None and by is None:
+        raise ValueError("hairline: bars: color_by needs by=, the groups it colours")
+    sort = sort or ("given" if by and not stacked else "value")
+    check_labels(data, [column for column in (by, facet) if column], "bars")
+    groups = group_names(data[by]) if by else [""]
+    frames = groups_of(data, facet, None, "bars")
+    locale = current_settings().locale
+    options = {"category": category, "value": value, "by": by, "stacked": stacked, "percent": percent,
+               "labels": labels, "top": top, "other": other or word("other", locale), "partial": []}
+    panels = facet_panels(frames, options, order, sort, groups)
+    every_name = list(dict.fromkeys(name for panel in panels for name in panel["names"]))
+    check_top(top, scales, partial, every_name)
+    options["partial"] = [str(name) for name in (partial or {})]
+    coarse = coarse_groups(data, by, color_by, "bars") if color_by else None
+    series = {group: coarse[group] if coarse else group for group in groups}
+    width_mm, _, settings = size_settings(size, None, None)
+    width = width_mm / MM_PER_INCH * 72
+    columns = columns or (min(len(panels), 2) if facet else 1)
+    for panel in panels:
+        panel["labels"] = labels_with_n(panel["names"], panel["n"], locale) if show_n else panel["names"]
+    if horizontal is None:
+        horizontal = is_horizontal(panels, groups, options, width, columns, settings)
+    sharex, sharey = bar_sharing(scales, horizontal) if facet else (False, False)
     split = f" and {str(by).replace('_', ' ')}" if by and by != category else ""
     result = figure(title or f"{humanise(value)} by {str(category).replace('_', ' ')}{split}", subtitle=subtitle,
-                    caption=caption, size=size)
-    options = {"category": category, "value": value, "by": by, "stacked": stacked, "percent": percent,
-               "labels": labels}
-    if horizontal is None:
-        horizontal = is_horizontal(table, names, groups, options, result)
-    with entities.chart(groups if by else [], colors):
-        draw_bars(result.ax, table, names, groups, {**options, "horizontal": horizontal})
-    result.categories(0, list(reversed(names)) if horizontal else names, "y" if horizontal else "x")
-    pad = load_tokens()["bars"]["category_pad"]
-    (result.ax.set_ylim if horizontal else result.ax.set_xlim)(-pad, len(names) - 1 + pad)
-    if percent:
-        result.percent_axis(0, "x" if horizontal else "y")
+                    caption=with_caption(caption, partial_caption(partial, locale)), size=size, panels=len(panels),
+                    layout="grid" if facet else "rows", columns=columns, sharex=sharex, sharey=sharey)
+    with entities.chart(list(dict.fromkeys(series.values())) if by else [], colors, dimension) as palette:
+        options.update(palette={group: palette[series[group]] for group in groups} if by else {}, series=series,
+                       horizontal=horizontal)
+        for index, panel in enumerate(panels):
+            draw_panel(result, index, panel, groups, options, facet, locale)
     if by:
         result.legend()
     return result
+
+
+def draw_panel(result: HairlineFigure, index: int, panel: dict, groups: list[str], options: dict, facet: str | None,
+               locale: str) -> None:
+    ax, names, horizontal = result.axes[index], panel["names"], options["horizontal"]
+    draw_bars(ax, panel["table"], names, groups, options)
+    labels = panel["labels"]
+    result.categories(index, list(reversed(labels)) if horizontal else labels, "y" if horizontal else "x")
+    pad = load_tokens()["bars"]["category_pad"]
+    (ax.set_ylim if horizontal else ax.set_xlim)(-pad, len(names) - 1 + pad)
+    if options["percent"]:
+        result.percent_axis(index, "x" if horizontal else "y")
+    if facet:
+        digits = auto_digits([panel["total"]])
+        result.panel_header(index, panel["name"], stats=[(word("total", locale),
+                                                          format_number(panel["total"], digits, locale))])

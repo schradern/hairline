@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal, localcontext
 
 from hairline.tokens import load_tokens
@@ -102,6 +103,22 @@ def format_interval(estimate: float, low: float, high: float, digits: int = 2, l
     """Format an estimate with its interval: '0.58 [0.41; 0.82]'."""
     parts = [format_number(value, digits, locale) for value in (estimate, low, high)]
     return f"{parts[0]} [{parts[1]}; {parts[2]}]"
+
+
+def word(key: str, locale: str | None = None, **fields: object) -> str:
+    """A caption word or sentence in the locale (tokens locales.<locale>.words), its `{fields}` filled in: the
+    same texts in both packages, so a German figure never carries an English note."""
+    return locale_symbols(locale)["words"][key].format(**fields)
+
+
+def listed(items: Sequence[str]) -> str:
+    """Items joined for a caption, comma-separated."""
+    return ", ".join(items)
+
+
+def count_text(count: int, locale: str | None = None) -> str:
+    """'1 value' or '12 values' in the locale."""
+    return word("value_one", locale) if count == 1 else word("value_many", locale, n=format_number(count, 0, locale))
 
 
 def format_p(value: float, locale: str | None = None) -> str:

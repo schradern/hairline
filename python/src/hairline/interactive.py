@@ -67,11 +67,33 @@ def date_texts(values, zone) -> list[str]:
 def x_texts(figure: HairlineFigure, index: int, ax, values) -> list[str]:
     """X values as text: ISO dates on a date axis, category names on a category axis, else numbers."""
     categories = figure.category_axes.get((index, "x"))
+    if index in figure.time_hours:
+        return [clock_text(value) for value in values]
     if categories:
         return [categories[int(round(value))] if 0 <= round(value) < len(categories) else "" for value in values]
     if is_date_axis(ax.xaxis):
         return date_texts(values, ax.xaxis.get_units())
     return axis_number_texts(figure, index, "x", values)
+
+
+def clock_text(hours: float) -> str:
+    """Hours since midnight as a time of day: 7.25 is '07:15', 25.5 is '01:30'."""
+    minutes = int(round(float(hours) * 60)) % 1440
+    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
+
+def hover_targets(figure: HairlineFigure, to_pt) -> list[dict]:
+    """The boxes charts registered with HairlineFigure.hover(): lanes cells, swimlane bars."""
+    found = []
+    for mark in figure.hover_marks:
+        ax = figure.axes[mark["index"]]
+        x0, y0, x1, y1 = mark["box"]
+        corner, opposite = to_pt(ax, (x0, y1)), to_pt(ax, (x1, y0))
+        left, top = min(corner[0], opposite[0]), min(corner[1], opposite[1])
+        rect = [left, top, abs(opposite[0] - corner[0]), abs(opposite[1] - corner[1])]
+        found.append({"name": mark["name"], "color": mark["color"], "marks": [{"rect": rect}],
+                      "tips": [{"at": [left + rect[2] / 2, top], "text": mark["text"]}]})
+    return found
 
 
 def tip_text(name: str, values: str) -> str:
@@ -243,7 +265,7 @@ def figure_targets(figure: HairlineFigure) -> dict:
         if index not in figure.drawings:
             series += line_targets(figure, index, ax, to_pt) + point_targets(figure, index, ax, to_pt)
             series += bar_targets(figure, index, ax, to_pt)
-    series += drawn_targets(figure)
+    series += drawn_targets(figure) + hover_targets(figure, to_pt)
     neutral, rules = figure.settings.neutral, load_tokens()["interactive"]
     style = {"ink": neutral["ink"], "surface": neutral["surface"], "axis": neutral["axis"],
              "font": figure.settings.font, "size": role_size(figure.settings, "label"), "veil": rules["veil"],

@@ -8,6 +8,32 @@ does not render Markdown tables.
 Every proposal is meant for both packages under the same name (`bars(...)` / `hl_bars(...)`) and for
 `tools/parity.py`. Most are optional arguments on existing charts, so existing calls keep their output.
 
+## Status (2026-11)
+
+**Python: every item below is in the package** (see `python/CHANGELOG.md`, "Unreleased"), with tests and five
+new gallery figures (`bars_facets`, `spread_doses`, `table_characteristics`, `unit_day`, `swimlanes_day`).
+Existing gallery figures keep their frame positions and tooltips exactly.
+
+**R: not yet.** The `hl_*` mirrors, their R gallery scripts and the parity entries are open. The tokens they
+need (locale words, `lanes`, `levels`, `swimlanes`, `table`, `time_axis`, `legend_ramp`, `partial`) are already
+shared. Until then the correlation heatmap keeps its old key in both languages (item 18's "charts add it
+themselves" waits for R), so the parity check still holds for every existing figure.
+
+Where the shipped form differs from the proposal:
+
+* Item 1: `facet` is on `bars`; the location figure is `bars(facet=..., top=6)`. `spread` and `dotplot` have no
+  `facet`.
+* Item 3: `dotplot` takes the n from a column (`n="patients"`), as its rows are already aggregated; `raincloud`
+  already writes n under each group.
+* Item 5: `clip` applies to the value axis (y on `scatter`).
+* Item 9: integer quantiles are opt-in (`spread(discrete=True)`, always in `levels()`), so existing calls keep
+  their medians. They use R's type 1 (numpy `inverted_cdf`), not numpy's `higher`: the smallest count reached on
+  at least that share of days, which is the "enough on 9 of 10 days" the decision line means. The median-gap
+  warning needs at least 10 values.
+* Item 15: composition is `figure(panels=..., heights=..., sharex=True)` with `lanes/levels/swimlanes(...,
+  into=figure, panel=i)`; rows sized with `heights` share y only when asked.
+* Item 16: `time_axis()` is a method on any figure; `timeseries` keeps its date axis.
+
 ## 1. Facets with their own scale
 
 **Seen:** counts per year for four groups, one about 30 times larger than the smallest. Stacked bars flattened the

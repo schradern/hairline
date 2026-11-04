@@ -67,3 +67,11 @@ def test_correlation_figure_has_a_colour_key():
 def test_correlation_needs_two_numeric_columns():
     with pytest.raises(ValueError, match="needs at least two numeric columns"):
         hl.correlation(pd.DataFrame({"a": [1, 2], "b": ["x", "y"]}))
+
+
+def test_scatter_clip_hides_points_but_the_fit_uses_every_point():
+    data = pd.DataFrame({"x": [1.0, 2, 3, 4, 5], "y": [1.0, 2, 3, 4, 500]})
+    figure = hl.scatter(data, "x", "y", clip=(None, 10))
+    assert len(figure.ax.collections[0].get_offsets()) == 4
+    assert dict(figure.headers[0].stats)["n"] == "5"
+    assert figure.caption == "1 value above 10 not drawn; the statistics use every value."

@@ -8,8 +8,16 @@ from collections.abc import Mapping
 import numpy as np
 import pandas as pd
 
-from hairline import entities
-from hairline.charts.common import check_columns, check_finite, check_numeric, humanise
+from hairline.charts.common import (
+    check_columns,
+    check_finite,
+    check_numeric,
+    clip_caption,
+    clip_limits,
+    humanise,
+    series_colors,
+    with_caption,
+)
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import STATIC_ID, lone_color
@@ -50,31 +58,44 @@ def draw_fit(ax, x: pd.Series, y: pd.Series) -> None:
 
 def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title: str | None = None,
             subtitle: str | None = None, caption: str | None = None, fit: str | None = "linear",
-            order: list[str] | None = None, colors: Mapping[str, str] | None = None,
-            size: str = "onehalf") -> HairlineFigure:
+            order: list[str] | None = None, colors: Mapping[str, str] | None = None, size: str = "onehalf",
+            clip: float | tuple[float | None, float | None] | None = None, clip_stats: bool = False,
+            color_by: str | None = None, dimension: str | None = None) -> HairlineFigure:
     """Points per group (entity colours) and, with `fit="linear"`, a fit over all points drawn (the groups in
-    `order`, when given) with n, r and slope."""
-    check_columns(data, [x, y, by])
+    `order`, when given) with n, r and slope. `clip` hides implausible y values (as in `spread()`) and says so in
+    the caption; the fit still uses every point unless `clip_stats`. `color_by` colours the groups of `by` by a
+    coarser column, which the legend lists; `dimension` keeps them off another dimension's slots."""
+    check_columns(data, [x, y, by, color_by])
     check_numeric(data, [y], "scatter")
     check_finite(data, x, "scatter")
     if fit not in ("linear", None):
         raise ValueError(f"hairline: scatter: fit {fit!r} must be 'linear' or None")
+    if color_by is not None and by is None:
+        raise ValueError("hairline: scatter: color_by needs by=, the groups it colours")
     rows = data.dropna(subset=[x, y])
     if not len(rows):
         raise ValueError(f"hairline: scatter: no rows with both '{x}' and '{y}' to draw")
-    result = figure(title or f"{humanise(y)} and {str(x).replace('_', ' ')}", subtitle=subtitle, caption=caption,
-                    size=size)
+    locale = current_settings().locale
     groups = groups_of(rows, by, order, "scatter")
-    with entities.chart([name for name, _ in groups] if by else [], colors):
-        for name, group in groups:
-            color = entities.color(name) if by else lone_color()
-            # Limits end on a break, so a point at the limit would be cut in half by the panel's edge.
-            result.ax.scatter(group[x], group[y], color=color, label=name if by else "_nolegend_", clip_on=False)
+    every = pd.concat([group for _, group in groups])[y].to_numpy(dtype=float)
+    limits = clip_limits(every, clip, "scatter")
+    note = clip_caption(every, limits, clip_stats, locale) if clip is not None else None
+    result = figure(title or f"{humanise(y)} and {str(x).replace('_', ' ')}", subtitle=subtitle,
+                    caption=with_caption(caption, note), size=size)
+    names = [name for name, _ in groups]
+    palette, coarse = series_colors(names, rows, by, color_by, colors, dimension, "scatter") if by else ({}, {})
+    for name, group in groups:
+        shown = group[group[y].between(*limits)]
+        color = palette[name] if by else lone_color()
+        # Limits end on a break, so a point at the limit would be cut in half by the panel's edge.
+        result.ax.scatter(shown[x], shown[y], color=color, label=coarse[name] if by else "_nolegend_", clip_on=False)
     if fit:
         drawn = pd.concat([group for _, group in groups])
+        if clip_stats:
+            drawn = drawn[drawn[y].between(*limits)]
         check_fit(drawn[x])
         draw_fit(result.ax, drawn[x], drawn[y])
-        result.panel_header(0, "Linear fit", stats=fit_stats(drawn[x], drawn[y], current_settings().locale))
+        result.panel_header(0, "Linear fit", stats=fit_stats(drawn[x], drawn[y], locale))
     result.y_title(humanise(y))
     result.x_title(humanise(x))
     if by:

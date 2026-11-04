@@ -101,25 +101,33 @@ def frame_height(spec: FrameInput, metrics: FontMetrics) -> float:
     return stack.y + rows + fixed_bottom_height(spec, spacing, metrics, line_gap)
 
 
+def row_shares(spec: FrameInput) -> list[float]:
+    """Each panel row's share of the panel height: `row_weights` (9, 3, 4 for rows sized by content), else equal."""
+    weights = list(spec.row_weights[:spec.panel_rows]) or [1.0] * spec.panel_rows
+    weights += [1.0] * (spec.panel_rows - len(weights))
+    total = sum(weights)
+    return [weight / total for weight in weights]
+
+
 def kept_height(spec: FrameInput, metrics: FontMetrics, least: float) -> float:
     """The figure height at which the panels together keep at least `least` pt (each row at least the smallest
     panel): the height given when that is enough, else a taller one. The frame keeps its size, the plot its room."""
     floor = load_tokens()["spacing"]["min_panel_height"] * spec.base_size
-    rows = spec.panel_rows
-    return max(spec.height_pt, frame_height(spec, metrics) + rows * max(least / rows, floor))
+    return max(spec.height_pt, frame_height(spec, metrics) + max(least, floor / min(row_shares(spec))))
 
 
-def panel_height(spec: FrameInput, top: float, spacing: dict, metrics: FontMetrics, line_gap: float) -> float:
+def panel_heights(spec: FrameInput, top: float, spacing: dict, metrics: FontMetrics, line_gap: float) -> list[float]:
+    """Height of each panel row: the room the frame leaves, shared by the rows' weights."""
     fixed = sum(fixed_row_height(spec, row, spacing, metrics, line_gap) for row in range(spec.panel_rows))
     available = spec.height_pt - top - fixed - fixed_bottom_height(spec, spacing, metrics, line_gap)
-    height = available / spec.panel_rows
-    floor = spacing["min_panel_height"] * spec.base_size
+    heights = [available * share for share in row_shares(spec)]
+    height, floor = min(heights), spacing["min_panel_height"] * spec.base_size
     if height < floor - FLOOR_TOLERANCE_PT:
-        needed = (spec.height_pt + spec.panel_rows * (floor - height)) / 72 * MM_PER_INCH
+        needed = (spec.height_pt + (floor - height) / min(row_shares(spec))) / 72 * MM_PER_INCH
         raise HairlineLayoutError(f"hairline: figure too small: {spec.height_pt:.0f} pt high leaves {height:.1f} pt "
                                   f"per panel for {spec.panel_rows} panel rows; make it at least {math.ceil(needed)} "
                                   f"mm tall (figure.resize(height_mm={math.ceil(needed)})) or use fewer rows")
-    return height
+    return heights
 
 
 def check_panel_width(spec: FrameInput, width: float, spacing: dict) -> None:
@@ -131,7 +139,7 @@ def check_panel_width(spec: FrameInput, width: float, spacing: dict) -> None:
                                   f"fewer columns or a wider size")
 
 
-def place_panels(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: dict, height: float) -> None:
+def place_panels(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: dict, heights: list[float]) -> None:
     base = spec.base_size
     gap = spacing["panel_columns"] * base
     offsets = column_offsets(spec, spacing)
@@ -149,8 +157,8 @@ def place_panels(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: d
             layout.y_title_baseline = stack.lines(spec.sizes["label"], 1)[0]
             stack.skip(spacing["y_title"] * base)
         layout.panels += [Box(layout.plot_left + column * (width + gap) + sum(offsets[: column + 1]), stack.y, width,
-                              height) for column in range(spec.panel_columns)]
-        stack.skip(height + inner_tick_band(spec, row, spacing))
+                              heights[row]) for column in range(spec.panel_columns)]
+        stack.skip(heights[row] + inner_tick_band(spec, row, spacing))
         titled = has_row_titles(spec, row) and row < spec.panel_rows - 1
         if titled:
             stack.skip(spacing["x_title"] * base)
@@ -184,7 +192,6 @@ def compute_frame(spec: FrameInput, metrics: FontMetrics) -> FrameLayout:
                                            if spec.y_labels else 0.0))
     stack = Stack(0.0, metrics, line_gap)
     place_header(stack, spec, layout, spacing)
-    height = panel_height(spec, stack.y, spacing, metrics, line_gap)
-    place_panels(stack, spec, layout, spacing, height)
+    place_panels(stack, spec, layout, spacing, panel_heights(spec, stack.y, spacing, metrics, line_gap))
     place_bottom(stack, spec, layout, spacing)
     return layout

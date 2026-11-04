@@ -119,3 +119,15 @@ def test_event_labels_sit_at_the_panel_bottom():
                                  events=[{"x": "2025-01-20", "label": "Move out"}]))
     note = figure.axes[0].texts[0]
     assert note.get_va() == "bottom" and note.xy[1] == 0
+
+
+def test_incomplete_periods_are_veiled_and_named_in_the_caption():
+    import pandas as pd
+
+    import hairline as hl
+    hl.use(brand=False)
+    data = pd.DataFrame({"date": pd.date_range("2021-11-01", "2023-02-28", freq="MS"), "cases": range(16)})
+    figure = hl.timeseries(data, "date", "cases", partial={"2021": "2 months", "2023": "2 months"}, raw=False)
+    veils = [patch for patch in figure.ax.patches if patch.get_alpha() == pytest.approx(0.55)]
+    assert len(veils) == 2
+    assert figure.caption == "Incomplete, drawn lighter: 2021 (2 months), 2023 (2 months)."

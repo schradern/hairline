@@ -37,3 +37,15 @@ def test_n_labels_under_groups():
 def test_comparison_names_must_be_groups():
     with pytest.raises(ValueError, match="comparison group 'ICU' is not one of: Surgical, Medical, Neuro"):
         hl.raincloud(stays(), "unit", "days", title="T", comparisons=[("Surgical", "ICU", "p = 0.01")])
+
+
+def test_raincloud_min_n_clip_and_colour_by():
+    import pandas as pd
+    hl.use(brand=False)
+    data = pd.DataFrame({"group": ["GA child"] * 20 + ["GA adult"] * 20 + ["RA"] * 2,
+                         "procedure": ["GA"] * 40 + ["RA"] * 2, "value": list(range(39)) + [900, 1, 2]})
+    figure = hl.raincloud(data, "group", "value", min_n=5, clip=(None, 100), color_by="procedure")
+    figure.figure.canvas.draw()
+    assert figure.category_axes[(0, "x")] == ["GA child", "GA adult"]
+    assert figure.caption == "Not shown (under 5): RA. 1 value above 100 not drawn; the statistics use every value."
+    assert figure.layout_report()["legend_labels"] == ["GA"]

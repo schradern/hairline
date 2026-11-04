@@ -1,0 +1,49 @@
+procedure,year,age,cases
+General anaesthesia,2021,Children,72
+General anaesthesia,2021,Adults,210
+General anaesthesia,2022,Children,554
+General anaesthesia,2022,Adults,1356
+General anaesthesia,2023,Children,564
+General anaesthesia,2023,Adults,1395
+General anaesthesia,2024,Children,632
+General anaesthesia,2024,Adults,1517
+General anaesthesia,2025,Children,615
+General anaesthesia,2025,Adults,1578
+General anaesthesia,2026,Children,522
+General anaesthesia,2026,Adults,1343
+Combined,2021,Children,15
+Combined,2021,Adults,43
+Combined,2022,Children,100
+Combined,2022,Adults,279
+Combined,2023,Children,105
+Combined,2023,Adults,263
+Combined,2024,Children,122
+Combined,2024,Adults,263
+Combined,2025,Children,105
+Combined,2025,Adults,279
+Combined,2026,Children,106
+Combined,2026,Adults,226
+Sedation,2021,Children,2
+Sedation,2021,Adults,17
+Sedation,2022,Children,45
+Sedation,2022,Adults,85
+Sedation,2023,Children,31
+Sedation,2023,Adults,76
+Sedation,2024,Children,46
+Sedation,2024,Adults,99
+Sedation,2025,Children,41
+Sedation,2025,Adults,106
+Sedation,2026,Children,26
+Sedation,2026,Adults,74
+"Regional, no ventilation",2021,Children,0
+"Regional, no ventilation",2021,Adults,10
+"Regional, no ventilation",2022,Children,19
+"Regional, no ventilation",2022,Adults,48
+"Regional, no ventilation",2023,Children,14
+"Regional, no ventilation",2023,Adults,38
+"Regional, no ventilation",2024,Children,21
+"Regional, no ventilation",2024,Adults,41
+"Regional, no ventilation",2025,Children,15
+"Regional, no ventilation",2025,Adults,34
+"Regional, no ventilation",2026,Children,16
+"Regional, no ventilation",2026,Adults,22

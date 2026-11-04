@@ -14,7 +14,7 @@ from hairline.layout.bare import fitted_box
 from hairline.layout.draw import add_text
 from hairline.layout.frame import compute_frame, kept_height
 from hairline.layout.geometry import FrameInput, FrameLayout, load_font_metrics
-from hairline.layout.legend import draw_legend, items_from_axes, pack_rows
+from hairline.layout.legend import draw_legend, items_from_axes, pack_rows, ramp_key_items
 from hairline.layout.measure import text_width, wrap
 from hairline.layout.panels import ComposedHeader, compose_header
 from hairline.layout.styles import header_gaps, header_styles, role_style
@@ -73,13 +73,30 @@ def measure_texts(figure: HairlineFigure, width_pt: float, y_labels: list[list[s
                     wrapped(figure.caption, "caption"), legend, widths[0], tuple(widths), x_tick_rows(figure))
 
 
+def block_style(figure: HairlineFigure, color: str | None = None) -> dict:
+    """Row-block names: the label size at the key weight, in the block's colour."""
+    return role_style(figure.settings, "label", load_tokens()["type"]["key_weight"], color)
+
+
+def block_width(figure: HairlineFigure, index: int) -> float:
+    """Room left of a panel's y labels for its row-block names and the gap after them."""
+    if index not in figure.blocks:
+        return 0.0
+    style = block_style(figure)
+    names = max(text_width(name, style["family"], style["size"], style["weight"]) for name, _, _ in
+                figure.blocks[index])
+    return names + load_tokens()["lanes"]["label_gap"] * figure.settings.base_size
+
+
 def column_widths(figure: HairlineFigure, y_labels: list[list[str]]) -> list[float]:
-    """Widest y tick label per column, counting only panels that show their labels."""
+    """Widest y tick label per column (and the row-block names before it), counting only panels that show their
+    labels."""
     size, widths = role_size(figure.settings, "label"), [0.0] * figure.columns
     for index, labels in enumerate(y_labels):
         if shows_y_labels(figure, index):
             column = grid_position(figure, index)[1]
-            widths[column] = max(widths[column], label_width(labels, figure.settings.font, size))
+            widths[column] = max(widths[column], label_width(labels, figure.settings.font, size)
+                                 + block_width(figure, index))
     widths[0] = max(widths[0], table_label_width(figure))
     return widths
 
@@ -108,7 +125,8 @@ def frame_input(figure: HairlineFigure, measured: Measured, size: tuple[float, f
                       y_label_width_pt=measured.y_label_width, table_lines=table_lines(figure),
                       column_label_widths=measured.column_label_widths, x_tick_rows=measured.x_tick_rows,
                       x_title_rows=tuple(any(grid_position(figure, index)[0] == row and header.x_title
-                                             for index, header in figure.headers.items()) for row in range(rows)))
+                                             for index, header in figure.headers.items()) for row in range(rows)),
+                      row_weights=tuple(figure.row_heights))
 
 
 def header_bounds(layout: FrameLayout, figure: HairlineFigure, index: int) -> tuple[float, float]:
@@ -142,7 +160,8 @@ def legend_style(figure: HairlineFigure) -> dict:
 
 def plan_layout(figure: HairlineFigure, measured: Measured, size: tuple[float, float]):
     spacing, margin = load_tokens()["spacing"], load_tokens()["spacing"]["margin"] * figure.settings.base_size
-    placed = pack_rows(measured.legend, margin, size[0] - margin, legend_style(figure), spacing)
+    placed = pack_rows(measured.legend, margin, size[0] - margin, legend_style(figure), spacing,
+                       ramp_key_items(figure.ramp_key))
     legend_rows = max((entry.row for entry in placed), default=-1) + 1
     metrics = load_font_metrics()
     provisional = tuple(1 if any(grid_position(figure, i)[0] == row for i in figure.headers) else 0
@@ -227,16 +246,47 @@ def draw_axis_titles(figure: HairlineFigure, layout: FrameLayout) -> list:
     return artists
 
 
+def block_texts(figure: HairlineFigure, layout: FrameLayout, measured: Measured) -> list:
+    """Each row block's name at the left of its panel's label column, on the baseline of the block's first row."""
+    from hairline.marks import point_fill, surface_of
+    artists, cap = [], load_font_metrics().cap_height
+    surface = surface_of(figure.settings)
+    for index, blocks in sorted(figure.blocks.items()):
+        box, ax = figure.plot_boxes[index], figure.axes[index]
+        column = grid_position(figure, index)[1]
+        left = layout.left if column == 0 else box.x - load_tokens()["spacing"]["y_labels_plot"] * \
+            figure.settings.base_size - measured.column_label_widths[column]
+        low, high = ax.get_ylim()
+        position = sum(count for _, _, count in blocks) - 1
+        for name, color, count in blocks:
+            style = block_style(figure, point_fill(color, surface))
+            centre = box.y + (high - position) / (high - low) * box.height
+            artists.append(add_text(figure.figure, left, centre + style["size"] * cap / 2, name, style))
+            position -= count
+    return artists
+
+
+def fit_inside_labels(figure: HairlineFigure) -> None:
+    """Labels inside bars (swimlanes) show only where their bar is wide enough for them."""
+    for index, artist, start, end in figure.inside_labels:
+        box, (low, high) = figure.plot_boxes[index], figure.axes[index].get_xlim()
+        room = (end - start) / (high - low) * box.width - 2 * load_tokens()["swimlanes"]["label_pad"] * \
+            figure.settings.base_size
+        style = role_style(figure.settings, "label")
+        artist.set_visible(text_width(artist.get_text(), style["family"], style["size"]) <= room)
+
+
 def draw_frame(figure: HairlineFigure, layout: FrameLayout, measured: Measured, placed, composed) -> None:
     spacing, lines = load_tokens()["spacing"], dict(load_tokens()["lines"])
     scale = line_scale(figure.plot_boxes[0].width) if figure.plot_boxes else 1.0
-    lines.update(data=lines["data"] * scale, secondary=lines["secondary"] * scale)
+    lines.update(data=lines["data"] * scale, secondary=lines["secondary"] * scale,
+                 outline_color=figure.settings.neutral["axis"])
     artists = draw_lines(figure, layout.left, layout.title_baselines, measured.title, "title")
     artists += draw_lines(figure, layout.left, layout.subtitle_baselines, measured.subtitle, "subtitle")
     artists += draw_lines(figure, layout.left, layout.caption_baselines, measured.caption, "caption")
     artists += draw_legend(figure.figure, placed, layout.legend_row_centers, legend_style(figure), spacing, lines)
     artists += draw_headers(figure, layout, composed) + draw_axis_titles(figure, layout)
-    artists += draw_table(figure, layout, lines)
+    artists += draw_table(figure, layout, lines) + block_texts(figure, layout, measured)
     figure.frame_artist.replace_children(run_drawings(figure) + artists)
 
 
@@ -289,6 +339,7 @@ def apply_frame(figure: HairlineFigure) -> dict[int, list[str]]:
     position_axes(figure, layout, size)
     scale_panel_lines(figure.axes, figure.plot_boxes, figure.line_widths)
     place_reference_labels(figure)
+    fit_inside_labels(figure)
     draw_frame(figure, layout, measured, placed, composed)
     figure.report = build_report(figure, layout, measured, placed, composed)
     figure.legend_placed = list(placed)

@@ -43,3 +43,22 @@ def test_medians_are_marked():
 def test_a_group_with_one_value_draws_no_ridge():
     data = pd.DataFrame({"unit": ["A"] * 5 + ["B"], "days": [1, 2, 3, 4, 5, 3]})
     assert len(ridges(hl.ridgeline(data, "unit", "days"))) == 1
+
+
+def test_ridgeline_shows_n_and_leaves_small_groups_out():
+    import pandas as pd
+    hl.use(brand=False)
+    data = pd.DataFrame({"group": ["a"] * 30 + ["b"] * 2, "value": list(range(30)) + [1, 2]})
+    figure = hl.ridgeline(data, "group", "value", show_n=True, min_n=5)
+    assert figure.category_axes[(0, "y")] == ["a (n = 30)"]
+    assert figure.caption == "Not shown (under 5): b."
+
+
+def test_ridgeline_clip_keeps_the_ridge_within_the_limit():
+    import pandas as pd
+    hl.use(brand=False)
+    data = pd.DataFrame({"group": ["a"] * 31, "value": list(range(30)) + [3000]})
+    figure = hl.ridgeline(data, "group", "value", clip=(None, 100))
+    figure.figure.canvas.draw()
+    assert figure.ax.get_xlim()[1] < 100
+    assert figure.caption == "1 value above 100 not drawn; the statistics use every value."
