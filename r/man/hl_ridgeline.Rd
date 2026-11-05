@@ -13,7 +13,13 @@ hl_ridgeline(
   caption = NULL,
   order = NULL,
   medians = TRUE,
-  colors = NULL
+  colors = NULL,
+  show_n = FALSE,
+  min_n = NULL,
+  clip = NULL,
+  clip_stats = FALSE,
+  color_by = NULL,
+  dimension = NULL
 )
 }
 \arguments{
@@ -29,6 +35,11 @@ hl_ridgeline(
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
 for the number of groups and are not remembered for other charts.}
+
+\item{show_n}{Write each group's n after its name, in the locale.}
+
+\item{min_n, clip, clip_stats, color_by, dimension}{As in \code{\link[=hl_spread]{hl_spread()}}: groups too small and values clipped off are
+named in the caption.}
 }
 \value{
 A ggplot with the hairline frame.

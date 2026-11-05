@@ -16,7 +16,8 @@ hl_dotplot(
   sort = TRUE,
   ratio = FALSE,
   reference = NULL,
-  digits = NULL
+  digits = NULL,
+  n = NULL
 )
 }
 \arguments{
@@ -35,6 +36,8 @@ hl_dotplot(
 \item{reference}{Value for a vertical reference line.}
 
 \item{digits}{Decimals of the numbers; \code{NULL} gives two, or more for small or close values.}
+
+\item{n}{Column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").}
 }
 \value{
 A ggplot with the hairline frame.

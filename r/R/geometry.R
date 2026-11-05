@@ -9,7 +9,7 @@ frame_defaults <- list(title_lines = 1, subtitle_lines = 0, legend_rows = 0, cap
                        panel_columns = 1, panel_header_lines = integer(), y_title = FALSE, x_title = FALSE,
                        x_tick_labels = TRUE, y_label_width_pt = 0, y_labels = TRUE, table_lines = 0,
                        column_label_widths = numeric(),
-                       x_tick_rows = logical(), x_title_rows = logical())
+                       x_tick_rows = logical(), x_title_rows = logical(), row_weights = numeric())
 
 text_block <- function(size, count, metrics, line_gap) {
   if (count == 0) return(0)
@@ -134,28 +134,37 @@ frame_height <- function(spec, metrics) {
   top + rows + fixed_bottom_height(spec, spacing, metrics, line_gap)
 }
 
+# Each panel row's share of the panel height: `row_weights` (9, 3, 4 for rows sized by content), else equal.
+row_shares <- function(spec) {
+  weights <- utils::head(unlist(spec$row_weights), spec$panel_rows)
+  weights <- c(weights, rep(1, spec$panel_rows - length(weights)))
+  weights / sum(weights)
+}
+
 # The figure height at which the panels together keep at least `least` pt (each row at least the smallest panel):
 # the height given when that is enough, else a taller one. The frame keeps its size, the plot its room.
 kept_frame_height <- function(spec, metrics, least) {
   spec <- utils::modifyList(frame_defaults, spec)
   floor <- hl_tokens()$spacing$min_panel_height * spec$base_size
-  rows <- spec$panel_rows
-  max(spec$height_pt, frame_height(spec, metrics) + rows * max(least / rows, floor))
+  max(spec$height_pt, frame_height(spec, metrics) + max(least, floor / min(row_shares(spec))))
 }
 
 floor_tolerance_pt <- 1e-6
 
-frame_panel_height <- function(spec, top, spacing, metrics, line_gap) {
+# Height of each panel row: the room the frame leaves, shared by the rows' weights.
+frame_panel_heights <- function(spec, top, spacing, metrics, line_gap) {
   fixed <- sum(vapply(seq_len(spec$panel_rows), fixed_row_height, numeric(1), spec = spec, spacing = spacing,
                       metrics = metrics, line_gap = line_gap))
   available <- spec$height_pt - top - fixed - fixed_bottom_height(spec, spacing, metrics, line_gap)
-  height <- available / spec$panel_rows
+  shares <- row_shares(spec)
+  heights <- available * shares
+  height <- min(heights)
   floor <- spacing$min_panel_height * spec$base_size
   if (height < floor - floor_tolerance_pt) {
-    needed <- ceiling((spec$height_pt + spec$panel_rows * (floor - height)) / 72 * 25.4)
+    needed <- ceiling((spec$height_pt + (floor - height) / min(shares)) / 72 * 25.4)
     stop(sprintf(paste0("hairline: figure too small: %.0f pt high leaves %.1f pt per panel for %d panel rows; ",
                         "make it at least %d mm tall (hl_save(height_mm = %d)) or use fewer rows"), spec$height_pt,
                  height, as.integer(spec$panel_rows), as.integer(needed), as.integer(needed)), call. = FALSE)
   }
-  height
+  heights
 }

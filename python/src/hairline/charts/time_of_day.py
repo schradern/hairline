@@ -111,10 +111,14 @@ def kept_rows(days: pd.DatetimeIndex, origin: pd.Timestamp) -> np.ndarray:
     return ((days - origin).days).to_numpy()
 
 
+# Float noise a data limit may carry (a span from 7 reads 6.999999999999998 once the axes are placed).
+HOUR_NOISE = 1e-9
+
+
 def hour_window(lows: Sequence[float], highs: Sequence[float], margin: float) -> tuple[float, float]:
     """The hours with data plus a margin, on whole hours: 06 to 22 rather than a night of nothing."""
     low, high = min(lows), max(highs)
-    return max(0.0, math.floor(low) - margin), min(48.0, math.ceil(high) + margin)
+    return max(0.0, math.floor(low + HOUR_NOISE) - margin), min(48.0, math.ceil(high - HOUR_NOISE) + margin)
 
 
 def first_free(starts: Sequence[float], ends: Sequence[float]) -> list[int]:

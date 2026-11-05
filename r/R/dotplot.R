@@ -14,6 +14,7 @@
 #' @param ratio Values are ratios (log axis).
 #' @param reference Value for a vertical reference line.
 #' @param digits Decimals of the numbers; `NULL` gives two, or more for small or close values.
+#' @param n Column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' rates <- data.frame(unit = c("Medical", "Surgical", "Cardiac"), mortality = c(0.13, 0.08, 0.06),
@@ -21,14 +22,19 @@
 #' hl_dotplot(rates, "unit", "mortality", "low", "high")
 #' @export
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
-                       sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL) {
-  check_columns(data, c(label, estimate, low, high))
+                       sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL) {
+  check_columns(data, c(label, estimate, low, high, n))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
                  if (is.null(low)) "high" else "low", low %||% high), call. = FALSE)
   }
   interval <- !is.null(low) && !is.null(high)
   if (sort) data <- data[order(-data[[estimate]], seq_len(nrow(data))), , drop = FALSE]
+  if (!is.null(n)) {
+    check_numeric(data, n, "dotplot")
+    names <- as.character(data[[label]])
+    data[[label]] <- labels_with_n(names, stats::setNames(as.list(data[[n]]), names))
+  }
   if (!interval) {
     data$.low <- data[[estimate]]
     data$.high <- data[[estimate]]

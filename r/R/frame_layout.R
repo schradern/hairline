@@ -9,7 +9,7 @@ check_panel_width <- function(spec, width, spacing) {
                as.integer(spec$panel_columns), labels), call. = FALSE)
 }
 
-place_panel_rows <- function(state, spec, layout, spacing, height) {
+place_panel_rows <- function(state, spec, layout, spacing, heights) {
   base <- spec$base_size
   gap <- spacing$panel_columns * base
   offsets <- column_offsets(spec, spacing)
@@ -30,9 +30,9 @@ place_panel_rows <- function(state, spec, layout, spacing, height) {
     }
     for (column in seq_len(spec$panel_columns)) {
       x <- layout$plot_left + (column - 1) * (width + gap) + sum(offsets[seq_len(column)])
-      layout$panels[[length(layout$panels) + 1]] <- c(x, state$y, width, height)
+      layout$panels[[length(layout$panels) + 1]] <- c(x, state$y, width, heights[row])
     }
-    state$y <- state$y + height + inner_tick_band(spec, row, spacing)
+    state$y <- state$y + heights[row] + inner_tick_band(spec, row, spacing)
     titled <- has_row_titles(spec, row) && row < spec$panel_rows
     if (titled) {
       state$y <- state$y + spacing$x_title * base
@@ -82,7 +82,7 @@ compute_frame <- function(spec, metrics) {
                  table_baselines = numeric())
   state <- list(y = 0, metrics = metrics, line_gap = tokens$type$line_gap)
   placed <- place_header_block(state, spec, layout, spacing)
-  height <- frame_panel_height(spec, placed$state$y, spacing, metrics, tokens$type$line_gap)
-  placed <- place_panel_rows(placed$state, spec, placed$layout, spacing, height)
+  heights <- frame_panel_heights(spec, placed$state$y, spacing, metrics, tokens$type$line_gap)
+  placed <- place_panel_rows(placed$state, spec, placed$layout, spacing, heights)
   place_bottom_block(placed$state, spec, placed$layout, spacing)
 }

@@ -13,5 +13,5 @@ with warnings.catch_warnings():
                      labels={"sofa": "SOFA score", "lactate": "Lactate"},
                      units={"age": "years", "sofa": "points", "lactate": "mmol/l"})
 figure = hl.table(study.describe().table, "Characteristics by arm", subtitle="Median (IQR) or n (%)",
-                  footnotes=["IQR: interquartile range."], caption="Synthetic data.", size="onehalf")
+                  footnotes=["IQR: interquartile range."], caption="Synthetic data.", size="double")
 finish(figure, "table_characteristics")

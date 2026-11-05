@@ -22,7 +22,8 @@ FIGURES = ["theme_scatter", "occupancy_rows", "grid_panels", "brand_example", "d
            "correlation_patients", "funnel_trials",
            "risk_of_bias_trials", "prisma_review",
            "arcs_pathways", "ridgeline_ages", "bars_stacked", "bars_percent", "chord_transfers",
-           "venn_comorbidities", "study_describe", "spread_occupancy", "colour_sets"]
+           "venn_comorbidities", "study_describe", "spread_occupancy", "colour_sets",
+           "bars_facets", "spread_doses", "table_characteristics", "unit_day", "swimlanes_day"]
 TOLERANCE_PT = 1.0
 
 

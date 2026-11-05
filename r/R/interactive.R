@@ -30,8 +30,16 @@ datetime_texts <- function(values, zone) {
   format(moments, if (seconds) "%Y-%m-%d %H:%M:%S" else if (timed) "%Y-%m-%d %H:%M" else "%Y-%m-%d")
 }
 
-# X (or y) values as text: ISO dates on a date scale, category names on a discrete scale, else numbers.
+# Hours since midnight as a time of day: 7.25 is "07:15", 25.5 is "01:30".
+clock_text <- function(hours) {
+  minutes <- round(as.numeric(hours) * 60) %% 1440
+  sprintf("%02d:%02d", minutes %/% 60, minutes %% 60)
+}
+
+# X (or y) values as text: the time of day on a time-of-day scale, ISO dates on a date scale, category names on a
+# discrete scale, else numbers.
 axis_texts <- function(params, scale, values) {
+  if (isTRUE(scale$hairline$time)) return(clock_text(values))
   if (scale$is_discrete()) {
     labels <- params$get_labels()
     return(vapply(round(values), function(position) {
@@ -95,7 +103,7 @@ finite_runs <- function(rows) {
   unname(split(finite, cumsum(c(1, diff(finite) > 1))))
 }
 
-line_targets <- function(data, geom, parts, plan, scaled) {
+line_targets <- function(data, geom, parts, plan, scaled, series = NULL) {
   if (!any(is.finite(data$x) & is.finite(data$y))) return(list())
   groups <- split(data, list(data$PANEL, data$group), drop = TRUE)
   groups <- Filter(function(rows) any(is.finite(rows$x) & is.finite(rows$y)), groups)
@@ -106,7 +114,7 @@ line_targets <- function(data, geom, parts, plan, scaled) {
       if (geom == "GeomStep") step_points(rows$x[run], rows$y[run]) else cbind(rows$x[run], rows$y[run])
     })
     rows <- rows[unlist(runs), , drop = FALSE]
-    name <- series_named(rows$colour[1], parts, context$index)
+    name <- series %||% series_named(rows$colour[1], parts, context$index)
     xs <- axis_texts(context$params$x, context$x_scale, rows$x)
     ys <- scale_numbers(context$y_scale, rows$y)
     at <- context$to_pt(rows$x, rows$y)
@@ -171,7 +179,9 @@ layer_targets <- function(parts, plan, index) {
   skipped <- isTRUE(layer$hairline_static) || isTRUE(layer$hairline_fixed) || isTRUE(layer$hairline_secondary)
   if (skipped || !nrow(data)) return(list())
   geom <- class(layer$geom)[1]
-  if (geom %in% c("GeomLine", "GeomPath", "GeomStep")) return(unname(line_targets(data, geom, parts, plan, TRUE)))
+  if (geom %in% c("GeomLine", "GeomPath", "GeomStep")) {
+    return(unname(line_targets(data, geom, parts, plan, TRUE, layer$hairline_series)))
+  }
   if (geom == "GeomPoint") return(unname(point_targets(data, parts, plan)))
   if (geom == "GeomCol") return(unname(bar_targets(data, parts, plan)))
   list()
@@ -192,6 +202,24 @@ drawn_targets <- function(shapes) {
     found[[shape$series]] <- entry
   }
   unname(found)
+}
+
+# The boxes charts registered as tooltip targets (plot@meta$hairline_hover: lanes cells, swimlane bars): one row per
+# box with its panel, series name, colour, corners in data units and text.
+hover_targets <- function(parts, plan) {
+  hover <- parts$hover
+  if (is.null(hover) || !nrow(hover)) return(list())
+  lapply(seq_len(nrow(hover)), function(index) {
+    row <- hover[index, ]
+    box <- fitted_box(plan$layout$panels[[row$panel]], parts$aspect)
+    x_range <- parts$x_ranges[[row$panel]]
+    y_range <- parts$y_ranges[[row$panel]]
+    xs <- box[1] + (c(row$x0, row$x1) - x_range[1]) / diff(x_range) * box[3]
+    ys <- box[2] + box[4] - (c(row$y1, row$y0) - y_range[1]) / diff(y_range) * box[4]
+    rect <- c(min(xs), min(ys), abs(diff(xs)), abs(diff(ys)))
+    list(name = row$name, color = colour_hex(row$colour), marks = list(list(rect = rect)),
+         tips = list(list(at = c(rect[1] + rect[3] / 2, rect[2]), text = row$text)))
+  })
 }
 
 merge_targets <- function(series) {
@@ -215,9 +243,22 @@ legend_targets <- function(parts, plan) {
   })
 }
 
+# The data layers' targets and the registered boxes; a composed figure (hl_rows()) collects them from each of its
+# charts, laid out in the panels that chart took.
+series_targets <- function(parts, plan) {
+  if (!is.null(parts$members)) {
+    return(unlist(lapply(parts$members, function(member) {
+      member_plan <- plan
+      member_plan$layout$panels <- plan$layout$panels[member$panels]
+      series_targets(member$parts, member_plan)
+    }), recursive = FALSE))
+  }
+  c(unlist(lapply(seq_along(parts$built@data), function(index) layer_targets(parts, plan, index)), recursive = FALSE),
+    hover_targets(parts, plan))
+}
+
 plot_targets <- function(parts, plan) {
-  series <- unlist(lapply(seq_along(parts$built@data), function(index) layer_targets(parts, plan, index)),
-                   recursive = FALSE)
+  series <- series_targets(parts, plan)
   settings <- parts$settings
   rules <- hl_tokens()$interactive
   style <- list(ink = settings$neutral$ink, surface = settings$neutral$surface, axis = settings$neutral$axis,
@@ -316,6 +357,11 @@ html_page <- function(title, fragment, surface = "#ffffff") {
 }
 
 write_html <- function(plot, path, size, size_mm, background) {
+  if (!is.null(plot@meta$hairline_tabular)) {
+    settings <- plot@meta$hairline_settings %||% hl_settings()
+    writeLines(html_page(plot@labels$title, table_html(plot), settings$neutral$surface), path, useBytes = TRUE)
+    return(invisible(path))
+  }
   if (!requireNamespace("svglite", quietly = TRUE)) {
     stop("hairline: HTML export needs the 'svglite' package", call. = FALSE)
   }

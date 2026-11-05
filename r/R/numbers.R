@@ -173,3 +173,27 @@ auto_digits <- function(values) {
   for (size in c(spread, magnitude)) if (size > 0) digits <- max(digits, places_for(size))
   capped_places(digits, magnitude)
 }
+
+# A caption word or sentence in the locale (tokens locales.<locale>.words), its `{fields}` filled in: the same texts
+# in both packages, so a German figure never carries an English note.
+word <- function(key, locale = NULL, ...) {
+  text <- locale_symbols(locale)$words[[key]]
+  if (is.null(text)) stop(sprintf("hairline: no locale word '%s'", key), call. = FALSE)
+  fields <- list(...)
+  for (name in names(fields)) text <- gsub(paste0("{", name, "}"), as.character(fields[[name]]), text, fixed = TRUE)
+  text
+}
+
+# Items joined for a caption, comma-separated.
+listed <- function(items) paste(items, collapse = ", ")
+
+# "1 value" or "12 values" in the locale (count_text() in the Python package).
+value_count_text <- function(count, locale = NULL) {
+  if (count == 1) word("value_one", locale) else word("value_many", locale, n = hl_format_number(count, 0, locale))
+}
+
+# The fewest decimals that write `value` exactly (0.5, 25), up to the axis maximum.
+exact_places <- function(value) {
+  for (places in seq(0, max_axis_digits - 1)) if (abs(round(value, places) - value) <= 1e-12) return(places)
+  max_axis_digits
+}

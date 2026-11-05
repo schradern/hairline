@@ -37,6 +37,13 @@ positions and tooltips are unchanged.
   figures. `legend_ramp()` draws a binned colour key with hairline outlines, right-aligned in the legend row.
 * Quantiles of whole people (`levels()`, `spread(discrete=True)`) use the inverted empirical CDF (R's type 1):
   the 0.9 quantile of daily peaks is the count that is enough on at least 9 of 10 days.
+* `correlation()` shows its colour key as the binned `legend_ramp()` key, right-aligned in the legend row with
+  outlined squares, as the R package's `hl_correlation()` does now.
+* The time-of-day window no longer gains an hour from float noise in a data limit: a span from 07:00 read
+  6.999999999999998 once the axes were placed, and the axis started at 05:00 instead of 06:00.
+
+The R package mirrors all of this under the same names (`hl_bars(facet = ...)`, `hl_lanes()`, ...); a composed
+figure there is `hl_rows()`.
 
 
 ## 0.2.1

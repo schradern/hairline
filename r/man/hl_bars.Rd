@@ -19,7 +19,17 @@ hl_bars(
   order = NULL,
   labels = TRUE,
   colors = NULL,
-  size = NULL
+  size = NULL,
+  facet = NULL,
+  scales = "free",
+  columns = NULL,
+  top = NULL,
+  other = NULL,
+  partial = NULL,
+  show_n = FALSE,
+  normalize = FALSE,
+  color_by = NULL,
+  dimension = NULL
 )
 }
 \arguments{
@@ -51,6 +61,29 @@ for the number of groups and are not remembered for other charts.}
 
 \item{size}{Size preset the bars are laid out for, as in \code{\link[=hl_save]{hl_save()}} (\code{NULL}: \code{"onehalf"}): its width decides
 between upright and lying bars, and \code{\link[=hl_save]{hl_save()}} uses it unless given another size.}
+
+\item{facet}{Column to draw one panel per value of, each with its own value axis (\code{scales = "free"}) or one
+shared axis (\code{scales = "shared"}), the facet's name and total in its panel header.}
+
+\item{scales}{\code{"free"} or \code{"shared"} value axes across facets.}
+
+\item{columns}{Panel columns for facets (default: up to 2).}
+
+\item{top}{Keep the \code{top} largest categories per panel and fold the rest into one bar named \code{other}.}
+
+\item{other}{Name of the folded bar (default: the locale's "Other").}
+
+\item{partial}{Incomplete periods and what they hold, e.g. \code{c("2021" = "2 months")}: drawn lighter and named in
+the caption, in the locale.}
+
+\item{show_n}{Write each category's n after its label; colours and \code{order} keep keying on the bare name.}
+
+\item{normalize}{Draw shares of each category's total (as \code{percent}) and keep the n in the labels.}
+
+\item{color_by}{Colour the groups of \code{by} by a coarser column, whose values the legend lists.}
+
+\item{dimension}{What the groups are, so their colours keep off the slots another dimension holds (see
+\code{\link[=hl_scope]{hl_scope()}}).}
 }
 \value{
 A ggplot with the hairline frame.
@@ -66,4 +99,7 @@ admissions <- data.frame(
   sex = c("Female", "Male", "Male", "Female", "Male", "Male"))
 hl_bars(admissions, "diagnosis")
 hl_bars(admissions, "diagnosis", by = "sex", stacked = TRUE)
+cases <- data.frame(year = rep(2021:2023, 2), group = rep(c("Large", "Small"), each = 3),
+                    cases = c(120, 900, 950, 4, 30, 28))
+hl_bars(cases, "year", "cases", facet = "group", sort = "given", partial = c("2021" = "2 months"))
 }

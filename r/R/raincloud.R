@@ -1,7 +1,9 @@
 # Raincloud, mirroring the Python raincloud(): per group a half density, the box (IQR and
 # median) and the points, with "n = …" under the group names and comparison brackets stacked without overlap.
 
-raincloud_group_layers <- function(values, position, colour, rules) {
+# Density and points of the values drawn; the box (interquartile range, median) of the values counted, held within
+# the drawn range.
+raincloud_group_layers <- function(values, position, colour, rules, counted = values) {
   settings <- hl_settings()
   layers <- list()
   curve <- density_curve(values)
@@ -12,7 +14,7 @@ raincloud_group_layers <- function(values, position, colour, rules) {
     layers[[1]] <- ggplot2::geom_polygon(data = outline, ggplot2::aes(.data$x, .data$y), fill = colour,
                                          alpha = rules$density_opacity, colour = NA, inherit.aes = FALSE)
   }
-  limits <- density_quantiles(values, c(0.25, 0.5, 0.75))
+  limits <- pmin(pmax(density_quantiles(counted, c(0.25, 0.5, 0.75)), min(values)), max(values))
   half <- rules$box_half
   box <- data.frame(xmin = position - half, xmax = position + half, ymin = limits[1], ymax = limits[3])
   median <- ggplot2::geom_segment(data = data.frame(x = position - half, xend = position + half, y = limits[2]),
@@ -115,6 +117,8 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #'   computed) or `c(group, group, text)` with your own result.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#' @param min_n,clip,clip_stats,color_by,dimension As in [hl_spread()]: groups too small and values clipped off are
+#'   named in the caption; "n = …" counts the values the statistics use.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -123,19 +127,28 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #' hl_raincloud(stays, "unit", "days", y_title = "Days")
 #' @export
 hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, y_title = NULL,
-                         order = NULL, comparisons = list(), colors = NULL) {
+                         order = NULL, comparisons = list(), colors = NULL, min_n = NULL, clip = NULL,
+                         clip_stats = FALSE, color_by = NULL, dimension = NULL) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
     group <- sides$right[1]
   }
-  check_columns(data, c(group, value))
+  check_columns(data, c(group, value, color_by))
   check_present(data, value, "raincloud")
   check_numeric(data, value, "raincloud")
   data <- data[!is.na(data[[value]]), , drop = FALSE]
   names <- chart_groups(data, group, order, "raincloud")
+  groups <- stats::setNames(lapply(names, function(name) data[[value]][as.character(data[[group]]) == name]), names)
+  dropped <- drop_small(groups, min_n, "raincloud")
+  groups <- dropped$groups
+  names <- names(groups)
+  limits <- clip_limits(unlist(groups, use.names = FALSE), clip, "raincloud")
+  drawn <- lapply(groups, within_limits, limits = limits)
+  counted <- if (clip_stats) drawn else groups
+  rows <- data.frame(group = rep(names, lengths(counted)), value = unlist(counted, use.names = FALSE))
   title <- title %||% paste(humanise(value), "by", gsub("_", " ", group))
-  comparisons <- resolve_comparisons(comparisons, data, group, value, names)
+  comparisons <- resolve_comparisons(comparisons, rows, "group", "value", names)
   for (name in unlist(lapply(comparisons, `[`, 1:2))) {
     if (!name %in% names) {
       stop(sprintf("hairline: raincloud: comparison group '%s' is not one of: %s", name,
@@ -144,20 +157,21 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   }
   rules <- hl_tokens()$raincloud
   plot <- ggplot2::ggplot()
-  counts <- character()
-  palette <- colours_for(names, colors)
+  coloured <- series_colours(names, data, group, color_by, colors, dimension, "raincloud")
   for (index in seq_along(names)) {
-    values <- data[[value]][as.character(data[[group]]) == names[index]]
-    plot <- plot + raincloud_group_layers(values, index - 1, palette[[names[index]]], rules)
-    counts[index] <- paste("n =", length(values))
+    plot <- plot + raincloud_group_layers(drawn[[index]], index - 1, coloured$palette[[names[index]]], rules,
+                                          counted[[index]])
   }
-  plot <- plot + raincloud_bracket_layers(comparisons, names, data[[value]], rules) +
+  counts <- vapply(counted, function(values) word("n_equals", n = hl_format_number(length(values), 0)), character(1))
+  notes <- c(dropped$note, if (!is.null(clip)) clip_caption(data[[value]], limits, clip_stats))
+  plot <- plot + raincloud_bracket_layers(comparisons, names, unlist(drawn, use.names = FALSE), rules) +
     ggplot2::scale_x_continuous(breaks = seq_along(names) - 1, labels = names, limits = c(-0.6, length(names) - 0.4),
                                 expand = c(0, 0)) +
-    ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = y_title) + theme_hairline() +
-    hl_legend(list())
+    ggplot2::labs(title = title, subtitle = subtitle, caption = with_caption(caption, notes), x = NULL,
+                  y = y_title) + theme_hairline() +
+    hl_legend(if (is.null(color_by)) list() else coarse_legend(coloured))
   plot@meta$hairline_table <- list(heading = NULL, rows = list(list(label = "", colour = NULL,
-                                                                    x = seq_along(names) - 1, text = counts)))
+                                                                    x = seq_along(names) - 1, text = unname(counts))))
   # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
   spans <- lapply(comparisons, function(comparison) match(comparison[1:2], names) - 1)
   plot@meta$hairline_min_plot <- bracket_plot_height(if (length(spans)) max(bracket_levels(spans)) + 1 else 0)

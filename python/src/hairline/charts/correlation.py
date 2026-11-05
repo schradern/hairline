@@ -1,4 +1,4 @@
-"""Correlation heatmap: lower triangle, diverging ramp, values in the cells, colour key in the
+"""Correlation heatmap: lower triangle, diverging ramp, values in the cells, a binned colour key in the
 legend row."""
 
 from __future__ import annotations
@@ -66,7 +66,6 @@ def correlation(data: pd.DataFrame, columns: Sequence[str] | None = None, *, met
     spec = correlation_spec(data, columns, method)
     result = figure(title or f"{method.title()} correlations", subtitle=subtitle, caption=caption, size=size)
     result.draw(0, lambda box, measure, style: correlation_drawing(spec, box, measure, style))
-    locale = current_settings().locale
-    result.legend([("square", ramp_color(value), format_number(value, 0 if value == int(value) else 1, locale))
-                   for value in load_tokens()["correlation"]["key"]])
+    key = [float(value) for value in load_tokens()["correlation"]["key"]]
+    result.legend_ramp([ramp_color(value) for value in key], key, format="number", limits=(-1.0, 1.0))
     return fit_height(result)

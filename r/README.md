@@ -51,8 +51,8 @@ repeated measurements are not counted as separate patients.
 Each chart is one call with the data and its column names, and returns a ggplot in the hairline frame:
 `hl_bars()`, `hl_scatter()`, `hl_timeseries()`, `hl_spread()`, `hl_raincloud()`, `hl_ridgeline()`,
 `hl_kaplan_meier()`, `hl_forest()`, `hl_dotplot()`, `hl_funnel()`, `hl_correlation()`, `hl_donut()`,
-`hl_partition()`, `hl_sankey()`, `hl_chord()`, `hl_arcs()`, `hl_venn()`, `hl_prisma()` and
-`hl_risk_of_bias()`.
+`hl_partition()`, `hl_sankey()`, `hl_chord()`, `hl_arcs()`, `hl_venn()`, `hl_prisma()`, `hl_risk_of_bias()`,
+`hl_lanes()`, `hl_levels()`, `hl_swimlanes()` and `hl_table()`.
 
 ```r
 admissions <- data.frame(diagnosis = c("Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac"),
@@ -70,6 +70,58 @@ figure <- ggplot(mtcars, aes(wt, mpg)) + geom_point() +
   theme_hairline()
 hl_save(figure, "fuel", size = "single")
 ```
+
+## For reports
+
+What a real report needs is one argument on the chart, and the caption says in the figure's locale what was left
+out or drawn differently ("Unvollständig, heller: 2021 (2 Monate)", "Not shown (under 10): …").
+
+```r
+hl_bars(cases, "year", "cases", facet = "procedure", scales = "free", columns = 2,   # one panel per procedure
+        partial = c("2021" = "2 months", "2026" = "10 months"))                     # incomplete years lighter
+hl_bars(locations, "place", facet = "procedure", top = 6)                           # the rest as one "Other" bar
+hl_bars(patterns, "procedure", by = "pattern", stacked = TRUE, normalize = TRUE)    # shares from counts, n kept
+hl_spread(doses, "procedure", "mg", show_n = TRUE, min_n = 10, clip = 0.99,         # n, small groups out, outliers
+          stats = c("median", "levels"), discrete = TRUE)                           # the frequent doses, on levels
+hl_bars(cases, "year", by = "row", color_by = "procedure")                          # 12 rows, 4 colours
+hl_scope("pattern", hl_bars(patterns, "pattern"))                                   # off the procedures' slots
+```
+
+- **`facet =`, `scales =`, `columns =`** on `hl_bars()`: one panel per value, each with its own value axis or one
+  shared axis, the panel header with the facet's total. `top =` and `other =` fold the smallest categories.
+- **`partial =`** on `hl_bars()` and `hl_timeseries()`: incomplete periods drawn lighter, named in the caption.
+- **`show_n =`** on `hl_bars()`, `hl_spread()` and `hl_ridgeline()` (`n =` column on `hl_dotplot()`): the n after
+  the label or in the numbers column; colours and `order` keep keying on the bare group.
+- **`min_n =`** on `hl_spread()`, `hl_ridgeline()` and `hl_raincloud()`; **`clip =`** (a quantile, or
+  `c(low, high)`) on those and `hl_scatter()`. The statistics use every value unless `clip_stats = TRUE`.
+- **`color_by =`** on every chart with groups, **`dimension =`** or `hl_scope()` across figures.
+- **`stats = c("levels", …)`** and **`discrete = TRUE`** on `hl_spread()`: the most frequent values with their
+  shares, and quantiles on the data's own levels. `hl_spread()` and `hl_describe()` warn when a median falls
+  between two large levels and matches neither.
+- **`hl_table(data, …)`**: any data frame (or `hl_describe()$table`) in hairline's typography, numbers in the
+  locale, `bold_rows =`, `footnotes =`, saved as PDF, PNG, SVG and as a real HTML table.
+- **`hl_report()`**: figures and tables numbered in the locale ("Abbildung 1", "Tabelle 2") in one Markdown or
+  HTML file with the images embedded (`hl_report_add()`, `hl_report_write()`).
+
+### Over the time of day
+
+```r
+lanes <- hl_lanes(stays, "place", "start", "end", group = "section", days = "weekdays", flows = moves,
+                  spans = list("Regular hours" = c(7, 16)))
+staff <- hl_levels(staff, "start", end = "end", by = "role", days = "weekdays")
+figure <- hl_rows(lanes, staff, heights = c(9, 3, 4), title = "Occupancy and staffing")
+hl_save(figure, "unit_day", size = "double")
+```
+
+- **`hl_lanes()`**: one row per place, each 15-minute cell coloured by the share of days it was occupied, in its
+  section's ramp, binned as the key in the legend row (`hl_legend_ramp()`); `flows =` adds the moves between rows
+  as faint connectors.
+- **`hl_levels()`**: whole counts of people as steps: how often exactly 1, 2, 3 … were needed, the typical day and
+  the count that is enough on 9 of 10 days, on the data's levels (quantile type 1).
+- **`hl_swimlanes()`**: one real day, a bar per interval with its label inside where it fits, an inner interval as
+  a darker band, and `assign = "first_free"` to turn tasks into rows of people.
+- **`hl_rows()`** stacks plots as panel rows sized by `heights` on one time axis, labelled once at the bottom, with
+  one legend row and caption: the R counterpart of the Python `figure(heights=, sharex=)` with `into=`.
 
 ## Colours
 

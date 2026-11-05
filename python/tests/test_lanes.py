@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 import hairline as hl
-from hairline.charts.time_of_day import calendar, first_free, short_label, step_index
+from hairline.charts.time_of_day import calendar, first_free, hour_window, short_label, step_index
 from hairline.interactive import figure_targets
 from hairline.stats.density import level_quantiles
 
@@ -26,6 +26,11 @@ def test_quantiles_on_levels_match_r_type_1():
 
 def test_first_free_gives_each_task_the_first_person_free():
     assert first_free([0, 1, 2, 5], [2, 3, 4, 6]) == [1, 2, 1, 1]
+
+
+def test_float_noise_in_a_data_limit_adds_no_hour_to_the_window():
+    assert hour_window([6.999999999999998], [18.75], 1) == (6, 20)
+    assert hour_window([7.25], [18.000000000000004], 1) == (6, 19)
 
 
 def test_calendar_keeps_weekdays_and_names_them_with_their_n():

@@ -94,6 +94,8 @@ register_frame_methods <- function() {
   suppressMessages(S7::`method<-`(ggplot2::update_ggplot, signature, value = add_hairline_highlight))
   signature <- list(hairline_legend, ggplot2::class_ggplot)
   suppressMessages(S7::`method<-`(ggplot2::update_ggplot, signature, value = add_hairline_legend))
+  signature <- list(hairline_ramp_key, ggplot2::class_ggplot)
+  suppressMessages(S7::`method<-`(ggplot2::update_ggplot, signature, value = add_hairline_ramp_key))
   signature <- list(hairline_reference, ggplot2::class_ggplot)
   suppressMessages(S7::`method<-`(ggplot2::update_ggplot, signature, value = add_hairline_reference))
   registerS3method("ggplot_build", "hairline::hairline_plot", build_hairline_plot,

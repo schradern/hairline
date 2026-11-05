@@ -72,11 +72,23 @@ fitted_box <- function(box, aspect) {
   c(box[1] + (box[3] - width) / 2, box[2], width, width * aspect)
 }
 
+# Per-panel extras a chart stores in its meta, by panel order: row blocks (lanes, swimlanes).
+with_panel_extras <- function(panels, meta) {
+  blocks <- meta$hairline_blocks %||% list()
+  for (index in seq_along(panels)) {
+    if (index <= length(blocks)) panels[[index]]["blocks"] <- list(blocks[[index]])
+  }
+  panels
+}
+
 frame_parts <- function(table, built) {
   settings <- built@plot@meta$hairline_settings %||% hl_settings()
-  panels <- extract_panels(table, built)
+  meta <- built@plot@meta
+  panels <- with_panel_extras(extract_panels(table, built), meta)
   flipped <- inherits(built@layout$coord, "CoordFlip")
-  list(settings = settings, panels = panels, bare = isTRUE(built@plot@meta$hairline_bare), built = built,
+  list(settings = settings, panels = panels, ramp_key = meta$hairline_ramp_key, row_weights = meta$hairline_heights,
+       hover = meta$hairline_hover, inside = meta$hairline_inside, bare = isTRUE(built@plot@meta$hairline_bare),
+       built = built,
        drawing = built@plot@meta$hairline_drawing, table = built@plot@meta$hairline_table,
        min_plot = built@plot@meta$hairline_min_plot,
        aspect = panel_aspect(built), rows = max(vapply(panels, `[[`, numeric(1), "row")),
@@ -92,6 +104,8 @@ frame_parts <- function(table, built) {
 }
 
 panel_header_for <- function(parts, index) {
+  # A composed figure resolves each panel's header from the chart it came from.
+  if (isTRUE(parts$panels[[index]]$header_set)) return(parts$panels[[index]]$header)
   headers <- parts$headers
   label <- parts$panels[[index]]$label
   if (is.null(label)) return(if (length(parts$panels) == 1 && length(headers)) headers[[1]] else NULL)

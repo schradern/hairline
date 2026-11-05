@@ -55,29 +55,58 @@ legend_items <- function(built) {
 }
 
 swatch_width <- function(kind, base, spacing) {
+  # A key's title (the binned colour key of hl_legend_ramp()) is text without a swatch.
+  if (identical(kind, "title")) return(0)
   factor <- if (kind %in% c("dot", "square")) spacing$legend_swatch_square else spacing$legend_swatch_line
   factor * base
 }
 
-pack_legend <- function(items, left, right, style, base, spacing) {
+# Swatch, gap and label; a title is its text alone.
+legend_item_width <- function(item, style, base, spacing) {
+  label <- text_width_pt(item$label, style)
+  if (identical(item$kind, "title")) return(label)
+  swatch_width(item$kind, base, spacing) + spacing$legend_swatch_text * base + label
+}
+
+# Items left to right, a new row when the next would cross `right`. The `key` (a binned colour key) sits
+# right-aligned on the first row, and the items keep clear of it there.
+pack_legend <- function(items, left, right, style, base, spacing, key = list()) {
   row <- 0
   cursor <- left
   placed <- list()
+  gap <- spacing$legend_item * base
+  widths <- vapply(key, legend_item_width, numeric(1), style = style, base = base, spacing = spacing)
+  key_width <- if (length(widths)) sum(widths) + gap * (length(widths) - 1) else 0
   for (item in items) {
-    width <- swatch_width(item$kind, base, spacing) + spacing$legend_swatch_text * base +
-      text_width_pt(item$label, style)
-    if (cursor > left && cursor + width > right) {
+    width <- legend_item_width(item, style, base, spacing)
+    edge <- if (row == 0 && key_width > 0) right - key_width - gap else right
+    if (cursor > left && cursor + width > edge) {
       row <- row + 1
       cursor <- left
     }
     placed[[length(placed) + 1]] <- c(item, list(row = row, x = cursor, right = cursor + width))
-    cursor <- cursor + width + spacing$legend_item * base
+    cursor <- cursor + width + gap
+  }
+  x <- right - key_width
+  for (index in seq_along(key)) {
+    placed[[length(placed) + 1]] <- c(key[[index]], list(row = 0, x = x, right = x + widths[index]))
+    x <- x + widths[index] + gap
   }
   placed
 }
 
+# The binned colour key as legend items: its title, then one outlined square per step.
+ramp_key_items <- function(key) {
+  if (is.null(key)) return(list())
+  title <- if (!is.null(key$title)) list(list(kind = "title", colour = NA, label = key$title))
+  c(title, lapply(seq_along(key$colors), function(index) {
+    list(kind = "square", colour = key$colors[[index]], label = key$labels[[index]], outline = TRUE)
+  }))
+}
+
 swatch_grob <- function(entry, center, height, base, spacing, lines) {
   width <- swatch_width(entry$kind, base, spacing)
+  if (identical(entry$kind, "title")) return(grid::nullGrob())
   y <- height - center
   if (entry$kind == "thin") {
     return(grid::segmentsGrob(grid::unit(entry$x, "pt"), grid::unit(y, "pt"), grid::unit(entry$x + width, "pt"),
@@ -96,8 +125,12 @@ swatch_grob <- function(entry, center, height, base, spacing, lines) {
                                                                    lwd = lines$reference * base / 0.75)))
   }
   if (entry$kind %in% c("square", "dot")) {
+    # An outlined square (a binned colour key) keeps its lightest step visible on the surface.
+    edge <- if (isTRUE(entry$outline)) hl_tokens()$legend_ramp$outline * base else 0
     return(grid::rectGrob(grid::unit(entry$x, "pt"), grid::unit(y, "pt"), grid::unit(width, "pt"),
-                          grid::unit(width, "pt"), hjust = 0, gp = grid::gpar(fill = entry$colour, col = NA)))
+                          grid::unit(width, "pt"), hjust = 0,
+                          gp = grid::gpar(fill = entry$colour, col = if (edge > 0) lines$outline_colour else NA,
+                                          lwd = edge / 0.75, linejoin = "mitre")))
   }
   grid::segmentsGrob(grid::unit(entry$x, "pt"), grid::unit(y, "pt"), grid::unit(entry$x + width, "pt"),
                      grid::unit(y, "pt"), gp = grid::gpar(col = entry$colour, lwd = lines$data * base / 0.75,
@@ -112,14 +145,16 @@ scaled_lines <- function(scale) {
   lines
 }
 
-legend_grobs <- function(placed, centers, style, base, height, cap_height, scale = 1) {
+legend_grobs <- function(placed, centers, style, base, height, cap_height, scale = 1, outline = NULL) {
   spacing <- hl_tokens()$spacing
   lines <- scaled_lines(scale)
+  lines$outline_colour <- outline
   grobs <- list()
   for (entry in placed) {
     center <- centers[entry$row + 1]
     grobs[[length(grobs) + 1]] <- swatch_grob(entry, center, height, base, spacing, lines)
-    text_x <- entry$x + swatch_width(entry$kind, base, spacing) + spacing$legend_swatch_text * base
+    text_x <- if (identical(entry$kind, "title")) entry$x else
+      entry$x + swatch_width(entry$kind, base, spacing) + spacing$legend_swatch_text * base
     grobs[[length(grobs) + 1]] <- text_grob_pt(entry$label, text_x, center + style$size * cap_height / 2, style,
                                                height)
   }

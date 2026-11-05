@@ -2,7 +2,7 @@
 # in the group's colour, the median as a dot, an optional reference tick, and the key numbers on the right (or, on
 # a figure too narrow for both, on a line under each row).
 
-spread_stats <- c("median", "iqr", "mean", "n", "range")
+spread_stats <- c("median", "iqr", "mean", "n", "range", "levels")
 
 spread_formatter <- function(values, percent, digits, extra = 0) {
   scale <- if (percent) 100 else 1
@@ -11,14 +11,29 @@ spread_formatter <- function(values, percent, digits, extra = 0) {
   function(value) paste0(hl_format_number(snap_noise(value * scale), places), suffix)
 }
 
+# The most frequent values with their shares: "25 (48%) · 50 (41%)".
+spread_levels_text <- function(values, number) {
+  shown <- top_levels(values, hl_tokens()$spread$levels_shown)
+  paste(paste0(vapply(shown$level, number, character(1)), " (",
+               vapply(shown$share, hl_format_percent, character(1), digits = 0), ")"), collapse = " \u00b7 ")
+}
+
+# A level as given: 12.5 mg stays 12.5 and 50 stays 50 (up to three decimals). On discrete data a rounded level would
+# read as a dose nobody gave.
+spread_level_number <- function(value) {
+  value <- snap_noise(value)
+  hl_format_number(value, min(3, exact_places(value)))
+}
+
 # Key numbers as (label, value) pairs, drawn like a panel header's key numbers.
-spread_pairs <- function(values, stats, numbers, mark, mark_label) {
-  limits <- density_quantiles(values, c(0, 0.25, 0.5, 0.75, 1))
+spread_pairs <- function(values, stats, numbers, mark, mark_label, discrete = FALSE) {
+  limits <- (if (discrete) level_quantiles else density_quantiles)(values, c(0, 0.25, 0.5, 0.75, 1))
   number <- numbers[[1]]
   parts <- list(median = c("Median", number(limits[3])),
                 iqr = c("IQR", paste0(number(limits[2]), "\u2013", number(limits[4]))),
                 mean = c("Mean", numbers[[2]](mean(values))), n = c("n", hl_format_number(length(values), 0)),
-                range = c("Range", paste0(number(limits[1]), "\u2013", number(limits[5]))))
+                range = c("Range", paste0(number(limits[1]), "\u2013", number(limits[5]))),
+                levels = if ("levels" %in% stats) c(word("levels"), spread_levels_text(values, number)))
   pairs <- unname(parts[stats])
   if (!is.null(mark) && !is.null(mark_label)) pairs[[length(pairs) + 1]] <- c(mark_label, number(mark))
   pairs
@@ -71,42 +86,89 @@ spread_check_marks <- function(marks, names) {
   }
 }
 
-spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_label = NULL,
-                        stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL, zero = FALSE,
-                        axis_title = NULL, colors = NULL) {
-  check_columns(data, c(group, value))
-  spread_check_options(stats, digits)
-  check_present(data, value, "spread")
-  check_numeric(data, value, "spread")
-  names <- chart_groups(data, group, order, "spread")
+# A median between two levels that each hold a large share matches neither (doses of 25 and 50 mg, median 35): say
+# so, as a report would need a footnote for it.
+warn_median_gaps <- function(groups, numbers, chart = "spread") {
+  rules <- hl_tokens()$spread
+  for (name in names(groups)) {
+    gap <- median_gap(groups[[name]], rules$discrete_share, rules$discrete_min_n)
+    if (is.null(gap)) next
+    label <- if (nzchar(name)) sprintf(" of '%s'", name) else ""
+    warning(sprintf(paste("hairline: %s: the median%s, %s, lies between %s and %s, which each hold more than %s of",
+                          "the values, and matches neither; show stats = c(\"levels\", ...) or use discrete = TRUE"),
+                    chart, label, numbers[[2]](stats::median(groups[[name]])), numbers[[1]](gap[1]),
+                    numbers[[1]](gap[2]), hl_format_percent(rules$discrete_share, 0)), call. = FALSE)
+  }
+}
+
+# Values per group (a named list), groups without a value left out.
+group_samples <- function(data, group, value, order, chart) {
+  names <- chart_groups(data, group, order, chart)
   samples <- lapply(names, function(name) {
     values <- as.numeric(data[[value]][!is.na(data[[group]]) & as.character(data[[group]]) == name])
     values[!is.na(values)]
   })
-  keep <- lengths(samples) > 0
-  names <- names[keep]
-  samples <- samples[keep]
-  every <- unlist(samples)
+  samples <- stats::setNames(samples, names)
+  samples[lengths(samples) > 0]
+}
+
+# The values drawn per group within the clip limits; a group left without one is refused.
+clipped_samples <- function(samples, limits, chart) {
+  drawn <- lapply(samples, within_limits, limits = limits)
+  empty <- names(drawn)[lengths(drawn) == 0]
+  if (length(empty)) {
+    stop(sprintf("hairline: %s: clip hides every value of '%s'; widen the limits", chart, empty[1]), call. = FALSE)
+  }
+  drawn
+}
+
+spread_numbers <- function(every, percent, digits, discrete) {
   whole <- is_whole(every) && !percent
   plain <- spread_formatter(every, percent, digits)
   mean_number <- spread_formatter(every, percent, digits, if (whole) 1 else 0)
-  whole <- whole && is.null(digits)
+  whole <- whole && is.null(digits) && !discrete
+  if (discrete && is.null(digits) && !percent) return(list(spread_level_number, mean_number))
   # Of whole numbers, a quantile between two of them keeps one decimal (a median of 2.5, not 3).
-  numbers <- list(function(value) if (quantile_places(value, 0, whole) > 0) mean_number(value) else plain(value),
-                  mean_number)
+  list(function(value) if (quantile_places(value, 0, whole) > 0) mean_number(value) else plain(value), mean_number)
+}
+
+spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_label = NULL,
+                        stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL, zero = FALSE,
+                        axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
+                        clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE) {
+  check_columns(data, c(group, value, color_by))
+  spread_check_options(stats, digits)
+  if (show_n && !"n" %in% stats) stats <- c(stats, "n")
+  check_present(data, value, "spread")
+  check_numeric(data, value, "spread")
+  dropped <- drop_small(group_samples(data, group, value, order, "spread"), min_n, "spread")
+  samples <- dropped$groups
+  every <- unlist(samples, use.names = FALSE)
+  limits <- clip_limits(every, clip, "spread")
+  drawn <- clipped_samples(samples, limits, "spread")
+  counted <- if (clip_stats) drawn else samples
+  numbers <- spread_numbers(every, percent, digits, discrete)
+  if (!discrete) warn_median_gaps(counted, numbers)
+  names <- names(samples)
   spread_check_marks(marks, names)
-  palette <- colours_for(names, colors)
-  rows <- lapply(seq_along(names), function(index) {
-    limits <- density_quantiles(samples[[index]], c(0, 0.25, 0.5, 0.75, 1))
-    mark <- if (names[index] %in% names(marks)) as.numeric(marks[[names[index]]]) else NULL
-    list(name = names[index], color = palette[[names[index]]], low = limits[1], q1 = limits[2], median = limits[3],
-         q3 = limits[4], high = limits[5], mark = mark,
-         pairs = spread_pairs(samples[[index]], stats, numbers, mark, mark_label))
+  coloured <- series_colours(names, data, group, color_by, colors, dimension, "spread")
+  rows <- lapply(names, function(name) {
+    values <- counted[[name]]
+    middle <- (if (discrete) level_quantiles else density_quantiles)(values, c(0.25, 0.5, 0.75))
+    low <- min(drawn[[name]])
+    high <- max(drawn[[name]])
+    middle <- pmin(pmax(middle, low), high)
+    mark <- if (name %in% names(marks)) as.numeric(marks[[name]]) else NULL
+    list(name = name, color = coloured$palette[[name]], low = low, q1 = middle[1], median = middle[2],
+         q3 = middle[3], high = high, mark = mark,
+         pairs = spread_pairs(values, stats, numbers, mark, mark_label, discrete))
   })
   marked <- unlist(lapply(rows, `[[`, "mark"))
+  notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats),
+             if (discrete) word("levels_note"))
   list(rows = rows, axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
                                        c(vapply(rows, `[[`, numeric(1), "high"), marked), percent, zero),
-       axis_title = axis_title)
+       axis_title = axis_title, notes = notes, legend = if (!is.null(color_by)) coarse_legend(coloured))
 }
 
 spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
@@ -239,12 +301,22 @@ spread_drawing <- function(spec, box, measure, style) {
 #' @param order Group order, top to bottom.
 #' @param marks Named reference values per group, e.g. `c("Unit A" = 20)` (a capacity, a target).
 #' @param mark_label Name of the reference in the numbers column, e.g. `"beds"`.
-#' @param stats Numbers to show: any of `"median"`, `"iqr"`, `"mean"`, `"n"`, `"range"`.
+#' @param stats Numbers to show: any of `"median"`, `"iqr"`, `"mean"`, `"n"`, `"range"`, `"levels"` (the most
+#'   frequent values with their shares). A median that falls between two large levels is warned about.
 #' @param percent Values are shares (0-1), shown as percentages.
 #' @param digits Decimals; default by magnitude (none for whole numbers).
 #' @param zero Include zero on the axis.
 #' @param axis_title Title under the axis numbers, e.g. the unit.
 #' @param colors Named colours for this chart only.
+#' @param show_n Add each group's n to the numbers column.
+#' @param min_n Leave out groups with fewer values; the caption names them.
+#' @param clip Hide implausible values: a quantile of every value (`0.99`: above the 99th percentile) or
+#'   `c(low, high)` (`NA` for no limit on that side); the caption says how many and where.
+#' @param clip_stats Compute the statistics from the values drawn; by default they use every value.
+#' @param color_by Colour the rows by a coarser column; the legend lists its values.
+#' @param dimension What the groups are, so their colours keep off the slots another dimension holds (see
+#'   [hl_scope()]).
+#' @param discrete Keep quantiles on the data's own levels (type 1), for whole people or doses on round levels.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -256,11 +328,14 @@ spread_drawing <- function(spec, box, measure, style) {
 #' @export
 hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption = NULL, order = NULL, marks = NULL,
                       mark_label = NULL, stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL,
-                      zero = FALSE, axis_title = NULL, colors = NULL) {
-  spec <- spread_spec(data, group, value, order, marks, mark_label, stats, percent, digits, zero, axis_title, colors)
+                      zero = FALSE, axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
+                      clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE) {
+  spec <- spread_spec(data, group, value, order, marks, mark_label, stats, percent, digits, zero, axis_title, colors,
+                      show_n, min_n, clip, clip_stats, color_by, dimension, discrete)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
-                  caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE)
+                  caption = with_caption(caption, spec$notes), x = NULL, y = NULL) + theme_hairline(axes = FALSE)
+  if (length(spec$legend)) plot <- plot + hl_legend(spec$legend)
   plot@meta$hairline_drawing <- function(box, measure, style) spread_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot

@@ -10,14 +10,11 @@ Every proposal is meant for both packages under the same name (`bars(...)` / `hl
 
 ## Status (2026-11)
 
-**Python: every item below is in the package** (see `python/CHANGELOG.md`, "Unreleased"), with tests and five
-new gallery figures (`bars_facets`, `spread_doses`, `table_characteristics`, `unit_day`, `swimlanes_day`).
-Existing gallery figures keep their frame positions and tooltips exactly.
-
-**R: not yet.** The `hl_*` mirrors, their R gallery scripts and the parity entries are open. The tokens they
-need (locale words, `lanes`, `levels`, `swimlanes`, `table`, `time_axis`, `legend_ramp`, `partial`) are already
-shared. Until then the correlation heatmap keeps its old key in both languages (item 18's "charts add it
-themselves" waits for R), so the parity check still holds for every existing figure.
+**Every item below is in both packages** (see `python/CHANGELOG.md`, "Unreleased", and `r/NEWS.md`, "development
+version"), under the same names (`bars(facet=...)` / `hl_bars(facet = ...)`), with tests and five new gallery
+figures in both languages (`bars_facets`, `spread_doses`, `table_characteristics`, `unit_day`, `swimlanes_day`),
+all in `tools/parity.py`: every gallery figure agrees within 1 pt, frame positions and tooltips. The correlation
+heatmap now adds the binned key of item 18 itself, in both languages.
 
 Where the shipped form differs from the proposal:
 
@@ -33,6 +30,13 @@ Where the shipped form differs from the proposal:
 * Item 15: composition is `figure(panels=..., heights=..., sharex=True)` with `lanes/levels/swimlanes(...,
   into=figure, panel=i)`; rows sized with `heights` share y only when asked.
 * Item 16: `time_axis()` is a method on any figure; `timeseries` keeps its date axis.
+* In R, item 15's composition is `hl_rows(hl_lanes(...), hl_levels(...), heights = c(9, 3, 4))`: R has no
+  `figure()` to draw into, so finished plots are stacked as the rows of one frame, one time axis shared and
+  labelled at the bottom. Item 18 is `hl_legend_ramp()`, added to any ggplot with `+`; item 11 is `hl_report()`
+  with `hl_report_add()` and `hl_report_write()`.
+* `table_characteristics` is drawn at the double size in both languages: at one and a half its "Early
+  mobilisation" heading needed to wrap by 0.06 pt in Python, closer than the two languages' text measurement
+  agrees, so the gallery figure now has room for its headings in one line.
 
 ## 1. Facets with their own scale
 
