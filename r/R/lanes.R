@@ -130,7 +130,8 @@ lane_cells <- function(matrix, layout, ramps, steps, bin, value, top) {
 #' @param size Size preset, as in [hl_save()].
 #' @return A ggplot with the hairline frame.
 #' @examples
-#' stays <- data.frame(place = c("Theatre 1", "Theatre 1", "Recovery 1"), section = c("Theatre", "Theatre", "Recovery"),
+#' stays <- data.frame(place = c("Theatre 1", "Theatre 1", "Recovery 1"),
+#'                     section = c("Theatre", "Theatre", "Recovery"),
 #'                     start = c("2026-01-05 08:00", "2026-01-06 09:10", "2026-01-05 10:05"),
 #'                     end = c("2026-01-05 10:00", "2026-01-06 11:30", "2026-01-05 11:20"))
 #' hl_lanes(stays, "place", "start", "end", group = "section")

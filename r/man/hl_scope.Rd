@@ -23,6 +23,7 @@ when it has not.
 \examples{
 hl_use(brand = FALSE)
 procedures <- hl_bars(data.frame(group = c("A", "B"), n = c(3, 4)), "group", "n", by = "group")
-hl_scope("pattern", hl_bars(data.frame(kind = c("Bolus", "Infusion"), n = c(5, 2)), "kind", "n", by = "kind"))
+patterns <- data.frame(kind = c("Bolus", "Infusion"), n = c(5, 2))
+hl_scope("pattern", hl_bars(patterns, "kind", "n", by = "kind"))
 hl_use()
 }

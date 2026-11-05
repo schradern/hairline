@@ -43,9 +43,11 @@ items once and the last binned colour key; each plot's notes (its calendar
 filter, the quantile rule) follow the caption.
 }
 \examples{
-stays <- data.frame(place = c("Theatre 1", "Theatre 1"), start = c("2026-01-05 08:00", "2026-01-06 09:10"),
+stays <- data.frame(place = c("Theatre 1", "Theatre 1"),
+                    start = c("2026-01-05 08:00", "2026-01-06 09:10"),
                     end = c("2026-01-05 10:00", "2026-01-06 11:30"))
 staff <- data.frame(role = "Doctors", start = stays$start, end = stays$end)
-hl_rows(hl_lanes(stays, "place", "start", "end"), hl_levels(staff, "start", end = "end", by = "role"),
-        heights = c(2, 3), title = "Theatre and doctors")
+lanes <- hl_lanes(stays, "place", "start", "end")
+doctors <- hl_levels(staff, "start", end = "end", by = "role")
+hl_rows(lanes, doctors, heights = c(2, 3), title = "Theatre and doctors")
 }

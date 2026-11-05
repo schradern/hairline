@@ -38,5 +38,6 @@ themselves.
 }
 \examples{
 ggplot2::ggplot(datasets::faithful, ggplot2::aes(eruptions, waiting)) + ggplot2::geom_point() +
-  ggplot2::labs(title = "Old Faithful") + theme_hairline() + hl_legend_ramp("blue", title = "Share")
+  ggplot2::labs(title = "Old Faithful") + theme_hairline() +
+  hl_legend_ramp("blues", title = "Share")
 }
