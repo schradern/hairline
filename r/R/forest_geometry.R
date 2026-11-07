@@ -125,8 +125,9 @@ forest_marker <- function(x, centre, side, shape, colour) {
 forest_marks <- function(row, centre, scale, plot, side, spec, style) {
   left <- max(plot[1], scale(row$low))
   right <- min(plot[2], scale(row$high))
-  mark <- forest_marker(scale(row$estimate), centre, side, spec$marker %||% "square", spec$color)
-  list(list(kind = "line", points = rbind(c(left, centre), c(right, centre)), color = spec$color,
+  colour <- row$color %||% spec$color
+  mark <- forest_marker(scale(row$estimate), centre, side, spec$marker %||% "square", colour)
+  list(list(kind = "line", points = rbind(c(left, centre), c(right, centre)), color = colour,
             width = style$data_width, series = row$study),
        c(mark, series = row$study, tip = paste0(row$study, ": ", row$effect_text),
          list(tip_at = c(scale(row$estimate), centre - side / 2))))

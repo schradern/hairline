@@ -19,7 +19,13 @@ hl_ridgeline(
   clip = NULL,
   clip_stats = FALSE,
   color_by = NULL,
-  dimension = NULL
+  dimension = NULL,
+  sort = NULL,
+  percent = FALSE,
+  x_title = NULL,
+  reference = NULL,
+  highlight = NULL,
+  key_title = NULL
 )
 }
 \arguments{
@@ -41,6 +47,19 @@ A ramp name such as \code{"blues"} colours ordered groups light to dark, in the 
 
 \item{min_n, clip, clip_stats, color_by, dimension}{As in \code{\link[=hl_spread]{hl_spread()}}: groups too small and values clipped off are
 named in the caption.}
+
+\item{sort}{Order of the groups: \code{"median"}, \code{"mean"} or \code{"n"}, highest first; \code{NULL} keeps the given order.}
+
+\item{percent}{Draw shares (0 to 1) as percent.}
+
+\item{x_title}{Axis title under the plot.}
+
+\item{reference}{Reference lines on the value axis: a value, several, or a named vector whose names label the
+lines, e.g. \code{c(Target = 0.9)}.}
+
+\item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
+
+\item{key_title}{Title at the start of the legend row, naming what the groups are.}
 }
 \value{
 A ggplot with the hairline frame.

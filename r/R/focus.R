@@ -113,10 +113,14 @@ apply_highlight <- function(built) {
   panels <- if (!is.null(spec$panels)) highlight_panels(built, spec$panels) else NULL
   for (index in seq_along(built@data)) {
     geom <- class(built@plot@layers[[index]]$geom)[1]
-    if (geom %in% c("GeomHline", "GeomVline") || isTRUE(built@plot@layers[[index]]$hairline_decoration)) next
+    # Text (value labels) keeps its ink, as in Python; lines and dots match by colour, filled marks by fill.
+    decoration <- isTRUE(built@plot@layers[[index]]$hairline_decoration)
+    if (geom %in% c("GeomHline", "GeomVline", "GeomText", "GeomLabel") || decoration) next
     data <- built@data[[index]]
     keep <- rep(TRUE, nrow(data))
-    if (!is.null(colours) && "colour" %in% names(data)) keep <- keep & data$colour %in% colours
+    filled <- "fill" %in% names(data) && !geom %in% c("GeomPoint", "GeomLine", "GeomPath", "GeomStep")
+    if (!is.null(colours) && filled) keep <- keep & data$fill %in% colours
+    if (!is.null(colours) && !filled && "colour" %in% names(data)) keep <- keep & data$colour %in% colours
     if (!is.null(panels)) keep <- keep & as.integer(data$PANEL) %in% as.integer(panels)
     built@data[[index]] <- restyle_layer(data, keep, geom, rules)
   }

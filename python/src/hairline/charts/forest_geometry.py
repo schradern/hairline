@@ -143,12 +143,12 @@ def interval_marks(row: dict, centre: float, scale, plot: tuple[float, float], s
                    style: dict) -> list[dict]:
     """Interval line clipped to the plot, and the marker centred on the estimate."""
     left, right = max(plot[0], scale(row["low"])), min(plot[1], scale(row["high"]))
-    line = {"kind": "line", "points": [[left, centre], [right, centre]], "color": spec["color"],
+    color = row.get("color", spec["color"])
+    line = {"kind": "line", "points": [[left, centre], [right, centre]], "color": color,
             "width": style["data_width"], "series": row["study"]}
     tip = {"series": row["study"], "tip": f"{row['study']}: {row['effect_text']}",
            "tip_at": [scale(row["estimate"]), centre - side / 2]}
-    return [line, {**marker(scale(row["estimate"]), centre, side, spec.get("marker", "square"), spec["color"]),
-                   **tip}]
+    return [line, {**marker(scale(row["estimate"]), centre, side, spec.get("marker", "square"), color), **tip}]
 
 
 def dot_size(style: dict) -> float:
@@ -230,12 +230,44 @@ def forest_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     shapes = table_texts(spec, columns, heading, None, style) + [rule(columns["study"], columns["right"], top, style)]
     sides = [dot_size(style)] * len(spec["rows"]) if spec.get("marker") == "dot" else square_sides(spec, rules, base)
     for row, centre, side in zip(spec["rows"], centres, sides, strict=True):
+        if "heading" in row:
+            # A block's name (a facet of the dot plot) over its rows, as spread draws its sections.
+            shapes.append(text(columns["study"], baseline_for(centre, style, "label"), row["heading"], "label",
+                               style["neutral"]["ink"], "left", load_tokens()["type"]["key_weight"]))
+            continue
         shapes += table_texts(spec, columns, baseline_for(centre, style, "label"), row, style)
         shapes += interval_marks(row, centre, scale, columns["plot"], side, spec, style)
     if spec["null"] is not None:
         shapes.append({"kind": "line", "points": [[scale(spec["null"]), top], [scale(spec["null"]), bottom]],
                        "color": style["neutral"]["muted"], "width": style["leader_width"], "part": "null"})
+    shapes += reference_lines(spec, scale, top, bottom, heading, style)
     if spec["pooled"]:
         shapes += pooled_shapes(spec, columns, top, bottom, pitch, pooled_centre, scale, style, rules)
-    return shapes + axis_shapes(spec, scale, columns["plot"], bottom + rules["axis_gap"] * base, style, rules, box,
-                                measure)
+    axis_y = bottom + rules["axis_gap"] * base
+    return shapes + axis_shapes(spec, scale, columns["plot"], axis_y, style, rules, box, measure) + \
+        axis_title_shape(spec, columns["plot"][1], axis_y, style, rules)
+
+
+def reference_lines(spec: dict, scale, top: float, bottom: float, heading: float, style: dict) -> list[dict]:
+    """Reference lines across the rows in the reference style; labels on the heading line, right of the line,
+    where the plot has no heading of its own."""
+    rules, shapes = load_tokens()["reference"], []
+    for value, label in spec.get("references", []):
+        x = scale(value)
+        shapes.append({"kind": "line", "points": [[x, top], [x, bottom]], "color": rules["color"],
+                       "width": style["leader_width"], "dash": rules["dash"], "role": "reference"})
+        if label:
+            shapes.append(text(x + rules["label_gap"] * style["sizes"]["caption"], heading, label, "caption",
+                               style["neutral"]["faint"]))
+    return shapes
+
+
+def axis_title_shape(spec: dict, right: float, axis_y: float, style: dict, rules: dict) -> list[dict]:
+    """The axis title under the tick labels, right-aligned to the plot, as on every chart."""
+    if not spec.get("axis_title") or spec.get("favours"):
+        return []
+    size, base = style["sizes"]["label"], style["base"]
+    ticks = axis_y + rules["axis_gap"] * base + style["cap_height"] * size
+    baseline = ticks + style["descender"] * size + load_tokens()["spacing"]["x_title"] * base + \
+        style["cap_height"] * size
+    return [{**text(right, baseline, spec["axis_title"], "label", style["neutral"]["muted"], "right"), "part": "title"}]

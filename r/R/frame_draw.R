@@ -168,7 +168,11 @@ reference_grobs <- function(parts, plan) {
   gap <- hl_tokens()$reference$label_gap * style$size
   grobs <- list()
   for (reference in parts$references) {
-    if (is.null(reference$label) || is.null(reference$y)) next
+    if (is.null(reference$label)) next
+    if (is.null(reference$y)) {
+      grobs <- c(grobs, vertical_reference_grobs(reference, parts, plan, style, gap))
+      next
+    }
     for (index in seq_along(parts$panels)) {
       box <- plan$layout$panels[[index]]
       range <- parts$y_ranges[[index]]
@@ -180,6 +184,16 @@ reference_grobs <- function(parts, plan) {
     }
   }
   grobs
+}
+
+# A vertical line's label at the top of each panel, right of the line, as Python places it.
+vertical_reference_grobs <- function(reference, parts, plan, style, gap) {
+  lapply(seq_along(parts$panels), function(index) {
+    box <- plan$layout$panels[[index]]
+    range <- parts$x_ranges[[index]]
+    x <- box[1] + (as.numeric(reference$x) - range[1]) / diff(range) * box[3] + gap
+    text_grob_pt(reference$label, x, box[2] + gap + style$size * font_metrics()$cap_height, style, plan$size[2])
+  })
 }
 
 note_grobs <- function(parts, plan) {

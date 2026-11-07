@@ -75,6 +75,13 @@ forest_drawing <- function(spec, box, measure, style) {
               list(forest_rule(columns$study, columns$right, top, style)))
   for (index in seq_along(spec$rows)) {
     centre <- top + pitch * (index - 1) + line_pitch / 2
+    if (!is.null(spec$rows[[index]]$heading)) {
+      # A block's name (a facet of the dot plot) over its rows, as spread draws its sections.
+      shapes[[length(shapes) + 1]] <- shape_text(columns$study, baseline_for(centre, style, "label"),
+                                                 spec$rows[[index]]$heading, "label", style$neutral$ink, "left",
+                                                 hl_tokens()$type$key_weight)
+      next
+    }
     shapes <- c(shapes, forest_table_texts(spec, columns, baseline_for(centre, style, "label"), spec$rows[[index]],
                                            style),
                 forest_marks(spec$rows[[index]], centre, scale, columns$plot, sides[index], spec, style))
@@ -84,10 +91,39 @@ forest_drawing <- function(spec, box, measure, style) {
     shapes[[length(shapes) + 1]] <- list(kind = "line", points = rbind(c(null, top), c(null, bottom)),
                                          color = style$neutral$muted, width = style$leader_width, part = "null")
   }
+  shapes <- c(shapes, forest_reference_lines(spec, scale, top, bottom, heading, style))
   if (!is.null(spec$pooled)) {
     centre <- top + pitch * length(spec$rows) + line_pitch / 2 + rules$pooled_gap * pitch
     shapes <- c(shapes, forest_pooled_shapes(spec, columns, top, bottom, pitch, centre, scale, style, rules))
   }
-  c(shapes, forest_axis_shapes(spec, scale, columns$plot, bottom + rules$axis_gap * base, style, rules, box,
-                               measure))
+  axis_y <- bottom + rules$axis_gap * base
+  c(shapes, forest_axis_shapes(spec, scale, columns$plot, axis_y, style, rules, box, measure),
+    forest_axis_title(spec, columns$plot[2], axis_y, style, rules))
+}
+
+# Reference lines across the rows in the reference style; labels on the heading line, right of the line, where the
+# plot has no heading of its own. As Python's reference_lines().
+forest_reference_lines <- function(spec, scale, top, bottom, heading, style) {
+  rules <- hl_tokens()$reference
+  shapes <- list()
+  for (line in spec$references %||% list()) {
+    x <- scale(line$value)
+    shapes[[length(shapes) + 1]] <- list(kind = "line", points = rbind(c(x, top), c(x, bottom)), color = rules$color,
+                                         width = style$leader_width, dash = rules$dash, role = "reference")
+    if (!is.null(line$label)) {
+      shapes[[length(shapes) + 1]] <- shape_text(x + rules$label_gap * style$sizes$caption, heading, line$label,
+                                                 "caption", style$neutral$faint)
+    }
+  }
+  shapes
+}
+
+# The axis title under the tick labels, right-aligned to the plot, as on every chart. As Python's axis_title_shape().
+forest_axis_title <- function(spec, right, axis_y, style, rules) {
+  if (is.null(spec$axis_title) || length(spec$favours)) return(list())
+  size <- style$sizes$label
+  base <- style$base
+  ticks <- axis_y + rules$axis_gap * base + style$cap_height * size
+  baseline <- ticks + style$descender * size + hl_tokens()$spacing$x_title * base + style$cap_height * size
+  list(c(shape_text(right, baseline, spec$axis_title, "label", style$neutral$muted, "right"), part = "title"))
 }

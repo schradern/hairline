@@ -72,6 +72,27 @@ positions and tooltips are unchanged.
 * `dotplot(percent=True)` draws shares as percent; `arcs(key_title=)` names the width key, which now has a title
   by default.
 
+### Options every chart shares
+
+* One module (`charts/options.py`) applies the options every chart shares, so each works the same wherever it
+  appears; `docs/guide/options.md` shows which chart has which.
+* `reference=` (0.9, (0.9, "Target"), a list of them or {"Target": 0.9}) on `bars`, `spread`, `dotplot`,
+  `raincloud`, `ridgeline`, `scatter`, `timeseries` and `kaplan_meier`: dashed lines on the value axis, labelled at
+  their end, or above the rows on charts drawn as rows. `dotplot(reference=)` now draws this line instead of a
+  plain null line.
+* `highlight=` on the same charts keeps the named groups in colour and greys the others, legend included; on bars
+  it now reaches bar series, and a highlighted group keeps the colour it has without the highlight.
+* `key_title=` titles the legend row on every chart with a legend (`HairlineFigure.key_title()` on hand-built
+  figures); `x_title=` and `y_title=` on every chart with axes (`x_title` is the same as `axis_title` on `spread`
+  and `likert`).
+* `min_n=` on `bars`, `scatter`, `likert` and `dotplot` (with `n=`); `sort=` ("median", "mean", "n") on `raincloud`
+  and `ridgeline`; `percent=` on `raincloud`, `ridgeline` and `scatter`; `clip=` on `timeseries`;
+  `raincloud(show_n=False)`; `dotplot(order=)`.
+* `facet=` on `scatter` and `raincloud` (panels on shared axes, each with its own fit or comparisons) and on
+  `spread`, `dotplot` and `likert` (a block of rows per value under its name, on one axis; a group keeps its colour
+  in every block).
+* Two gallery figures in both languages: `scatter_sites` and `spread_years`; `dotplot_rates` draws a benchmark.
+
 The R package mirrors all of this under the same names (`hl_bars(facet = ...)`, `hl_lanes()`, ...); a composed
 figure there is `hl_rows()`.
 

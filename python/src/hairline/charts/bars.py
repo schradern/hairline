@@ -22,8 +22,10 @@ from hairline.charts.common import (
     partial_caption,
     with_caption,
     with_counts,
+    without_small_categories,
 )
 from hairline.charts.correlation_geometry import text_color
+from hairline.charts.options import Reference, apply_options
 from hairline.charts.timeseries import groups_of
 from hairline.drawing import measure_for
 from hairline.figure import MM_PER_INCH, HairlineFigure, figure, size_settings
@@ -361,7 +363,9 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
          top: int | None = None, other: str | None = None, partial: Mapping[str, str] | None = None,
          show_n: bool | str = False, normalize: bool = False, color_by: str | None = None,
          dimension: str | None = None, context: Sequence[str] | None = None, header: str = "total",
-         inside: str | None = None, respondents: str | None = None) -> HairlineFigure:
+         inside: str | None = None, respondents: str | None = None, min_n: int | None = None,
+         x_title: str | None = None, y_title: str | None = None, reference: Reference = None,
+         highlight: Sequence[str] | str | None = None, key_title: str | None = None) -> HairlineFigure:
     """Bars per category; without `value` rows are counted. Long or many labels, or labels too wide for upright
     bars at the figure's width, turn the bars horizontal; single series are sorted by value unless `order` or
     `sort="given"` says otherwise.
@@ -379,7 +383,11 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     were possible. `context` names categories drawn in the context grey (an exclusive "none" answer), last when
     sorted by value. `header="n"` puts each facet's n in its header instead of its total. `show_n="column"`
     writes each bar's n in a column right of the panel. `inside="name"` writes each stacked segment's name and
-    value inside it, in greys by position, so rows may hold different answers and no legend is needed."""
+    value inside it, in greys by position, so rows may hold different answers and no legend is needed.
+
+    Shared with the other charts: `min_n` leaves out categories with fewer rows and names them in the caption;
+    `x_title` and `y_title` title the axes; `reference` draws lines on the value axis (0.9, (0.9, "Target") or
+    {"Target": 0.9}); `highlight` keeps these groups of `by` in colour; `key_title` titles the legend row."""
     value_given = value is not None
     context = [str(name) for name in (context or ())]
     respondent_n: dict[str, int] = {}
@@ -390,6 +398,7 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
                                   "value_given": value_given})
         data, respondent_n = respondent_shares(data, category, facet, respondents)
         value = "_share"
+    data, small = without_small_categories(data, category, min_n, "bars")
     data, value = with_counts(data, value)
     check_columns(data, [category, value, by, facet, color_by])
     stacked = stacked and by is not None
@@ -435,7 +444,7 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     split = f" and {str(by).replace('_', ' ')}" if by and by != category else ""
     result = figure(title or f"{humanise(value)} by {str(category).replace('_', ' ')}{split}", subtitle=subtitle,
                     caption=with_caption(caption, partial_caption(partial, locale),
-                                         word("several_answers", locale) if respondents else None),
+                                         word("several_answers", locale) if respondents else None, small),
                     size=size, panels=len(panels),
                     layout="grid" if facet else "rows", columns=columns, sharex=sharex, sharey=sharey)
     with entities.chart(list(dict.fromkeys(series.values())) if by else [], colors, dimension) as palette:
@@ -447,7 +456,9 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
         result.legend([])
     elif by:
         result.legend()
-    return result
+    return apply_options(result, "bars", names=list(dict.fromkeys(series.values())) if by else [], x_title=x_title,
+                         y_title=y_title, reference=reference, reference_axis="x" if horizontal else "y",
+                         highlight=highlight, key_title=key_title)
 
 
 def draw_panel(result: HairlineFigure, index: int, panel: dict, groups: list[str], options: dict, facet: str | None,
@@ -507,3 +518,4 @@ def draw_named(result: HairlineFigure, index: int, panel: dict, options: dict) -
             result.inside_labels.append((index, artist, start, start + width))
             result.hover(index, group, color, (start, y - half, start + width, y + half), f"{group}: {name}, {shown}")
             start += width
+

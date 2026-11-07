@@ -24,7 +24,8 @@ FIGURES = ["theme_scatter", "occupancy_rows", "grid_panels", "brand_example", "d
            "arcs_pathways", "ridgeline_ages", "bars_stacked", "bars_percent", "chord_transfers",
            "venn_comorbidities", "study_describe", "spread_occupancy", "colour_sets",
            "bars_facets", "spread_doses", "table_characteristics", "unit_day", "swimlanes_day",
-           "likert_visits", "spread_importance", "bars_sources", "bars_answers"]
+           "likert_visits", "spread_importance", "bars_sources", "bars_answers", "scatter_sites",
+           "spread_years"]
 TOLERANCE_PT = 1.0
 
 

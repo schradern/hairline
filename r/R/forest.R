@@ -94,7 +94,7 @@ forest_rows <- function(data, study, estimate, low, high, weight, columns, digit
 forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns = character(), pooled = NULL,
                         ratio = TRUE, favours = NULL, colour, study_heading = "Study",
                         effect_heading = NULL, weight_heading = "Weight", digits = NULL,
-                        marker = "square", interval = TRUE, null = "auto") {
+                        marker = "square", interval = TRUE, null = "auto", references = list(), axis_title = NULL) {
   check_columns(data, c(study, estimate, low, high, weight, unname(columns)))
   forest_check_rows(data, study, estimate, low, high, weight, ratio)
   if (!is.null(favours) && length(favours) != 2) {
@@ -111,12 +111,16 @@ forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns
                    effect_text = hl_format_interval(pooled$estimate, pooled$low, pooled$high, digits))
   }
   intervals <- c(rows, if (is.null(pooled)) list() else list(pooled))
-  axis <- forest_axis(vapply(intervals, `[[`, numeric(1), "low"), vapply(intervals, `[[`, numeric(1), "high"), ratio,
-                      null)
-  list(rows = rows, columns = as.list(names(columns)), pooled = pooled, ratio = ratio, null = null, marker = marker,
-       favours = if (is.null(favours)) NULL else as.list(favours), axis = axis, color = colour,
-       study_heading = study_heading, effect_heading = effect_heading,
-       weight_heading = if (is.null(weight)) NULL else weight_heading)
+  lines <- vapply(references, `[[`, numeric(1), "value")
+  axis <- forest_axis(c(vapply(intervals, `[[`, numeric(1), "low"), lines),
+                      c(vapply(intervals, `[[`, numeric(1), "high"), lines), ratio, null)
+  spec <- list(rows = rows, columns = as.list(names(columns)), pooled = pooled, ratio = ratio, null = null,
+               marker = marker, favours = if (is.null(favours)) NULL else as.list(favours), axis = axis, color = colour,
+               study_heading = study_heading, effect_heading = effect_heading,
+               weight_heading = if (is.null(weight)) NULL else weight_heading)
+  if (length(references)) spec$references <- references
+  if (!is.null(axis_title)) spec$axis_title <- axis_title
+  spec
 }
 
 forest_from_model <- function(model, exponentiate) {

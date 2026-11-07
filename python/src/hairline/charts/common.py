@@ -216,6 +216,18 @@ def drop_small(groups: list[tuple[str, np.ndarray]], min_n: int | None, chart: s
     return kept, note
 
 
+def without_small_categories(data: pd.DataFrame, category: str, min_n: int | None,
+                             chart: str) -> tuple[pd.DataFrame, str | None]:
+    """Rows of categories with at least `min_n` rows, and the caption note naming the others."""
+    if min_n is None:
+        return data, None
+    check_columns(data, [category])
+    counts = data.groupby(data[category].astype(str), sort=False).size()
+    kept, note = drop_small([(str(name), np.ones(int(count))) for name, count in counts.items()], min_n, chart,
+                            None)
+    return data[data[category].astype(str).isin(dict(kept))], note
+
+
 def clip_limits(values: np.ndarray, clip: float | tuple[float | None, float | None] | None,
                 chart: str) -> tuple[float, float]:
     """The range drawn: everything (None), up to the `clip` quantile of every value (0.99: the top 1 % hidden), or
@@ -258,11 +270,14 @@ def within(values: np.ndarray, limits: tuple[float, float]) -> np.ndarray:
 
 
 def series_colors(names: Sequence[str], data: pd.DataFrame, group: str | None, color_by: str | None,
-                  colors: Mapping[str, str] | None, dimension: str | None, chart: str) -> tuple[dict[str, str],
-                                                                                             dict[str, str]]:
+                  colors: Mapping[str, str] | str | None, dimension: str | None, chart: str,
+                  highlight: Sequence[str] | str | None = None) -> tuple[dict[str, str], dict[str, str]]:
     """Each group's colour and the legend label it stands for: its own name, or with `color_by` the coarser
-    column's value (12 rows of procedure x age coloured by the 4 procedures; the palette counts the 4)."""
+    column's value (12 rows of procedure x age coloured by the 4 procedures; the palette counts the 4). Groups not
+    in `highlight` take the context grey."""
     from hairline import entities
+    from hairline.charts.options import highlighted
     coarse = coarse_groups(data, group, color_by, chart) if color_by else {name: name for name in names}
     palette = entities.colors_for(list(dict.fromkeys(coarse[name] for name in names)), colors, dimension)
-    return {name: palette[coarse[name]] for name in names}, {name: coarse[name] for name in names}
+    colours = {name: palette[coarse[name]] for name in names}
+    return highlighted(colours, highlight, list(names), chart), {name: coarse[name] for name in names}

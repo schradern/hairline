@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
 from hairline.charts.forest_geometry import axis_shapes, dot_size, marker, x_scale
+from hairline.charts.options import reference_line_height, reference_shapes
 from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -148,11 +149,13 @@ def spread_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     pitch = line + (lead if layout["under"] else 0.0)
     lines = section_lines(spec["rows"])
     heights = [line if kind == "heading" else pitch for kind, _ in lines]
-    bottom = box.y + sum(heights)
-    shapes = [{"kind": "line", "points": [[scale(value), box.y], [scale(value), bottom]],
+    lines_above = reference_line_height(spec, style)
+    bottom = box.y + lines_above + sum(heights)
+    shapes = [{"kind": "line", "points": [[scale(value), box.y + lines_above], [scale(value), bottom]],
                "color": style["neutral"]["grid"], "width": style["grid"], "role": "grid"}
               for value in spec["axis"]["breaks"]]
-    top, headings = box.y, 0
+    shapes += reference_shapes(spec, scale, box.y, bottom, style)
+    top, headings = box.y + lines_above, 0
     for (kind, entry), height in zip(lines, heights, strict=True):
         centre = top + line / 2
         baseline = baseline_for(centre, style, "label")
@@ -169,3 +172,4 @@ def spread_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     axis = {"axis": spec["axis"], "favours": None, "null": None}
     return shapes + axis_shapes(axis, scale, (left, right), bottom, style, rules) + \
         axis_title_shape(spec, right, bottom, style, rules)
+

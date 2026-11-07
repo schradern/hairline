@@ -18,7 +18,12 @@ hl_dotplot(
   reference = NULL,
   digits = NULL,
   n = NULL,
-  percent = FALSE
+  percent = FALSE,
+  order = NULL,
+  min_n = NULL,
+  x_title = NULL,
+  highlight = NULL,
+  facet = NULL
 )
 }
 \arguments{
@@ -34,13 +39,24 @@ hl_dotplot(
 
 \item{ratio}{Values are ratios (log axis).}
 
-\item{reference}{Value for a vertical reference line.}
+\item{reference}{Reference lines on the value axis: a value, several, or a named vector whose names label the
+lines, e.g. \code{c(Target = 0.9)}.}
 
 \item{digits}{Decimals of the numbers; \code{NULL} gives two, or more for small or close values.}
 
 \item{n}{Column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").}
 
 \item{percent}{\code{TRUE} draws shares (0.15) as percent (15), the heading naming the unit.}
+
+\item{order}{Row order instead of sorting by value.}
+
+\item{min_n}{Groups (or categories) with fewer values (rows) are left out and named in the caption.}
+
+\item{x_title}{Axis title under the plot.}
+
+\item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
+
+\item{facet}{Column whose values each get a block of rows under their name, each block sorted on its own.}
 }
 \value{
 A ggplot with the hairline frame.

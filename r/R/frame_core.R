@@ -97,8 +97,11 @@ frame_parts <- function(table, built) {
        aspect = panel_aspect(built), rows = max(vapply(panels, `[[`, numeric(1), "row")),
        columns = max(vapply(panels, `[[`, numeric(1), "col")), title = plot_label(built, "title"),
        subtitle = plot_label(built, "subtitle"), caption = plot_label(built, "caption"),
-       y_title = plot_label(built, if (flipped) "x" else "y"), x_title = plot_label(built, if (flipped) "y" else "x"),
-       legend = built@plot@meta$hairline_legend %||% c(legend_items(built), reference_legend_items(built)),
+       y_title = built@plot@meta$hairline_y_title %||% plot_label(built, if (flipped) "x" else "y"),
+       x_title = built@plot@meta$hairline_x_title %||% plot_label(built, if (flipped) "y" else "x"),
+       legend = titled_legend(built@plot@meta$hairline_legend %||%
+                                c(legend_items(built), reference_legend_items(built)),
+                              built@plot@meta$hairline_key_title),
        notes = built@plot@meta$hairline_notes %||% list(),
        x_ranges = lapply(built@layout$panel_params, function(params) params$x$continuous_range),
        headers = built@plot@meta$hairline_headers %||% list(),

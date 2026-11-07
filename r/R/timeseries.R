@@ -218,6 +218,9 @@ partial_layer <- function(partial, values) {
 #'   value): drawn lighter and named in the caption.
 #' @param color_by Colour the panels by a coarser column.
 #' @param dimension What the groups are, so their colours keep off the slots another dimension holds.
+#' @param clip,clip_stats As in [hl_spread()]: values beyond the limit are not drawn and the caption says so; the
+#'   key numbers use every value unless `clip_stats`.
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame; [hl_save()] writes it at the `"double"` size (174 mm) unless told
 #'   otherwise, as the Python package does.
 #' @examples
@@ -234,7 +237,8 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
                           threshold_legend = NULL, stats = c("mean", "median"), share_label = NULL, key = NULL,
                           key_panels = NULL, highlight = NULL, qualifiers = list(), bands = list(), events = list(),
                           order = NULL, raw_label = "Raw values", mean_label = NULL, colors = NULL, partial = NULL,
-                          color_by = NULL, dimension = NULL) {
+                          color_by = NULL, dimension = NULL, clip = NULL, clip_stats = FALSE, x_title = NULL,
+                          y_title = NULL, reference = NULL, key_title = NULL) {
   check_columns(data, c(x, y, by, color_by))
   if (length(partial) && is.null(names(partial))) {
     stop("hairline: timeseries: partial needs names, such as c(\"2021\" = \"2 months\")", call. = FALSE)
@@ -246,7 +250,13 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   check_present(data, y, "timeseries")
   check_numeric(data, y, "timeseries")
   data[[x]] <- with_iso_dates(data[[x]])
+  every <- data[[y]][!is.na(data[[y]])]
+  limits <- clip_limits(every, clip, "timeseries")
+  if (!is.null(clip)) caption <- with_caption(caption, clip_caption(every, limits, clip_stats))
+  counted <- prepared_series(data, x, y, by, order, window)
+  data[[y]][!is.na(data[[y]]) & (data[[y]] < limits[1] | data[[y]] > limits[2])] <- NA
   data <- prepared_series(data, x, y, by, order, window)
+  if (clip_stats) counted <- data
   x <- ".x"
   y <- ".y"
   colours <- if (is.null(by)) stats::setNames(lone_colour(), levels(data$.group)) else
@@ -267,8 +277,9 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
     list(x = as_axis_value(event$x, data[[x]], "event x"), label = event$label, panels = event$panels)
   })
   plot@meta$hairline_notes <- Filter(function(note) !is.null(note$label), notes)
-  plot <- headers_for(plot, data, y, stats, percent, threshold, share_label, key, key_panels, qualifiers)
+  plot <- headers_for(plot, counted, y, stats, percent, threshold, share_label, key, key_panels, qualifiers)
   # Panels in rows across the page, as the Python package's default size.
   plot@meta$hairline_size <- "double"
-  plot
+  chart_options(plot, "timeseries", x_title = x_title, y_title = y_title, reference = reference,
+                key_title = key_title)
 }

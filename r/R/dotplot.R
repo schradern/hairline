@@ -12,10 +12,12 @@
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param sort Sort by value, largest at the top.
 #' @param ratio Values are ratios (log axis).
-#' @param reference Value for a vertical reference line.
 #' @param digits Decimals of the numbers; `NULL` gives two, or more for small or close values.
 #' @param n Column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").
 #' @param percent `TRUE` draws shares (0.15) as percent (15), the heading naming the unit.
+#' @param order Row order instead of sorting by value.
+#' @param facet Column whose values each get a block of rows under their name, each block sorted on its own.
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' rates <- data.frame(unit = c("Medical", "Surgical", "Cardiac"), mortality = c(0.13, 0.08, 0.06),
@@ -23,18 +25,22 @@
 #' hl_dotplot(rates, "unit", "mortality", "low", "high")
 #' @export
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
-                       sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL, percent = FALSE) {
-  check_columns(data, c(label, estimate, low, high, n))
+                       sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL, percent = FALSE,
+                       order = NULL, min_n = NULL, x_title = NULL, highlight = NULL, facet = NULL) {
+  check_columns(data, c(label, estimate, low, high, n, facet))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
                  if (is.null(low)) "high" else "low", low %||% high), call. = FALSE)
   }
   interval <- !is.null(low) && !is.null(high)
   if (isTRUE(percent)) data <- dotplot_percent(data, c(estimate, low, high))
-  if (sort) data <- data[order(-data[[estimate]], seq_len(nrow(data))), , drop = FALSE]
+  kept <- dotplot_min_n(data, label, n, min_n)
+  arranged <- dotplot_faceted(kept$data, label, estimate, sort, order, facet)
+  data <- arranged$data
+  names <- as.character(data[[label]])
+  chosen <- checked_highlight(highlight, names, "dotplot")
   if (!is.null(n)) {
     check_numeric(data, n, "dotplot")
-    names <- as.character(data[[label]])
     data[[label]] <- labels_with_n(names, stats::setNames(as.list(data[[n]]), names))
   }
   if (!interval) {
@@ -47,13 +53,66 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   heading <- if (interval) word("interval", name = name) else name
   spec <- forest_spec(data, label, estimate, low, high, ratio = ratio, colour = lone_colour(),
                       study_heading = humanise(label), effect_heading = heading, digits = digits, marker = "dot",
-                      interval = interval, null = reference)
+                      interval = interval, null = NULL, references = option_references(reference, "dotplot"),
+                      axis_title = x_title)
+  if (length(chosen)) {
+    for (index in seq_along(spec$rows)) {
+      spec$rows[[index]]$color <- if (names[index] %in% chosen) spec$color else context_colour()
+    }
+  }
+  if (length(arranged$blocks)) spec$rows <- dotplot_headings(spec$rows, arranged$blocks)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(estimate), "by", gsub("_", " ", label)), subtitle = subtitle,
-                  caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE)
+                  caption = with_caption(caption, kept$note), x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot
+}
+
+# Rows whose `n` reaches `min_n`, and the caption note naming the others; `min_n` needs the n column. As Python's
+# rows_with_min_n().
+dotplot_min_n <- function(data, label, n, min_n) {
+  if (is.null(min_n)) return(list(data = data, note = NULL))
+  if (is.null(n)) stop("hairline: dotplot: min_n needs n =, the column holding each row's n", call. = FALSE)
+  check_numeric(data, n, "dotplot")
+  names <- as.character(data[[label]])
+  dropped <- drop_small(stats::setNames(lapply(data[[n]], function(count) rep(1, count)), names), min_n, "dotplot")
+  list(data = data[names %in% names(dropped$groups), , drop = FALSE], note = dropped$note)
+}
+
+# The rows in `order` when given, else largest first when sorted, else as given. As Python's ordered_rows().
+dotplot_ordered <- function(data, label, estimate, sort, order) {
+  if (!is.null(order)) {
+    names <- ordered_names(data[[label]], order, "dotplot", label)
+    return(data[match(names, as.character(data[[label]])), , drop = FALSE])
+  }
+  if (sort) data[order(-data[[estimate]], seq_len(nrow(data))), , drop = FALSE] else data
+}
+
+# The rows, block after block when faceted (each block ordered on its own), and each row's block. As Python's
+# faceted_rows().
+dotplot_faceted <- function(data, label, estimate, sort, order, facet) {
+  if (is.null(facet)) return(list(data = dotplot_ordered(data, label, estimate, sort, order), blocks = character()))
+  parts <- lapply(unique(as.character(data[[facet]])), function(block) {
+    rows <- data[as.character(data[[facet]]) == block, , drop = FALSE]
+    present <- as.character(order)[as.character(order) %in% as.character(rows[[label]])]
+    dotplot_ordered(rows, label, estimate, sort, if (is.null(order)) NULL else present)
+  })
+  data <- do.call(rbind, parts)
+  list(data = data, blocks = as.character(data[[facet]]))
+}
+
+# A heading row before the first row of each block. As Python's with_headings().
+dotplot_headings <- function(rows, blocks) {
+  found <- list()
+  for (index in seq_along(rows)) {
+    if (index == 1 || blocks[index] != blocks[index - 1]) {
+      found[[length(found) + 1]] <- list(heading = blocks[index], study = blocks[index], cells = list(),
+                                         effect_text = "", weight_text = "")
+    }
+    found[[length(found) + 1]] <- rows[[index]]
+  }
+  found
 }
 
 # Shares as percent: each named column x 100.

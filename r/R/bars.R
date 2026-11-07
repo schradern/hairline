@@ -376,6 +376,7 @@ bar_colours <- function(data, by, groups, color_by, colors, dimension) {
 #' @param respondents Column naming the respondent of each multiple-choice answer (one row per answer): each
 #'   respondent counts once per answer, as a share of the panel's respondents; the caption says several answers
 #'   were possible.
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' admissions <- data.frame(
@@ -391,8 +392,12 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
                     stacked = FALSE, percent = FALSE, horizontal = NULL, sort = NULL, order = NULL, labels = TRUE,
                     colors = NULL, size = NULL, facet = NULL, scales = "free", columns = NULL, top = NULL,
                     other = NULL, partial = NULL, show_n = FALSE, normalize = FALSE, color_by = NULL,
-                    dimension = NULL, context = NULL, header = "total", inside = NULL, respondents = NULL) {
+                    dimension = NULL, context = NULL, header = "total", inside = NULL, respondents = NULL,
+                    min_n = NULL, x_title = NULL, y_title = NULL, reference = NULL, highlight = NULL,
+                    key_title = NULL) {
   if (!is.null(size)) check_size_preset(size)
+  kept <- without_small_categories(data, category, min_n, "bars")
+  data <- kept$data
   respondent_n <- list()
   if (!is.null(respondents)) {
     check_respondents(value, by, percent || normalize)
@@ -428,7 +433,8 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
   if (column || !is.null(inside)) horizontal <- TRUE
   horizontal <- horizontal %||% bars_lie_down(panels, category, by, stacked, labels, percent, size %||% "onehalf",
                                               columns, divide)
-  caption <- with_caption(caption, partial_caption(partial), if (!is.null(respondents)) word("several_answers"))
+  caption <- with_caption(caption, partial_caption(partial), if (!is.null(respondents)) word("several_answers"),
+                          kept$note)
   drawn <- list(horizontal = horizontal, stacked = stacked, labels = labels, percent = percent, divide = divide,
                 partial = partial, facet = facet, context = as.character(context), inside = inside,
                 cap = if (!is.null(respondents)) 1 else Inf,
@@ -446,7 +452,9 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
   if (percent) plot <- plot + if (horizontal) scale_x_hairline(percent = TRUE) else scale_y_hairline(percent = TRUE)
   if (column) plot@meta$hairline_side_numbers <- bar_side_numbers(panels)
   plot@meta$hairline_size <- size
-  plot
+  series <- if (is.null(by)) character() else unique(unname(drawn$coloured$series %||% groups))
+  chart_options(plot, "bars", series, x_title = x_title, y_title = y_title, reference = reference,
+                reference_axis = if (horizontal) "x" else "y", highlight = highlight, key_title = key_title)
 }
 
 # The bars of every panel (or, with `inside = "name"`, the named segments of one) on their category axis.

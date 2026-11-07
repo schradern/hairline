@@ -32,6 +32,31 @@ raincloud_group_layers <- function(values, position, colour, rules, counted = va
                                                   inherit.aes = FALSE))))
 }
 
+# One panel's groups at their positions (a group without values here is left empty) and its comparisons, tested on
+# this panel's values: the layers and the bracket levels. As Python's draw_panel().
+raincloud_panel_layers <- function(drawn, counted, comparisons, names, palette) {
+  rules <- hl_tokens()$raincloud
+  layers <- list()
+  for (index in seq_along(names)) {
+    if (!length(drawn[[index]])) next
+    layers <- c(layers, raincloud_group_layers(drawn[[index]], index - 1, palette[[names[index]]], rules,
+                                               counted[[index]]))
+  }
+  present <- lengths(counted) > 0
+  rows <- data.frame(group = rep(names[present], lengths(counted[present])),
+                     value = unlist(counted[present], use.names = FALSE))
+  pairs <- resolve_comparisons(comparisons, rows, "group", "value", names[present])
+  for (name in unlist(lapply(pairs, `[`, 1:2))) {
+    if (!name %in% names[present]) {
+      stop(sprintf("hairline: raincloud: comparison group '%s' is not one of: %s", name,
+                   paste(names[present], collapse = ", ")), call. = FALSE)
+    }
+  }
+  spans <- lapply(pairs, function(pair) match(pair[1:2], names) - 1)
+  list(layers = c(layers, raincloud_bracket_layers(pairs, names, unlist(drawn, use.names = FALSE), rules)),
+       levels = if (length(spans)) max(bracket_levels(spans)) + 1 else 0)
+}
+
 bracket_headroom <- 0.6 # bracket steps above the highest bracket, for its label
 
 # The least plot height (x the base size) at which each of `levels` bracket levels has room for its p label: the
@@ -120,6 +145,9 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param min_n,clip,clip_stats,color_by,dimension As in [hl_spread()]: groups too small and values clipped off are
 #'   named in the caption; "n = …" counts the values the statistics use.
+#' @param show_n Write "n = …" under each group.
+#' @param columns Panels per row with `facet` (two by default).
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -129,52 +157,62 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #' @export
 hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, y_title = NULL,
                          order = NULL, comparisons = list(), colors = NULL, min_n = NULL, clip = NULL,
-                         clip_stats = FALSE, color_by = NULL, dimension = NULL) {
+                         clip_stats = FALSE, color_by = NULL, dimension = NULL, sort = NULL, percent = FALSE,
+                         show_n = TRUE, x_title = NULL, reference = NULL, highlight = NULL, key_title = NULL,
+                         facet = NULL, columns = NULL) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
     group <- sides$right[1]
   }
-  check_columns(data, c(group, value, color_by))
+  check_columns(data, c(group, value, color_by, facet))
   check_present(data, value, "raincloud")
   check_numeric(data, value, "raincloud")
   data <- data[!is.na(data[[value]]), , drop = FALSE]
   names <- chart_groups(data, group, order, "raincloud")
   groups <- stats::setNames(lapply(names, function(name) data[[value]][as.character(data[[group]]) == name]), names)
   dropped <- drop_small(groups, min_n, "raincloud")
-  groups <- dropped$groups
+  groups <- dropped$groups[sorted_names(names(dropped$groups), function(name) dropped$groups[[name]], sort,
+                                        "raincloud")]
   names <- names(groups)
   limits <- clip_limits(unlist(groups, use.names = FALSE), clip, "raincloud")
   drawn <- lapply(groups, within_limits, limits = limits)
   counted <- if (clip_stats) drawn else groups
-  rows <- data.frame(group = rep(names, lengths(counted)), value = unlist(counted, use.names = FALSE))
   title <- title %||% paste(humanise(value), "by", gsub("_", " ", group))
-  comparisons <- resolve_comparisons(comparisons, rows, "group", "value", names)
-  for (name in unlist(lapply(comparisons, `[`, 1:2))) {
-    if (!name %in% names) {
-      stop(sprintf("hairline: raincloud: comparison group '%s' is not one of: %s", name,
-                   paste(names, collapse = ", ")), call. = FALSE)
-    }
-  }
-  rules <- hl_tokens()$raincloud
+  coloured <- series_colours(names, data, group, color_by, colors, dimension, "raincloud", highlight)
+  panels <- if (is.null(facet)) "" else chart_groups(data, facet, NULL, "raincloud")
   plot <- ggplot2::ggplot()
-  coloured <- series_colours(names, data, group, color_by, colors, dimension, "raincloud")
-  for (index in seq_along(names)) {
-    plot <- plot + raincloud_group_layers(drawn[[index]], index - 1, coloured$palette[[names[index]]], rules,
-                                          counted[[index]])
+  levels <- 0
+  for (panel in panels) {
+    here <- if (is.null(facet)) rep(TRUE, nrow(data)) else as.character(data[[facet]]) == panel
+    values <- lapply(names, function(name) data[[value]][here & as.character(data[[group]]) == name])
+    shown <- lapply(values, within_limits, limits = limits)
+    built <- raincloud_panel_layers(shown, if (clip_stats) shown else values, comparisons, names, coloured$palette)
+    plot <- plot + if (is.null(facet)) built$layers else in_facet(built$layers, panel, panels)
+    levels <- max(levels, built$levels)
+    if (!is.null(facet)) {
+      total <- sum(lengths(if (clip_stats) shown else values))
+      plot <- plot + hl_panel_header(panel = panel, name = panel,
+                                     stats = if (show_n) c(n = hl_format_number(total, 0)) else NULL)
+    }
   }
   counts <- vapply(counted, function(values) word("n_equals", n = hl_format_number(length(values), 0)), character(1))
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(data[[value]], limits, clip_stats))
-  plot <- plot + raincloud_bracket_layers(comparisons, names, unlist(drawn, use.names = FALSE), rules) +
+  plot <- plot +
     ggplot2::scale_x_continuous(breaks = seq_along(names) - 1, labels = names, limits = c(-0.6, length(names) - 0.4),
                                 expand = c(0, 0)) +
     ggplot2::labs(title = title, subtitle = subtitle, caption = with_caption(caption, notes), x = NULL,
                   y = y_title) + theme_hairline() +
     hl_legend(if (is.null(color_by)) list() else coarse_legend(coloured))
-  plot@meta$hairline_table <- list(heading = NULL, rows = list(list(label = "", colour = NULL,
-                                                                    x = seq_along(names) - 1, text = unname(counts))))
+  if (!is.null(facet)) {
+    plot <- plot + ggplot2::facet_wrap(ggplot2::vars(.data$.facet), ncol = columns %||% min(length(panels), 2))
+  }
+  if (show_n && is.null(facet)) {
+    plot@meta$hairline_table <- list(heading = NULL, rows = list(list(label = "", colour = NULL,
+                                                                      x = seq_along(names) - 1, text = unname(counts))))
+  }
+  if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
   # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
-  spans <- lapply(comparisons, function(comparison) match(comparison[1:2], names) - 1)
-  plot@meta$hairline_min_plot <- bracket_plot_height(if (length(spans)) max(bracket_levels(spans)) + 1 else 0)
-  plot
+  plot@meta$hairline_min_plot <- bracket_plot_height(levels)
+  chart_options(plot, "raincloud", names, x_title = x_title, reference = reference, key_title = key_title)
 }

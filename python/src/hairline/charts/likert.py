@@ -9,8 +9,18 @@ from collections.abc import Mapping, Sequence
 import numpy as np
 import pandas as pd
 
-from hairline.charts.common import check_columns, check_labels, check_numeric, coarse_groups, humanise, ordered_names
+from hairline.charts.common import (
+    check_columns,
+    check_labels,
+    check_numeric,
+    coarse_groups,
+    humanise,
+    ordered_names,
+    with_caption,
+    without_small_categories,
+)
 from hairline.charts.likert_geometry import likert_drawing
+from hairline.charts.options import FACET_BLOCK, FACET_KEY, facet_rows
 from hairline.charts.spread import level_number, spread_axis
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -194,7 +204,8 @@ def likert(data: pd.DataFrame, item: str, rating: str, *, levels: Sequence[float
            group: str | None = None, reverse: Sequence[str] = (), order: Sequence[str] | None = None,
            sort: str | None = None, stats: Sequence[str] = STATS, axis_title: str | None = None,
            key_title: str | None = None, ramp: str | None = None, title: str | None = None,
-           subtitle: str | None = None, caption: str | None = None, size: str = "double") -> HairlineFigure:
+           subtitle: str | None = None, caption: str | None = None, size: str = "double", min_n: int | None = None,
+           x_title: str | None = None, facet: str | None = None) -> HairlineFigure:
     """Ratings per item (one row per answer), as diverging bars: the share of each bin stacked away from the
     split between the low and the high half of the scale, a middle level centred on it. `levels` is the scale
     (by default the ratings found), `split` where it divides (by default its middle). `bins` names ranges of levels
@@ -203,14 +214,39 @@ def likert(data: pd.DataFrame, item: str, rating: str, *, levels: Sequence[float
     recoded (low becomes high) and marked, so colour keeps one meaning. `group` draws the items in blocks under
     their section's name; `sort="balance"` orders a block by agreement less disagreement. The median, IQR (on the
     data's levels) and n stand beside each row; the binned key sits in the legend row. `ramp` names a diverging
-    ramp; the high half takes its first pole."""
+    ramp; the high half takes its first pole. Shared with the other charts: `min_n` leaves out items with fewer
+    ratings and names them; `x_title` is the same as `axis_title`; `facet` draws a block of items per value of that
+    column, under its name (as `group` does for sections), so the same items can be compared across blocks."""
+    check_columns(data, [item, rating])
+    title = title or f"{humanise(rating)} by {str(item).replace('_', ' ')}"
+    if facet is not None:
+        data, item, group, order, reverse = faceted_items(data, item, facet, group, order, reverse)
+    data, small = without_small_categories(data[data[rating].notna()], item, min_n, "likert") if min_n else (data,
+                                                                                                         None)
     spec = likert_spec(data, item, rating, levels=levels, split=split, bins=bins, group=group, reverse=reverse,
-                       order=order, sort=sort, stats=stats, axis_title=axis_title, ramp_name=ramp)
-    result = figure(title or f"{humanise(rating)} by {str(item).replace('_', ' ')}", subtitle=subtitle,
-                    caption=caption, size=size)
+                       order=order, sort=sort, stats=stats, axis_title=axis_title or x_title, ramp_name=ramp)
+    if facet is not None:
+        for row in spec["rows"]:
+            row["name"] = row["name"].split(" · ", 1)[1]
+    result = figure(title, subtitle=subtitle, caption=with_caption(caption, small), size=size)
     result.draw(0, lambda box, measure, style: likert_drawing(spec, box, measure, style))
     count = len(spec["bins"])
     result.legend([])
     result.legend_ramp([entry["color"] for entry in spec["bins"]], [(index + 1) / count for index in range(count)],
                        key_title, labels=[entry["name"] for entry in spec["bins"]])
     return fit_height(result)
+
+
+def faceted_items(data: pd.DataFrame, item: str, facet: str, group: str | None, order: Sequence[str] | None,
+                  reverse: Sequence[str]) -> tuple:
+    """The data keyed by facet and item, drawn in blocks as sections: (data, item, group, order, reverse) for
+    likert_spec(), the reversed items named by key."""
+    if group is not None:
+        raise ValueError("hairline: likert: facet and group both draw blocks of items; give one of them")
+    keyed, keys, items = facet_rows(data, item, facet, order, "likert")
+    unknown = [str(name) for name in reverse if str(name) not in set(items.values())]
+    if unknown:
+        raise ValueError(f"hairline: likert: reverse names {unknown[0]!r}, which is not an item; items: "
+                         f"{', '.join(dict.fromkeys(items.values()))}")
+    reversed_keys = [key for key in keys if items[key] in {str(name) for name in reverse}]
+    return keyed, FACET_KEY, FACET_BLOCK, keys, reversed_keys

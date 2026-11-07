@@ -40,6 +40,11 @@ Names are set in ink and numbers recede; a key always starts at the left; an int
 groups take the steps of one ramp (`colors="blues"`), and counts of people are shaded in greys so they never borrow
 a group's colour.
 
+The same holds for options: one question, one option, the same name in every chart that has the concept and in both
+languages. `highlight`, `reference`, `key_title`, `x_title`, `min_n`, `sort`, `percent` and `facet` are built once
+and shared, so `facet="site"` gives a scatter, a raincloud or a bar chart a panel per site, and a spread, dot plot or
+Likert chart a block of rows per site. The [options guide](docs/guide/options.md) shows which chart has which.
+
 ## Install
 
 Python, from PyPI:
@@ -159,6 +164,12 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 <tr><td width="50%" valign="top"><a href="gallery/python/bars_sources.py"><img src="docs/images/gallery/bars_sources.png" alt="Multiple choice, share of respondents"></a><br><sub>Multiple choice, share of respondents</sub></td><td width="50%" valign="top"><a href="gallery/python/bars_answers.py"><img src="docs/images/gallery/bars_answers.png" alt="Answers named inside"></a><br><sub>Answers named inside</sub></td></tr>
 </table>
 
+### Options every chart shares
+
+<table>
+<tr><td width="50%" valign="top"><a href="gallery/python/scatter_sites.py"><img src="docs/images/gallery/scatter_sites.png" alt="Facets on a scatter"></a><br><sub>Facets on a scatter</sub></td><td width="50%" valign="top"><a href="gallery/python/spread_years.py"><img src="docs/images/gallery/spread_years.png" alt="Facets as blocks of rows"></a><br><sub>Facets as blocks of rows</sub></td></tr>
+</table>
+
 ### Survival and evidence
 
 <table>
@@ -276,6 +287,8 @@ cat(hl_brand_report())
 
 - [Python package](python/README.md) and [R package](r/README.md): install, quick start, charts, files.
 - [Colour guide](docs/guide/colours.md): the colour sets, choosing one, colours that follow names, brands.
+- [Options guide](docs/guide/options.md): the options every chart shares (order, highlight, reference, facet, ...)
+  and which chart has which.
 - In R, every function has a help page with examples (`?hl_bars`), and `?hairline_colours` covers colour; in
   Python, `help(hl.bars)` and `help(hairline.palettes)`.
 
