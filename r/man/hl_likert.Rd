@@ -71,7 +71,8 @@ key sits in the legend row.
 }
 \examples{
 set.seed(1)
-answers <- data.frame(statement = rep(c("Easy to book a visit", "Explanations were clear"), each = 40),
+statements <- c("Easy to book a visit", "Explanations were clear")
+answers <- data.frame(statement = rep(statements, each = 40),
                       rating = c(sample(4:10, 40, TRUE), sample(1:8, 40, TRUE)))
 hl_likert(answers, "statement", "rating", levels = 1:10)
 }
