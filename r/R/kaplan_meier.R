@@ -73,6 +73,22 @@ km_layer_data <- function(estimates) {
          function(frame) transform(frame, group = factor(frame$group, levels = levels)))
 }
 
+# Censor ticks as vertical strokes of a set length and width in pt, like Python's "|" marker. A "|" glyph would take
+# its stroke width from the font, not from the token.
+censor_tick_geom <- ggplot2::ggproto("GeomCensorTick", ggplot2::Geom,
+  required_aes = c("x", "y"),
+  default_aes = ggplot2::aes(colour = "black", alpha = 1),
+  draw_key = ggplot2::draw_key_blank,
+  draw_panel = function(data, panel_params, coord, length_pt, width_pt) {
+    points <- coord$transform(data, panel_params)
+    half <- grid::unit(length_pt / 2, "bigpts")
+    grid::segmentsGrob(x0 = grid::unit(points$x, "native"), x1 = grid::unit(points$x, "native"),
+                       y0 = grid::unit(points$y, "native") - half, y1 = grid::unit(points$y, "native") + half,
+                       gp = grid::gpar(col = ggplot2::alpha(points$colour, points$alpha), lwd = width_pt / 0.75,
+                                       lineend = "butt"))
+  }
+)
+
 km_layers <- function(layers, colours, median_line) {
   rules <- hl_tokens()$survival
   base <- hl_settings()$base_size
@@ -82,9 +98,10 @@ km_layers <- function(layers, colours, median_line) {
                                alpha = rules$band_opacity, inherit.aes = FALSE)
   curve <- ggplot2::geom_step(data = layers$curves, ggplot2::aes(.data$time, .data$survival, colour = .data$group),
                               linewidth = width, direction = "hv", inherit.aes = FALSE)
-  ticks <- ggplot2::geom_point(data = layers$censored, ggplot2::aes(.data$time, .data$survival, colour = .data$group),
-                               shape = 124, size = pt_to_mm(rules$censor_tick * base / 0.75), alpha = 1,
-                               inherit.aes = FALSE)
+  ticks <- ggplot2::layer(geom = censor_tick_geom, stat = "identity", position = "identity", data = layers$censored,
+                          mapping = ggplot2::aes(.data$time, .data$survival, colour = .data$group),
+                          params = list(length_pt = rules$censor_tick * base, width_pt = rules$censor_width * base),
+                          inherit.aes = FALSE, show.legend = FALSE)
   range <- ggplot2::geom_blank(data = data.frame(time = 0, survival = c(0, 1)),
                                ggplot2::aes(.data$time, .data$survival), inherit.aes = FALSE)
   result <- list(band, curve, ticks, range, ggplot2::scale_colour_manual(values = colours),

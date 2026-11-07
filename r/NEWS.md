@@ -57,6 +57,9 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
 ## Fixes
 
 * Bar value labels are no longer cut off at the panel's top edge when they reach past the last break, as in Python.
+* `hl_kaplan_meier()` draws its censor ticks as strokes of the token's length and width, as Python does; the "|"
+  glyph it used before took its stroke from the font and came out thinner.
+* `hl_forest()` with a `metafor::rma` fit no longer carries metafor's attributes into the study table.
 
 # hairline 0.2.1
 

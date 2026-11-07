@@ -25,3 +25,16 @@ test_that("Kaplan-Meier inputs are checked", {
   expect_error(km_estimate(c(1, 2), c(1, 2)), "event values must be 0 or 1; found 2")
   expect_error(km_estimate(c(-1, 2), c(1, 1)), "time -1 is negative")
 })
+
+test_that("censor ticks are strokes of the token's length and width, not a glyph", {
+  hl_use(brand = FALSE)
+  data <- data.frame(months = c(2, 4, 5, 7, 9, 12), died = c(1, 0, 1, 0, 1, 0), arm = "A")
+  plot <- hl_kaplan_meier(data, "months", "died", "arm")
+  ticks <- Filter(function(layer) inherits(layer$geom, "GeomCensorTick"), plot@layers)
+  expect_length(ticks, 1)
+  rules <- hl_tokens()$survival
+  base <- hl_settings()$base_size
+  expect_equal(ticks[[1]]$geom_params$width_pt, rules$censor_width * base)
+  expect_equal(ticks[[1]]$geom_params$length_pt, rules$censor_tick * base)
+  expect_equal(nrow(ticks[[1]]$data), 3)
+})

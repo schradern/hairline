@@ -7,5 +7,6 @@ counts <- list(identified = 1240, registers = 85, duplicates = 260, automation =
                sought = 120, not_retrieved = 10, assessed = 110,
                excluded_reasons = c("Wrong population" = 40, "Wrong intervention" = 31, "No control group" = 21),
                included = 18, reports = 22)
-plot <- hl_prisma(counts, subtitle = "Systematic review of early mobilisation in the ICU", caption = "Synthetic counts.")
+plot <- hl_prisma(counts, subtitle = "Systematic review of early mobilisation in the ICU",
+                  caption = "Synthetic counts.")
 finish(plot, "prisma_review", "double")

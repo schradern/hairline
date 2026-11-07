@@ -28,7 +28,7 @@ Issues = "https://github.com/schradern/hairline/issues"
 Documentation = "https://github.com/schradern/hairline#readme"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6", "fonttools>=4.50", "opentype-feature-freezer>=1.32", "pillow>=10"]
+dev = ["pytest>=8", "ruff>=0.6", "fonttools>=4.50", "opentype-feature-freezer>=1.32", "pillow>=10", "lifelines>=0.27"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/hairline"]
