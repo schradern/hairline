@@ -98,3 +98,21 @@ def test_dotplot_takes_order_min_n_and_facets():
     assert "Not shown (under 10): C, C." in figure.caption and {"2024", "2025"} <= set(shown)
     with pytest.raises(ValueError, match="min_n needs n="):
         hl.dotplot(rates, "unit", "rate", min_n=10)
+
+
+def test_ridgeline_facets_draw_panels_with_their_n():
+    data = patients()
+    figure = hl.ridgeline(data, "group", "lactate", facet="site", show_n=True)
+    assert len(figure.axes) == 2
+    assert [header.stats for header in figure.headers.values()] == [(("n", "45"),), (("n", "45"),)]
+
+
+def test_show_n_false_leaves_n_out_of_dotplot_and_likert():
+    rates = pd.DataFrame({"unit": ["A", "B"], "rate": [0.1, 0.2], "n": [50, 40]})
+    assert "A (n = 50)" in texts(hl.dotplot(rates, "unit", "rate", n="n"))
+    shown = texts(hl.dotplot(rates, "unit", "rate", n="n", show_n=False, min_n=45))
+    assert "A" in shown and "A (n = 50)" not in shown and "B" not in shown
+    ratings = pd.DataFrame({"item": np.repeat(["Clear", "Kind"], 20), "rating": np.tile([1, 2, 3, 4, 5], 8)})
+    labels = [[text.strip() for text in texts(hl.likert(ratings, "item", "rating", show_n=shown))]
+              for shown in (True, False)]
+    assert "n" in labels[0] and "n" not in labels[1]

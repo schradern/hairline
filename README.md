@@ -42,8 +42,8 @@ a group's colour.
 
 The same holds for options: one question, one option, the same name in every chart that has the concept and in both
 languages. `highlight`, `reference`, `key_title`, `x_title`, `min_n`, `sort`, `percent` and `facet` are built once
-and shared, so `facet="site"` gives a scatter, a raincloud or a bar chart a panel per site, and a spread, dot plot or
-Likert chart a block of rows per site. The [options guide](docs/guide/options.md) shows which chart has which.
+and shared, so `facet="site"` gives a scatter, a raincloud, a ridgeline or a bar chart a panel per site, and a
+spread, dot plot or Likert chart a block of rows per site. The [options guide](docs/guide/options.md) shows which chart has which.
 
 ## Install
 

@@ -78,3 +78,25 @@ test_that("the dot plot takes order, min_n and facets", {
   expect_true(all(c("2024", "2025") %in% drawn_texts(plot)))
   expect_error(hl_dotplot(rates, "unit", "rate", min_n = 10), "min_n needs n =")
 })
+
+test_that("ridgeline facets draw panels with their n", {
+  hl_use(brand = FALSE)
+  plot <- hl_ridgeline(patients(), "group", "lactate", facet = "site", show_n = TRUE)
+  expect_length(hl_layout_report(plot)$panels, 2)
+  parts <- ggplot2::ggplotGrob(plot)$parts
+  headers <- lapply(1:2, function(index) panel_header_for(parts, index))
+  expect_equal(vapply(headers, `[[`, "", "name"), c("North", "South"))
+  expect_equal(unname(unlist(lapply(headers, `[[`, "stats"))), c("45", "45"))
+})
+
+test_that("show_n = FALSE leaves n out of the dot plot and Likert", {
+  hl_use(brand = FALSE)
+  rates <- data.frame(unit = c("A", "B"), rate = c(0.1, 0.2), n = c(50, 40))
+  expect_true("A (n = 50)" %in% drawn_texts(hl_dotplot(rates, "unit", "rate", n = "n")))
+  shown <- drawn_texts(hl_dotplot(rates, "unit", "rate", n = "n", show_n = FALSE, min_n = 45))
+  expect_true("A" %in% shown)
+  expect_false(any(c("A (n = 50)", "B") %in% shown))
+  ratings <- data.frame(item = rep(c("Clear", "Kind"), each = 20), rating = rep(1:5, 8))
+  expect_true("n" %in% trimws(drawn_texts(hl_likert(ratings, "item", "rating"))))
+  expect_false("n" %in% trimws(drawn_texts(hl_likert(ratings, "item", "rating", show_n = FALSE))))
+})
