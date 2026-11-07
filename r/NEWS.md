@@ -68,6 +68,26 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
 * `hl_dotplot(percent = TRUE)` draws shares as percent; `hl_arcs(key_title =)` names the width key, which now has a
   title by default.
 
+## Options every chart shares
+
+* One module (`chart_options.R`) applies the options every chart shares, so each works the same wherever it appears;
+  `docs/guide/options.md` shows which chart has which.
+* `reference =` (0.9, several values, or `c(Target = 0.9)`) on `hl_bars()`, `hl_spread()`, `hl_dotplot()`,
+  `hl_raincloud()`, `hl_ridgeline()`, `hl_scatter()`, `hl_timeseries()` and `hl_kaplan_meier()`: dashed lines on the
+  value axis, labelled at their end, or above the rows on charts drawn as rows. `hl_dotplot(reference =)` now draws
+  this line instead of a plain null line.
+* `highlight =` on the same charts keeps the named groups in colour and greys the others, legend included; on bars it
+  now reaches bar series, and a highlighted group keeps the colour it has without the highlight.
+* `key_title =` titles the legend row on every chart with a legend; `x_title =` and `y_title =` on every chart with
+  axes (`x_title` is the same as `axis_title` on `hl_spread()` and `hl_likert()`).
+* `min_n =` on `hl_bars()`, `hl_scatter()`, `hl_likert()` and `hl_dotplot()` (with `n =`); `sort =` ("median", "mean",
+  "n") on `hl_raincloud()` and `hl_ridgeline()`; `percent =` on `hl_raincloud()`, `hl_ridgeline()` and `hl_scatter()`;
+  `clip =` on `hl_timeseries()`; `hl_raincloud(show_n = FALSE)`; `hl_dotplot(order =)`.
+* `facet =` on `hl_scatter()` and `hl_raincloud()` (panels on shared axes, each with its own fit or comparisons) and
+  on `hl_spread()`, `hl_dotplot()` and `hl_likert()` (a block of rows per value under its name, on one axis; a group
+  keeps its colour in every block).
+* Two gallery figures in both languages: `scatter_sites` and `spread_years`; `dotplot_rates` draws a benchmark.
+
 ## Fixes
 
 * Bar value labels are no longer cut off at the panel's top edge when they reach past the last break, as in Python.

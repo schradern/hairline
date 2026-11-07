@@ -114,8 +114,8 @@ apply_highlight <- function(built) {
   for (index in seq_along(built@data)) {
     geom <- class(built@plot@layers[[index]]$geom)[1]
     # Text (value labels) keeps its ink, as in Python; lines and dots match by colour, filled marks by fill.
-    if (geom %in% c("GeomHline", "GeomVline", "GeomText", "GeomLabel") ||
-        isTRUE(built@plot@layers[[index]]$hairline_decoration)) next
+    decoration <- isTRUE(built@plot@layers[[index]]$hairline_decoration)
+    if (geom %in% c("GeomHline", "GeomVline", "GeomText", "GeomLabel") || decoration) next
     data <- built@data[[index]]
     keep <- rep(TRUE, nrow(data))
     filled <- "fill" %in% names(data) && !geom %in% c("GeomPoint", "GeomLine", "GeomPath", "GeomStep")

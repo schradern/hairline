@@ -151,13 +151,22 @@ hl.bars(answers, "question", "count", by="answer", stacked=True, percent=True,  
   gives each facet its n; **`show_n="column"`** writes each bar's n right of it; **`inside="name"`** names each
   stacked segment inside it, so rows may hold different answers.
 
+## Options every chart shares
+
+The same question gets the same option in every chart that has the concept: `order`, `sort`, `colors`,
+`highlight`, `key_title`, `x_title`, `y_title`, `reference`, `percent`, `show_n`, `min_n`, `clip` and `facet`.
+`reference={"Target": 0.9}` draws labelled dashed lines on the value axis, `highlight=["Unit B"]` greys the other
+groups, `facet="site"` draws a panel per site (a block of rows on spread, dot plot and Likert). The
+[options guide](../docs/guide/options.md) shows which chart has which.
+
 ## Colours
 
-Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its
-colour in every chart. `hl.palettes()` lists the six palettes, the purpose sets (two groups, greyscale print,
-risk of bias) and the ramps for amounts; `hl.swatches()` draws them; `hl.use(palette="calm")` changes the
-default; `hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name; `colors="blues"` on a chart gives
-ordered groups the steps of one ramp; `hl.colormap("blues")` gives a ramp to your own matplotlib plots. `help(hairline.palettes)` has the details.
+Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its colour
+in every chart. `hl.palettes()` lists the six palettes, the purpose sets (two groups, greyscale print, risk of bias)
+and the ramps for amounts; `hl.swatches()` draws them; `hl.use(palette="calm")` changes the default;
+`hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name; `colors="blues"` on a chart gives ordered groups the
+steps of one ramp; `hl.colormap("blues")` gives a ramp to your own matplotlib plots. `help(hairline.palettes)` has
+the details.
 
 ## Files
 

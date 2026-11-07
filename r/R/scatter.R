@@ -100,8 +100,8 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
     shown <- if (is.null(facet)) rows else rows[as.character(rows[[facet]]) == panel, , drop = FALSE]
     if (!is.null(fit)) {
       scatter_check_fit(shown[[x]])
-      plot <- plot + scatter_fit_layers(shown[[x]], shown[[y]], if (is.null(facet)) NULL else
-        factor(panel, levels = panels)) +
+      tag <- if (is.null(facet)) NULL else factor(panel, levels = panels)
+      plot <- plot + scatter_fit_layers(shown[[x]], shown[[y]], tag) +
         hl_panel_header(panel = if (is.null(facet)) NULL else panel,
                         name = if (is.null(facet)) "Linear fit" else panel,
                         stats = scatter_stats(shown[[x]], shown[[y]]))

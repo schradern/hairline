@@ -99,8 +99,8 @@ frame_parts <- function(table, built) {
        subtitle = plot_label(built, "subtitle"), caption = plot_label(built, "caption"),
        y_title = built@plot@meta$hairline_y_title %||% plot_label(built, if (flipped) "x" else "y"),
        x_title = built@plot@meta$hairline_x_title %||% plot_label(built, if (flipped) "y" else "x"),
-       legend = titled_legend(built@plot@meta$hairline_legend %||% c(legend_items(built),
-                                                                      reference_legend_items(built)),
+       legend = titled_legend(built@plot@meta$hairline_legend %||%
+                                c(legend_items(built), reference_legend_items(built)),
                               built@plot@meta$hairline_key_title),
        notes = built@plot@meta$hairline_notes %||% list(),
        x_ranges = lapply(built@layout$panel_params, function(params) params$x$continuous_range),

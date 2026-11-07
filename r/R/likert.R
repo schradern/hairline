@@ -238,8 +238,9 @@ hl_likert <- function(data, item, rating, levels = NULL, split = NULL, bins = NU
   spec <- likert_spec(kept$data, item, rating, levels, split, bins, group, reverse, order, sort, stats,
                       axis_title %||% x_title, ramp)
   if (!is.null(facet)) {
-    for (index in seq_along(spec$rows)) spec$rows[[index]]$name <- sub("^.*? \u00b7 ", "", spec$rows[[index]]$name,
-                                                                         perl = TRUE)
+    for (index in seq_along(spec$rows)) {
+      spec$rows[[index]]$name <- sub("^.*? \u00b7 ", "", spec$rows[[index]]$name, perl = TRUE)
+    }
   }
   count <- length(spec$bins)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
