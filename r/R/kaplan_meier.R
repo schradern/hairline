@@ -135,6 +135,7 @@ km_layers <- function(layers, colours, median_line) {
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
 #'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -144,7 +145,8 @@ km_layers <- function(layers, colours, median_line) {
 #' @export
 hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = NULL, subtitle = NULL, caption = NULL,
                             x_title = "Time", endpoint = "Survival", median_line = TRUE, stats = character(),
-                            at_risk = TRUE, times = NULL, order = NULL, test = TRUE, colors = NULL) {
+                            at_risk = TRUE, times = NULL, order = NULL, test = TRUE, colors = NULL, reference = NULL,
+                            highlight = NULL, key_title = NULL) {
   if (inherits(time, "formula")) {
     sides <- formula_sides(time)
     time <- as.character(sides$left[[2]])
@@ -161,7 +163,8 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
   grouped <- !is.null(by) || length(estimates) > 1
   names <- vapply(estimates, function(estimate) if (nzchar(estimate$name)) estimate$name else endpoint, character(1))
   for (index in seq_along(estimates)) estimates[[index]]$name <- names[index]
-  colours <- if (grouped) colours_for(names, colors) else stats::setNames(lone_colour(), names)
+  colours <- if (grouped) highlighted_colours(colours_for(names, colors), highlight, names, "kaplan_meier") else
+    stats::setNames(lone_colour(), names)
   max_time <- max(vapply(estimates, function(estimate) max(estimate$table$time), numeric(1)))
   moments <- times %||% nice_breaks(0, max_time)
   digits <- median_digits(lapply(estimates, `[[`, "table"))
@@ -186,5 +189,5 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
     })
     plot@meta$hairline_table <- list(heading = "Number at risk", rows = rows)
   }
-  plot
+  chart_options(plot, "kaplan_meier", names, reference = reference, key_title = key_title)
 }

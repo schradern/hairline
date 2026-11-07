@@ -12,6 +12,7 @@ import pandas as pd
 
 from hairline import entities
 from hairline.charts.common import check_columns, check_numeric
+from hairline.charts.options import Reference, apply_options, highlighted
 from hairline.charts.timeseries import groups_of, reference_style
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
@@ -139,11 +140,13 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
                  x_title: str = "Time", endpoint: str = "Survival", median_line: bool = True,
                  stats: Sequence[tuple[str, str]] = (), at_risk: bool = True, times: Sequence[float] | None = None,
                  order: Sequence[str] | None = None, test: bool = True, colors: Mapping[str, str] | None = None,
-                 size: str = "onehalf") -> HairlineFigure:
+                 size: str = "onehalf", reference: Reference = None, highlight: Sequence[str] | str | None = None,
+                 key_title: str | None = None) -> HairlineFigure:
     """Survival curves per group from time and event (1 = event, 0 = censored) columns, or from fitted
     Kaplan–Meier objects (one lifelines KaplanMeierFitter, or a mapping of group to one); with groups in raw data
     and `test`, the log-rank p joins the key numbers. A figure whose frame would leave the curves less than 8 x the
-    base size high (a narrow figure with a number-at-risk table) grows taller."""
+    base size high (a narrow figure with a number-at-risk table) grows taller. Shared with the other charts:
+    `reference` (lines at survival values), `highlight` (groups kept in colour) and `key_title`."""
     check_options(stats, times)
     estimates = estimates_from(data, time, event, by, order)
     if not estimates:
@@ -156,7 +159,8 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
     latest = max(float(table["time"].max()) for _, table, _ in estimates)
     moments = sorted(set(times)) if times is not None else nice_breaks(0, latest)
-    palette = entities.colors_for([name for name, _, _ in estimates], colors) if grouped else {}
+    names = [name for name, _, _ in estimates]
+    palette = highlighted(entities.colors_for(names, colors), highlight, names, "kaplan_meier") if grouped else {}
     rows = []
     for name, table, total in estimates:
         color = palette.get(name, lone_color())
@@ -169,7 +173,7 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
                     median_line, grouped)
     if at_risk:
         result.table(rows, heading="Number at risk")
-    return result
+    return apply_options(result, "kaplan_meier", names=names, reference=reference, key_title=key_title)
 
 
 def finish_survival(result: HairlineFigure, estimates: list, stats, endpoint: str, x_title: str, median_line: bool,

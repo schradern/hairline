@@ -52,13 +52,15 @@ scatter_check_fit <- function(x) {
 #'   uses every point unless `clip_stats`.
 #' @param color_by Colour the groups of `by` by a coarser column, which the legend lists.
 #' @param dimension What the groups are, so their colours keep off the slots another dimension holds.
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' hl_scatter(datasets::mtcars, "wt", "mpg", title = "Fuel use by weight")
 #' @export
 hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, caption = NULL, fit = "linear",
                        order = NULL, colors = NULL, clip = NULL, clip_stats = FALSE, color_by = NULL,
-                       dimension = NULL) {
+                       dimension = NULL, min_n = NULL, percent = FALSE, x_title = NULL, y_title = NULL,
+                       reference = NULL, highlight = NULL, key_title = NULL) {
   check_columns(data, c(x, y, by, color_by))
   if (!is.null(color_by) && is.null(by)) {
     stop("hairline: scatter: color_by needs by =, the groups it colours", call. = FALSE)
@@ -70,13 +72,15 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
   }
   rows <- data[stats::complete.cases(data[, c(x, y)]), , drop = FALSE]
   if (!nrow(rows)) stop(sprintf("hairline: scatter: no rows with both '%s' and '%s' to draw", x, y), call. = FALSE)
+  kept <- if (is.null(by)) list(data = rows, note = NULL) else without_small_categories(rows, by, min_n, "scatter")
+  rows <- kept$data
   groups <- chart_groups(rows, by, order, "scatter")
   # The fit and its key numbers cover the points drawn: the groups in `order`, when given.
   if (!is.null(by)) rows <- rows[as.character(rows[[by]]) %in% groups, , drop = FALSE]
   limits <- clip_limits(rows[[y]], clip, "scatter")
   note <- if (!is.null(clip)) clip_caption(rows[[y]], limits, clip_stats)
   coloured <- if (is.null(by)) list(palette = stats::setNames(lone_colour(), ""), coarse = NULL) else
-    series_colours(groups, rows, by, color_by, colors, dimension, "scatter")
+    series_colours(groups, rows, by, color_by, colors, dimension, "scatter", highlight)
   plot <- ggplot2::ggplot()
   for (name in groups) {
     subset <- if (is.null(by)) rows else rows[as.character(rows[[by]]) == name, , drop = FALSE]
@@ -94,7 +98,11 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
       hl_panel_header(name = "Linear fit", stats = scatter_stats(rows[[x]], rows[[y]]))
   }
   # Limits end on a break, so a point at the limit would be cut in half by the panel's edge.
-  plot + ggplot2::coord_cartesian(clip = "off") +
+  plot <- plot + ggplot2::coord_cartesian(clip = "off") +
     ggplot2::labs(title = title %||% paste(humanise(y), "and", gsub("_", " ", x)), subtitle = subtitle,
-                  caption = with_caption(caption, note), x = humanise(x), y = humanise(y)) + theme_hairline()
+                  caption = with_caption(caption, note, kept$note), x = humanise(x), y = humanise(y)) +
+    theme_hairline()
+  if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
+  chart_options(plot, "scatter", groups, x_title = x_title, y_title = y_title, reference = reference,
+                key_title = key_title)
 }

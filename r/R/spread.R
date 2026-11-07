@@ -144,7 +144,7 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
                         stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL, zero = FALSE,
                         axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
                         clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
-                        panel_letters = FALSE, mean = FALSE, sort = NULL) {
+                        panel_letters = FALSE, mean = FALSE, sort = NULL, reference = NULL, highlight = NULL) {
   check_columns(data, c(group, value, color_by, section))
   if (!is.null(sort) && !identical(sort, "median")) {
     stop(sprintf("hairline: spread: sort '%s' must be 'median' or NULL", sort), call. = FALSE)
@@ -163,7 +163,8 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   if (!discrete) warn_median_gaps(counted, numbers)
   names <- names(samples)
   spread_check_marks(marks, names)
-  coloured <- series_colours(names, data, group, color_by, colors, dimension, "spread")
+  coloured <- series_colours(names, data, group, color_by, colors, dimension, "spread", highlight)
+  lines <- option_references(reference, "spread")
   sections <- if (!is.null(section)) coarse_groups(data, group, section, "spread")
   rows <- lapply(names, function(name) {
     values <- counted[[name]]
@@ -178,13 +179,14 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
          pairs = spread_pairs(values, stats, numbers, mark, mark_label, discrete))
   })
   rows <- arranged_rows(rows, sort)
-  marked <- unlist(lapply(rows, `[[`, "mark"))
+  marked <- c(unlist(lapply(rows, `[[`, "mark")), vapply(lines, `[[`, numeric(1), "value"))
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats),
              if (discrete) word("levels_note"))
   list(rows = rows, axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
                                        c(vapply(rows, `[[`, numeric(1), "high"), marked), percent, zero),
        axis_title = axis_title, notes = notes, letters = isTRUE(panel_letters),
-       legend = c(if (!is.null(color_by)) coarse_legend(coloured), if (mean) spread_mean_legend()))
+       legend = c(if (!is.null(color_by)) coarse_legend(coloured), if (mean) spread_mean_legend()),
+       references = lines)
 }
 
 # The legend row's names for the median dot and the mean's open diamond.
@@ -336,12 +338,14 @@ spread_drawing <- function(spec, box, measure, style) {
   pitch <- line + if (layout$under) lead else 0
   lines <- section_lines(spec$rows)
   heights <- vapply(lines, function(entry) if (entry$kind == "heading") line else pitch, numeric(1))
-  bottom <- box[2] + sum(heights)
+  above <- drawn_reference_height(spec, style)
+  bottom <- box[2] + above + sum(heights)
   shapes <- lapply(spec$axis$breaks, function(value) {
-    list(kind = "line", points = rbind(c(scale(value), box[2]), c(scale(value), bottom)), color = style$neutral$grid,
-         width = style$grid, role = "grid")
+    list(kind = "line", points = rbind(c(scale(value), box[2] + above), c(scale(value), bottom)),
+         color = style$neutral$grid, width = style$grid, role = "grid")
   })
-  top <- box[2]
+  shapes <- c(shapes, drawn_reference_shapes(spec, scale, box[2], bottom, style))
+  top <- box[2] + above
   headings <- 0
   for (index in seq_along(lines)) {
     entry <- lines[[index]]$entry
@@ -396,6 +400,7 @@ spread_drawing <- function(spec, box, measure, style) {
 #' @param panel_letters Letter the sections a, b, c.
 #' @param mean Mark each row's mean as an open diamond; the legend row names median and mean.
 #' @param sort `"median"` orders the rows of a section by median, highest first; `NULL` keeps their order.
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -409,15 +414,17 @@ hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption
                       mark_label = NULL, stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL,
                       zero = FALSE, axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
                       clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
-                      panel_letters = FALSE, mean = FALSE, sort = NULL) {
-  spec <- spread_spec(data, group, value, order, marks, mark_label, stats, percent, digits, zero, axis_title, colors,
-                      show_n, min_n, clip, clip_stats, color_by, dimension, discrete, section, panel_letters, mean,
-                      sort)
+                      panel_letters = FALSE, mean = FALSE, sort = NULL, x_title = NULL, reference = NULL,
+                      highlight = NULL, key_title = NULL) {
+  spec <- spread_spec(data, group, value, order, marks, mark_label, stats, percent, digits, zero,
+                      axis_title %||% x_title, colors, show_n, min_n, clip, clip_stats, color_by, dimension, discrete,
+                      section, panel_letters, mean, sort, reference, highlight)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
                   caption = with_caption(caption, spec$notes), x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   if (length(spec$legend)) plot <- plot + hl_legend(spec$legend)
   plot@meta$hairline_drawing <- function(box, measure, style) spread_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
+  plot@meta$hairline_key_title <- key_title
   plot
 }

@@ -3,7 +3,7 @@ numbers."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,9 @@ from hairline.charts.common import (
     humanise,
     series_colors,
     with_caption,
+    without_small_categories,
 )
+from hairline.charts.options import Reference, apply_options
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import STATIC_ID, lone_color
@@ -60,11 +62,16 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
             subtitle: str | None = None, caption: str | None = None, fit: str | None = "linear",
             order: list[str] | None = None, colors: Mapping[str, str] | None = None, size: str = "onehalf",
             clip: float | tuple[float | None, float | None] | None = None, clip_stats: bool = False,
-            color_by: str | None = None, dimension: str | None = None) -> HairlineFigure:
+            color_by: str | None = None, dimension: str | None = None, min_n: int | None = None,
+            percent: bool = False, x_title: str | None = None, y_title: str | None = None,
+            reference: Reference = None, highlight: Sequence[str] | str | None = None,
+            key_title: str | None = None) -> HairlineFigure:
     """Points per group (entity colours) and, with `fit="linear"`, a fit over all points drawn (the groups in
     `order`, when given) with n, r and slope. `clip` hides implausible y values (as in `spread()`) and says so in
     the caption; the fit still uses every point unless `clip_stats`. `color_by` colours the groups of `by` by a
-    coarser column, which the legend lists; `dimension` keeps them off another dimension's slots."""
+    coarser column, which the legend lists; `dimension` keeps them off another dimension's slots. Shared with the
+    other charts: `min_n` (groups of `by` with fewer points are left out and named), `percent` (the y axis),
+    `x_title`, `y_title`, `reference` (lines at y values), `highlight` (groups kept in colour) and `key_title`."""
     check_columns(data, [x, y, by, color_by])
     check_numeric(data, [y], "scatter")
     check_finite(data, x, "scatter")
@@ -75,15 +82,17 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
     rows = data.dropna(subset=[x, y])
     if not len(rows):
         raise ValueError(f"hairline: scatter: no rows with both '{x}' and '{y}' to draw")
+    rows, small = without_small_categories(rows, by, min_n, "scatter") if by else (rows, None)
     locale = current_settings().locale
     groups = groups_of(rows, by, order, "scatter")
     every = pd.concat([group for _, group in groups])[y].to_numpy(dtype=float)
     limits = clip_limits(every, clip, "scatter")
     note = clip_caption(every, limits, clip_stats, locale) if clip is not None else None
     result = figure(title or f"{humanise(y)} and {str(x).replace('_', ' ')}", subtitle=subtitle,
-                    caption=with_caption(caption, note), size=size)
+                    caption=with_caption(caption, note, small), size=size)
     names = [name for name, _ in groups]
-    palette, coarse = series_colors(names, rows, by, color_by, colors, dimension, "scatter") if by else ({}, {})
+    palette, coarse = series_colors(names, rows, by, color_by, colors, dimension, "scatter",
+                                    highlight) if by else ({}, {})
     for name, group in groups:
         shown = group[group[y].between(*limits)]
         color = palette[name] if by else lone_color()
@@ -96,8 +105,9 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
         check_fit(drawn[x])
         draw_fit(result.ax, drawn[x], drawn[y])
         result.panel_header(0, "Linear fit", stats=fit_stats(drawn[x], drawn[y], locale))
-    result.y_title(humanise(y))
-    result.x_title(humanise(x))
+    if percent:
+        result.percent_axis(0, "y")
     if by:
         result.legend()
-    return result
+    return apply_options(result, "scatter", names=names, x_title=x_title or humanise(x),
+                         y_title=y_title or humanise(y), reference=reference, key_title=key_title)

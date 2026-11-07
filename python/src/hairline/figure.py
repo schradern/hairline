@@ -79,6 +79,7 @@ class HairlineFigure:
     hover_marks: list[dict] = field(default_factory=list)
     inside_labels: list[tuple] = field(default_factory=list)
     side_numbers: dict[int, list[tuple[float, str, str]]] = field(default_factory=dict)
+    legend_heading: str | None = None
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)
@@ -141,6 +142,10 @@ class HairlineFigure:
 
     def x_title(self, text: str) -> None:
         self.x_title_text = text
+
+    def key_title(self, text: str | None) -> None:
+        """A title at the start of the legend row, naming what the series are ("Risk group")."""
+        self.legend_heading = None if text is None else str(text)
 
     def legend(self, items: Sequence[tuple[str, str, str]] | None = None) -> None:
         """Legend row under the header: explicit (kind, colour, label) items, or collected from the axes."""

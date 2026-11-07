@@ -27,6 +27,12 @@ point_fills <- function(colours) {
          USE.NAMES = FALSE)
 }
 
+# A title at the start of the legend row, naming what the series are ("Risk group"); none for an empty legend.
+titled_legend <- function(items, title) {
+  if (is.null(title) || !length(items)) return(items)
+  c(list(list(kind = "title", colour = NA, label = as.character(title))), items)
+}
+
 legend_items <- function(built) {
   items <- list()
   seen <- character()

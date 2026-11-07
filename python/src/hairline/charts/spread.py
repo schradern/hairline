@@ -24,6 +24,7 @@ from hairline.charts.common import (
     within,
 )
 from hairline.charts.forest import decimals
+from hairline.charts.options import Reference, references
 from hairline.charts.spread_geometry import spread_drawing
 from hairline.charts.timeseries import groups_of
 from hairline.drawing import fit_height
@@ -157,7 +158,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
                 clip: float | tuple[float | None, float | None] | None = None, clip_stats: bool = False,
                 color_by: str | None = None, dimension: str | None = None, discrete: bool = False,
                 section: str | None = None, panel_letters: bool = False, mean: bool = False,
-                sort: str | None = None) -> dict:
+                sort: str | None = None, reference: Reference = None,
+                highlight: Sequence[str] | str | None = None) -> dict:
     check_columns(data, [group, value, color_by, section])
     if sort not in SORTS:
         raise ValueError(f"hairline: spread: sort {sort!r} must be 'median' or None")
@@ -190,7 +192,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
     if not discrete:
         warn_median_gaps(counted, numbers)
     names = [name for name, _ in groups]
-    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "spread")
+    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "spread", highlight)
+    lines = references(reference, "spread")
     marks = checked_marks(marks, groups)
     sections = coarse_groups(data, group, section, "spread") if section else {}
     rows = []
@@ -205,8 +208,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
                      "section": sections[name] if section else None,
                      "pairs": stats_pairs(values, stats, numbers, mark, mark_label, discrete)})
     rows = arranged(rows, sort)
-    lows = [row["low"] for row in rows] + [row["mark"] for row in rows if row["mark"] is not None]
-    highs = [row["high"] for row in rows] + [row["mark"] for row in rows if row["mark"] is not None]
+    extra = [row["mark"] for row in rows if row["mark"] is not None] + [value for value, _ in lines]
+    lows, highs = [row["low"] for row in rows] + extra, [row["high"] for row in rows] + extra
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None,
              word("levels_note", locale) if discrete else None]
     legend = [("square", color, label) for label, color in dict.fromkeys((coarse[name], palette[name])
@@ -215,7 +218,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
         ink = current_settings().neutral["ink"]
         legend += [("dot", ink, word("median", locale)), ("diamond", ink, word("mean", locale))]
     return {"rows": rows, "axis": spread_axis(lows, highs, percent, zero), "axis_title": axis_title,
-            "notes": [note for note in notes if note], "legend": legend, "letters": panel_letters}
+            "notes": [note for note in notes if note], "legend": legend, "letters": panel_letters,
+            "references": [list(line) for line in lines]}
 
 
 def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
@@ -226,7 +230,8 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
            min_n: int | None = None, clip: float | tuple[float | None, float | None] | None = None,
            clip_stats: bool = False, color_by: str | None = None, dimension: str | None = None,
            discrete: bool = False, section: str | None = None, panel_letters: bool = False, mean: bool = False,
-           sort: str | None = None) -> HairlineFigure:
+           sort: str | None = None, x_title: str | None = None, reference: Reference = None,
+           highlight: Sequence[str] | str | None = None, key_title: str | None = None) -> HairlineFigure:
     """Distributions per group compared on one axis, first group on top; `marks` adds a reference tick per group
     (a capacity, a target), `mark_label` names it in the numbers column; `axis_title` (e.g. the unit) goes under
     the axis numbers. On a figure too narrow for the numbers beside the plot, they sit on a line under each row.
@@ -240,15 +245,19 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
 
     `section` draws the rows in blocks of that column, each under its name (lettered a, b, c with
     `panel_letters`) on one shared axis; `sort="median"` orders the rows of a block by median, highest first;
-    `mean` marks each row's mean as an open diamond, and the legend row names median and mean."""
+    `mean` marks each row's mean as an open diamond, and the legend row names median and mean.
+
+    Shared with the other charts: `x_title` (the same as `axis_title`), `reference` (dashed lines across the rows,
+    labelled above them), `highlight` (groups kept in colour) and `key_title`."""
     spec = spread_spec(data, group, value, order=order, marks=marks, mark_label=mark_label, stats=stats,
-                       percent=percent, digits=digits, zero=zero, axis_title=axis_title, colors=colors,
+                       percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title, colors=colors,
                        show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats, color_by=color_by,
                        dimension=dimension, discrete=discrete, section=section, panel_letters=panel_letters,
-                       mean=mean, sort=sort)
+                       mean=mean, sort=sort, reference=reference, highlight=highlight)
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *spec["notes"]), size=size)
     result.draw(0, lambda box, measure, style: spread_drawing(spec, box, measure, style))
     if spec["legend"]:
         result.legend(spec["legend"])
+    result.key_title(key_title)
     return fit_height(result)

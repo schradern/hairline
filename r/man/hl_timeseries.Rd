@@ -33,7 +33,13 @@ hl_timeseries(
   colors = NULL,
   partial = NULL,
   color_by = NULL,
-  dimension = NULL
+  dimension = NULL,
+  clip = NULL,
+  clip_stats = FALSE,
+  x_title = NULL,
+  y_title = NULL,
+  reference = NULL,
+  key_title = NULL
 )
 }
 \arguments{
@@ -81,6 +87,18 @@ value): drawn lighter and named in the caption.}
 \item{color_by}{Colour the panels by a coarser column.}
 
 \item{dimension}{What the groups are, so their colours keep off the slots another dimension holds.}
+
+\item{clip, clip_stats}{As in \code{\link[=hl_spread]{hl_spread()}}: values beyond the limit are not drawn and the caption says so; the
+key numbers use every value unless \code{clip_stats}.}
+
+\item{x_title}{Axis title under the plot.}
+
+\item{y_title}{Axis title above the plot, at the outer left edge.}
+
+\item{reference}{Reference lines on the value axis: a value, several, or a named vector whose names label the
+lines, e.g. \code{c(Target = 0.9)}.}
+
+\item{key_title}{Title at the start of the legend row, naming what the groups are.}
 }
 \value{
 A ggplot with the hairline frame; \code{\link[=hl_save]{hl_save()}} writes it at the \code{"double"} size (174 mm) unless told

@@ -9,7 +9,16 @@ from collections.abc import Mapping, Sequence
 import numpy as np
 import pandas as pd
 
-from hairline.charts.common import check_columns, check_labels, check_numeric, coarse_groups, humanise, ordered_names
+from hairline.charts.common import (
+    check_columns,
+    check_labels,
+    check_numeric,
+    coarse_groups,
+    humanise,
+    ordered_names,
+    with_caption,
+    without_small_categories,
+)
 from hairline.charts.likert_geometry import likert_drawing
 from hairline.charts.spread import level_number, spread_axis
 from hairline.drawing import fit_height
@@ -194,7 +203,8 @@ def likert(data: pd.DataFrame, item: str, rating: str, *, levels: Sequence[float
            group: str | None = None, reverse: Sequence[str] = (), order: Sequence[str] | None = None,
            sort: str | None = None, stats: Sequence[str] = STATS, axis_title: str | None = None,
            key_title: str | None = None, ramp: str | None = None, title: str | None = None,
-           subtitle: str | None = None, caption: str | None = None, size: str = "double") -> HairlineFigure:
+           subtitle: str | None = None, caption: str | None = None, size: str = "double", min_n: int | None = None,
+           x_title: str | None = None) -> HairlineFigure:
     """Ratings per item (one row per answer), as diverging bars: the share of each bin stacked away from the
     split between the low and the high half of the scale, a middle level centred on it. `levels` is the scale
     (by default the ratings found), `split` where it divides (by default its middle). `bins` names ranges of levels
@@ -203,11 +213,15 @@ def likert(data: pd.DataFrame, item: str, rating: str, *, levels: Sequence[float
     recoded (low becomes high) and marked, so colour keeps one meaning. `group` draws the items in blocks under
     their section's name; `sort="balance"` orders a block by agreement less disagreement. The median, IQR (on the
     data's levels) and n stand beside each row; the binned key sits in the legend row. `ramp` names a diverging
-    ramp; the high half takes its first pole."""
+    ramp; the high half takes its first pole. Shared with the other charts: `min_n` leaves out items with fewer
+    ratings and names them; `x_title` is the same as `axis_title`."""
+    check_columns(data, [item, rating])
+    data, small = without_small_categories(data[data[rating].notna()], item, min_n, "likert") if min_n else (data,
+                                                                                                         None)
     spec = likert_spec(data, item, rating, levels=levels, split=split, bins=bins, group=group, reverse=reverse,
-                       order=order, sort=sort, stats=stats, axis_title=axis_title, ramp_name=ramp)
+                       order=order, sort=sort, stats=stats, axis_title=axis_title or x_title, ramp_name=ramp)
     result = figure(title or f"{humanise(rating)} by {str(item).replace('_', ' ')}", subtitle=subtitle,
-                    caption=caption, size=size)
+                    caption=with_caption(caption, small), size=size)
     result.draw(0, lambda box, measure, style: likert_drawing(spec, box, measure, style))
     count = len(spec["bins"])
     result.legend([])

@@ -14,11 +14,14 @@ from hairline.charts.common import (
     check_labels,
     check_numeric,
     check_present,
+    clip_caption,
+    clip_limits,
     humanise,
     ordered_names,
     partial_caption,
     with_caption,
 )
+from hairline.charts.options import Reference, apply_options
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
 from hairline.fonts import families
@@ -198,11 +201,15 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
                events: Sequence[Mapping] = (), order: Sequence[str] | None = None, raw_label: str = "Raw values",
                mean_label: str | None = None, colors: Mapping[str, str] | None = None,
                size: str = "double", partial: Mapping[str, str] | None = None, color_by: str | None = None,
-               dimension: str | None = None) -> HairlineFigure:
+               dimension: str | None = None, clip: float | tuple[float | None, float | None] | None = None,
+               clip_stats: bool = False, x_title: str | None = None, y_title: str | None = None,
+               reference: Reference = None, key_title: str | None = None) -> HairlineFigure:
     """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers.
     `partial` names incomplete periods ({"2021": "2 months"}: a year, a date, or an x value) and what they hold:
     they are drawn lighter and the caption says so. `color_by` colours the panels by a coarser column;
-    `dimension` keeps their colours off another dimension's slots."""
+    `dimension` keeps their colours off another dimension's slots. Shared with the other charts: `clip` and
+    `clip_stats` (as in `spread()`), `x_title`, `y_title`, `reference` (lines at y values, beside `threshold`) and
+    `key_title`."""
     from hairline.charts.common import series_colors
     check_columns(data, [x, y, by, color_by])
     check_window(window)
@@ -212,7 +219,10 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     data = with_iso_dates(data, x)
     title = title or (f"{humanise(y)} by {str(by).replace('_', ' ')}" if by else f"{humanise(y)} over time")
     groups = groups_of(data, by, order, "timeseries")
-    caption = with_caption(caption, partial_caption(partial, current_settings().locale))
+    every = pd.concat([rows[y] for _, rows in groups]).dropna().to_numpy(dtype=float)
+    limits = clip_limits(every, clip, "timeseries")
+    clipped = clip_caption(every, limits, clip_stats, current_settings().locale) if clip is not None else None
+    caption = with_caption(caption, partial_caption(partial, current_settings().locale), clipped)
     result = figure(title, subtitle=subtitle, caption=caption, size=size, panels=len(groups), layout="rows")
     is_date = pd.api.types.is_datetime64_any_dtype(data[x])
     share_label = share_label or f"≥ {formatter(percent)(threshold, 0) if threshold is not None else ''}"
@@ -221,7 +231,8 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
                             "timeseries")[0] if by else {}
     for index, (name, rows) in enumerate(groups):
         ax = result.axes[index]
-        draw_series(ax, rows, x, y, palette.get(name, lone_color()), window, raw)
+        drawn = rows.assign(**{y: rows[y].where(rows[y].between(*limits))})
+        draw_series(ax, drawn, x, y, palette.get(name, lone_color()), window, raw)
         if period_mean:
             ax.axhline(rows[y].mean(), **{**reference_style(), "color": current_settings().neutral["muted"],
                                           "linestyle": (0, (3, 2.5))})
@@ -231,7 +242,7 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
             result.percent_axis(index)
         emphasise = key is not None and (key_panels is None or name in key_panels)
         result.panel_header(index, name or title, (qualifiers or {}).get(name),
-                            panel_stats(rows[y], stats, percent, threshold, share_label),
+                            panel_stats((drawn if clip_stats else rows)[y], stats, percent, threshold, share_label),
                             key=labels.get(key, key) if emphasise else None)
     if threshold is not None:
         result.reference(y=threshold, label=threshold_label)
@@ -239,4 +250,5 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
         result.highlight(panels=list(highlight))
     result.legend(legend_items(raw, period_mean, list(bands), {"raw": raw_label, "threshold": threshold_legend,
                                                                 "mean": mean_label or f"Rolling mean ({window})"}))
-    return result
+    return apply_options(result, "timeseries", x_title=x_title, y_title=y_title, reference=reference,
+                         key_title=key_title)

@@ -109,7 +109,8 @@ def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: s
                 columns: Mapping[str, str] | None = None, pooled: Mapping | None = None, ratio: bool = True,
                 favours: Sequence[str] | None = None, color: str, study_heading: str = "Study",
                 effect_heading: str | None = None, weight_heading: str = "Weight", digits: int | None = None,
-                marker: str = "square", interval: bool = True, null: float | None | str = "auto") -> dict:
+                marker: str = "square", interval: bool = True, null: float | None | str = "auto",
+                references: Sequence[tuple[float, str | None]] = (), axis_title: str | None = None) -> dict:
     """Everything the geometry needs, with numbers already formatted for the active locale."""
     columns = dict(columns or {})
     check_columns(data, [study, estimate, low, high, weight, *columns.values()])
@@ -127,8 +128,12 @@ def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: s
                                                                 digits, locale)}
     extra = [pooled_spec] if pooled_spec else []
     null = (1 if ratio else 0) if null == "auto" else null
-    axis = forest_axis([row["low"] for row in rows + extra], [row["high"] for row in rows + extra], ratio, locale, null)
-    return {"rows": rows, "columns": list(columns), "pooled": pooled_spec, "ratio": ratio, "null": null,
+    lines = [value for value, _ in references]
+    axis = forest_axis([row["low"] for row in rows + extra] + lines, [row["high"] for row in rows + extra] + lines,
+                       ratio, locale, null)
+    optional = {"references": [list(line) for line in references]} if references else {}
+    optional.update({"axis_title": axis_title} if axis_title else {})
+    return {**optional, "rows": rows, "columns": list(columns), "pooled": pooled_spec, "ratio": ratio, "null": null,
             "favours": list(favours) if favours else None, "axis": axis, "color": color, "study_heading": study_heading,
             "effect_heading": effect_heading, "weight_heading": weight_heading if weight else None, "marker": marker}
 

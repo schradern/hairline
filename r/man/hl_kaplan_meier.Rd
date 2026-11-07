@@ -20,7 +20,10 @@ hl_kaplan_meier(
   times = NULL,
   order = NULL,
   test = TRUE,
-  colors = NULL
+  colors = NULL,
+  reference = NULL,
+  highlight = NULL,
+  key_title = NULL
 )
 }
 \arguments{
@@ -52,6 +55,13 @@ hl_kaplan_meier(
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
 for the number of groups and are not remembered for other charts.
 A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
+
+\item{reference}{Reference lines on the value axis: a value, several, or a named vector whose names label the
+lines, e.g. \code{c(Target = 0.9)}.}
+
+\item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
+
+\item{key_title}{Title at the start of the legend row, naming what the groups are.}
 }
 \value{
 A ggplot with the hairline frame.

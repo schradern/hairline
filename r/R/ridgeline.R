@@ -58,6 +58,7 @@ ridge_spikes <- function(values, base, colour, rules) {
 #' @param show_n Write each group's n after its name, in the locale.
 #' @param min_n,clip,clip_stats,color_by,dimension As in [hl_spread()]: groups too small and values clipped off are
 #'   named in the caption.
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -68,7 +69,8 @@ ridge_spikes <- function(values, base, colour, rules) {
 #' @export
 hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL,
                          medians = TRUE, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL, clip_stats = FALSE,
-                         color_by = NULL, dimension = NULL) {
+                         color_by = NULL, dimension = NULL, sort = NULL, percent = FALSE, x_title = NULL,
+                         reference = NULL, highlight = NULL, key_title = NULL) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
@@ -83,7 +85,8 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     as.numeric(stats::na.omit(data[[value]][as.character(data[[group]]) == name]))
   }), names)
   dropped <- drop_small(groups, min_n, "ridgeline")
-  groups <- dropped$groups
+  groups <- dropped$groups[sorted_names(names(dropped$groups), function(name) dropped$groups[[name]], sort,
+                                        "ridgeline")]
   names <- names(groups)
   every <- unlist(groups, use.names = FALSE)
   limits <- clip_limits(every, clip, "ridgeline")
@@ -93,7 +96,7 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   peak <- max(c(0, unlist(lapply(curves, function(curve) if (is.null(curve)) 0 else max(curve$height)))))
   scale <- (1 + rules$overlap) / if (peak > 0) peak else 1
   plot <- ggplot2::ggplot()
-  coloured <- series_colours(names, data, group, color_by, colors, dimension, "ridgeline")
+  coloured <- series_colours(names, data, group, color_by, colors, dimension, "ridgeline", highlight)
   palette <- coloured$palette
   for (index in seq_along(names)) {
     if (is.null(curves[[index]])) {
@@ -110,5 +113,7 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
                   caption = with_caption(caption, notes), x = humanise(value), y = NULL) + theme_hairline()
   if (!is.null(color_by)) plot <- plot + hl_legend(coarse_legend(coloured))
-  plot
+  if (percent) plot <- plot + scale_x_hairline(percent = TRUE)
+  chart_options(plot, "ridgeline", names, x_title = x_title, reference = reference, reference_axis = "x",
+                key_title = key_title)
 }

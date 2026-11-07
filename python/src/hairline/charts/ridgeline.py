@@ -21,6 +21,7 @@ from hairline.charts.common import (
     with_caption,
     within,
 )
+from hairline.charts.options import Reference, apply_options, sorted_groups
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import STATIC_ID
@@ -83,10 +84,14 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               colors: Mapping[str, str] | None = None, size: str = "onehalf", show_n: bool = False,
               min_n: int | None = None, clip: float | tuple[float | None, float | None] | None = None,
               clip_stats: bool = False, color_by: str | None = None,
-              dimension: str | None = None) -> HairlineFigure:
+              dimension: str | None = None, sort: str | None = None, percent: bool = False,
+              x_title: str | None = None, reference: Reference = None,
+              highlight: Sequence[str] | str | None = None, key_title: str | None = None) -> HairlineFigure:
     """Distributions per group as overlapping ridges, the first group on top; all ridges share one height scale.
     `show_n` writes each group's n after its name; `min_n`, `clip`, `color_by` and `dimension` work as in
-    `spread()`: groups too small are named in the caption, and so are the values clipped off."""
+    `spread()`: groups too small are named in the caption, and so are the values clipped off. Shared with the
+    other charts: `sort` ("median", "mean", "n"), `percent`, `x_title`, `reference` (lines on the value axis),
+    `highlight` (groups kept in colour) and `key_title`."""
     check_columns(data, [group, value, color_by])
     check_present(data, value, "ridgeline")
     check_numeric(data, [value], "ridgeline")
@@ -95,6 +100,7 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     groups = [(name, rows[value].dropna().astype(float).to_numpy())
               for name, rows in groups_of(data, group, order, "ridgeline")]
     groups, small = drop_small(groups, min_n, "ridgeline", locale)
+    groups = sorted_groups(groups, sort, "ridgeline")
     every = np.concatenate([values for _, values in groups])
     limits = clip_limits(every, clip, "ridgeline")
     drawn = [(name, within(values, limits)) for name, values in groups]
@@ -105,13 +111,15 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *notes), size=size)
     names = [name for name, _ in groups]
-    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "ridgeline")
+    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "ridgeline", highlight)
     draw_ridges(result.ax, drawn, curves, scale, medians, palette, drawn if clip_stats else groups)
     labels = labels_with_n(names, {name: len(values) for name, values in groups}, locale) if show_n else names
     result.categories(0, list(reversed(labels)), "y")
     result.ax.set_ylim(0, len(groups) + rules["overlap"] + rules["headroom"])
-    result.x_title(humanise(value))
+    if percent:
+        result.percent_axis(0, "x")
     if color_by:
         result.legend([("square", color, label) for label, color in
                        dict.fromkeys((coarse[name], palette[name]) for name in names)])
-    return result
+    return apply_options(result, "ridgeline", names=names, x_title=x_title or humanise(value), reference=reference,
+                         reference_axis="x", key_title=key_title)

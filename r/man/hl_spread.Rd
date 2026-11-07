@@ -30,7 +30,11 @@ hl_spread(
   section = NULL,
   panel_letters = FALSE,
   mean = FALSE,
-  sort = NULL
+  sort = NULL,
+  x_title = NULL,
+  reference = NULL,
+  highlight = NULL,
+  key_title = NULL
 )
 }
 \arguments{
@@ -83,6 +87,15 @@ A ramp name such as \code{"blues"} colours ordered groups light to dark, in the 
 \item{mean}{Mark each row's mean as an open diamond; the legend row names median and mean.}
 
 \item{sort}{\code{"median"} orders the rows of a section by median, highest first; \code{NULL} keeps their order.}
+
+\item{x_title}{Axis title under the plot.}
+
+\item{reference}{Reference lines on the value axis: a value, several, or a named vector whose names label the
+lines, e.g. \code{c(Target = 0.9)}.}
+
+\item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
+
+\item{key_title}{Title at the start of the legend row, naming what the groups are.}
 }
 \value{
 A ggplot with the hairline frame.

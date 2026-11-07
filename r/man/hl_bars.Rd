@@ -33,7 +33,13 @@ hl_bars(
   context = NULL,
   header = "total",
   inside = NULL,
-  respondents = NULL
+  respondents = NULL,
+  min_n = NULL,
+  x_title = NULL,
+  y_title = NULL,
+  reference = NULL,
+  highlight = NULL,
+  key_title = NULL
 )
 }
 \arguments{
@@ -101,6 +107,19 @@ hold different answers and no legend is needed.}
 \item{respondents}{Column naming the respondent of each multiple-choice answer (one row per answer): each
 respondent counts once per answer, as a share of the panel's respondents; the caption says several answers
 were possible.}
+
+\item{min_n}{Groups (or categories) with fewer values (rows) are left out and named in the caption.}
+
+\item{x_title}{Axis title under the plot.}
+
+\item{y_title}{Axis title above the plot, at the outer left edge.}
+
+\item{reference}{Reference lines on the value axis: a value, several, or a named vector whose names label the
+lines, e.g. \code{c(Target = 0.9)}.}
+
+\item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
+
+\item{key_title}{Title at the start of the legend row, naming what the groups are.}
 }
 \value{
 A ggplot with the hairline frame.

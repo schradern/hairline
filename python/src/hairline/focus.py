@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from matplotlib.collections import PathCollection
 from matplotlib.colors import to_hex
+from matplotlib.container import BarContainer
 
 from hairline.errors import HairlineLayoutError
 from hairline.fonts import families
@@ -26,8 +27,14 @@ def data_artists(ax) -> list:
     return lines + [collection for collection in ax.collections if isinstance(collection, PathCollection)]
 
 
+def bar_series(ax) -> list[BarContainer]:
+    """The labelled bar series of a panel (one container per group of `by`)."""
+    return [container for container in ax.containers if isinstance(container, BarContainer)
+            and not str(container.get_label()).startswith("_")]
+
+
 def series_labels(figure: HairlineFigure) -> list[str]:
-    labels = [artist.get_label() for ax in figure.axes for artist in data_artists(ax)]
+    labels = [artist.get_label() for ax in figure.axes for artist in [*data_artists(ax), *bar_series(ax)]]
     return list(dict.fromkeys(label for label in labels if not label.startswith("_")))
 
 
@@ -101,6 +108,13 @@ def apply_highlight(figure: HairlineFigure) -> None:
             restyle(artist, keep, rules, context_color(figure.settings))
             if not keep:
                 figure.light_slot_done.add(id(artist))
+        for container in bar_series(ax):
+            if id(container) in figure.focus_done:
+                continue
+            figure.focus_done.add(id(container))
+            if not (index in panels and (not spec["series"] or container.get_label() in spec["series"])):
+                for patch in container:
+                    patch.set_facecolor(context_color(figure.settings))
 
 
 def add_reference(figure: HairlineFigure, y: float | None, x: float | None, label: str | None,

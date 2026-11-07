@@ -14,7 +14,7 @@ from hairline.layout.bare import fitted_box
 from hairline.layout.draw import add_text
 from hairline.layout.frame import compute_frame, kept_height
 from hairline.layout.geometry import FrameInput, FrameLayout, load_font_metrics
-from hairline.layout.legend import draw_legend, items_from_axes, pack_rows, ramp_key_items
+from hairline.layout.legend import TITLE, LegendItem, draw_legend, items_from_axes, pack_rows, ramp_key_items
 from hairline.layout.measure import text_width, wrap
 from hairline.layout.panels import ComposedHeader, compose_header
 from hairline.layout.styles import header_gaps, header_styles, role_style
@@ -67,6 +67,8 @@ def measure_texts(figure: HairlineFigure, width_pt: float, y_labels: list[list[s
     legend = figure.legend_items if figure.legend_items is not None else (
         focus_legend_items(figure, items_from_axes(figure.axes)) + figure.extra_legend_items
         if figure.collect_legend else [])
+    if figure.legend_heading and legend:
+        legend = [LegendItem(TITLE, "#000000", figure.legend_heading), *legend]
     figure.table_keys = table_keys(figure.table_spec, legend)
     widths = column_widths(figure, y_labels)
     return Measured(wrapped(figure.title, "title"), wrapped(figure.subtitle, "subtitle"),

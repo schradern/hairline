@@ -18,7 +18,14 @@ hl_scatter(
   clip = NULL,
   clip_stats = FALSE,
   color_by = NULL,
-  dimension = NULL
+  dimension = NULL,
+  min_n = NULL,
+  percent = FALSE,
+  x_title = NULL,
+  y_title = NULL,
+  reference = NULL,
+  highlight = NULL,
+  key_title = NULL
 )
 }
 \arguments{
@@ -44,6 +51,21 @@ uses every point unless \code{clip_stats}.}
 \item{color_by}{Colour the groups of \code{by} by a coarser column, which the legend lists.}
 
 \item{dimension}{What the groups are, so their colours keep off the slots another dimension holds.}
+
+\item{min_n}{Groups (or categories) with fewer values (rows) are left out and named in the caption.}
+
+\item{percent}{Draw shares (0 to 1) as percent.}
+
+\item{x_title}{Axis title under the plot.}
+
+\item{y_title}{Axis title above the plot, at the outer left edge.}
+
+\item{reference}{Reference lines on the value axis: a value, several, or a named vector whose names label the
+lines, e.g. \code{c(Target = 0.9)}.}
+
+\item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
+
+\item{key_title}{Title at the start of the legend row, naming what the groups are.}
 }
 \value{
 A ggplot with the hairline frame.

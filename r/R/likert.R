@@ -208,6 +208,7 @@ likert_spec <- function(data, item, rating, levels = NULL, split = NULL, bins = 
 #' @param ramp A diverging ramp's name; the high half takes its first pole.
 #' @param title,subtitle,caption Frame texts.
 #' @param size Size preset, as in [hl_save()].
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -218,13 +219,19 @@ likert_spec <- function(data, item, rating, levels = NULL, split = NULL, bins = 
 #' @export
 hl_likert <- function(data, item, rating, levels = NULL, split = NULL, bins = NULL, group = NULL,
                       reverse = character(), order = NULL, sort = NULL, stats = likert_stats, axis_title = NULL,
-                      key_title = NULL, ramp = NULL, title = NULL, subtitle = NULL, caption = NULL, size = "double") {
+                      key_title = NULL, ramp = NULL, title = NULL, subtitle = NULL, caption = NULL, size = "double",
+                      min_n = NULL, x_title = NULL) {
   check_size_preset(size)
-  spec <- likert_spec(data, item, rating, levels, split, bins, group, reverse, order, sort, stats, axis_title, ramp)
+  check_columns(data, c(item, rating))
+  kept <- if (is.null(min_n)) list(data = data, note = NULL) else
+    without_small_categories(data[!is.na(data[[rating]]), , drop = FALSE], item, min_n, "likert")
+  spec <- likert_spec(kept$data, item, rating, levels, split, bins, group, reverse, order, sort, stats,
+                      axis_title %||% x_title, ramp)
   count <- length(spec$bins)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(rating), "by", gsub("_", " ", item)), subtitle = subtitle,
-                  caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE) + hl_legend(list()) +
+                  caption = with_caption(caption, kept$note), x = NULL, y = NULL) + theme_hairline(axes = FALSE) +
+    hl_legend(list()) +
     hl_legend_ramp(vapply(spec$bins, `[[`, "", "color"), seq_len(count) / count, key_title,
                    labels = vapply(spec$bins, `[[`, "", "name"))
   plot@meta$hairline_drawing <- function(box, measure, style) likert_drawing(spec, box, measure, style)

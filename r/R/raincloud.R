@@ -120,6 +120,8 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param min_n,clip,clip_stats,color_by,dimension As in [hl_spread()]: groups too small and values clipped off are
 #'   named in the caption; "n = …" counts the values the statistics use.
+#' @param show_n Write "n = …" under each group.
+#' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -129,7 +131,8 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #' @export
 hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, y_title = NULL,
                          order = NULL, comparisons = list(), colors = NULL, min_n = NULL, clip = NULL,
-                         clip_stats = FALSE, color_by = NULL, dimension = NULL) {
+                         clip_stats = FALSE, color_by = NULL, dimension = NULL, sort = NULL, percent = FALSE,
+                         show_n = TRUE, x_title = NULL, reference = NULL, highlight = NULL, key_title = NULL) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
@@ -142,7 +145,8 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   names <- chart_groups(data, group, order, "raincloud")
   groups <- stats::setNames(lapply(names, function(name) data[[value]][as.character(data[[group]]) == name]), names)
   dropped <- drop_small(groups, min_n, "raincloud")
-  groups <- dropped$groups
+  groups <- dropped$groups[sorted_names(names(dropped$groups), function(name) dropped$groups[[name]], sort,
+                                        "raincloud")]
   names <- names(groups)
   limits <- clip_limits(unlist(groups, use.names = FALSE), clip, "raincloud")
   drawn <- lapply(groups, within_limits, limits = limits)
@@ -158,7 +162,7 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   }
   rules <- hl_tokens()$raincloud
   plot <- ggplot2::ggplot()
-  coloured <- series_colours(names, data, group, color_by, colors, dimension, "raincloud")
+  coloured <- series_colours(names, data, group, color_by, colors, dimension, "raincloud", highlight)
   for (index in seq_along(names)) {
     plot <- plot + raincloud_group_layers(drawn[[index]], index - 1, coloured$palette[[names[index]]], rules,
                                           counted[[index]])
@@ -171,10 +175,13 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     ggplot2::labs(title = title, subtitle = subtitle, caption = with_caption(caption, notes), x = NULL,
                   y = y_title) + theme_hairline() +
     hl_legend(if (is.null(color_by)) list() else coarse_legend(coloured))
-  plot@meta$hairline_table <- list(heading = NULL, rows = list(list(label = "", colour = NULL,
-                                                                    x = seq_along(names) - 1, text = unname(counts))))
+  if (show_n) {
+    plot@meta$hairline_table <- list(heading = NULL, rows = list(list(label = "", colour = NULL,
+                                                                      x = seq_along(names) - 1, text = unname(counts))))
+  }
+  if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
   # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
   spans <- lapply(comparisons, function(comparison) match(comparison[1:2], names) - 1)
   plot@meta$hairline_min_plot <- bracket_plot_height(if (length(spans)) max(bracket_levels(spans)) + 1 else 0)
-  plot
+  chart_options(plot, "raincloud", names, x_title = x_title, reference = reference, key_title = key_title)
 }
