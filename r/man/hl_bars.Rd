@@ -61,7 +61,8 @@ down, and so do labels too wide for upright bars at the width of \code{size}.}
 \item{labels}{Print the values: at the bar ends, or inside stacked segments with the totals at the ends.}
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
-for the number of groups and are not remembered for other charts.}
+for the number of groups and are not remembered for other charts.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
 
 \item{size}{Size preset the bars are laid out for, as in \code{\link[=hl_save]{hl_save()}} (\code{NULL}: \code{"onehalf"}): its width decides
 between upright and lying bars, and \code{\link[=hl_save]{hl_save()}} uses it unless given another size.}

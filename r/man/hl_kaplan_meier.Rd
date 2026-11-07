@@ -50,7 +50,8 @@ hl_kaplan_meier(
 \item{test}{Add the log-rank p to the key numbers when there are groups.}
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
-for the number of groups and are not remembered for other charts.}
+for the number of groups and are not remembered for other charts.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
 }
 \value{
 A ggplot with the hairline frame.

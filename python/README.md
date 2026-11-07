@@ -156,8 +156,8 @@ hl.bars(answers, "question", "count", by="answer", stacked=True, percent=True,  
 Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its
 colour in every chart. `hl.palettes()` lists the six palettes, the purpose sets (two groups, greyscale print,
 risk of bias) and the ramps for amounts; `hl.swatches()` draws them; `hl.use(palette="calm")` changes the
-default; `hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name; `hl.colormap("blues")` gives a ramp
-to your own matplotlib plots. `help(hairline.palettes)` has the details.
+default; `hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name; `colors="blues"` on a chart gives
+ordered groups the steps of one ramp; `hl.colormap("blues")` gives a ramp to your own matplotlib plots. `help(hairline.palettes)` has the details.
 
 ## Files
 

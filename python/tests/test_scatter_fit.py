@@ -62,7 +62,7 @@ def test_correlation_figure_has_a_colour_key():
     figure.figure.canvas.draw()
     report = figure.layout_report()
     assert report["legend_labels"] == ["−1", "−0.5", "0", "0.5", "1"]
-    assert report["legend_item_rights"][-1] == pytest.approx(report["right"])
+    assert report["legend_item_rights"][-1] < report["right"] - 100
     assert figure.ramp_key is not None and figure.ramp_key["labels"] == ["−1", "−0.5", "0", "0.5", "1"]
     assert figure.title == "Pearson correlations"
 

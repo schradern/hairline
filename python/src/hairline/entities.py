@@ -74,13 +74,26 @@ def reserved_colors(dimension: str | None) -> dict[str, str]:
             if _state["dimensions"].get(name) != dimension}
 
 
+def ordered_colors(names: Sequence[str], ramp_name: str) -> dict[str, str]:
+    """Ordered groups (low, medium, high risk) as steps of one ramp in the chart's order: a sequential ramp from
+    its middle to its dark end, so the lightest group still reads as a dot or a line on the surface; a diverging
+    ramp across both poles."""
+    from hairline.palettes import ramp, ramp_kind
+    names = [str(name) for name in dict.fromkeys(names)]
+    if ramp_kind(ramp_name) == "diverging":
+        return dict(zip(names, ramp(ramp_name, len(names)), strict=True))
+    return dict(zip(names, ramp(ramp_name, len(names) + 2)[2:], strict=True))
+
+
 @contextmanager
-def chart(names: Sequence[str], colors: Mapping[str, str] | None = None,
+def chart(names: Sequence[str], colors: Mapping[str, str] | str | None = None,
           dimension: str | None = None) -> Iterator[dict[str, str]]:
     """Assign the colours of one chart's groups at once; inside, color(name) answers from this assignment.
-    `dimension` names what the groups are (procedures, application patterns): groups of one dimension keep clear
-    of the slots another dimension holds. Without one, the enclosing scope() applies."""
+    `colors` maps names to colours, or names a ramp ("blues") for ordered groups. `dimension` names what the groups
+    are (procedures, application patterns): groups of one dimension keep clear of the slots another dimension
+    holds. Without one, the enclosing scope() applies."""
     from hairline.settings import current_settings
+    colors = ordered_colors(names, colors) if isinstance(colors, str) else colors
     settings, override = current_settings(), {name: str(value).lower() for name, value in (colors or {}).items()}
     dimension = dimension if dimension is not None else current_dimension()
     mapping = chart_colors(settings.palette, settings.palette_label, _state["fixed"], _state["auto"], override,

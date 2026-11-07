@@ -93,7 +93,7 @@ forest_rows <- function(data, study, estimate, low, high, weight, columns, digit
 
 forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns = character(), pooled = NULL,
                         ratio = TRUE, favours = NULL, colour, study_heading = "Study",
-                        effect_heading = "Effect [95 % CI]", weight_heading = "Weight", digits = NULL,
+                        effect_heading = NULL, weight_heading = "Weight", digits = NULL,
                         marker = "square", interval = TRUE, null = "auto") {
   check_columns(data, c(study, estimate, low, high, weight, unname(columns)))
   forest_check_rows(data, study, estimate, low, high, weight, ratio)
@@ -102,6 +102,7 @@ forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns
   }
   if (!is.null(pooled)) pooled <- forest_checked_pooled(as.list(pooled), ratio)
   digits <- digits %||% forest_default_digits(data, c(estimate, low, high))
+  effect_heading <- effect_heading %||% word("interval", name = word("effect"))
   rows <- forest_rows(data, study, estimate, low, high, weight, columns, digits, interval)
   if (identical(null, "auto")) null <- if (ratio) 1 else 0
   if (!is.null(pooled)) {

@@ -42,7 +42,7 @@ test_that("lanes draw rows in blocks, a binned key and a tooltip per cell", {
   expect_equal(hover$text[1], "Induction 1, 07:15–07:30: 50%")
   report <- hl_layout_report(plot)
   expect_equal(report$legend_labels, c("Share of days", "25%", "50%", "75%", "100%"))
-  expect_equal(utils::tail(report$legend_item_rights, 1), report$right)
+  expect_lt(utils::tail(report$legend_item_rights, 1), report$right - 100)
   expect_error(hl_lanes(stays(), "place", "start", "end", value = "mean"), "value 'mean' must be one of")
   expect_error(hl_lanes(stays(), "place", "start"), "give end =")
 })
@@ -114,13 +114,13 @@ test_that("a figure too short for its smallest row names the height that fits", 
   expect_error(compute_frame(spec, font_metrics()), "make it at least")
 })
 
-test_that("hl_legend_ramp draws outlined squares right-aligned in the legend row", {
+test_that("hl_legend_ramp draws outlined squares after the series items", {
   hl_use(brand = FALSE)
   plot <- ggplot2::ggplot(data.frame(x = 1:2, y = 1:2, g = "Series"), ggplot2::aes(x, y, colour = g)) +
     ggplot2::geom_line() + ggplot2::labs(title = "Key") + theme_hairline() + hl_legend_ramp(title = "Share of days")
   report <- hl_layout_report(plot, size = "double")
   expect_equal(report$legend_labels, c("Series", "Share of days", "25%", "50%", "75%", "100%"))
-  expect_equal(utils::tail(report$legend_item_rights, 1), report$right)
+  expect_lt(utils::tail(report$legend_item_rights, 1), report$right - 100)
   expect_error(hl_legend_ramp(steps = 2), "step 2 lies outside the limits")
   expect_error(hl_legend_ramp(format = "share"), "format 'share' must be")
 })

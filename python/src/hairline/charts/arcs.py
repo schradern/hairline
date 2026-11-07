@@ -11,13 +11,15 @@ from hairline.charts.common import flow_rows, humanise, with_counts
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
-from hairline.numbers import auto_digits, format_number
+from hairline.numbers import auto_digits, format_number, word
 from hairline.settings import current_settings
 
 
 def arcs_spec(data: pd.DataFrame, source: str, target: str, value: str | None,
-              order: Sequence[str] | None = None) -> dict:
-    """Nodes in order of first appearance (or `order`) and one link per pair with its summed value."""
+              order: Sequence[str] | None = None, key_title: str | None = None) -> dict:
+    """Nodes in order of first appearance (or `order`) and one link per pair with its summed value; the width
+    key's title is `key_title`, the value's name or the locale's word for a count."""
+    title = key_title or (humanise(value) if value else word("people"))
     data, value = with_counts(data, value)
     rows, names = flow_rows(data, source, target, value, "arcs", order)
     totals: dict[tuple[str, str], float] = {}
@@ -32,7 +34,8 @@ def arcs_spec(data: pd.DataFrame, source: str, target: str, value: str | None,
     links = [{"source": first, "target": second, "value": amount,
               "value_text": format_number(amount, digits, locale), "pair": pair_text(directions[(first, second)])}
              for (first, second), amount in totals.items() if amount > 0]
-    return {"nodes": names, "links": links, "color": lone_color(), "key": arcs_key(amounts, digits, locale)}
+    return {"nodes": names, "links": links, "color": lone_color(), "key": arcs_key(amounts, digits, locale),
+            "key_title": title}
 
 
 def pair_text(directions: set) -> str:
@@ -52,9 +55,10 @@ def arcs_key(amounts: list[float], digits: int, locale: str) -> list[dict]:
 
 def arcs(data: pd.DataFrame, source: str, target: str, value: str | None = None, *, title: str | None = None,
          subtitle: str | None = None, caption: str | None = None, order: Sequence[str] | None = None,
-         size: str = "onehalf") -> HairlineFigure:
-    """Flows between nodes as arcs above a baseline; without `value` each row counts once."""
-    spec = arcs_spec(data, source, target, value, order)
+         size: str = "onehalf", key_title: str | None = None) -> HairlineFigure:
+    """Flows between nodes as arcs above a baseline; without `value` each row counts once. `key_title` names the
+    width key (the value's name, or "Count")."""
+    spec = arcs_spec(data, source, target, value, order, key_title)
     label = humanise(value) if value else "Count"
     result = figure(title or f"{label} from {str(source).replace('_', ' ')} to {str(target).replace('_', ' ')}",
                     subtitle=subtitle, caption=caption, size=size)

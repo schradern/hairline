@@ -71,29 +71,31 @@ legend_item_width <- function(item, style, base, spacing) {
   swatch_width(item$kind, base, spacing) + spacing$legend_swatch_text * base + label
 }
 
-# Items left to right, a new row when the next would cross `right`. The `key` (a binned colour key) sits
-# right-aligned on the first row, and the items keep clear of it there.
+# Items left to right, a new row when the next would cross `right`. The `key` (a binned colour key) follows the
+# items, from the same left edge as every legend, and moves to a new row as a whole when it does not fit beside them.
 pack_legend <- function(items, left, right, style, base, spacing, key = list()) {
   row <- 0
   cursor <- left
   placed <- list()
   gap <- spacing$legend_item * base
-  widths <- vapply(key, legend_item_width, numeric(1), style = style, base = base, spacing = spacing)
-  key_width <- if (length(widths)) sum(widths) + gap * (length(widths) - 1) else 0
   for (item in items) {
     width <- legend_item_width(item, style, base, spacing)
-    edge <- if (row == 0 && key_width > 0) right - key_width - gap else right
-    if (cursor > left && cursor + width > edge) {
+    if (cursor > left && cursor + width > right) {
       row <- row + 1
       cursor <- left
     }
     placed[[length(placed) + 1]] <- c(item, list(row = row, x = cursor, right = cursor + width))
     cursor <- cursor + width + gap
   }
-  x <- right - key_width
+  widths <- vapply(key, legend_item_width, numeric(1), style = style, base = base, spacing = spacing)
+  key_width <- if (length(widths)) sum(widths) + gap * (length(widths) - 1) else 0
+  if (length(widths) && cursor > left && cursor + key_width > right) {
+    row <- row + 1
+    cursor <- left
+  }
   for (index in seq_along(key)) {
-    placed[[length(placed) + 1]] <- c(key[[index]], list(row = 0, x = x, right = x + widths[index]))
-    x <- x + widths[index] + gap
+    placed[[length(placed) + 1]] <- c(key[[index]], list(row = row, x = cursor, right = cursor + widths[index]))
+    cursor <- cursor + widths[index] + gap
   }
   placed
 }

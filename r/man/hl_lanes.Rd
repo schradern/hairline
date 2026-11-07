@@ -58,7 +58,8 @@ hl_lanes(
 
 \item{spans}{Named periods to shade, e.g. \code{list("Regular hours" = c(7, 16))}.}
 
-\item{colors}{Named colours for this chart only.}
+\item{colors}{Named colours for this chart only.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
 
 \item{dimension}{What the groups are, so their colours keep off the slots another dimension holds.}
 

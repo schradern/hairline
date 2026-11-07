@@ -117,6 +117,7 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #'   computed) or `c(group, group, text)` with your own result.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param min_n,clip,clip_stats,color_by,dimension As in [hl_spread()]: groups too small and values clipped off are
 #'   named in the caption; "n = …" counts the values the statistics use.
 #' @return A ggplot with the hairline frame.

@@ -94,22 +94,23 @@ def item_width(item: LegendItem, style: dict, spacing: dict) -> float:
 def pack_rows(items: Sequence[LegendItem], left: float, right: float, style: dict, spacing: dict,
               key: Sequence[LegendItem] = ()) -> list[PlacedItem]:
     """Place items left to right; start a new row when the next item would cross `right`. The `key` (a binned
-    colour key) sits right-aligned on the first row, and the items keep clear of it there."""
+    colour key) follows the items, from the same left edge as every legend, and moves to a new row as a whole
+    when it does not fit beside them."""
     base, placed, row, cursor = style["base"], [], 0, left
     gap = spacing["legend_item"] * base
-    widths = [item_width(item, style, spacing) for item in key]
-    key_width = sum(widths) + gap * (len(widths) - 1) if widths else 0.0
     for item in items:
         width = item_width(item, style, spacing)
-        edge = right - key_width - gap if row == 0 and key_width else right
-        if cursor > left and cursor + width > edge:
+        if cursor > left and cursor + width > right:
             row, cursor = row + 1, left
         placed.append(PlacedItem(item, row, cursor, cursor + width))
         cursor += width + gap
-    x = right - key_width
+    widths = [item_width(item, style, spacing) for item in key]
+    key_width = sum(widths) + gap * (len(widths) - 1) if widths else 0.0
+    if widths and cursor > left and cursor + key_width > right:
+        row, cursor = row + 1, left
     for item, width in zip(key, widths, strict=True):
-        placed.append(PlacedItem(item, 0, x, x + width))
-        x += width + gap
+        placed.append(PlacedItem(item, row, cursor, cursor + width))
+        cursor += width + gap
     return placed
 
 

@@ -46,6 +46,9 @@ def label_shapes(names: list[str], xs: list[float], baseline_y: float, measure: 
 def key_shapes(spec: dict, box: Box, largest: float, measure: Measure, style: dict, rules: dict) -> list[dict]:
     base, baseline = style["base"], baseline_for(box.y + line_height(style, "label") / 2, style, "label")
     x, shapes, muted = box.x, [], style["neutral"]["muted"]
+    if spec.get("key_title"):
+        shapes.append({**text(x, baseline, spec["key_title"], "label", muted), "part": "key"})
+        x += measure(spec["key_title"], "label") + rules["key_gap"] * base
     for item in spec["key"]:
         middle = box.y + line_height(style, "label") / 2
         shapes.append({"kind": "line", "points": [[x, middle], [x + rules["key_line"] * base, middle]],

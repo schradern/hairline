@@ -3,7 +3,10 @@ library(hairline)
 source(file.path("r", "common.R"))
 
 hl_use(brand = FALSE)
-plot <- hl_scatter(gallery_data("scatter"), "sofa", "lactate", by = "group",
+patients <- gallery_data("scatter")
+names(patients)[match(c("sofa", "lactate"), names(patients))] <- c("SOFA score", "Lactate (mmol/l)")
+plot <- hl_scatter(patients, "SOFA score", "Lactate (mmol/l)", by = "group",
+                   order = c("Low risk", "Medium risk", "High risk"), colors = "oranges",
                    title = "Lactate rises with the SOFA score", subtitle = "One dot per patient at admission",
-                   caption = "Synthetic data. Lactate in mmol/l.")
+                   caption = "Synthetic data.")
 finish(plot, "scatter_fit", "double")

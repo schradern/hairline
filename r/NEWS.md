@@ -34,9 +34,9 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
 * `hl_rows()` stacks plots as the panel rows of one figure: rows sized by `heights =`, one time axis shared and
   labelled at the bottom (`sharex =`), one legend row and caption. It is the R counterpart of the Python
   `figure(heights=, sharex=)` with charts drawn `into=` it.
-* `hl_legend_ramp()` draws a binned colour key with hairline outlines, right-aligned in the legend row. The lanes,
-  levels and the correlation heatmap add it themselves; `hl_correlation()` now shows its key this way, as Python
-  does.
+* `hl_legend_ramp()` draws a binned colour key with hairline outlines in the legend row, after the series items. The
+  lanes, levels and the correlation heatmap add it themselves; `hl_correlation()` now shows its key this way, as
+  Python does.
 * Quantiles of whole people (`hl_levels()`, `hl_spread(discrete = TRUE)`) use quantile type 1: the 0.9 quantile of
   daily peaks is the count that is enough on at least 9 of 10 days.
 
@@ -53,6 +53,20 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
   its n, `show_n = "column"` writes each bar's n in a column right of the panel, and `inside = "name"` writes each
   stacked segment's name and value inside it, in greys by position.
 * `hl_legend_ramp(labels =)` names the steps of a binned key; `hl_legend()` takes a `"diamond"` (open marker) item.
+
+## One design across charts
+
+* Category and row names are set in ink in every chart, as spread, forest and Likert rows already were; numbers on
+  the axes (years and lane numbers included) stay faint. Bar, ridgeline, raincloud and study panels change.
+* Binned keys (`hl_legend_ramp()`, the correlation heatmap, `hl_likert()`, `hl_lanes()`, `hl_levels()`) start at the
+  left edge after the series items, as every other legend does, instead of sitting at the right.
+* Interval headings follow the locale: "Effect [95% CI]" in English, "Effekt [95 %-KI]" in German, on `hl_forest()`,
+  `hl_dotplot()` and `hl_effects()`.
+* `hl_levels(by = ...)` shades its panels in greys unless `colors =` is given, as its binned key already was: the panel
+  names say whose levels they are, and the hues stay free for the places drawn beside them.
+* `colors = "blues"` (any ramp name) on any chart gives ordered groups the steps of one ramp, light to dark.
+* `hl_dotplot(percent = TRUE)` draws shares as percent; `hl_arcs(key_title =)` names the width key, which now has a
+  title by default.
 
 ## Fixes
 

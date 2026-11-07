@@ -55,9 +55,11 @@ step_frame <- function(values, bins, bin) {
              y = c(values[bins], values[bins[length(bins)]]))
 }
 
-# One shaded row per count from 1 up: each bin's share of days that needed exactly that many, binned as the key shows.
+# One shaded row per count from 1 up: each bin's share of days that needed exactly that many, binned as the key shows;
+# without a colour in greys, the tooltips taking the darkest.
 level_cells <- function(name, peaks, bins, colour, steps, bin) {
   ramp <- step_colours(colour, length(steps))
+  colour <- colour %||% ramp[length(ramp)]
   half <- hl_tokens()$lanes$cell / 2
   cells <- list()
   for (level in seq_len(max(peaks))) {
@@ -150,7 +152,7 @@ hl_levels <- function(data, time, count = NULL, end = NULL, by = NULL, bin = NUL
   found <- peaks_per_group(data, time, count, end, by, bin, days, order)
   groups <- found$groups
   names <- names(groups)
-  colours <- if (is.null(by)) stats::setNames(lone_colour(), "") else colours_for(names, colors, dimension)
+  colours <- levels_colours(names, by, colors, dimension)
   occupied <- which(Reduce(`|`, lapply(groups, function(peaks) apply(peaks, 2, max) > 0)))
   if (!length(occupied)) stop("hairline: levels: every count is 0 on the days kept; nothing to draw", call. = FALSE)
   bins <- seq(min(occupied), max(occupied))
@@ -217,4 +219,13 @@ hl_levels <- function(data, time, count = NULL, end = NULL, by = NULL, bin = NUL
   plot@meta$hairline_height_mm <- 40
   plot@meta$hairline_size <- size
   plot
+}
+
+# One panel's colour: the series colour without `by`; with `by` greys (NULL), as the binned key shows, since each
+# panel's name already says whose levels they are and the hues stay free for the charts drawn beside them; `colors`
+# gives the groups hues of their own. As Python's panel_colors().
+levels_colours <- function(names, by, colors, dimension) {
+  if (is.null(by)) return(stats::setNames(list(lone_colour()), ""))
+  if (is.null(colors)) return(stats::setNames(vector("list", length(names)), names))
+  as.list(colours_for(names, colors, dimension))
 }

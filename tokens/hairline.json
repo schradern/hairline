@@ -373,7 +373,10 @@
         "several_answers": "Several answers were possible.",
         "median": "Median",
         "mean": "Mean",
-        "iqr": "IQR"
+        "iqr": "IQR",
+        "interval": "{name} [95% CI]",
+        "effect": "Effect",
+        "estimate": "Estimate"
       }
     },
     "de": {
@@ -439,7 +442,10 @@
         "several_answers": "Mehrfachnennungen möglich.",
         "median": "Median",
         "mean": "Mittelwert",
-        "iqr": "IQR"
+        "iqr": "IQR",
+        "interval": "{name} [95 %-KI]",
+        "effect": "Effekt",
+        "estimate": "Schätzer"
       }
     }
   },

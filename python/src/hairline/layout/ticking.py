@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from matplotlib.ticker import FixedFormatter, FixedLocator, FuncFormatter
@@ -38,6 +39,12 @@ def tick_interval(figure: HairlineFigure, index: int, which: str) -> tuple[float
         return None
     shared = figure.sharey if which == "y" else figure.sharex
     return data_interval(figure.axes if shared else [ax], which)
+
+
+def names_axis(labels: Sequence[str]) -> bool:
+    """Labels with a letter are names, read like every other name in ink; numbers (years, lane 1, 2, …) stay
+    faint with the other tick labels."""
+    return any(character.isalpha() for label in labels for character in label)
 
 
 def set_categories(ax, which: str, names: list[str]) -> list[str]:
@@ -111,6 +118,8 @@ def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
                 continue
             if (index, which) in figure.category_axes:
                 result = set_categories(ax, which, figure.category_axes[(index, which)])
+                if names_axis(result):
+                    ax.tick_params(axis=which, labelcolor=figure.settings.neutral["ink"])
                 if which == "y":
                     labels.append(result)
                 continue

@@ -38,8 +38,8 @@ test_that("the correlation heatmap has a colour key", {
   plot <- hl_correlation(data)
   report <- hl_layout_report(plot)
   expect_equal(report$legend_labels, c("−1", "−0.5", "0", "0.5", "1"))
-  # The binned key sits right-aligned in the legend row, its squares outlined.
-  expect_equal(utils::tail(report$legend_item_rights, 1), report$right)
+  # The binned key starts at the left like every legend, its squares outlined.
+  expect_lt(utils::tail(report$legend_item_rights, 1), report$right - 100)
   expect_equal(plot@meta$hairline_ramp_key$labels, c("−1", "−0.5", "0", "0.5", "1"))
   expect_error(hl_correlation(data.frame(a = 1:2, b = c("x", "y"))), "needs at least two numeric columns")
 })

@@ -61,8 +61,26 @@ build_hairline_plot <- function(plot, ...) {
     for (scale in extra) plot <- suppressMessages(plot + scale)
     return(ggplot2::ggplot_build(plot))
   }
-  built <- apply_light_slots(apply_highlight(built))
+  built <- names_in_ink(apply_light_slots(apply_highlight(built)))
   class(built) <- c("hairline_built", class(built))
+  built
+}
+
+# Tick labels with a letter are names, read like every other name in ink; numbers (years, lane 1, 2, …) and dates
+# stay faint with the other tick labels. As Python's names_axis().
+names_in_ink <- function(built) {
+  ink <- (built@plot@meta$hairline_settings %||% hl_settings())$neutral$ink
+  for (axis in c("x", "y")) {
+    scale <- built@layout[[paste0("panel_scales_", axis)]][[1]]
+    if (is.null(scale) || inherits(scale, c("ScaleContinuousDate", "ScaleContinuousDatetime"))) next
+    labels <- tryCatch(as.character(unlist(scale$get_labels())), error = function(error) character())
+    if (!any(grepl("[[:alpha:]]", labels))) next
+    theme <- built@plot@theme
+    for (name in c(paste0("axis.text.", axis), if (axis == "x") "axis.text.x.bottom" else "axis.text.y.left")) {
+      if (S7::S7_inherits(theme[[name]], ggplot2::element_text)) S7::prop(theme[[name]], "colour") <- ink
+    }
+    built@plot@theme <- theme
+  }
   built
 }
 

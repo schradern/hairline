@@ -151,8 +151,8 @@ hl_bars(answers, "question", "count", by = "answer", stacked = TRUE, percent = T
 Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its
 colour in every chart. `hl_palettes()` lists the six palettes, the purpose sets (two groups, greyscale print,
 risk of bias) and the ramps for amounts; `hl_swatches()` draws them; `hl_use(palette = "calm")` changes the
-default; `hl_use(colors = c("Unit B" = "#e79d01"))` pins a colour to a name; `scale_fill_hairline_c("blues")`
-gives a ramp to your own ggplots. `?hairline_colours` has the details.
+default; `hl_use(colors = c("Unit B" = "#e79d01"))` pins a colour to a name; `colors = "blues"` on a chart
+gives ordered groups the steps of one ramp; `scale_fill_hairline_c("blues")` gives a ramp to your own ggplots. `?hairline_colours` has the details.
 
 ## Files
 

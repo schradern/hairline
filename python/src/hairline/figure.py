@@ -150,7 +150,7 @@ class HairlineFigure:
     def legend_ramp(self, ramp: str | Sequence[str] | None = None, steps: Sequence[float] | None = None,
                     title: str | None = None, format: str = "percent", limits: tuple[float, float] = (0.0, 1.0),
                     digits: int | None = None, labels: Sequence[str] | None = None) -> None:
-        """A binned colour key in the legend row, right-aligned beside the series items: `title`, then one small
+        """A binned colour key in the legend row, after the series items: `title`, then one small
         outlined square per step (its value formatted as a percentage or, with `format="number"`, a number with
         `digits` decimals). `ramp` is a ramp name or its colours; `steps` are values within `limits`, by default
         25 %, 50 %, 75 % and 100 % of a share. `labels` names the steps instead (the bins of a rating scale:

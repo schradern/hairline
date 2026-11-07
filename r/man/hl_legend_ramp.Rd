@@ -35,7 +35,7 @@ An object to add to a ggplot with \code{+}.
 \description{
 A key for colours that stand for amounts: its title, then one small square
 per step with a hairline outline (so the lightest step stays visible on the
-surface), right-aligned in the legend row beside the series items. Charts
+surface), in the legend row after the series items. Charts
 with a ramp (\code{\link[=hl_lanes]{hl_lanes()}}, \code{\link[=hl_levels]{hl_levels()}}, \code{\link[=hl_correlation]{hl_correlation()}}, \code{\link[=hl_likert]{hl_likert()}}) add it
 themselves.
 }

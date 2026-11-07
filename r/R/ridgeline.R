@@ -54,6 +54,7 @@ ridge_spikes <- function(values, base, colour, rules) {
 #' @param medians Mark the medians.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param show_n Write each group's n after its name, in the locale.
 #' @param min_n,clip,clip_stats,color_by,dimension As in [hl_spread()]: groups too small and values clipped off are
 #'   named in the caption.

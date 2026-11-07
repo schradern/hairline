@@ -57,7 +57,8 @@ frequent values with their shares). A median that falls between two large levels
 
 \item{axis_title}{Title under the axis numbers, e.g. the unit.}
 
-\item{colors}{Named colours for this chart only.}
+\item{colors}{Named colours for this chart only.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
 
 \item{show_n}{Add each group's n to the numbers column.}
 

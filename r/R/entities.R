@@ -71,6 +71,15 @@ reserved_colours <- function(dimension) {
   stats::setNames(unname(owners[other]), unname(known[other]))
 }
 
+# Ordered groups (low, medium, high risk) as steps of one ramp in the chart's order: a sequential ramp from its middle
+# to its dark end, so the lightest group still reads as a dot or a line on the surface; a diverging ramp across both
+# poles. As Python's ordered_colors().
+ordered_colours <- function(names, ramp_name) {
+  names <- unique(as.character(names))
+  if (ramp_kind(ramp_name) == "diverging") return(stats::setNames(hl_ramp(ramp_name, length(names)), names))
+  stats::setNames(hl_ramp(ramp_name, length(names) + 2)[-(1:2)], names)
+}
+
 # The colours of one chart's groups; names seen for the first time are remembered for later charts, a chart's own
 # `colors` are not. `dimension` names what the groups are (procedures, application patterns): groups of one dimension
 # keep clear of the slots another dimension holds; without one, the enclosing hl_scope() applies.
@@ -78,6 +87,7 @@ colours_for <- function(names, colors = NULL, dimension = NULL) {
   settings <- hl_settings()
   state <- entity_state()
   dimension <- dimension %||% current_dimension()
+  if (is.character(colors) && length(colors) == 1 && is.null(names(colors))) colors <- ordered_colours(names, colors)
   override <- if (length(colors)) stats::setNames(tolower(unname(colors)), names(colors)) else character()
   mapping <- chart_colours(settings$palette, settings$palette_label, state$fixed, state$auto, override,
                            as.character(names), reserved_colours(dimension), dimension)

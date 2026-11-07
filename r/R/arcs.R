@@ -1,7 +1,8 @@
 # Arc diagram, mirroring the Python arcs(): nodes on a baseline, half-ellipse arcs above whose
 # width follows the value, labels under the nodes (upright when crowded), a width key at the top.
 
-arcs_spec <- function(data, source, target, value = NULL, order = NULL) {
+arcs_spec <- function(data, source, target, value = NULL, order = NULL, key_title = NULL) {
+  title <- key_title %||% if (is.null(value)) word("people") else humanise(value)
   counted <- with_counts(data, value)
   data <- counted$data
   value <- counted$value
@@ -25,7 +26,7 @@ arcs_spec <- function(data, source, target, value = NULL, order = NULL) {
                                        value_text = hl_format_number(totals[[key]], digits),
                                        pair = arcs_pair_text(first[rows], second[rows]))
   }
-  list(nodes = as.list(names), links = links, color = lone_colour(), key = arcs_key(values, digits))
+  list(nodes = as.list(names), links = links, color = lone_colour(), key = arcs_key(values, digits), key_title = title)
 }
 
 # "A -> B" for one direction, "A <-> B" when the arc carries both; the first direction in code-point order names it.
@@ -74,6 +75,10 @@ arc_key_shapes <- function(spec, box, largest, measure, style, rules) {
   baseline <- baseline_for(middle, style, "label")
   x <- box[1]
   shapes <- list()
+  if (!is.null(spec$key_title)) {
+    shapes[[1]] <- c(shape_text(x, baseline, spec$key_title, "label", style$neutral$muted), part = "key")
+    x <- x + measure(spec$key_title, "label") + rules$key_gap * base
+  }
   for (item in spec$key) {
     sample <- rbind(c(x, middle), c(x + rules$key_line * base, middle))
     shapes[[length(shapes) + 1]] <- list(kind = "line", points = sample,
@@ -141,14 +146,16 @@ arcs_drawing <- function(spec, box, measure, style) {
 #' @param value Column with the amounts; `NULL` counts rows.
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param order Node order along the baseline.
+#' @param key_title Title of the width key; `NULL` gives the value's name, or "Count".
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' moves <- data.frame(origin = c("ICU", "ICU", "Ward", "Theatre", "ICU", "Ward"),
 #'                     destination = c("Ward", "Ward", "Home", "ICU", "Home", "ICU"))
 #' hl_arcs(moves, "origin", "destination", order = c("Theatre", "ICU", "Ward", "Home"))
 #' @export
-hl_arcs <- function(data, source, target, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL) {
-  spec <- arcs_spec(data, source, target, value, order)
+hl_arcs <- function(data, source, target, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL,
+                    key_title = NULL) {
+  spec <- arcs_spec(data, source, target, value, order, key_title)
   label <- if (is.null(value)) "Count" else humanise(value)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(label, "from", gsub("_", " ", source), "to", gsub("_", " ", target)),

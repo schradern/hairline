@@ -15,6 +15,7 @@
 #' @param reference Value for a vertical reference line.
 #' @param digits Decimals of the numbers; `NULL` gives two, or more for small or close values.
 #' @param n Column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").
+#' @param percent `TRUE` draws shares (0.15) as percent (15), the heading naming the unit.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' rates <- data.frame(unit = c("Medical", "Surgical", "Cardiac"), mortality = c(0.13, 0.08, 0.06),
@@ -22,13 +23,14 @@
 #' hl_dotplot(rates, "unit", "mortality", "low", "high")
 #' @export
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
-                       sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL) {
+                       sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL, percent = FALSE) {
   check_columns(data, c(label, estimate, low, high, n))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
                  if (is.null(low)) "high" else "low", low %||% high), call. = FALSE)
   }
   interval <- !is.null(low) && !is.null(high)
+  if (isTRUE(percent)) data <- dotplot_percent(data, c(estimate, low, high))
   if (sort) data <- data[order(-data[[estimate]], seq_len(nrow(data))), , drop = FALSE]
   if (!is.null(n)) {
     check_numeric(data, n, "dotplot")
@@ -41,7 +43,8 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
     low <- ".low"
     high <- ".high"
   }
-  heading <- if (interval) paste(humanise(estimate), "[95 % CI]") else humanise(estimate)
+  name <- if (isTRUE(percent)) paste0(humanise(estimate), " (%)") else humanise(estimate)
+  heading <- if (interval) word("interval", name = name) else name
   spec <- forest_spec(data, label, estimate, low, high, ratio = ratio, colour = lone_colour(),
                       study_heading = humanise(label), effect_heading = heading, digits = digits, marker = "dot",
                       interval = interval, null = reference)
@@ -51,4 +54,11 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot
+}
+
+# Shares as percent: each named column x 100.
+dotplot_percent <- function(data, columns) {
+  check_numeric(data, columns, "dotplot")
+  for (column in columns) data[[column]] <- data[[column]] * 100
+  data
 }

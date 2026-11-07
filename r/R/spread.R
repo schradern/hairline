@@ -382,6 +382,7 @@ spread_drawing <- function(spec, box, measure, style) {
 #' @param zero Include zero on the axis.
 #' @param axis_title Title under the axis numbers, e.g. the unit.
 #' @param colors Named colours for this chart only.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param show_n Add each group's n to the numbers column.
 #' @param min_n Leave out groups with fewer values; the caption names them.
 #' @param clip Hide implausible values: a quantile of every value (`0.99`: above the 99th percentile) or

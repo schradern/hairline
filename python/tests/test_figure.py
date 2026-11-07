@@ -228,7 +228,7 @@ def test_a_figure_too_short_for_its_smallest_row_names_the_height_that_fits():
         figure.figure.canvas.draw()
 
 
-def test_legend_ramp_draws_outlined_squares_right_aligned_in_the_legend_row():
+def test_legend_ramp_draws_outlined_squares_after_the_series_items():
     figure = hl.figure("Key", size="double")
     figure.ax.plot([0, 1], [0, 1], label="Series")
     figure.legend()
@@ -236,7 +236,7 @@ def test_legend_ramp_draws_outlined_squares_right_aligned_in_the_legend_row():
     figure.figure.canvas.draw()
     report = figure.layout_report()
     assert report["legend_labels"] == ["Series", "Share of days", "25%", "50%", "75%", "100%"]
-    assert report["legend_item_rights"][-1] == pytest.approx(report["right"])
+    assert report["legend_item_rights"][-1] < report["right"] - 100
     edges = [artist for artist in figure.frame_artist.children if getattr(artist, "get_linewidth", None)
              and type(artist).__name__ == "Rectangle" and artist.get_linewidth() > 0]
     assert len(edges) == 4

@@ -352,6 +352,7 @@ bar_colours <- function(data, by, groups, color_by, colors, dimension) {
 #' @param labels Print the values: at the bar ends, or inside stacked segments with the totals at the ends.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param size Size preset the bars are laid out for, as in [hl_save()] (`NULL`: `"onehalf"`): its width decides
 #'   between upright and lying bars, and [hl_save()] uses it unless given another size.
 #' @param facet Column to draw one panel per value of, each with its own value axis (`scales = "free"`) or one

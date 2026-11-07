@@ -34,10 +34,10 @@ positions and tooltips are unchanged.
   `into=` / `panel=` to draw into a composed figure on one time axis.
 * `figure(heights=, sharex=, sharey=)`: panel rows sized by content; rows with `heights` share y only when asked.
 * `HairlineFigure.time_axis()`, `integer_axis()`, `row_blocks()`, `legend_ramp()` and `hover()` for hand-built
-  figures. `legend_ramp()` draws a binned colour key with hairline outlines, right-aligned in the legend row.
+  figures. `legend_ramp()` draws a binned colour key with hairline outlines in the legend row, after the series items.
 * Quantiles of whole people (`levels()`, `spread(discrete=True)`) use the inverted empirical CDF (R's type 1):
   the 0.9 quantile of daily peaks is the count that is enough on at least 9 of 10 days.
-* `correlation()` shows its colour key as the binned `legend_ramp()` key, right-aligned in the legend row with
+* `correlation()` shows its colour key as the binned `legend_ramp()` key in the legend row, with
   outlined squares, as the R package's `hl_correlation()` does now.
 * The time-of-day window no longer gains an hour from float noise in a data limit: a span from 07:00 read
   6.999999999999998 once the axes were placed, and the axis started at 05:00 instead of 06:00.
@@ -57,6 +57,20 @@ positions and tooltips are unchanged.
   segment's name and value inside it, in greys by position, so rows may hold different answers.
 * `HairlineFigure.numbers_column()` for a numbers column beside a hand-built panel; `legend_ramp(labels=)` names
   the steps of a binned key; the legend row takes a `"diamond"` (open marker) item.
+
+### One design across charts
+
+* Category and row names are set in ink in every chart, as spread, forest and Likert rows already were; numbers on
+  the axes (years and lane numbers included) stay faint. Bar, ridgeline, raincloud and study panels change.
+* Binned keys (`legend_ramp()`, the correlation heatmap, `likert()`, `lanes()`, `levels()`) start at the left
+  edge after the series items, as every other legend does, instead of sitting at the right.
+* Interval headings follow the locale: "Effect [95% CI]" in English, "Effekt [95 %-KI]" in German, on `forest()`,
+  `dotplot()` and `study().effects()`.
+* `levels(by=...)` shades its panels in greys unless `colors=` is given, as its binned key already was: the panel
+  names say whose levels they are, and the hues stay free for the places drawn beside them.
+* `colors="blues"` (any ramp name) on any chart gives ordered groups the steps of one ramp, light to dark.
+* `dotplot(percent=True)` draws shares as percent; `arcs(key_title=)` names the width key, which now has a title
+  by default.
 
 The R package mirrors all of this under the same names (`hl_bars(facet = ...)`, `hl_lanes()`, ...); a composed
 figure there is `hl_rows()`.

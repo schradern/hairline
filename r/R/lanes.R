@@ -124,6 +124,7 @@ lane_cells <- function(matrix, layout, ramps, steps, bin, value, top) {
 #' @param hours The hours shown, e.g. `c(6, 22)`; by default the hours with data and a margin.
 #' @param spans Named periods to shade, e.g. `list("Regular hours" = c(7, 16))`.
 #' @param colors Named colours for this chart only.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param dimension What the groups are, so their colours keep off the slots another dimension holds.
 #' @param key_title Title of the key (default: the locale's "Share of days").
 #' @param title,subtitle,caption Frame texts.

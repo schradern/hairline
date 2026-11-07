@@ -1,5 +1,5 @@
 # A binned colour key in the legend row (the R twin of the Python package's HairlineFigure.legend_ramp()): its title,
-# then one small outlined square per step, right-aligned beside the series items.
+# then one small outlined square per step, after the series items.
 
 hairline_ramp_key <- S7::new_class("hairline_ramp_key", package = "hairline", properties = list(key = S7::class_any))
 
@@ -40,7 +40,7 @@ ramp_key <- function(ramp = NULL, steps = NULL, title = NULL, format = "percent"
 #'
 #' A key for colours that stand for amounts: its title, then one small square
 #' per step with a hairline outline (so the lightest step stays visible on the
-#' surface), right-aligned in the legend row beside the series items. Charts
+#' surface), in the legend row after the series items. Charts
 #' with a ramp ([hl_lanes()], [hl_levels()], [hl_correlation()], [hl_likert()]) add it
 #' themselves.
 #'
