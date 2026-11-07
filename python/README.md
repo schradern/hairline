@@ -156,8 +156,8 @@ hl.bars(answers, "question", "count", by="answer", stacked=True, percent=True,  
 The same question gets the same option in every chart that has the concept: `order`, `sort`, `colors`,
 `highlight`, `key_title`, `x_title`, `y_title`, `reference`, `percent`, `show_n`, `min_n`, `clip` and `facet`.
 `reference={"Target": 0.9}` draws labelled dashed lines on the value axis, `highlight=["Unit B"]` greys the other
-groups, `facet="site"` draws a panel per site (a block of rows on spread, dot plot and Likert). The
-[options guide](../docs/guide/options.md) shows which chart has which.
+groups, `facet="site"` draws a panel per site on bars, scatter, raincloud and ridgeline (a block of rows on
+spread, dot plot and Likert). The [options guide](../docs/guide/options.md) shows which chart has which.
 
 ## Colours
 

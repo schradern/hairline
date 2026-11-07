@@ -82,9 +82,10 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
   axes (`x_title` is the same as `axis_title` on `hl_spread()` and `hl_likert()`).
 * `min_n =` on `hl_bars()`, `hl_scatter()`, `hl_likert()` and `hl_dotplot()` (with `n =`); `sort =` ("median", "mean",
   "n") on `hl_raincloud()` and `hl_ridgeline()`; `percent =` on `hl_raincloud()`, `hl_ridgeline()` and `hl_scatter()`;
-  `clip =` on `hl_timeseries()`; `hl_raincloud(show_n = FALSE)`; `hl_dotplot(order =)`.
-* `facet =` on `hl_scatter()` and `hl_raincloud()` (panels on shared axes, each with its own fit or comparisons) and
-  on `hl_spread()`, `hl_dotplot()` and `hl_likert()` (a block of rows per value under its name, on one axis; a group
+  `clip =` on `hl_timeseries()`; `show_n = FALSE` on `hl_raincloud()`, `hl_dotplot()` (the `n` column then only
+  counts for `min_n`) and `hl_likert()` (n left out of the key numbers); `hl_dotplot(order =)`.
+* `facet =` on `hl_scatter()`, `hl_raincloud()` and `hl_ridgeline()` (panels on shared axes, each with its own fit or
+  comparisons; ridges on one height scale) and on `hl_spread()`, `hl_dotplot()` and `hl_likert()` (a block of rows per value under its name, on one axis; a group
   keeps its colour in every block).
 * Two gallery figures in both languages: `scatter_sites` and `spread_years`; `dotplot_rates` draws a benchmark.
 

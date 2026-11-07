@@ -209,6 +209,7 @@ likert_spec <- function(data, item, rating, levels = NULL, split = NULL, bins = 
 #' @param title,subtitle,caption Frame texts.
 #' @param size Size preset, as in [hl_save()].
 #' @param facet Column whose values each get a block of items under their name, as `group` draws sections.
+#' @param show_n `FALSE` leaves n out of the key numbers beside each row.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -221,7 +222,7 @@ likert_spec <- function(data, item, rating, levels = NULL, split = NULL, bins = 
 hl_likert <- function(data, item, rating, levels = NULL, split = NULL, bins = NULL, group = NULL,
                       reverse = character(), order = NULL, sort = NULL, stats = likert_stats, axis_title = NULL,
                       key_title = NULL, ramp = NULL, title = NULL, subtitle = NULL, caption = NULL, size = "double",
-                      min_n = NULL, x_title = NULL, facet = NULL) {
+                      min_n = NULL, x_title = NULL, facet = NULL, show_n = TRUE) {
   check_size_preset(size)
   check_columns(data, c(item, rating))
   title <- title %||% paste(humanise(rating), "by", gsub("_", " ", item))
@@ -235,8 +236,8 @@ hl_likert <- function(data, item, rating, levels = NULL, split = NULL, bins = NU
   }
   kept <- if (is.null(min_n)) list(data = data, note = NULL) else
     without_small_categories(data[!is.na(data[[rating]]), , drop = FALSE], item, min_n, "likert")
-  spec <- likert_spec(kept$data, item, rating, levels, split, bins, group, reverse, order, sort, stats,
-                      axis_title %||% x_title, ramp)
+  spec <- likert_spec(kept$data, item, rating, levels, split, bins, group, reverse, order, sort,
+                      if (isTRUE(show_n)) stats else setdiff(stats, "n"), axis_title %||% x_title, ramp)
   if (!is.null(facet)) {
     for (index in seq_along(spec$rows)) {
       spec$rows[[index]]$name <- sub("^.*? \u00b7 ", "", spec$rows[[index]]$name, perl = TRUE)

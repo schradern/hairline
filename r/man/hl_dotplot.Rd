@@ -23,7 +23,8 @@ hl_dotplot(
   min_n = NULL,
   x_title = NULL,
   highlight = NULL,
-  facet = NULL
+  facet = NULL,
+  show_n = TRUE
 )
 }
 \arguments{
@@ -57,6 +58,8 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
 
 \item{facet}{Column whose values each get a block of rows under their name, each block sorted on its own.}
+
+\item{show_n}{\code{FALSE} leaves the n out of the labels (it still counts for \code{min_n}).}
 }
 \value{
 A ggplot with the hairline frame.

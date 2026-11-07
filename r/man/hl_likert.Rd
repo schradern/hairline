@@ -25,7 +25,8 @@ hl_likert(
   size = "double",
   min_n = NULL,
   x_title = NULL,
-  facet = NULL
+  facet = NULL,
+  show_n = TRUE
 )
 }
 \arguments{
@@ -64,6 +65,8 @@ hl_likert(
 \item{x_title}{Axis title under the plot.}
 
 \item{facet}{Column whose values each get a block of items under their name, as \code{group} draws sections.}
+
+\item{show_n}{\code{FALSE} leaves n out of the key numbers beside each row.}
 }
 \value{
 A ggplot with the hairline frame.
