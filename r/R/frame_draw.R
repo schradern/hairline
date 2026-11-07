@@ -29,7 +29,8 @@ one_panel_grobs <- function(panel, box, height, settings, bare = FALSE, layers =
 panel_grobs <- function(parts, plan) {
   grobs <- lapply(seq_along(parts$panels), function(index) {
     box <- fitted_box(plan$layout$panels[[index]], parts$aspect)
-    one_panel_grobs(parts$panels[[index]], box, plan$size[2], parts$settings, parts$bare, parts$line_layers)
+    panel <- parts$panels[[index]]
+    one_panel_grobs(panel, box, plan$size[2], parts$settings, parts$bare, panel$layers %||% parts$line_layers)
   })
   unlist(grobs, recursive = FALSE)
 }
@@ -86,11 +87,80 @@ frame_children <- function(parts, plan) {
                         height),
              legend_grobs(plan$placed, layout$legend_row_centers, role_style(settings, "label"), settings$base_size,
                           height, font_metrics()$cap_height,
-                          line_scale(fitted_box(layout$panels[[1]], parts$aspect)[3])),
+                          line_scale(fitted_box(layout$panels[[1]], parts$aspect)[3]), settings$neutral$axis,
+                          settings$neutral$surface),
              header_grobs(parts, plan), axis_title_grobs(parts, plan), table_grobs(parts, plan),
              reference_grobs(parts, plan),
-             note_grobs(parts, plan))
+             note_grobs(parts, plan), block_grobs(parts, plan), inside_grobs(parts, plan),
+             side_number_grobs(parts, plan))
   do.call(grid::gList, grobs)
+}
+
+# Each row block's name at the left of its panel's label column, on the baseline of the block's first row.
+block_grobs <- function(parts, plan) {
+  settings <- parts$settings
+  surface <- surface_colour(settings)
+  cap <- font_metrics()$cap_height
+  grobs <- list()
+  for (index in seq_along(parts$panels)) {
+    panel <- parts$panels[[index]]
+    if (!length(panel$blocks)) next
+    box <- plan$layout$panels[[index]]
+    left <- if (panel$col == 1) plan$layout$left else
+      box[1] - hl_tokens()$spacing$y_labels_plot * settings$base_size - plan$texts$column_widths[panel$col]
+    range <- parts$y_ranges[[index]]
+    position <- sum(vapply(panel$blocks, `[[`, numeric(1), "count")) - 1
+    for (block in panel$blocks) {
+      style <- block_style(settings, point_fill(block$colour, surface))
+      centre <- box[2] + (range[2] - position) / diff(range) * box[4]
+      grobs[[length(grobs) + 1]] <- text_grob_pt(block$name, left, centre + style$size * cap / 2, style, plan$size[2])
+      position <- position - block$count
+    }
+  }
+  grobs
+}
+
+# Each numbers column beside its panel, the label faint and the value muted, as spread's key numbers.
+side_number_grobs <- function(parts, plan) {
+  settings <- parts$settings
+  cap <- font_metrics()$cap_height
+  gap <- hl_tokens()$spacing$y_labels_plot * settings$base_size
+  plain <- role_style(settings, "label", NULL, settings$neutral$faint)
+  strong <- role_style(settings, "label", hl_tokens()$type$value_weight, settings$neutral$muted)
+  grobs <- list()
+  for (index in seq_along(parts$panels)) {
+    box <- plan$layout$panels[[index]]
+    range <- parts$y_ranges[[index]]
+    for (entry in parts$panels[[index]]$side_numbers) {
+      baseline <- box[2] + (range[2] - entry$position) / diff(range) * box[4] + plain$size * cap / 2
+      x <- box[1] + box[3] + gap
+      grobs[[length(grobs) + 1]] <- text_grob_pt(paste0(entry$label, " "), x, baseline, plain, plan$size[2])
+      grobs[[length(grobs) + 1]] <- text_grob_pt(entry$value, x + side_pair_width(settings, entry$label, ""),
+                                                 baseline, strong, plan$size[2])
+    }
+  }
+  grobs
+}
+
+# Labels inside bars (swimlanes) show only where their bar is wide enough for them.
+inside_grobs <- function(parts, plan) {
+  settings <- parts$settings
+  cap <- font_metrics()$cap_height
+  pad <- hl_tokens()$swimlanes$label_pad * settings$base_size
+  grobs <- list()
+  for (label in parts$inside %||% list()) {
+    box <- plan$layout$panels[[label$panel]]
+    x_range <- parts$x_ranges[[label$panel]]
+    y_range <- parts$y_ranges[[label$panel]]
+    style <- role_style(settings, "label", NULL, label$colour)
+    room <- (label$end - label$start) / diff(x_range) * box[3] - 2 * pad
+    if (text_width_pt(label$text, style) > room) next
+    x <- box[1] + ((label$start + label$end) / 2 - x_range[1]) / diff(x_range) * box[3]
+    centre <- box[2] + (y_range[2] - label$y) / diff(y_range) * box[4]
+    grobs[[length(grobs) + 1]] <- text_grob_pt(label$text, x, centre + style$size * cap / 2, style, plan$size[2],
+                                               "center")
+  }
+  grobs
 }
 
 reference_grobs <- function(parts, plan) {

@@ -12,7 +12,8 @@ hl_arcs(
   title = NULL,
   subtitle = NULL,
   caption = NULL,
-  order = NULL
+  order = NULL,
+  key_title = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ hl_arcs(
 \item{title, subtitle, caption}{Frame texts; the title defaults to the columns.}
 
 \item{order}{Node order along the baseline.}
+
+\item{key_title}{Title of the width key; \code{NULL} gives the value's name, or "Count".}
 }
 \value{
 A ggplot with the hairline frame.

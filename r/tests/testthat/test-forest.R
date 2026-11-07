@@ -60,5 +60,12 @@ test_that("a metafor fit is accepted", {
   fit <- metafor::rma(yi = log(c(0.62, 0.81, 0.47)), sei = c(0.21, 0.2, 0.32), measure = "OR",
                       slab = c("Adams", "Baker", "Chen"))
   plot <- hl_forest(fit, title = "Mortality")
-  expect_match(plot@labels$caption, "tau")
+  expect_equal(plot@labels$caption, sprintf("I\u00b2 = %s %%, tau\u00b2 = %s.", hl_format_number(fit$I2, 0),
+                                            hl_format_number(fit$tau2, 2)))
+  converted <- forest_from_rma(fit)
+  expect_equal(converted$table$study, c("Adams", "Baker", "Chen"))
+  expect_equal(converted$table$estimate, c(0.62, 0.81, 0.47))
+  expect_equal(converted$pooled$estimate, exp(as.numeric(fit$b[1])))
+  expect_true(converted$ratio)
+  expect_equal(sum(converted$table$weight), 100)
 })

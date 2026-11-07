@@ -27,7 +27,8 @@ hl_chord(
 
 \item{order}{Group order around the ring, clockwise from the top.}
 
-\item{colors}{Named colours for this chart only; they override the colour set for the number of groups.}
+\item{colors}{Named colours for this chart only; they override the colour set for the number of groups.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
 }
 \value{
 A ggplot with the hairline frame.

@@ -6,6 +6,7 @@ import math
 from collections.abc import Mapping, Sequence
 
 import pandas as pd
+from matplotlib.patches import Rectangle
 
 from hairline import entities
 from hairline.charts.common import (
@@ -27,12 +28,16 @@ from hairline.charts.timeseries import groups_of
 from hairline.drawing import measure_for
 from hairline.figure import MM_PER_INCH, HairlineFigure, figure, size_settings
 from hairline.fonts import families
-from hairline.marks import lone_color
+from hairline.marks import STATIC_ID, context_color, lone_color
 from hairline.numbers import auto_digits, format_compact, format_number, format_percent, number_unit, word
+from hairline.palettes import interpolate, ramp
 from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
 
 SCALES = ("free", "shared")
+HEADERS = ("total", "n")
+SHOW_N = (False, True, "column")
+INSIDE = (None, "name")
 
 
 def bar_table(data: pd.DataFrame, category: str, value: str, by: str | None, order: Sequence[str] | None,
@@ -106,7 +111,7 @@ def upright_values(table: pd.DataFrame, category: str, value: str, by: str | Non
     """The value texts upright bars would carry over their ends: every bar's, or each stack's total."""
     if not options["labels"] or (options["stacked"] and options["percent"]):
         return []
-    heights = [bar_values(table, category, value, by, names, group, options["percent"]) for group in groups]
+    heights = [bar_values(table, category, value, by, names, group, options["divide"]) for group in groups]
     numbers = bar_numbers(table, category, value, by, names, groups, options)
     if options["stacked"]:
         heights = [[sum(without_missing(list(column))) for column in zip(*heights, strict=True)]]
@@ -216,7 +221,7 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
                "numbers": bar_numbers(table, category, value, by, names, groups, options)}
     ends, present = 0.0, [False] * len(names)
     for index, group in enumerate(groups):
-        heights = bar_values(table, category, value, by, names, group, options["percent"])
+        heights = bar_values(table, category, value, by, names, group, options["divide"])
         step = (len(groups) - 1) / 2 - index if horizontal else index - (len(groups) - 1) / 2
         offset = 0.0 if stacked else step * single
         color = options["palette"][group] if by else lone_color()
@@ -227,6 +232,7 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
         container = draw(where, heights, single * 0.92, base, color=color,
                          label=options["series"][group] if by else "_nolegend_", **edge)
         lighten_partial(container, names, options["partial"])
+        recede(container, names, options["context"])
         ends = max([ends, *without_missing(heights)])
         present = [shown or not math.isnan(height) for shown, height in zip(present, heights, strict=True)]
         if stacked and options["labels"]:
@@ -244,6 +250,9 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
                        [downs[index] for index in shown], horizontal, options["numbers"])
     if options["labels"] and not (stacked and options["percent"]):
         reach = (max(ups) if stacked else ends) * (1 + rules["label_headroom"])
+        if options["percent"] and not options["divide"]:
+            # Shares of respondents end at 100 %; a label past it may run into the margin.
+            reach = min(reach, 1.0)
         ax.update_datalim([(reach, positions[0])] if horizontal else [(positions[0], reach)])
 
 
@@ -253,6 +262,14 @@ def lighten_partial(container, names: list[str], partial: Sequence[str]) -> None
     for patch, name in zip(container.patches, names, strict=True):
         if name in partial:
             patch.set_alpha(opacity)
+
+
+def recede(container, names: list[str], context: Sequence[str]) -> None:
+    """Categories named as context (an exclusive "none" answer) are drawn in the context grey, outside the ranking's
+    colour."""
+    for patch, name in zip(container.patches, names, strict=True):
+        if name in context:
+            patch.set_facecolor(context_color())
 
 
 def stacked_totals(ax, positions: list[float], ups: list[float], downs: list[float], horizontal: bool,
@@ -294,9 +311,46 @@ def facet_panels(frames: list[tuple[str, pd.DataFrame]], options: dict, order: S
     for name, rows in frames:
         table, names, _ = bar_table(rows, category, value, by, order, sort, groups)
         table, names = fold_top(table, names, options["top"], options["other"], category, value, by)
+        if sort == "value":
+            # An answer outside the ranking (an exclusive "none") goes last.
+            names = [name for name in names if name not in options["context"]] + \
+                [name for name in names if name in options["context"]]
         panels.append({"name": name, "table": table, "names": names, "n": category_n(table, category, value, names),
                        "total": float(table[value].sum())})
     return panels
+
+
+def respondent_shares(data: pd.DataFrame, category: str, facet: str | None,
+                      respondents: str) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Multiple choice: each respondent once per answer, as a share of the respondents of the panel (not of the
+    answers, which add up to more than 100 %); and the respondents per panel."""
+    check_columns(data, [respondents])
+    keys = [column for column in (facet, category) if column]
+    check_labels(data, keys, "bars")
+    distinct = data.dropna(subset=[respondents]).drop_duplicates(subset=[respondents, *keys])
+    labels = distinct[facet].astype(str) if facet else pd.Series([""] * len(distinct), index=distinct.index)
+    totals = distinct.groupby(labels, sort=False)[respondents].nunique()
+    shares = distinct.groupby(keys, sort=False).size().reset_index(name="_answers")
+    panels = shares[facet].astype(str) if facet else pd.Series([""] * len(shares), index=shares.index)
+    shares["_share"] = shares["_answers"] / panels.map(totals).to_numpy(dtype=float)
+    return shares, {str(name): int(count) for name, count in totals.items()}
+
+
+def check_survey_options(show_n: object, header: str, inside: str | None, context: Sequence[str],
+                         respondents: str | None, options: dict) -> None:
+    if show_n not in SHOW_N:
+        raise ValueError(f"hairline: bars: show_n {show_n!r} must be True, False or 'column'")
+    if header not in HEADERS:
+        raise ValueError(f"hairline: bars: header {header!r} must be one of {', '.join(HEADERS)}")
+    if inside not in INSIDE:
+        raise ValueError(f"hairline: bars: inside {inside!r} must be 'name' or None")
+    if inside and not (options["by"] and options["stacked"]):
+        raise ValueError("hairline: bars: inside='name' writes the names of stacked groups; give by= and stacked=True")
+    if context and options["by"]:
+        raise ValueError("hairline: bars: context greys categories of a single series; with by=, use colors=")
+    if respondents and (options["by"] or options["percent"] or options["value_given"]):
+        raise ValueError("hairline: bars: respondents counts one answer per row; leave out value, by, percent "
+                         "and normalize")
 
 
 def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | None = None, *,
@@ -305,8 +359,9 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
          order: Sequence[str] | None = None, labels: bool = True, colors: Mapping[str, str] | None = None,
          size: str = "onehalf", facet: str | None = None, scales: str = "free", columns: int | None = None,
          top: int | None = None, other: str | None = None, partial: Mapping[str, str] | None = None,
-         show_n: bool = False, normalize: bool = False, color_by: str | None = None,
-         dimension: str | None = None) -> HairlineFigure:
+         show_n: bool | str = False, normalize: bool = False, color_by: str | None = None,
+         dimension: str | None = None, context: Sequence[str] | None = None, header: str = "total",
+         inside: str | None = None, respondents: str | None = None) -> HairlineFigure:
     """Bars per category; without `value` rows are counted. Long or many labels, or labels too wide for upright
     bars at the figure's width, turn the bars horizontal; single series are sorted by value unless `order` or
     `sort="given"` says otherwise.
@@ -317,11 +372,29 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     incomplete periods and what they hold ({"2021": "2 months"}): their bars are drawn lighter and the caption
     says so. `show_n` writes each category's n after its label; `normalize` draws shares of each category's total
     (as `percent`) and keeps the n in the labels. `color_by` colours the groups of `by` by a coarser column, with
-    that column's values in the legend; `dimension` keeps their colours off the slots another dimension holds."""
+    that column's values in the legend; `dimension` keeps their colours off the slots another dimension holds.
+
+    For surveys: `respondents` names the respondent column of multiple-choice answers (one row per answer): each
+    respondent counts once per answer, as a share of the panel's respondents, and the caption says several answers
+    were possible. `context` names categories drawn in the context grey (an exclusive "none" answer), last when
+    sorted by value. `header="n"` puts each facet's n in its header instead of its total. `show_n="column"`
+    writes each bar's n in a column right of the panel. `inside="name"` writes each stacked segment's name and
+    value inside it, in greys by position, so rows may hold different answers and no legend is needed."""
+    value_given = value is not None
+    context = [str(name) for name in (context or ())]
+    respondent_n: dict[str, int] = {}
+    if respondents is not None:
+        if value_given or by or percent or normalize:
+            check_survey_options(show_n, header, inside, context, respondents,
+                                 {"by": by, "stacked": stacked, "percent": percent or normalize,
+                                  "value_given": value_given})
+        data, respondent_n = respondent_shares(data, category, facet, respondents)
+        value = "_share"
     data, value = with_counts(data, value)
     check_columns(data, [category, value, by, facet, color_by])
     stacked = stacked and by is not None
-    percent, show_n = percent or normalize, show_n or normalize
+    percent = percent or normalize
+    show_n = "column" if show_n == "column" else bool(show_n or normalize)
     if (sort or "value") not in ("value", "given"):
         raise ValueError(f"hairline: bars: sort {sort!r} must be 'value' or 'given'")
     if color_by is not None and by is None:
@@ -331,11 +404,18 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     groups = group_names(data[by]) if by else [""]
     frames = groups_of(data, facet, None, "bars")
     locale = current_settings().locale
-    options = {"category": category, "value": value, "by": by, "stacked": stacked, "percent": percent,
-               "labels": labels, "top": top, "other": other or word("other", locale), "partial": []}
+    options = {"category": category, "value": value, "by": by, "stacked": stacked,
+               "percent": percent or respondents is not None, "divide": percent, "labels": labels, "top": top,
+               "other": other or word("other", locale), "partial": [], "context": context, "inside": inside,
+               "header": header, "value_given": value_given, "respondent_n": respondent_n}
+    check_survey_options(show_n, header, inside, context, None, options)
     panels = facet_panels(frames, options, order, sort, groups)
     every_name = list(dict.fromkeys(name for panel in panels for name in panel["names"]))
     check_top(top, scales, partial, every_name)
+    unknown = [name for name in context if name not in every_name]
+    if unknown:
+        raise ValueError(f"hairline: bars: context names {unknown[0]!r}, which is not a category; categories: "
+                         f"{', '.join(every_name)}")
     options["partial"] = [str(name) for name in (partial or {})]
     coarse = coarse_groups(data, by, color_by, "bars") if color_by else None
     series = {group: coarse[group] if coarse else group for group in groups}
@@ -343,20 +423,29 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     width = width_mm / MM_PER_INCH * 72
     columns = columns or (min(len(panels), 2) if facet else 1)
     for panel in panels:
-        panel["labels"] = labels_with_n(panel["names"], panel["n"], locale) if show_n else panel["names"]
+        panel["labels"] = labels_with_n(panel["names"], panel["n"], locale) if show_n is True else panel["names"]
+    if (show_n == "column" or inside) and horizontal is False:
+        raise ValueError("hairline: bars: show_n='column' and inside='name' need horizontal bars")
+    if show_n == "column" or inside:
+        horizontal = True
     if horizontal is None:
         horizontal = is_horizontal(panels, groups, options, width, columns, settings)
+    options["show_n"] = show_n
     sharex, sharey = bar_sharing(scales, horizontal) if facet else (False, False)
     split = f" and {str(by).replace('_', ' ')}" if by and by != category else ""
     result = figure(title or f"{humanise(value)} by {str(category).replace('_', ' ')}{split}", subtitle=subtitle,
-                    caption=with_caption(caption, partial_caption(partial, locale)), size=size, panels=len(panels),
+                    caption=with_caption(caption, partial_caption(partial, locale),
+                                         word("several_answers", locale) if respondents else None),
+                    size=size, panels=len(panels),
                     layout="grid" if facet else "rows", columns=columns, sharex=sharex, sharey=sharey)
     with entities.chart(list(dict.fromkeys(series.values())) if by else [], colors, dimension) as palette:
         options.update(palette={group: palette[series[group]] for group in groups} if by else {}, series=series,
                        horizontal=horizontal)
         for index, panel in enumerate(panels):
             draw_panel(result, index, panel, groups, options, facet, locale)
-    if by:
+    if inside:
+        result.legend([])
+    elif by:
         result.legend()
     return result
 
@@ -364,7 +453,13 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
 def draw_panel(result: HairlineFigure, index: int, panel: dict, groups: list[str], options: dict, facet: str | None,
                locale: str) -> None:
     ax, names, horizontal = result.axes[index], panel["names"], options["horizontal"]
-    draw_bars(ax, panel["table"], names, groups, options)
+    if options["inside"]:
+        draw_named(result, index, panel, options)
+    else:
+        draw_bars(ax, panel["table"], names, groups, options)
+    if options["show_n"] == "column":
+        result.numbers_column(index, [(len(names) - 1 - position, "n", format_number(panel["n"][name], 0, locale))
+                                      for position, name in enumerate(names)])
     labels = panel["labels"]
     result.categories(index, list(reversed(labels)) if horizontal else labels, "y" if horizontal else "x")
     pad = load_tokens()["bars"]["category_pad"]
@@ -372,6 +467,43 @@ def draw_panel(result: HairlineFigure, index: int, panel: dict, groups: list[str
     if options["percent"]:
         result.percent_axis(index, "x" if horizontal else "y")
     if facet:
-        digits = auto_digits([panel["total"]])
-        result.panel_header(index, panel["name"], stats=[(word("total", locale),
-                                                          format_number(panel["total"], digits, locale))])
+        result.panel_header(index, panel["name"], stats=[header_stat(panel, options, locale)])
+
+
+def header_stat(panel: dict, options: dict, locale: str) -> tuple[str, str]:
+    """A facet's total, or its n: the respondents of a multiple-choice panel, else its total count."""
+    if options["header"] == "n":
+        count = options["respondent_n"].get(panel["name"], panel["total"])
+        return "n", format_number(count, 0, locale)
+    return word("total", locale), format_number(panel["total"], auto_digits([panel["total"]]), locale)
+
+
+def named_colors(count: int) -> list[str]:
+    """Greys from dark to light, one per position in a row, the near-white step left out."""
+    return list(reversed(interpolate(ramp("greys"), count + 1)))[:count]
+
+
+def draw_named(result: HairlineFigure, index: int, panel: dict, options: dict) -> None:
+    """Stacked rows whose groups differ per row, each segment named inside where it fits, in greys by position
+    (first answer darkest), each a tooltip target; no legend is needed."""
+    ax, category, value, by = result.axes[index], options["category"], options["value"], options["by"]
+    rules, settings, names, table = load_tokens()["bars"], current_settings(), panel["names"], panel["table"]
+    half = rules["width"] * 0.92 / 2
+    rows = {name: table[table[category] == name] for name in names}
+    colors = named_colors(max(len(found) for found in rows.values()))
+    for position, name in enumerate(names):
+        y, start, found = len(names) - 1 - position, 0.0, rows[name]
+        total = float(found[value].sum())
+        for slot, (group, amount) in enumerate(zip(found[by].astype(str), found[value].astype(float), strict=True)):
+            if not amount > 0:
+                continue
+            width = amount / total if options["divide"] else amount
+            color, shown = colors[slot], value_text(width, options["percent"], (auto_digits([width]), None))
+            ax.add_patch(Rectangle((start, y - half), width, 2 * half, facecolor=color,
+                                   edgecolor=settings.neutral["surface"], linewidth=rules["gap_pt"] / 2))
+            artist = ax.text(start + width / 2, y, f"{group} {shown}", ha="center", va="center",
+                             fontsize=role_size(settings, "label"), fontfamily=families(settings.font),
+                             color=text_color(color, {"neutral": settings.neutral}), gid=STATIC_ID)
+            result.inside_labels.append((index, artist, start, start + width))
+            result.hover(index, group, color, (start, y - half, start + width, y + half), f"{group}: {name}, {shown}")
+            start += width

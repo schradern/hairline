@@ -57,7 +57,7 @@ measurements are not counted as separate patients.
 Each chart is one call with the data and its column names, and returns a figure in the hairline frame:
 `bars`, `scatter`, `timeseries`, `spread`, `raincloud`, `ridgeline`, `kaplan_meier`, `forest`, `dotplot`,
 `funnel`, `correlation`, `donut`, `partition`, `sankey`, `chord`, `arcs`, `venn`, `prisma`, `risk_of_bias`,
-`lanes`, `levels`, `swimlanes` and `table`.
+`lanes`, `levels`, `swimlanes`, `likert` and `table`.
 
 ```python
 admissions = pd.DataFrame({"diagnosis": ["Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac"],
@@ -128,13 +128,36 @@ hl.save(figure, "unit_day")
 - **`figure(heights=, sharex=, sharey=)`** sizes panel rows by content on one x axis; `time_axis()` labels the
   hours ("06", "08") cropped to the data, with named `spans`.
 
+### Surveys
+
+```python
+hl.likert(survey, "statement", "rating", levels=range(1, 11), group="section",  # 1–2, 3–5 | 6–8, 9–10
+          reverse=["Waited too long on the day"])                               # recoded and marked
+hl.spread(importance, "feature", "rating", section="area", panel_letters=True,  # a, b, c blocks
+          mean=True, sort="median")                                             # mean as an open diamond
+hl.bars(sources, "answer", facet="question", respondents="respondent",          # % of respondents, n per panel
+        context=["None of these"], header="n")                                  # the exclusive answer in grey
+hl.bars(answers, "question", "count", by="answer", stacked=True, percent=True,  # each answer named inside,
+        inside="name", show_n="column")                                         # n in a column on the right
+```
+
+- **`likert()`**: diverging bars for rating scales, the levels in a few named bins (a ten-point scale reads 1–2,
+  3–5 | 6–8, 9–10), a middle level centred on the split, negatively worded items recoded and marked, sections as
+  blocks, median, IQR and n beside each row, the binned key in the legend row.
+- **`spread(section=, panel_letters=, mean=, sort="median")`**: rows in lettered blocks, the mean as an open
+  diamond beside the median dot, rows ordered by median.
+- **`bars(respondents=)`** counts each respondent once per answer, as a share of the panel's respondents, and says
+  that several answers were possible; **`context=`** draws an answer outside the ranking in grey; **`header="n"`**
+  gives each facet its n; **`show_n="column"`** writes each bar's n right of it; **`inside="name"`** names each
+  stacked segment inside it, so rows may hold different answers.
+
 ## Colours
 
 Groups take a palette's colours in order, so two groups always get the same two colours and a group keeps its
 colour in every chart. `hl.palettes()` lists the six palettes, the purpose sets (two groups, greyscale print,
 risk of bias) and the ramps for amounts; `hl.swatches()` draws them; `hl.use(palette="calm")` changes the
-default; `hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name; `hl.colormap("blues")` gives a ramp
-to your own matplotlib plots. `help(hairline.palettes)` has the details.
+default; `hl.use(colors={"Unit B": "#e79d01"})` pins a colour to a name; `colors="blues"` on a chart gives
+ordered groups the steps of one ramp; `hl.colormap("blues")` gives a ramp to your own matplotlib plots. `help(hairline.palettes)` has the details.
 
 ## Files
 

@@ -15,7 +15,7 @@ from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
-from hairline.numbers import auto_digits, capped_places, format_interval, format_number, format_percent
+from hairline.numbers import auto_digits, capped_places, format_interval, format_number, format_percent, word
 from hairline.settings import current_settings
 from hairline.ticks import axis_limits, nice_breaks
 from hairline.tokens import load_tokens
@@ -108,7 +108,7 @@ def forest_rows(data: pd.DataFrame, names: tuple[str, str, str, str], weight: st
 def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: str, *, weight: str | None = None,
                 columns: Mapping[str, str] | None = None, pooled: Mapping | None = None, ratio: bool = True,
                 favours: Sequence[str] | None = None, color: str, study_heading: str = "Study",
-                effect_heading: str = "Effect [95 % CI]", weight_heading: str = "Weight", digits: int | None = None,
+                effect_heading: str | None = None, weight_heading: str = "Weight", digits: int | None = None,
                 marker: str = "square", interval: bool = True, null: float | None | str = "auto") -> dict:
     """Everything the geometry needs, with numbers already formatted for the active locale."""
     columns = dict(columns or {})
@@ -119,6 +119,7 @@ def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: s
     pooled = None if pooled is None else checked_pooled(pooled, ratio)
     digits = default_digits(data, [estimate, low, high]) if digits is None else digits
     locale = current_settings().locale
+    effect_heading = effect_heading or word("interval", locale, name=word("effect", locale))
     rows = forest_rows(data, (study, estimate, low, high), weight, columns, digits, locale, interval)
     pooled_spec = None if pooled is None else {
         "label": pooled.get("label", "Pooled"), "estimate": pooled["estimate"], "low": pooled["low"],

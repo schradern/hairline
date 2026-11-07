@@ -16,6 +16,7 @@ from hairline.charts.common import (
     check_numeric,
     clip_caption,
     clip_limits,
+    coarse_groups,
     drop_small,
     humanise,
     series_colors,
@@ -43,6 +44,7 @@ from hairline.ticks import axis_limits, nice_breaks
 from hairline.tokens import load_tokens
 
 STATS = ("median", "iqr", "mean", "n", "range", "levels")
+SORTS = (None, "median")
 DASH = "–"
 
 
@@ -138,14 +140,27 @@ def warn_median_gaps(groups: list[tuple[str, np.ndarray]], numbers: tuple, chart
                           UserWarning, stacklevel=4)
 
 
+def arranged(rows: list[dict], sort: str | None) -> list[dict]:
+    """Rows by section (in the order sections first appear), then by median, highest first, when sorted."""
+    sections = list(dict.fromkeys(row["section"] for row in rows))
+    ordered = sorted(rows, key=lambda row: sections.index(row["section"]))
+    if sort == "median":
+        ordered = sorted(ordered, key=lambda row: (sections.index(row["section"]), -row["median"]))
+    return ordered
+
+
 def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[str] | None = None,
                 marks: Mapping[str, float] | None = None, mark_label: str | None = None,
                 stats: Sequence[str] = ("median", "iqr", "mean"), percent: bool = False, digits: int | None = None,
                 zero: bool = False, axis_title: str | None = None, colors: Mapping[str, str] | None = None,
                 show_n: bool = False, min_n: int | None = None,
                 clip: float | tuple[float | None, float | None] | None = None, clip_stats: bool = False,
-                color_by: str | None = None, dimension: str | None = None, discrete: bool = False) -> dict:
-    check_columns(data, [group, value, color_by])
+                color_by: str | None = None, dimension: str | None = None, discrete: bool = False,
+                section: str | None = None, panel_letters: bool = False, mean: bool = False,
+                sort: str | None = None) -> dict:
+    check_columns(data, [group, value, color_by, section])
+    if sort not in SORTS:
+        raise ValueError(f"hairline: spread: sort {sort!r} must be 'median' or None")
     check_numeric(data, [value], "spread")
     stats = check_options(stats, digits)
     if show_n and "n" not in stats:
@@ -177,6 +192,7 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
     names = [name for name, _ in groups]
     palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "spread")
     marks = checked_marks(marks, groups)
+    sections = coarse_groups(data, group, section, "spread") if section else {}
     rows = []
     for (name, values), (_, shown) in zip(counted, drawn, strict=True):
         q1, middle, q3 = (level_quantiles if discrete else quantiles)(values, [0.25, 0.5, 0.75])
@@ -185,14 +201,21 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
         rows.append({"name": name, "color": palette[name], "low": low, "q1": min(max(q1, low), high),
                      "median": min(max(middle, low), high), "q3": min(max(q3, low), high), "high": high,
                      "mark": None if mark is None else float(mark),
+                     "mean": min(max(float(np.mean(values)), low), high) if mean else None,
+                     "section": sections[name] if section else None,
                      "pairs": stats_pairs(values, stats, numbers, mark, mark_label, discrete)})
+    rows = arranged(rows, sort)
     lows = [row["low"] for row in rows] + [row["mark"] for row in rows if row["mark"] is not None]
     highs = [row["high"] for row in rows] + [row["mark"] for row in rows if row["mark"] is not None]
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None,
              word("levels_note", locale) if discrete else None]
-    legend = list(dict.fromkeys((coarse[name], palette[name]) for name in names)) if color_by else []
+    legend = [("square", color, label) for label, color in dict.fromkeys((coarse[name], palette[name])
+                                                                           for name in names)] if color_by else []
+    if mean:
+        ink = current_settings().neutral["ink"]
+        legend += [("dot", ink, word("median", locale)), ("diamond", ink, word("mean", locale))]
     return {"rows": rows, "axis": spread_axis(lows, highs, percent, zero), "axis_title": axis_title,
-            "notes": [note for note in notes if note], "legend": legend}
+            "notes": [note for note in notes if note], "legend": legend, "letters": panel_letters}
 
 
 def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
@@ -202,7 +225,8 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
            colors: Mapping[str, str] | None = None, size: str = "onehalf", show_n: bool = False,
            min_n: int | None = None, clip: float | tuple[float | None, float | None] | None = None,
            clip_stats: bool = False, color_by: str | None = None, dimension: str | None = None,
-           discrete: bool = False) -> HairlineFigure:
+           discrete: bool = False, section: str | None = None, panel_letters: bool = False, mean: bool = False,
+           sort: str | None = None) -> HairlineFigure:
     """Distributions per group compared on one axis, first group on top; `marks` adds a reference tick per group
     (a capacity, a target), `mark_label` names it in the numbers column; `axis_title` (e.g. the unit) goes under
     the axis numbers. On a figure too narrow for the numbers beside the plot, they sit on a line under each row.
@@ -212,14 +236,19 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
     outside those values) and says in the caption how many and where; the statistics still use every value unless
     `clip_stats`. `stats` may include "levels", the most frequent values with their shares; a median that falls
     between two large levels is warned about. `discrete` keeps quantiles on the data's levels (whole people, whole
-    doses). `color_by` colours the rows by a coarser column, `dimension` keeps them off another dimension's slots."""
+    doses). `color_by` colours the rows by a coarser column, `dimension` keeps them off another dimension's slots.
+
+    `section` draws the rows in blocks of that column, each under its name (lettered a, b, c with
+    `panel_letters`) on one shared axis; `sort="median"` orders the rows of a block by median, highest first;
+    `mean` marks each row's mean as an open diamond, and the legend row names median and mean."""
     spec = spread_spec(data, group, value, order=order, marks=marks, mark_label=mark_label, stats=stats,
                        percent=percent, digits=digits, zero=zero, axis_title=axis_title, colors=colors,
                        show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats, color_by=color_by,
-                       dimension=dimension, discrete=discrete)
+                       dimension=dimension, discrete=discrete, section=section, panel_letters=panel_letters,
+                       mean=mean, sort=sort)
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *spec["notes"]), size=size)
     result.draw(0, lambda box, measure, style: spread_drawing(spec, box, measure, style))
     if spec["legend"]:
-        result.legend([("square", color, label) for label, color in spec["legend"]])
+        result.legend(spec["legend"])
     return fit_height(result)

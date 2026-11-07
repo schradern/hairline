@@ -10,6 +10,11 @@ from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
+# The mean's open diamond: its half-diagonal against a dot's radius, and its outline against the data line.
+DIAMOND = 1.3
+OPEN_EDGE = 0.6
+LETTERS = "abcdefghijklmnopqrstuvwxyz"
+
 
 def pair_width(pair: list[str], measure: Measure) -> float:
     return measure(f"{pair[0]} ", "label") + measure(pair[1], "label", load_tokens()["type"]["value_weight"])
@@ -81,11 +86,46 @@ def row_shapes(row: dict, centre: float, pitch: float, scale, style: dict, rules
               {"kind": "polygon", "points": band, "fill": row["color"], "alpha": rules["band_opacity"],
                "role": "band", "tip": tip, "tip_at": [scale(row["median"]), centre - half]},
               marker(scale(row["median"]), centre, dot_size(style), "dot", row["color"])]
+    if row.get("mean") is not None:
+        shapes.append(open_diamond(scale(row["mean"]), centre, row["color"], style))
     if row["mark"] is not None:
         tick, x = rules["mark"] * half, scale(row["mark"])
         shapes.append({"kind": "line", "points": [[x, centre - tick], [x, centre + tick]],
                        "color": style["neutral"]["ink"], "width": style["leader_width"], "role": "mark"})
     return [{**shape, "series": row["name"]} for shape in shapes]
+
+
+def open_diamond(x: float, centre: float, color: str, style: dict) -> dict:
+    """The mean: an open diamond in the row's colour, filled with the surface so the band shows round it."""
+    half = DIAMOND * dot_size(style) / 2
+    points = [[x - half, centre], [x, centre - half], [x + half, centre], [x, centre + half]]
+    return {"kind": "polygon", "points": points,
+            "fill": style["neutral"]["surface"], "edge": color, "edge_width": style["data_width"] * OPEN_EDGE,
+            "role": "mean"}
+
+
+def heading_shapes(name: str, index: int, letters: bool, x: float, baseline: float, measure: Measure,
+                   style: dict) -> list[dict]:
+    """A section's name over its rows, at the key weight, after its letter (a, b, c) when the sections are
+    lettered."""
+    weight, ink = load_tokens()["type"]["key_weight"], style["neutral"]["ink"]
+    shapes = []
+    if letters:
+        letter = LETTERS[index % len(LETTERS)]
+        shapes.append({**text(x, baseline, letter, "label", ink, "left", weight), "part": "letter"})
+        x += measure(letter, "label", weight) + load_tokens()["spacing"]["panel_letter_gap"] * style["base"]
+    return shapes + [{**text(x, baseline, name, "label", ink, "left", weight), "part": "heading"}]
+
+
+def section_lines(rows: list[dict]) -> list[tuple[str, object]]:
+    """The lines top to bottom: a heading where a section starts, then its rows."""
+    lines, current = [], object()
+    for row in rows:
+        if row.get("section") is not None and row["section"] != current:
+            lines.append(("heading", row["section"]))
+        current = row.get("section")
+        lines.append(("row", row))
+    return lines
 
 
 def axis_title_shape(spec: dict, right: float, axis_y: float, style: dict, rules: dict) -> list[dict]:
@@ -106,16 +146,25 @@ def spread_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     scale = x_scale(spec["axis"], False, left, right)
     line = rules["row_pitch"] * lead
     pitch = line + (lead if layout["under"] else 0.0)
-    bottom = box.y + pitch * len(spec["rows"])
+    lines = section_lines(spec["rows"])
+    heights = [line if kind == "heading" else pitch for kind, _ in lines]
+    bottom = box.y + sum(heights)
     shapes = [{"kind": "line", "points": [[scale(value), box.y], [scale(value), bottom]],
                "color": style["neutral"]["grid"], "width": style["grid"], "role": "grid"}
               for value in spec["axis"]["breaks"]]
-    for index, row in enumerate(spec["rows"]):
-        centre = box.y + pitch * index + line / 2
+    top, headings = box.y, 0
+    for (kind, entry), height in zip(lines, heights, strict=True):
+        centre = top + line / 2
         baseline = baseline_for(centre, style, "label")
-        shapes += row_shapes(row, centre, line, scale, style, rules)
-        shapes += [text(box.x, baseline, row["name"], "label", style["neutral"]["ink"])]
-        shapes += pair_texts(row["pairs"], layout["lefts"], baseline + (lead if layout["under"] else 0.0), measure,
+        top += height
+        if kind == "heading":
+            shapes += heading_shapes(str(entry), headings, spec.get("letters", False), box.x, baseline, measure,
+                                     style)
+            headings += 1
+            continue
+        shapes += row_shapes(entry, centre, line, scale, style, rules)
+        shapes += [text(box.x, baseline, entry["name"], "label", style["neutral"]["ink"])]
+        shapes += pair_texts(entry["pairs"], layout["lefts"], baseline + (lead if layout["under"] else 0.0), measure,
                              style)
     axis = {"axis": spec["axis"], "favours": None, "null": None}
     return shapes + axis_shapes(axis, scale, (left, right), bottom, style, rules) + \

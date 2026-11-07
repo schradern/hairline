@@ -21,7 +21,8 @@ hl_venn(
 
 \item{title, subtitle, caption}{Frame texts; the title defaults to the set names.}
 
-\item{colors}{Named colours for this chart only; they override the colour set for the number of sets.}
+\item{colors}{Named colours for this chart only; they override the colour set for the number of sets.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
 
 \item{proportional}{Areas proportional to the counts (two sets only).}
 }

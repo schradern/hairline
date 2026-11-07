@@ -188,7 +188,8 @@ hl_effects <- function(study, model_or_table, measure = NULL, study_column = "st
   shown <- data.frame(study = terms, estimate = rows$estimate, low = rows$low, high = rows$high)
   ratio <- fit$ratio || (!is.null(measure) && measure %in% hl_tokens()$study$ratio_measures)
   figure <- hl_forest(shown, ratio = ratio, digits = digits, ...)
-  table <- data.frame(Term = terms, `Estimate [95 % CI]` = texts, check.names = FALSE, stringsAsFactors = FALSE)
+  table <- data.frame(Term = terms, texts, check.names = FALSE, stringsAsFactors = FALSE)
+  names(table)[2] <- word("interval", name = word("estimate"))
   modelled <- inherits(model_or_table, c("lm", "coxph"))
   found <- list(scale = if (ratio) "ratio" else "difference",
                 reference = if (modelled) model_references(model_or_table) else stats::setNames(list(), character()),

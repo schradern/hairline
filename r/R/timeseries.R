@@ -159,6 +159,35 @@ headers_for <- function(plot, data, y, stats, percent, threshold, share_label, k
   plot
 }
 
+# An incomplete period on the x axis: a year ("2021") or a date on a date axis, a number otherwise; it reaches to the
+# next year, day or number.
+partial_span <- function(key, values) {
+  if (!inherits(values, c("Date", "POSIXct"))) {
+    start <- as.numeric(key)
+    if (is.na(start)) stop(sprintf("hairline: timeseries: partial names '%s', which is not an x value", key),
+                           call. = FALSE)
+    return(c(start - 0.5, start + 0.5))
+  }
+  dated <- inherits(values, "Date")
+  as_moment <- function(text) if (dated) as.Date(text) else as.POSIXct(text, tz = attr(values, "tzone") %||% "UTC")
+  if (grepl("^[0-9]{4}$", key)) return(c(as_moment(paste0(key, "-01-01")),
+                                         as_moment(paste0(as.integer(key) + 1, "-01-01"))))
+  start <- as_moment(key)
+  if (is.na(start)) stop(sprintf("hairline: timeseries: partial names '%s', which is not a date", key), call. = FALSE)
+  c(start, start + if (dated) 1 else 86400)
+}
+
+# Incomplete periods drawn lighter: a veil of the surface colour over the data there, as bars of an incomplete year
+# are drawn lighter.
+partial_layer <- function(partial, values) {
+  if (!length(partial)) return(list())
+  spans <- lapply(names(partial), partial_span, values = values)
+  frame <- data.frame(xmin = do.call(c, lapply(spans, `[`, 1)), xmax = do.call(c, lapply(spans, `[`, 2)))
+  list(static_layer(ggplot2::geom_rect(data = frame, ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax),
+                                       ymin = -Inf, ymax = Inf, fill = hl_settings()$neutral$surface,
+                                       alpha = 1 - hl_tokens()$partial$opacity, colour = NA, inherit.aes = FALSE)))
+}
+
 #' Small-multiple time series with two levels of detail
 #'
 #' One panel per group: raw values as a thin line under a trailing rolling
@@ -184,6 +213,11 @@ headers_for <- function(plot, data, y, stats, percent, threshold, share_label, k
 #' @param raw_label,mean_label Legend labels of the two lines.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
+#' @param partial Incomplete periods and what they hold, e.g. `c("2021" = "2 months")` (a year, a date or an x
+#'   value): drawn lighter and named in the caption.
+#' @param color_by Colour the panels by a coarser column.
+#' @param dimension What the groups are, so their colours keep off the slots another dimension holds.
 #' @return A ggplot with the hairline frame; [hl_save()] writes it at the `"double"` size (174 mm) unless told
 #'   otherwise, as the Python package does.
 #' @examples
@@ -199,8 +233,14 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
                           period_mean = FALSE, percent = FALSE, threshold = NULL, threshold_label = NULL,
                           threshold_legend = NULL, stats = c("mean", "median"), share_label = NULL, key = NULL,
                           key_panels = NULL, highlight = NULL, qualifiers = list(), bands = list(), events = list(),
-                          order = NULL, raw_label = "Raw values", mean_label = NULL, colors = NULL) {
-  check_columns(data, c(x, y, by))
+                          order = NULL, raw_label = "Raw values", mean_label = NULL, colors = NULL, partial = NULL,
+                          color_by = NULL, dimension = NULL) {
+  check_columns(data, c(x, y, by, color_by))
+  if (length(partial) && is.null(names(partial))) {
+    stop("hairline: timeseries: partial needs names, such as c(\"2021\" = \"2 months\")", call. = FALSE)
+  }
+  caption <- with_caption(caption, partial_caption(partial))
+  source <- data
   title <- title %||% if (is.null(by)) paste(humanise(y), "over time") else paste(humanise(y), "by", gsub("_", " ", by))
   check_window(window)
   check_present(data, y, "timeseries")
@@ -210,12 +250,13 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   x <- ".x"
   y <- ".y"
   colours <- if (is.null(by)) stats::setNames(lone_colour(), levels(data$.group)) else
-    colours_for(levels(data$.group), colors)
+    series_colours(levels(data$.group), source, by, color_by, colors, dimension, "timeseries")$palette
   threshold_text <- if (is.null(threshold)) "" else value_formatter(percent)(threshold, 0)
   share_label <- share_label %||% paste("\u2265", threshold_text)
   plot <- ggplot2::ggplot(data) + mark_layers(bands, events, data[[x]], levels(data$.group))
   if (period_mean) plot <- plot + period_mean_layer(data, y)
-  plot <- plot + series_layers(data, x, y, raw, colours) + ggplot2::facet_wrap(~.group, ncol = 1) +
+  plot <- plot + series_layers(data, x, y, raw, colours) + partial_layer(partial, data[[x]]) +
+    ggplot2::facet_wrap(~.group, ncol = 1) +
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline() +
     timeseries_legend(raw, period_mean, bands, raw_label, mean_label %||% sprintf("Rolling mean (%d)", window),
                       threshold_legend)

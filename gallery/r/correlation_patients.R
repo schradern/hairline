@@ -3,6 +3,8 @@ library(hairline)
 source(file.path("r", "common.R"))
 
 hl_use(brand = FALSE)
-plot <- hl_correlation(gallery_data("patients"), subtitle = "Measurements at ICU admission, 160 patients",
+patients <- gallery_data("patients")
+names(patients)[names(patients) == "sofa"] <- "SOFA score"
+plot <- hl_correlation(patients, subtitle = "Measurements at ICU admission, 160 patients",
                        caption = "Synthetic data.")
 finish(plot, "correlation_patients", "double")

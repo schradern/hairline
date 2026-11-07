@@ -5,6 +5,7 @@ import hairline as hl
 from common import data, finish
 
 hl.use(brand=False)
-figure = hl.correlation(data("patients"), subtitle="Measurements at ICU admission, 160 patients",
-                        caption="Synthetic data.", size="double")
+patients = data("patients").rename(columns={"sofa": "SOFA score"})
+figure = hl.correlation(patients, subtitle="Measurements at ICU admission, 160 patients", caption="Synthetic data.",
+                        size="double")
 finish(figure, "correlation_patients")

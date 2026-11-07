@@ -1,3 +1,80 @@
+# hairline (development version)
+
+What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and the
+staffing of a surgical unit over the day. The same options as the Python package, under the same names, and every
+gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing calls keep their output.
+
+## For reports
+
+* `hl_bars(facet =, scales =, columns =)`: one panel per facet value, each with its own value axis or one shared
+  axis, the facet's total in its panel header. `top =` and `other =` keep the largest categories per panel and fold
+  the rest into one bar.
+* `partial =` on `hl_bars()` and `hl_timeseries()`: incomplete periods are drawn lighter and named in the caption,
+  in the locale ("Unvollständig, heller: 2021 (2 Monate)").
+* `show_n =` on `hl_bars()`, `hl_spread()` and `hl_ridgeline()`, `n =` on `hl_dotplot()`: the n after the label or
+  in the numbers column, formatted in the locale; colours and `order` keep keying on the bare group.
+* `min_n =` on `hl_spread()`, `hl_ridgeline()` and `hl_raincloud()`, `clip =` (a quantile or `c(low, high)`) and
+  `clip_stats =` on those and `hl_scatter()`: groups and values left out are counted in the caption.
+* `normalize =` on `hl_bars()`: shares from counts, the n of each category kept in its label.
+* `color_by =` on every chart with groups: groups coloured by a coarser column, which the legend lists and the
+  palette check counts. `dimension =` and `hl_scope()` keep the categories of one dimension off the slots another
+  dimension holds, with an error naming both when the palette is full.
+* `hl_spread(stats = c("levels", ...), discrete = TRUE)`: the most frequent values with their shares, and quantiles
+  on the data's own levels, each level written as given (12.5 mg, 50 mg). `hl_spread()` and `hl_describe()` warn
+  when a median falls between two levels that each hold more than 20 % of the values.
+* `hl_table()`: any data frame in hairline's typography, numbers in the locale, wrapped headings, indents kept,
+  `bold_rows =` and `footnotes =`; `hl_save()` writes it as PDF, PNG, SVG and as a real HTML `<table>`.
+* `hl_report()`, `hl_report_add()` and `hl_report_write()`: figures and tables numbered in the locale, in one
+  self-contained Markdown or HTML file.
+
+## Over the time of day
+
+* `hl_lanes()`, `hl_levels()` and `hl_swimlanes()`, with `days =` (weekdays, weekends, dates), `hours =` and
+  `spans =`.
+* `hl_rows()` stacks plots as the panel rows of one figure: rows sized by `heights =`, one time axis shared and
+  labelled at the bottom (`sharex =`), one legend row and caption. It is the R counterpart of the Python
+  `figure(heights=, sharex=)` with charts drawn `into=` it.
+* `hl_legend_ramp()` draws a binned colour key with hairline outlines in the legend row, after the series items. The
+  lanes, levels and the correlation heatmap add it themselves; `hl_correlation()` now shows its key this way, as
+  Python does.
+* Quantiles of whole people (`hl_levels()`, `hl_spread(discrete = TRUE)`) use quantile type 1: the 0.9 quantile of
+  daily peaks is the count that is enough on at least 9 of 10 days.
+
+## Surveys
+
+* `hl_likert()`: diverging bars for rating scales. The levels are binned so their colours can be told apart (a
+  ten-point scale reads 1-2, 3-5 | 6-8, 9-10; `bins =` names others), a middle level is centred on the split,
+  `reverse =` recodes and marks negatively worded items, `group =` draws sections, median, IQR and n stand beside
+  each row, and the binned key sits in the legend row.
+* `hl_spread(section =, panel_letters =, mean =, sort = "median")`: rows in lettered blocks under their names, the
+  mean as an open diamond beside the median, rows ordered by median.
+* `hl_bars(respondents =)`: multiple-choice answers as shares of the panel's respondents, with a caption note that
+  several answers were possible. `context =` draws categories in the context grey, `header = "n"` gives each facet
+  its n, `show_n = "column"` writes each bar's n in a column right of the panel, and `inside = "name"` writes each
+  stacked segment's name and value inside it, in greys by position.
+* `hl_legend_ramp(labels =)` names the steps of a binned key; `hl_legend()` takes a `"diamond"` (open marker) item.
+
+## One design across charts
+
+* Category and row names are set in ink in every chart, as spread, forest and Likert rows already were; numbers on
+  the axes (years and lane numbers included) stay faint. Bar, ridgeline, raincloud and study panels change.
+* Binned keys (`hl_legend_ramp()`, the correlation heatmap, `hl_likert()`, `hl_lanes()`, `hl_levels()`) start at the
+  left edge after the series items, as every other legend does, instead of sitting at the right.
+* Interval headings follow the locale: "Effect [95% CI]" in English, "Effekt [95 %-KI]" in German, on `hl_forest()`,
+  `hl_dotplot()` and `hl_effects()`.
+* `hl_levels(by = ...)` shades its panels in greys unless `colors =` is given, as its binned key already was: the panel
+  names say whose levels they are, and the hues stay free for the places drawn beside them.
+* `colors = "blues"` (any ramp name) on any chart gives ordered groups the steps of one ramp, light to dark.
+* `hl_dotplot(percent = TRUE)` draws shares as percent; `hl_arcs(key_title =)` names the width key, which now has a
+  title by default.
+
+## Fixes
+
+* Bar value labels are no longer cut off at the panel's top edge when they reach past the last break, as in Python.
+* `hl_kaplan_meier()` draws its censor ticks as strokes of the token's length and width, as Python does; the "|"
+  glyph it used before took its stroke from the font and came out thinner.
+* `hl_forest()` with a `metafor::rma` fit no longer carries metafor's attributes into the study table.
+
 # hairline 0.2.1
 
 ## Long labels

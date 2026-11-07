@@ -100,11 +100,12 @@ def step_xy(values: np.ndarray, bins: np.ndarray, bin_minutes: int) -> tuple[lis
     return xs, ys + ys[-1:]
 
 
-def draw_shading(result: HairlineFigure, index: int, name: str, peaks: np.ndarray, bins: np.ndarray, color: str,
-                 steps: list[float], bin_minutes: int) -> None:
+def draw_shading(result: HairlineFigure, index: int, name: str, peaks: np.ndarray, bins: np.ndarray,
+                 color: str | None, steps: list[float], bin_minutes: int) -> None:
     """One shaded row per count from 1 up: each bin's share of days that needed exactly that many, binned as the
-    key shows."""
+    key shows; without a colour in greys, the tooltips taking the darkest."""
     ramp, top = step_colors(color, len(steps)), int(peaks.max())
+    color = color or ramp[-1]
     polygons, faces = [], []
     half = load_tokens()["lanes"]["cell"] / 2
     for level in range(1, top + 1):
@@ -160,8 +161,7 @@ def levels(data: pd.DataFrame, time: str, count: str | None = None, *, end: str 
         return made
     result, indexes = target_panels(into, panel, len(groups), make)
     names = [name for name, _ in groups]
-    with entities.chart(names if by else [], colors, dimension) as palette:
-        colours = {name: palette.get(name, lone_color()) for name in names}
+    colours = panel_colors(names, by, colors, dimension)
     base, neutral = result.settings.base_size, result.settings.neutral
     occupied = np.flatnonzero(np.any([peaks.max(axis=0) > 0 for _, peaks in groups], axis=0))
     if not len(occupied):
@@ -200,3 +200,14 @@ def levels(data: pd.DataFrame, time: str, count: str | None = None, *, end: str 
         result.legend_ramp(key, steps, key_title or word("share_of_days", locale))
     add_caption(result, word("levels_note", locale), f"{day_label}." if into is not None and day_label else None)
     return result
+
+
+def panel_colors(names: list[str], by: str | None, colors: Mapping[str, str] | None,
+                 dimension: str | None) -> dict[str, str | None]:
+    """One panel's colour: the series colour without `by`; with `by` greys (None), as the binned key shows, since
+    each panel's name already says whose levels they are and the hues stay free for the charts drawn beside them;
+    `colors` gives the groups hues of their own."""
+    if by and colors is None:
+        return {name: None for name in names}
+    with entities.chart(names if by else [], colors, dimension) as palette:
+        return {name: palette.get(name, lone_color()) for name in names}

@@ -14,7 +14,11 @@ hl_scatter(
   caption = NULL,
   fit = "linear",
   order = NULL,
-  colors = NULL
+  colors = NULL,
+  clip = NULL,
+  clip_stats = FALSE,
+  color_by = NULL,
+  dimension = NULL
 )
 }
 \arguments{
@@ -31,7 +35,15 @@ hl_scatter(
 \item{order}{Group order.}
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
-for the number of groups and are not remembered for other charts.}
+for the number of groups and are not remembered for other charts.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
+
+\item{clip, clip_stats}{Hide implausible y values, as in \code{\link[=hl_spread]{hl_spread()}}, and say so in the caption; the fit still
+uses every point unless \code{clip_stats}.}
+
+\item{color_by}{Colour the groups of \code{by} by a coarser column, which the legend lists.}
+
+\item{dimension}{What the groups are, so their colours keep off the slots another dimension holds.}
 }
 \value{
 A ggplot with the hairline frame.

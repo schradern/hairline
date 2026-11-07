@@ -143,7 +143,10 @@ def place_panels(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: d
     base = spec.base_size
     gap = spacing["panel_columns"] * base
     offsets = column_offsets(spec, spacing)
-    width = (layout.right - layout.plot_left - gap * (spec.panel_columns - 1) - sum(offsets)) / spec.panel_columns
+    # Room right of each column's panels for its numbers column (an n per bar), when it has one.
+    sides = (list(spec.side_widths) + [0.0] * spec.panel_columns)[:spec.panel_columns]
+    width = (layout.right - layout.plot_left - gap * (spec.panel_columns - 1) - sum(offsets) - sum(sides)) / \
+        spec.panel_columns
     check_panel_width(spec, width, spacing)
     for row in range(spec.panel_rows):
         if row:
@@ -156,8 +159,9 @@ def place_panels(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: d
             layout.y_title_left = layout.left
             layout.y_title_baseline = stack.lines(spec.sizes["label"], 1)[0]
             stack.skip(spacing["y_title"] * base)
-        layout.panels += [Box(layout.plot_left + column * (width + gap) + sum(offsets[: column + 1]), stack.y, width,
-                              heights[row]) for column in range(spec.panel_columns)]
+        layout.panels += [Box(layout.plot_left + column * (width + gap) + sum(offsets[: column + 1]) +
+                              sum(sides[:column]), stack.y, width, heights[row])
+                          for column in range(spec.panel_columns)]
         stack.skip(heights[row] + inner_tick_band(spec, row, spacing))
         titled = has_row_titles(spec, row) and row < spec.panel_rows - 1
         if titled:

@@ -30,7 +30,10 @@ hl_timeseries(
   order = NULL,
   raw_label = "Raw values",
   mean_label = NULL,
-  colors = NULL
+  colors = NULL,
+  partial = NULL,
+  color_by = NULL,
+  dimension = NULL
 )
 }
 \arguments{
@@ -69,7 +72,15 @@ hl_timeseries(
 \item{raw_label, mean_label}{Legend labels of the two lines.}
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
-for the number of groups and are not remembered for other charts.}
+for the number of groups and are not remembered for other charts.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
+
+\item{partial}{Incomplete periods and what they hold, e.g. \code{c("2021" = "2 months")} (a year, a date or an x
+value): drawn lighter and named in the caption.}
+
+\item{color_by}{Colour the panels by a coarser column.}
+
+\item{dimension}{What the groups are, so their colours keep off the slots another dimension holds.}
 }
 \value{
 A ggplot with the hairline frame; \code{\link[=hl_save]{hl_save()}} writes it at the \code{"double"} size (174 mm) unless told

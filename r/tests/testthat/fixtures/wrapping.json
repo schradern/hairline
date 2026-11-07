@@ -21816,7 +21816,7 @@
     },
     "color": "#2474cf",
     "study_heading": "Study",
-    "effect_heading": "Effect [95 % CI]",
+    "effect_heading": "Effect [95% CI]",
     "weight_heading": null,
     "marker": "square"
    },
@@ -21841,7 +21841,7 @@
      "kind": "text",
      "x": 260.0,
      "y": 65.04,
-     "text": "Effect [95 % CI]",
+     "text": "Effect [95% CI]",
      "role": "label",
      "color": "#5b6168",
      "align": "right",

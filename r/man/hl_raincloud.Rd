@@ -14,7 +14,12 @@ hl_raincloud(
   y_title = NULL,
   order = NULL,
   comparisons = list(),
-  colors = NULL
+  colors = NULL,
+  min_n = NULL,
+  clip = NULL,
+  clip_stats = FALSE,
+  color_by = NULL,
+  dimension = NULL
 )
 }
 \arguments{
@@ -32,7 +37,11 @@ hl_raincloud(
 computed) or \code{c(group, group, text)} with your own result.}
 
 \item{colors}{Named colours for this chart only, e.g. \code{c(Male = "#0a6ddd")}; they override the colour set
-for the number of groups and are not remembered for other charts.}
+for the number of groups and are not remembered for other charts.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
+
+\item{min_n, clip, clip_stats, color_by, dimension}{As in \code{\link[=hl_spread]{hl_spread()}}: groups too small and values clipped off are
+named in the caption; "n = …" counts the values the statistics use.}
 }
 \value{
 A ggplot with the hairline frame.

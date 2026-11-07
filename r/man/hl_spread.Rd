@@ -19,7 +19,18 @@ hl_spread(
   digits = NULL,
   zero = FALSE,
   axis_title = NULL,
-  colors = NULL
+  colors = NULL,
+  show_n = FALSE,
+  min_n = NULL,
+  clip = NULL,
+  clip_stats = FALSE,
+  color_by = NULL,
+  dimension = NULL,
+  discrete = FALSE,
+  section = NULL,
+  panel_letters = FALSE,
+  mean = FALSE,
+  sort = NULL
 )
 }
 \arguments{
@@ -35,7 +46,8 @@ hl_spread(
 
 \item{mark_label}{Name of the reference in the numbers column, e.g. \code{"beds"}.}
 
-\item{stats}{Numbers to show: any of \code{"median"}, \code{"iqr"}, \code{"mean"}, \code{"n"}, \code{"range"}.}
+\item{stats}{Numbers to show: any of \code{"median"}, \code{"iqr"}, \code{"mean"}, \code{"n"}, \code{"range"}, \code{"levels"} (the most
+frequent values with their shares). A median that falls between two large levels is warned about.}
 
 \item{percent}{Values are shares (0-1), shown as percentages.}
 
@@ -45,7 +57,32 @@ hl_spread(
 
 \item{axis_title}{Title under the axis numbers, e.g. the unit.}
 
-\item{colors}{Named colours for this chart only.}
+\item{colors}{Named colours for this chart only.
+A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
+
+\item{show_n}{Add each group's n to the numbers column.}
+
+\item{min_n}{Leave out groups with fewer values; the caption names them.}
+
+\item{clip}{Hide implausible values: a quantile of every value (\code{0.99}: above the 99th percentile) or
+\code{c(low, high)} (\code{NA} for no limit on that side); the caption says how many and where.}
+
+\item{clip_stats}{Compute the statistics from the values drawn; by default they use every value.}
+
+\item{color_by}{Colour the rows by a coarser column; the legend lists its values.}
+
+\item{dimension}{What the groups are, so their colours keep off the slots another dimension holds (see
+\code{\link[=hl_scope]{hl_scope()}}).}
+
+\item{discrete}{Keep quantiles on the data's own levels (type 1), for whole people or doses on round levels.}
+
+\item{section}{Column whose values draw the rows in blocks, each under its name, on one shared axis.}
+
+\item{panel_letters}{Letter the sections a, b, c.}
+
+\item{mean}{Mark each row's mean as an open diamond; the legend row names median and mean.}
+
+\item{sort}{\code{"median"} orders the rows of a section by median, highest first; \code{NULL} keeps their order.}
 }
 \value{
 A ggplot with the hairline frame.

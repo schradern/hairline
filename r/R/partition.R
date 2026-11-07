@@ -86,6 +86,7 @@ partition_drawing <- function(spec, box, measure, style) {
 #' @param level_names Row headings; default the column names.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param order Top-level slices in this order; any others follow in their data order.
 #' @return A ggplot with the hairline frame.
 #' @examples

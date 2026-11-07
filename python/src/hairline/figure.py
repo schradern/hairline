@@ -78,6 +78,7 @@ class HairlineFigure:
     integer_axes: set[tuple[int, str]] = field(default_factory=set)
     hover_marks: list[dict] = field(default_factory=list)
     inside_labels: list[tuple] = field(default_factory=list)
+    side_numbers: dict[int, list[tuple[float, str, str]]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)
@@ -148,11 +149,12 @@ class HairlineFigure:
 
     def legend_ramp(self, ramp: str | Sequence[str] | None = None, steps: Sequence[float] | None = None,
                     title: str | None = None, format: str = "percent", limits: tuple[float, float] = (0.0, 1.0),
-                    digits: int | None = None) -> None:
-        """A binned colour key in the legend row, right-aligned beside the series items: `title`, then one small
+                    digits: int | None = None, labels: Sequence[str] | None = None) -> None:
+        """A binned colour key in the legend row, after the series items: `title`, then one small
         outlined square per step (its value formatted as a percentage or, with `format="number"`, a number with
         `digits` decimals). `ramp` is a ramp name or its colours; `steps` are values within `limits`, by default
-        25 %, 50 %, 75 % and 100 % of a share. Charts with a ramp (lanes, levels, correlation) add it themselves."""
+        25 %, 50 %, 75 % and 100 % of a share. `labels` names the steps instead (the bins of a rating scale:
+        "1–2", "3–5"). Charts with a ramp (lanes, levels, correlation, likert) add it themselves."""
         from hairline.numbers import format_number, format_percent
         from hairline.palettes import ramp as ramp_colors
         if format not in ("percent", "number"):
@@ -170,8 +172,11 @@ class HairlineFigure:
         locale = self.settings.locale
         places = [digits if digits is not None else exact_places(step * (100 if format == "percent" else 1))
                   for step in steps]
-        labels = [format_percent(step, count, locale) if format == "percent" else format_number(step, count, locale)
-                  for step, count in zip(steps, places, strict=True)]
+        if labels is not None and len(labels) != len(steps):
+            raise ValueError(f"hairline: legend_ramp: labels gives {len(labels)} names for {len(steps)} steps")
+        labels = [str(label) for label in labels] if labels is not None else [
+            format_percent(step, count, locale) if format == "percent" else format_number(step, count, locale)
+            for step, count in zip(steps, places, strict=True)]
         self.ramp_key = {"title": title, "labels": labels,
                          "colors": colors if binned else [colors[round((step - low) / (high - low) * (len(colors) - 1))]
                                                           for step in steps]}
@@ -208,6 +213,12 @@ class HairlineFigure:
         labels = [str(label) for _, _, rows in blocks for label in rows]
         self.categories(index, list(reversed(labels)), "y")
         self.blocks[index] = [(str(name), color, len(rows)) for name, color, rows in blocks]
+
+    def numbers_column(self, index: int, entries: Sequence[tuple[float, str, str]]) -> None:
+        """Key numbers right of panel `index`, one per row: (y position in the panel's data, label, value), drawn as
+        spread's numbers column ("n 198"), the panel narrowed to make room."""
+        self.check_index(index)
+        self.side_numbers[index] = [(float(position), str(label), str(value)) for position, label, value in entries]
 
     def hover(self, index: int, name: str, color: str, box: tuple[float, float, float, float], text: str) -> None:
         """A tooltip target for interactive HTML: a box (x0, y0, x1, y1 in panel `index`'s data) of series

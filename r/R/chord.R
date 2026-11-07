@@ -136,6 +136,7 @@ chord_drawing <- function(spec, box, measure, style) {
 #' @param title,subtitle,caption Frame texts; the title defaults to the columns.
 #' @param order Group order around the ring, clockwise from the top.
 #' @param colors Named colours for this chart only; they override the colour set for the number of groups.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' transfers <- data.frame(origin = c("ICU", "Ward", "ICU", "Step-down", "Ward"),

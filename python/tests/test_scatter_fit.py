@@ -60,7 +60,10 @@ def test_correlation_values_and_text_contrast():
 def test_correlation_figure_has_a_colour_key():
     figure = hl.correlation(patients(), ["sofa", "lactate", "age", "length_of_stay"])
     figure.figure.canvas.draw()
-    assert figure.layout_report()["legend_labels"] == ["−1", "−0.5", "0", "0.5", "1"]
+    report = figure.layout_report()
+    assert report["legend_labels"] == ["−1", "−0.5", "0", "0.5", "1"]
+    assert report["legend_item_rights"][-1] < report["right"] - 100
+    assert figure.ramp_key is not None and figure.ramp_key["labels"] == ["−1", "−0.5", "0", "0.5", "1"]
     assert figure.title == "Pearson correlations"
 
 

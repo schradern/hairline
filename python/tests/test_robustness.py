@@ -492,10 +492,9 @@ def test_negative_bars_have_proper_targets():
 
 
 def test_delayed_entry_counts_only_those_who_have_entered():
-    from lifelines import KaplanMeierFitter
-
+    lifelines = pytest.importorskip("lifelines")
     from hairline.charts.kaplan_meier import at_risk_from, fitter_table
-    table, total = fitter_table(KaplanMeierFitter().fit([2, 4, 6, 8], [1, 0, 1, 0], entry=[0, 0, 3, 5]))
+    table, total = fitter_table(lifelines.KaplanMeierFitter().fit([2, 4, 6, 8], [1, 0, 1, 0], entry=[0, 0, 3, 5]))
     assert at_risk_from(table, total, [0, 2.5, 4.5, 6.5]) == [2, 1, 1, 1]
 
 

@@ -93,7 +93,7 @@ forest_rows <- function(data, study, estimate, low, high, weight, columns, digit
 
 forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns = character(), pooled = NULL,
                         ratio = TRUE, favours = NULL, colour, study_heading = "Study",
-                        effect_heading = "Effect [95 % CI]", weight_heading = "Weight", digits = NULL,
+                        effect_heading = NULL, weight_heading = "Weight", digits = NULL,
                         marker = "square", interval = TRUE, null = "auto") {
   check_columns(data, c(study, estimate, low, high, weight, unname(columns)))
   forest_check_rows(data, study, estimate, low, high, weight, ratio)
@@ -102,6 +102,7 @@ forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns
   }
   if (!is.null(pooled)) pooled <- forest_checked_pooled(as.list(pooled), ratio)
   digits <- digits %||% forest_default_digits(data, c(estimate, low, high))
+  effect_heading <- effect_heading %||% word("interval", name = word("effect"))
   rows <- forest_rows(data, study, estimate, low, high, weight, columns, digits, interval)
   if (identical(null, "auto")) null <- if (ratio) 1 else 0
   if (!is.null(pooled)) {
@@ -144,9 +145,10 @@ forest_from_model <- function(model, exponentiate) {
 forest_from_rma <- function(fit) {
   ratio <- fit$measure %in% c("OR", "RR", "HR", "IRR", "PETO", "ROM")
   back <- if (ratio) exp else identity
-  spread <- stats::qnorm(0.975) * sqrt(fit$vi)
-  table <- data.frame(study = as.character(fit$slab), estimate = back(fit$yi), low = back(fit$yi - spread),
-                      high = back(fit$yi + spread), weight = stats::weights(fit))
+  effects <- as.numeric(fit$yi)
+  spread <- stats::qnorm(0.975) * sqrt(as.numeric(fit$vi))
+  table <- data.frame(study = as.character(fit$slab), estimate = back(effects), low = back(effects - spread),
+                      high = back(effects + spread), weight = unname(stats::weights(fit)))
   list(table = table, ratio = ratio,
        pooled = list(estimate = back(fit$b[1]), low = back(fit$ci.lb), high = back(fit$ci.ub), label = "Pooled"),
        heterogeneity = sprintf("I\u00b2 = %s %%, tau\u00b2 = %s", hl_format_number(fit$I2, 0),

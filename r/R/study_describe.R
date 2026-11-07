@@ -12,9 +12,26 @@ study_subsets <- function(study) {
 
 study_part_names <- function(parts) vapply(parts, `[[`, character(1), "name")
 
+# A median between two levels that each hold a large share matches neither (doses of 25 and 50 mg, median 35); the
+# table would need a footnote, so say so.
+warn_describe_gaps <- function(study, name, parts, digits) {
+  rules <- hl_tokens()$spread
+  for (part in parts) {
+    values <- study_numbers(part$rows[[name]])
+    values <- values[!is.na(values)]
+    gap <- if (length(values)) median_gap(values, rules$discrete_share, rules$discrete_min_n)
+    if (is.null(gap)) next
+    warning(sprintf(paste("hairline: describe: the median of %s in %s lies between %s and %s, which each hold more",
+                          "than %s of the values, and matches neither; give the shares of the levels in the text or a",
+                          "footnote"), study_label(study, name), part$name, hl_format_number(gap[1], digits),
+                    hl_format_number(gap[2], digits), hl_format_percent(rules$discrete_share, 0)), call. = FALSE)
+  }
+}
+
 describe_numeric <- function(study, name, parts, stats) {
   digits <- study_digits(study_numbers(study$data[[name]]))
   whole <- is_whole(study_numbers(study$data[[name]]))
+  if ("median_iqr" %in% stats) warn_describe_gaps(study, name, parts, digits)
   found <- stats::setNames(lapply(parts, function(part) {
     summary_numbers(study_numbers(part$rows[[name]]), stats, sum(study_is_missing(part$rows[[name]])))
   }), study_part_names(parts))

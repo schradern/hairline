@@ -95,6 +95,7 @@ sankey_spec <- function(data, columns, value, color_by = NULL, headings = NULL, 
 #' @param headings Column headings; default the column names.
 #' @param colors Named colours for this chart only, e.g. `c(Male = "#0a6ddd")`; they override the colour set
 #'   for the number of groups and are not remembered for other charts.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' budget <- data.frame(income = c("Salary", "Salary", "Benefit"),

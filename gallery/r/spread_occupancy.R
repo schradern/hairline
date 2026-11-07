@@ -8,5 +8,6 @@ occupancy$occupied <- round(occupancy$share * occupancy$beds)
 capacity <- tapply(occupancy$beds, occupancy$ward, function(values) values[1])
 plot <- hl_spread(occupancy, "ward", "occupied", marks = capacity, mark_label = "Beds", zero = TRUE,
                   axis_title = "Occupied beds at 00:00", title = "Occupied beds by unit",
-                  subtitle = "Every day, January 2025 to June 2026; ticks mark the capacity", caption = "Synthetic data.")
+                  subtitle = "Every day, January 2025 to June 2026; ticks mark the capacity",
+                  caption = "Synthetic data.")
 finish(plot, "spread_occupancy", "double")

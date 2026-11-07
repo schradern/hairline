@@ -7,5 +7,5 @@ from common import data, finish
 hl.use(brand=False)
 stages = ["Emergency", "Theatre", "ICU", "Step-down", "Ward", "Rehabilitation", "Home"]
 figure = hl.arcs(data("pathways"), "origin", "destination", order=stages, title="Moves along the care pathway",
-                 subtitle="420 patient moves, 2025", caption="Synthetic data.", size="double")
+                 subtitle="420 patient moves, 2025", caption="Synthetic data.", key_title="Moves", size="double")
 finish(figure, "arcs_pathways")

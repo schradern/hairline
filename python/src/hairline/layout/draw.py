@@ -5,7 +5,7 @@ from __future__ import annotations
 from matplotlib.artist import Artist
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Polygon, Rectangle
 from matplotlib.text import Text
 from matplotlib.transforms import Affine2D, Transform
 
@@ -64,6 +64,15 @@ def add_line(fig: Figure, x0: float, y0: float, x1: float, y1: float, style: dic
     line.set_figure(fig)
     line.set_in_layout(False)
     return line
+
+
+def add_polygon(fig: Figure, points: list[tuple[float, float]], fill: str, edge: str, edge_width: float) -> Polygon:
+    """A closed outline in pt from the top-left corner (an open diamond's swatch)."""
+    polygon = Polygon(points, closed=True, transform=pt_transform(fig), facecolor=fill, edgecolor=edge,
+                      linewidth=edge_width, joinstyle="miter")
+    polygon.set_figure(fig)
+    polygon.set_in_layout(False)
+    return polygon
 
 
 def add_rect(fig: Figure, x: float, y: float, width: float, height: float, color: str, edge: str | None = None,

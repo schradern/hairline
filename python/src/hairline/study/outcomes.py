@@ -9,7 +9,7 @@ import pandas as pd
 
 from hairline.charts.forest import forest, model_table, ratio_model
 from hairline.charts.kaplan_meier import estimates_from, kaplan_meier
-from hairline.numbers import format_interval, format_number, format_p
+from hairline.numbers import format_interval, format_number, format_p, word
 from hairline.stats.survival import km_median, median_digits
 from hairline.stats.tests import logrank
 from hairline.study.columns import is_missing, level_text
@@ -145,7 +145,7 @@ def effects(study: Study, model_or_table, measure: str | None = None, size: str 
     estimates = [{"estimate": float(row.estimate), "low": float(row.low), "high": float(row.high)}
                  for row in rows.itertuples()]
     texts = [prefix + format_interval(item["estimate"], item["low"], item["high"], digits) for item in estimates]
-    table = pd.DataFrame({"Term": terms, "Estimate [95 % CI]": texts})
+    table = pd.DataFrame({"Term": terms, word("interval", name=word("estimate")): texts})
     modelled = hasattr(model_or_table, "params")
     exponentiated = (ratio_model(model_or_table) if exponentiate is None else exponentiate) if modelled \
         else bool(exponentiate)

@@ -1,16 +1,51 @@
 # The frame grob: lays out the extracted parts when it is drawn, so it knows the device size.
 
 hl_gtable <- function(table, built) {
-  frame <- grid::gTree(parts = frame_parts(table, built), table = table, cl = "hairline_frame")
+  parts <- frame_parts(table, built)
+  rows <- built@plot@meta$hairline_rows
+  if (!is.null(rows)) parts <- composed_parts(parts, rows)
+  frame <- grid::gTree(parts = parts, table = table, cl = "hairline_frame")
   attr(frame, "hairline_frame") <- TRUE
   frame
+}
+
+# Row-block names: the label size at the key weight, in the block's colour.
+block_style <- function(settings, colour = NULL) role_style(settings, "label", hl_tokens()$type$key_weight, colour)
+
+# Room left of a panel's y labels for its row-block names and the gap after them.
+block_width <- function(panel, settings) {
+  if (!length(panel$blocks)) return(0)
+  style <- block_style(settings)
+  names <- max(vapply(panel$blocks, function(block) text_width_pt(block$name, style), numeric(1)))
+  names + hl_tokens()$lanes$label_gap * settings$base_size
+}
+
+# A key number's width: its label in the label style, then its value at the value weight.
+side_pair_width <- function(settings, label, value) {
+  text_width_pt(paste0(label, " "), role_style(settings, "label")) +
+    text_width_pt(value, role_style(settings, "label", hl_tokens()$type$value_weight))
+}
+
+# Room right of each column's panels for their numbers column and the gap before it.
+side_widths <- function(parts) {
+  widths <- numeric(parts$columns)
+  gap <- hl_tokens()$spacing$y_labels_plot * parts$settings$base_size
+  for (panel in parts$panels) {
+    if (!length(panel$side_numbers)) next
+    widest <- max(vapply(panel$side_numbers, function(entry) {
+      side_pair_width(parts$settings, entry$label, entry$value)
+    }, numeric(1)))
+    widths[panel$col] <- max(widths[panel$col], widest + gap)
+  }
+  widths
 }
 
 column_label_widths <- function(parts) {
   widths <- numeric(parts$columns)
   for (panel in parts$panels) {
     if (inherits(panel$axis_l, "zeroGrob")) next
-    width <- grid::convertWidth(grid::grobWidth(panel$axis_l), "pt", valueOnly = TRUE)
+    width <- grid::convertWidth(grid::grobWidth(panel$axis_l), "pt", valueOnly = TRUE) +
+      block_width(panel, parts$settings)
     widths[panel$col] <- max(widths[panel$col], width)
   }
   widths
@@ -41,7 +76,8 @@ frame_spec <- function(parts, texts, size, legend_rows, header_lines) {
        table_lines = table_line_count(parts$table),
        y_label_width_pt = if (parts$bare) 0 else texts$column_widths[1],
        column_label_widths = if (parts$bare) numeric(parts$columns) else texts$column_widths,
-       x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts), x_title_rows = x_title_rows(parts))
+       x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts), x_title_rows = x_title_rows(parts),
+       row_weights = parts$row_weights %||% numeric(), side_widths = side_widths(parts))
 }
 
 compose_all_headers <- function(parts, layout) {
@@ -89,7 +125,7 @@ plan_frame <- function(parts, size, grow = FALSE) {
                 column_widths = column_label_widths(parts))
   texts$column_widths[1] <- max(texts$column_widths[1], table_label_width(parts))
   placed <- pack_legend(parts$legend, margin, size[1] - margin, role_style(settings, "label"),
-                        settings$base_size, spacing)
+                        settings$base_size, spacing, ramp_key_items(parts$ramp_key))
   legend_rows <- if (length(placed)) max(vapply(placed, `[[`, numeric(1), "row")) + 1 else 0
   metrics <- font_metrics()
   # The provisional pass only places the headers across; its height merely has to leave the panels room.

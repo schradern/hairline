@@ -82,6 +82,7 @@ venn_spec <- function(data, columns = NULL, colors = NULL, proportional = FALSE)
 #' @param columns For a data frame, the membership columns (TRUE/FALSE or 0/1).
 #' @param title,subtitle,caption Frame texts; the title defaults to the set names.
 #' @param colors Named colours for this chart only; they override the colour set for the number of sets.
+#'   A ramp name such as `"blues"` colours ordered groups light to dark, in the chart's order.
 #' @param proportional Areas proportional to the counts (two sets only).
 #' @return A ggplot with the hairline frame.
 #' @examples

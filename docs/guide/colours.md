@@ -108,6 +108,26 @@ hl_colors()                      # every name with its colour so far
 For colours that stay the same across a report, whatever order the charts are drawn in, put them in the brand
 file (next section).
 
+## Ordered groups
+
+Groups with an order (low, medium and high risk; stages; age bands) read best as steps of one hue rather than as
+unrelated colours. Name a ramp instead of colours, and the groups take its steps from light to dark, in the
+chart's order (from the middle of a sequential ramp, so the lightest group still reads as a dot or a line):
+
+```python
+hl.scatter(patients, "SOFA score", "Lactate (mmol/l)", by="group",
+           order=["Low risk", "Medium risk", "High risk"], colors="oranges")
+```
+
+```r
+hl_scatter(patients, "SOFA score", "Lactate (mmol/l)", by = "group",
+           order = c("Low risk", "Medium risk", "High risk"), colors = "oranges")
+```
+
+Every chart that takes `colors=` takes a ramp name. Counts of people over the day (`levels()`) are shaded in
+greys when split by role, since the panel names say whose they are and the hues stay free for the places drawn
+beside them.
+
 ## Brand colours
 
 A `_brand.yml` file (the [brand.yml](https://posit-dev.github.io/brand-yml/) format) holds an institution's

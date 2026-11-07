@@ -5,7 +5,9 @@ import hairline as hl
 from common import data, finish
 
 hl.use(brand=False)
-figure = hl.scatter(data("scatter"), "sofa", "lactate", by="group", title="Lactate rises with the SOFA score",
-                    subtitle="One dot per patient at admission", caption="Synthetic data. Lactate in mmol/l.",
-                    size="double")
+patients = data("scatter").rename(columns={"sofa": "SOFA score", "lactate": "Lactate (mmol/l)"})
+figure = hl.scatter(patients, "SOFA score", "Lactate (mmol/l)", by="group",
+                    order=["Low risk", "Medium risk", "High risk"], colors="oranges",
+                    title="Lactate rises with the SOFA score", subtitle="One dot per patient at admission",
+                    caption="Synthetic data.", size="double")
 finish(figure, "scatter_fit")

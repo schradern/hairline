@@ -5,6 +5,37 @@ density_quantiles <- function(values, probabilities) {
   as.numeric(stats::quantile(values, probabilities, type = 7, names = FALSE))
 }
 
+# Quantiles that stay on the data's levels (type 1, numpy's inverted_cdf): the smallest value reached by at least that
+# share of the values. Of daily peaks, the 0.9 quantile is the staffing that is enough on 9 of 10 days; of counts of
+# people, the median is a whole person.
+level_quantiles <- function(values, probabilities) {
+  as.numeric(stats::quantile(values, probabilities, type = 1, names = FALSE))
+}
+
+# The two levels a median falls between when it matches neither and each holds more than `share` of the values (doses
+# of 25 and 50 mg, median 35); NULL otherwise, and for fewer than `least` values, whose median falls between two of
+# them by chance.
+median_gap <- function(values, share, least = 10) {
+  values <- as.numeric(values)
+  if (length(values) < least) return(NULL)
+  middle <- stats::median(values)
+  below <- values[values < middle]
+  above <- values[values > middle]
+  if (!length(below) || !length(above) || any(values == middle)) return(NULL)
+  low <- max(below)
+  high <- min(above)
+  if (mean(values == low) > share && mean(values == high) > share) c(low, high) else NULL
+}
+
+# The `count` most frequent values with their shares, most frequent first (ties: the smaller value first).
+top_levels <- function(values, count) {
+  values <- as.numeric(values)
+  levels <- sort(unique(values))
+  found <- tabulate(match(values, levels), length(levels))
+  ranked <- order(-found, levels)[seq_len(min(count, length(levels)))]
+  data.frame(level = levels[ranked], share = found[ranked] / length(values))
+}
+
 density_bandwidth <- function(values) {
   limits <- density_quantiles(values, c(0.25, 0.75))
   spread <- min(stats::sd(values), (limits[2] - limits[1]) / 1.34)

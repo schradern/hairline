@@ -1,5 +1,5 @@
 # Correlation heatmap, mirroring the Python correlation(): lower triangle, diverging ramp,
-# values in the cells, each variable named on the empty diagonal, colour key in the legend row.
+# values in the cells, each variable named on the empty diagonal, a binned colour key in the legend row.
 
 correlation_colour <- function(value) {
   colours <- hl_ramp(default_ramp("diverging"))
@@ -89,13 +89,11 @@ contrast_text <- function(fill, style) {
 #' @export
 hl_correlation <- function(data, columns = NULL, method = "pearson", title = NULL, subtitle = NULL, caption = NULL) {
   spec <- correlation_spec(data, columns, method)
-  key <- lapply(hl_tokens()$correlation$key, function(value) {
-    list(kind = "square", colour = correlation_colour(value),
-         label = hl_format_number(value, if (value == round(value)) 0 else 1))
-  })
+  key <- as.numeric(unlist(hl_tokens()$correlation$key))
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(tools::toTitleCase(method), "correlations"), subtitle = subtitle,
-                  caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE) + hl_legend(key)
+                  caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE) + hl_legend(list()) +
+    hl_legend_ramp(vapply(key, correlation_colour, ""), key, format = "number", limits = c(-1, 1))
   plot@meta$hairline_drawing <- function(box, measure, style) correlation_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot

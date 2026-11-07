@@ -16,7 +16,9 @@ hl_dotplot(
   sort = TRUE,
   ratio = FALSE,
   reference = NULL,
-  digits = NULL
+  digits = NULL,
+  n = NULL,
+  percent = FALSE
 )
 }
 \arguments{
@@ -35,6 +37,10 @@ hl_dotplot(
 \item{reference}{Value for a vertical reference line.}
 
 \item{digits}{Decimals of the numbers; \code{NULL} gives two, or more for small or close values.}
+
+\item{n}{Column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").}
+
+\item{percent}{\code{TRUE} draws shares (0.15) as percent (15), the heading naming the unit.}
 }
 \value{
 A ggplot with the hairline frame.
