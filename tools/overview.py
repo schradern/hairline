@@ -30,6 +30,8 @@ CHARTS = [("bars_admissions", "Bar chart"), ("bars_stacked", "Stacked bars"), ("
           ("bars_facets", "Facets with their own scale"), ("spread_doses", "Spread rows, discrete doses"),
           ("table_characteristics", "Table for documents"), ("unit_day", "Lanes and levels over the day"),
           ("swimlanes_day", "Swimlanes for one day"),
+          ("likert_visits", "Diverging bars for ratings"), ("spread_importance", "Spread rows in sections"),
+          ("bars_sources", "Multiple choice, share of respondents"), ("bars_answers", "Answers named inside"),
           ("occupancy_rows", "Time series, two levels of detail"), ("grid_panels", "Small multiples"),
           ("theme_scatter", "Scatter with the theme"), ("brand_example", "Brand file"),
           ("colour_sets", "Colour sets")]

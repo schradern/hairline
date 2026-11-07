@@ -87,10 +87,12 @@ frame_children <- function(parts, plan) {
                         height),
              legend_grobs(plan$placed, layout$legend_row_centers, role_style(settings, "label"), settings$base_size,
                           height, font_metrics()$cap_height,
-                          line_scale(fitted_box(layout$panels[[1]], parts$aspect)[3]), settings$neutral$axis),
+                          line_scale(fitted_box(layout$panels[[1]], parts$aspect)[3]), settings$neutral$axis,
+                          settings$neutral$surface),
              header_grobs(parts, plan), axis_title_grobs(parts, plan), table_grobs(parts, plan),
              reference_grobs(parts, plan),
-             note_grobs(parts, plan), block_grobs(parts, plan), inside_grobs(parts, plan))
+             note_grobs(parts, plan), block_grobs(parts, plan), inside_grobs(parts, plan),
+             side_number_grobs(parts, plan))
   do.call(grid::gList, grobs)
 }
 
@@ -113,6 +115,28 @@ block_grobs <- function(parts, plan) {
       centre <- box[2] + (range[2] - position) / diff(range) * box[4]
       grobs[[length(grobs) + 1]] <- text_grob_pt(block$name, left, centre + style$size * cap / 2, style, plan$size[2])
       position <- position - block$count
+    }
+  }
+  grobs
+}
+
+# Each numbers column beside its panel, the label faint and the value muted, as spread's key numbers.
+side_number_grobs <- function(parts, plan) {
+  settings <- parts$settings
+  cap <- font_metrics()$cap_height
+  gap <- hl_tokens()$spacing$y_labels_plot * settings$base_size
+  plain <- role_style(settings, "label", NULL, settings$neutral$faint)
+  strong <- role_style(settings, "label", hl_tokens()$type$value_weight, settings$neutral$muted)
+  grobs <- list()
+  for (index in seq_along(parts$panels)) {
+    box <- plan$layout$panels[[index]]
+    range <- parts$y_ranges[[index]]
+    for (entry in parts$panels[[index]]$side_numbers) {
+      baseline <- box[2] + (range[2] - entry$position) / diff(range) * box[4] + plain$size * cap / 2
+      x <- box[1] + box[3] + gap
+      grobs[[length(grobs) + 1]] <- text_grob_pt(paste0(entry$label, " "), x, baseline, plain, plan$size[2])
+      grobs[[length(grobs) + 1]] <- text_grob_pt(entry$value, x + side_pair_width(settings, entry$label, ""),
+                                                 baseline, strong, plan$size[2])
     }
   }
   grobs

@@ -9,7 +9,8 @@ frame_defaults <- list(title_lines = 1, subtitle_lines = 0, legend_rows = 0, cap
                        panel_columns = 1, panel_header_lines = integer(), y_title = FALSE, x_title = FALSE,
                        x_tick_labels = TRUE, y_label_width_pt = 0, y_labels = TRUE, table_lines = 0,
                        column_label_widths = numeric(),
-                       x_tick_rows = logical(), x_title_rows = logical(), row_weights = numeric())
+                       x_tick_rows = logical(), x_title_rows = logical(), row_weights = numeric(),
+                       side_widths = numeric())
 
 text_block <- function(size, count, metrics, line_gap) {
   if (count == 0) return(0)

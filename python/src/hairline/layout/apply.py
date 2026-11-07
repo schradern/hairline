@@ -88,6 +88,41 @@ def block_width(figure: HairlineFigure, index: int) -> float:
     return names + load_tokens()["lanes"]["label_gap"] * figure.settings.base_size
 
 
+def side_pair_width(figure: HairlineFigure, label: str, value: str) -> float:
+    """A key number's width: its label in the label style, then its value at the value weight."""
+    plain = role_style(figure.settings, "label")
+    strong = role_style(figure.settings, "label", load_tokens()["type"]["value_weight"])
+    return text_width(f"{label} ", plain["family"], plain["size"], plain["weight"]) + \
+        text_width(value, strong["family"], strong["size"], strong["weight"])
+
+
+def side_widths(figure: HairlineFigure) -> tuple[float, ...]:
+    """Room right of each column's panels for their numbers column and the gap before it."""
+    widths = [0.0] * figure.columns
+    gap = load_tokens()["spacing"]["y_labels_plot"] * figure.settings.base_size
+    for index, entries in figure.side_numbers.items():
+        column = grid_position(figure, index)[1]
+        widest = max((side_pair_width(figure, label, value) for _, label, value in entries), default=0.0)
+        widths[column] = max(widths[column], widest + gap if entries else 0.0)
+    return tuple(widths)
+
+
+def side_number_texts(figure: HairlineFigure) -> list:
+    """Each numbers column beside its panel, the label faint and the value muted, as spread's key numbers."""
+    artists, cap = [], load_font_metrics().cap_height
+    neutral, gap = figure.settings.neutral, load_tokens()["spacing"]["y_labels_plot"] * figure.settings.base_size
+    for index, entries in sorted(figure.side_numbers.items()):
+        box, (low, high) = figure.plot_boxes[index], figure.axes[index].get_ylim()
+        for position, label, value in entries:
+            plain = role_style(figure.settings, "label", None, neutral["faint"])
+            strong = role_style(figure.settings, "label", load_tokens()["type"]["value_weight"], neutral["muted"])
+            baseline = box.y + (high - position) / (high - low) * box.height + plain["size"] * cap / 2
+            x = box.x + box.width + gap
+            artists.append(add_text(figure.figure, x, baseline, f"{label} ", plain))
+            artists.append(add_text(figure.figure, x + side_pair_width(figure, label, ""), baseline, value, strong))
+    return artists
+
+
 def column_widths(figure: HairlineFigure, y_labels: list[list[str]]) -> list[float]:
     """Widest y tick label per column (and the row-block names before it), counting only panels that show their
     labels."""
@@ -126,7 +161,7 @@ def frame_input(figure: HairlineFigure, measured: Measured, size: tuple[float, f
                       column_label_widths=measured.column_label_widths, x_tick_rows=measured.x_tick_rows,
                       x_title_rows=tuple(any(grid_position(figure, index)[0] == row and header.x_title
                                              for index, header in figure.headers.items()) for row in range(rows)),
-                      row_weights=tuple(figure.row_heights))
+                      row_weights=tuple(figure.row_heights), side_widths=side_widths(figure))
 
 
 def header_bounds(layout: FrameLayout, figure: HairlineFigure, index: int) -> tuple[float, float]:
@@ -280,13 +315,13 @@ def draw_frame(figure: HairlineFigure, layout: FrameLayout, measured: Measured, 
     spacing, lines = load_tokens()["spacing"], dict(load_tokens()["lines"])
     scale = line_scale(figure.plot_boxes[0].width) if figure.plot_boxes else 1.0
     lines.update(data=lines["data"] * scale, secondary=lines["secondary"] * scale,
-                 outline_color=figure.settings.neutral["axis"])
+                 outline_color=figure.settings.neutral["axis"], surface=figure.settings.neutral["surface"])
     artists = draw_lines(figure, layout.left, layout.title_baselines, measured.title, "title")
     artists += draw_lines(figure, layout.left, layout.subtitle_baselines, measured.subtitle, "subtitle")
     artists += draw_lines(figure, layout.left, layout.caption_baselines, measured.caption, "caption")
     artists += draw_legend(figure.figure, placed, layout.legend_row_centers, legend_style(figure), spacing, lines)
     artists += draw_headers(figure, layout, composed) + draw_axis_titles(figure, layout)
-    artists += draw_table(figure, layout, lines) + block_texts(figure, layout, measured)
+    artists += draw_table(figure, layout, lines) + block_texts(figure, layout, measured) + side_number_texts(figure)
     figure.frame_artist.replace_children(run_drawings(figure) + artists)
 
 

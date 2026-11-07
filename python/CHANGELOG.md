@@ -42,6 +42,22 @@ positions and tooltips are unchanged.
 * The time-of-day window no longer gains an hour from float noise in a data limit: a span from 07:00 read
   6.999999999999998 once the axes were placed, and the axis started at 05:00 instead of 06:00.
 
+### Surveys
+
+* `likert()`: diverging bars for rating scales. The levels are binned so their colours can be told apart (a
+  ten-point scale reads 1–2, 3–5 | 6–8, 9–10; `bins=` names others), a middle level is centred on the split,
+  `reverse=` recodes and marks negatively worded items, `group=` draws sections, median, IQR and n stand beside
+  each row, and the binned key sits in the legend row. Agreement takes the diverging ramp's first pole (blue).
+* `spread(section=, panel_letters=, mean=, sort="median")`: rows in lettered blocks under their names, the mean as
+  an open diamond beside the median, rows ordered by median; the legend row names median and mean.
+* `bars(respondents=)`: multiple-choice answers as shares of the panel's respondents, each respondent once per
+  answer, with a caption note that several answers were possible. `context=` draws categories in the context grey
+  (an exclusive "none" answer), last when sorted by value; `header="n"` gives each facet its n instead of its
+  total; `show_n="column"` writes each bar's n in a column right of the panel; `inside="name"` writes each stacked
+  segment's name and value inside it, in greys by position, so rows may hold different answers.
+* `HairlineFigure.numbers_column()` for a numbers column beside a hand-built panel; `legend_ramp(labels=)` names
+  the steps of a binned key; the legend row takes a `"diamond"` (open marker) item.
+
 The R package mirrors all of this under the same names (`hl_bars(facet = ...)`, `hl_lanes()`, ...); a composed
 figure there is `hl_rows()`.
 

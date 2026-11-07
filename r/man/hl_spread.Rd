@@ -26,7 +26,11 @@ hl_spread(
   clip_stats = FALSE,
   color_by = NULL,
   dimension = NULL,
-  discrete = FALSE
+  discrete = FALSE,
+  section = NULL,
+  panel_letters = FALSE,
+  mean = FALSE,
+  sort = NULL
 )
 }
 \arguments{
@@ -70,6 +74,14 @@ frequent values with their shares). A median that falls between two large levels
 \code{\link[=hl_scope]{hl_scope()}}).}
 
 \item{discrete}{Keep quantiles on the data's own levels (type 1), for whole people or doses on round levels.}
+
+\item{section}{Column whose values draw the rows in blocks, each under its name, on one shared axis.}
+
+\item{panel_letters}{Letter the sections a, b, c.}
+
+\item{mean}{Mark each row's mean as an open diamond; the legend row names median and mean.}
+
+\item{sort}{\code{"median"} orders the rows of a section by median, highest first; \code{NULL} keeps their order.}
 }
 \value{
 A ggplot with the hairline frame.

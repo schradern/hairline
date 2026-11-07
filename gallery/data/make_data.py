@@ -310,6 +310,74 @@ def staff_rows(stays: list[dict]) -> list[dict]:
     return rows
 
 
+# A patient survey of an outpatient clinic: statements on the visit rated 1 (not at all) to 10 (completely), two
+# of them worded negatively, each left out by some respondents.
+STATEMENTS = [("Booking", "Easy to book a visit", 7.5), ("Booking", "Waited too long on the day", 2.9),
+              ("Booking", "Reminder came in good time", 7.1), ("Booking", "Had to repeat my details", 3.3),
+              ("Consultation", "Felt listened to", 6.9), ("Consultation", "Explanations were clear", 5.8),
+              ("Consultation", "Time for my questions", 4.8), ("Consultation", "Involved in decisions", 5.3),
+              ("After the visit", "Knew whom to contact", 4.2), ("After the visit", "Results came promptly", 5.1),
+              ("After the visit", "Written summary helped", 5.7)]
+RESPONDENTS = 240
+# Rated usefulness of features of a patient portal, 1 (not useful) to 10 (essential).
+FEATURES = [("Appointments", "Book online", 8.9), ("Appointments", "Cancel or move online", 8.3),
+            ("Appointments", "Text reminders", 7.6), ("Appointments", "Waiting-list updates", 6.2),
+            ("Appointments", "Calendar export", 5.0), ("Appointments", "Choose the clinician", 4.1),
+            ("Records", "Lab results", 8.7), ("Records", "Medication list", 8.1), ("Records", "Clinic letters", 7.0),
+            ("Records", "Imaging reports", 6.4), ("Contact", "Repeat prescriptions", 8.5),
+            ("Contact", "Message the team", 7.8), ("Contact", "Video visits", 6.0),
+            ("Contact", "Billing questions", 3.8), ("Contact", "Feedback form", 3.0)]
+# Multiple choice: where patients found information and what they want more of; "None of these" excludes the rest.
+SOURCES = {"Where information came from": [("Clinic website", 0.72), ("Family doctor", 0.64), ("Leaflet", 0.41),
+                                           ("Patient portal", 0.38), ("Friends and family", 0.27),
+                                           ("Social media", 0.12)],
+           "Topics wanted": [("Side effects", 0.61), ("Diet", 0.47), ("Exercise", 0.39), ("Costs", 0.22),
+                             ("Support groups", 0.15)]}
+NONE_ANSWER = "None of these"
+ANSWERS = [("Would recommend the clinic", "Yes", 118), ("Would recommend the clinic", "No", 43),
+           ("Would recommend the clinic", "Unsure", 35), ("Preferred reminder", "Text message", 98),
+           ("Preferred reminder", "Email", 61), ("Preferred reminder", "Letter", 27),
+           ("First visit to the clinic", "Yes", 74), ("First visit to the clinic", "No", 121)]
+
+
+def rating(rng: np.random.Generator, mean: float, spread: float) -> int:
+    return int(min(10, max(1, round(rng.normal(mean, spread)))))
+
+
+def survey_rows(rng: np.random.Generator) -> list[dict]:
+    rows = []
+    for section, statement, mean in STATEMENTS:
+        skipped = rng.uniform(0.05, 0.18)
+        for respondent in range(1, RESPONDENTS + 1):
+            if rng.uniform() >= skipped:
+                rows.append({"respondent": respondent, "section": section, "statement": statement,
+                             "rating": rating(rng, mean, 2.3)})
+    return rows
+
+
+def importance_rows(rng: np.random.Generator) -> list[dict]:
+    rows = []
+    for area, feature, mean in FEATURES:
+        skipped = rng.uniform(0.12, 0.25)
+        for respondent in range(1, RESPONDENTS + 1):
+            if rng.uniform() >= skipped:
+                rows.append({"respondent": respondent, "area": area, "feature": feature,
+                             "rating": rating(rng, mean, 1.9)})
+    return rows
+
+
+def source_rows(rng: np.random.Generator) -> list[dict]:
+    rows = []
+    for question, answers in SOURCES.items():
+        for respondent in range(1, RESPONDENTS + 1):
+            if rng.uniform() < 0.1:
+                continue
+            chosen = [answer for answer, share in answers if rng.uniform() < share]
+            for answer in chosen or [NONE_ANSWER]:
+                rows.append({"respondent": respondent, "question": question, "answer": answer})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -343,6 +411,13 @@ def main() -> None:
     write("unit_stays.csv", stays)
     write("unit_moves.csv", moves)
     write("unit_staff.csv", staff_rows(stays))
+    # The survey has its own generator, so the data above stays as it was.
+    survey = np.random.default_rng(SEED + 1)
+    write("survey.csv", survey_rows(survey))
+    write("importance.csv", importance_rows(survey))
+    write("sources.csv", source_rows(survey))
+    write("answers.csv", [{"question": question, "answer": answer, "count": count}
+                          for question, answer, count in ANSWERS])
 
 
 if __name__ == "__main__":

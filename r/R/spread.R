@@ -132,11 +132,23 @@ spread_numbers <- function(every, percent, digits, discrete) {
   list(function(value) if (quantile_places(value, 0, whole) > 0) mean_number(value) else plain(value), mean_number)
 }
 
+# Rows by section (in the order sections first appear), then by median, highest first, when sorted.
+arranged_rows <- function(rows, sort) {
+  sections <- vapply(rows, function(row) row$section %||% "", character(1))
+  rank <- match(sections, unique(sections))
+  medians <- vapply(rows, `[[`, numeric(1), "median")
+  rows[if (identical(sort, "median")) order(rank, -medians) else order(rank)]
+}
+
 spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_label = NULL,
                         stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL, zero = FALSE,
                         axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
-                        clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE) {
-  check_columns(data, c(group, value, color_by))
+                        clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
+                        panel_letters = FALSE, mean = FALSE, sort = NULL) {
+  check_columns(data, c(group, value, color_by, section))
+  if (!is.null(sort) && !identical(sort, "median")) {
+    stop(sprintf("hairline: spread: sort '%s' must be 'median' or NULL", sort), call. = FALSE)
+  }
   spread_check_options(stats, digits)
   if (show_n && !"n" %in% stats) stats <- c(stats, "n")
   check_present(data, value, "spread")
@@ -152,6 +164,7 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   names <- names(samples)
   spread_check_marks(marks, names)
   coloured <- series_colours(names, data, group, color_by, colors, dimension, "spread")
+  sections <- if (!is.null(section)) coarse_groups(data, group, section, "spread")
   rows <- lapply(names, function(name) {
     values <- counted[[name]]
     middle <- (if (discrete) level_quantiles else density_quantiles)(values, c(0.25, 0.5, 0.75))
@@ -160,15 +173,65 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
     middle <- pmin(pmax(middle, low), high)
     mark <- if (name %in% names(marks)) as.numeric(marks[[name]]) else NULL
     list(name = name, color = coloured$palette[[name]], low = low, q1 = middle[1], median = middle[2],
-         q3 = middle[3], high = high, mark = mark,
+         q3 = middle[3], high = high, mark = mark, mean = if (mean) min(max(base::mean(values), low), high),
+         section = if (!is.null(section)) unname(sections[[name]]),
          pairs = spread_pairs(values, stats, numbers, mark, mark_label, discrete))
   })
+  rows <- arranged_rows(rows, sort)
   marked <- unlist(lapply(rows, `[[`, "mark"))
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats),
              if (discrete) word("levels_note"))
   list(rows = rows, axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
                                        c(vapply(rows, `[[`, numeric(1), "high"), marked), percent, zero),
-       axis_title = axis_title, notes = notes, legend = if (!is.null(color_by)) coarse_legend(coloured))
+       axis_title = axis_title, notes = notes, letters = isTRUE(panel_letters),
+       legend = c(if (!is.null(color_by)) coarse_legend(coloured), if (mean) spread_mean_legend()))
+}
+
+# The legend row's names for the median dot and the mean's open diamond.
+spread_mean_legend <- function() {
+  ink <- hl_settings()$neutral$ink
+  list(list(kind = "dot", colour = ink, label = word("median")),
+       list(kind = "diamond", colour = ink, label = word("mean")))
+}
+
+# The mean's open diamond: its half-diagonal against a dot's radius.
+diamond_size <- 1.3
+
+# The mean: an open diamond in the row's colour, filled with the surface so the band shows round it.
+open_diamond <- function(x, centre, colour, style) {
+  half <- diamond_size * dot_size(style) / 2
+  list(kind = "polygon", points = rbind(c(x - half, centre), c(x, centre - half), c(x + half, centre),
+                                        c(x, centre + half)),
+       fill = style$neutral$surface, edge = colour, edge_width = style$data_width * open_edge, role = "mean")
+}
+
+spread_letters <- letters
+
+# A section's name over its rows, at the key weight, after its letter (a, b, c) when the sections are lettered.
+heading_shapes <- function(name, index, lettered, x, baseline, measure, style) {
+  weight <- hl_tokens()$type$key_weight
+  ink <- style$neutral$ink
+  shapes <- list()
+  if (lettered) {
+    letter <- spread_letters[(index %% length(spread_letters)) + 1]
+    shapes[[1]] <- c(shape_text(x, baseline, letter, "label", ink, "left", weight), part = "letter")
+    x <- x + measure(letter, "label", weight) + hl_tokens()$spacing$panel_letter_gap * style$base
+  }
+  c(shapes, list(c(shape_text(x, baseline, name, "label", ink, "left", weight), part = "heading")))
+}
+
+# The lines top to bottom: a heading where a section starts, then its rows.
+section_lines <- function(rows) {
+  lines <- list()
+  current <- NULL
+  for (row in rows) {
+    if (!is.null(row$section) && !identical(row$section, current)) {
+      lines[[length(lines) + 1]] <- list(kind = "heading", entry = row$section)
+    }
+    current <- row$section
+    lines[[length(lines) + 1]] <- list(kind = "row", entry = row)
+  }
+  lines
 }
 
 spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
@@ -182,6 +245,7 @@ spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
                                                          collapse = ", ")),
                       tip_at = c(scale(row$median), centre - half)),
                  forest_marker(scale(row$median), centre, dot_size(style), "dot", row$color))
+  if (!is.null(row$mean)) shapes[[length(shapes) + 1]] <- open_diamond(scale(row$mean), centre, row$color, style)
   if (!is.null(row$mark)) {
     tick <- rules$mark * half
     x <- scale(row$mark)
@@ -270,18 +334,28 @@ spread_drawing <- function(spec, box, measure, style) {
   scale <- forest_scale(spec$axis, FALSE, left, right)
   line <- rules$row_pitch * lead
   pitch <- line + if (layout$under) lead else 0
-  bottom <- box[2] + pitch * length(spec$rows)
+  lines <- section_lines(spec$rows)
+  heights <- vapply(lines, function(entry) if (entry$kind == "heading") line else pitch, numeric(1))
+  bottom <- box[2] + sum(heights)
   shapes <- lapply(spec$axis$breaks, function(value) {
     list(kind = "line", points = rbind(c(scale(value), box[2]), c(scale(value), bottom)), color = style$neutral$grid,
          width = style$grid, role = "grid")
   })
-  for (index in seq_along(spec$rows)) {
-    row <- spec$rows[[index]]
-    centre <- box[2] + pitch * (index - 1) + line / 2
+  top <- box[2]
+  headings <- 0
+  for (index in seq_along(lines)) {
+    entry <- lines[[index]]$entry
+    centre <- top + line / 2
     baseline <- baseline_for(centre, style, "label")
-    shapes <- c(shapes, spread_row_shapes(row, centre, line, scale, style, rules),
-                list(shape_text(box[1], baseline, row$name, "label", style$neutral$ink)),
-                spread_pair_texts(row$pairs, layout$lefts, baseline + if (layout$under) lead else 0, measure, style))
+    top <- top + heights[index]
+    if (lines[[index]]$kind == "heading") {
+      shapes <- c(shapes, heading_shapes(entry, headings, isTRUE(spec$letters), box[1], baseline, measure, style))
+      headings <- headings + 1
+      next
+    }
+    shapes <- c(shapes, spread_row_shapes(entry, centre, line, scale, style, rules),
+                list(shape_text(box[1], baseline, entry$name, "label", style$neutral$ink)),
+                spread_pair_texts(entry$pairs, layout$lefts, baseline + if (layout$under) lead else 0, measure, style))
   }
   axis <- list(axis = spec$axis, favours = NULL, null = NULL)
   c(shapes, forest_axis_shapes(axis, scale, c(left, right), bottom, style, rules),
@@ -317,6 +391,10 @@ spread_drawing <- function(spec, box, measure, style) {
 #' @param dimension What the groups are, so their colours keep off the slots another dimension holds (see
 #'   [hl_scope()]).
 #' @param discrete Keep quantiles on the data's own levels (type 1), for whole people or doses on round levels.
+#' @param section Column whose values draw the rows in blocks, each under its name, on one shared axis.
+#' @param panel_letters Letter the sections a, b, c.
+#' @param mean Mark each row's mean as an open diamond; the legend row names median and mean.
+#' @param sort `"median"` orders the rows of a section by median, highest first; `NULL` keeps their order.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' set.seed(1)
@@ -329,9 +407,11 @@ spread_drawing <- function(spec, box, measure, style) {
 hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption = NULL, order = NULL, marks = NULL,
                       mark_label = NULL, stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL,
                       zero = FALSE, axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
-                      clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE) {
+                      clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
+                      panel_letters = FALSE, mean = FALSE, sort = NULL) {
   spec <- spread_spec(data, group, value, order, marks, mark_label, stats, percent, digits, zero, axis_title, colors,
-                      show_n, min_n, clip, clip_stats, color_by, dimension, discrete)
+                      show_n, min_n, clip, clip_stats, color_by, dimension, discrete, section, panel_letters, mean,
+                      sort)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
                   caption = with_caption(caption, spec$notes), x = NULL, y = NULL) + theme_hairline(axes = FALSE)

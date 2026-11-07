@@ -40,6 +40,20 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
 * Quantiles of whole people (`hl_levels()`, `hl_spread(discrete = TRUE)`) use quantile type 1: the 0.9 quantile of
   daily peaks is the count that is enough on at least 9 of 10 days.
 
+## Surveys
+
+* `hl_likert()`: diverging bars for rating scales. The levels are binned so their colours can be told apart (a
+  ten-point scale reads 1-2, 3-5 | 6-8, 9-10; `bins =` names others), a middle level is centred on the split,
+  `reverse =` recodes and marks negatively worded items, `group =` draws sections, median, IQR and n stand beside
+  each row, and the binned key sits in the legend row.
+* `hl_spread(section =, panel_letters =, mean =, sort = "median")`: rows in lettered blocks under their names, the
+  mean as an open diamond beside the median, rows ordered by median.
+* `hl_bars(respondents =)`: multiple-choice answers as shares of the panel's respondents, with a caption note that
+  several answers were possible. `context =` draws categories in the context grey, `header = "n"` gives each facet
+  its n, `show_n = "column"` writes each bar's n in a column right of the panel, and `inside = "name"` writes each
+  stacked segment's name and value inside it, in greys by position.
+* `hl_legend_ramp(labels =)` names the steps of a binned key; `hl_legend()` takes a `"diamond"` (open marker) item.
+
 ## Fixes
 
 * Bar value labels are no longer cut off at the panel's top edge when they reach past the last break, as in Python.

@@ -21,8 +21,8 @@ from hairline.tokens import load_tokens
 LAZY_NAMES = {
     **{name: f"hairline.charts.{name}" for name in (
         "arcs", "bars", "chord", "correlation", "donut", "dotplot", "forest", "funnel", "kaplan_meier", "lanes",
-        "levels", "partition", "prisma", "raincloud", "ridgeline", "risk_of_bias", "sankey", "scatter", "spread",
-        "swatches", "swimlanes", "table", "timeseries", "venn")},
+        "levels", "likert", "partition", "prisma", "raincloud", "ridgeline", "risk_of_bias", "sankey", "scatter",
+        "spread", "swatches", "swimlanes", "table", "timeseries", "venn")},
     "Result": "hairline.study", "Study": "hairline.study", "study": "hairline.study",
     "Report": "hairline.report", "report": "hairline.report", "scope": "hairline.entities",
 }
@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from hairline.charts.kaplan_meier import kaplan_meier
     from hairline.charts.lanes import lanes
     from hairline.charts.levels import levels
+    from hairline.charts.likert import likert
     from hairline.charts.partition import partition
     from hairline.charts.prisma import prisma
     from hairline.charts.raincloud import raincloud
@@ -84,7 +85,7 @@ __all__ = [
     "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Report", "Result", "Settings", "Study", "arcs", "bars",
     "brand_report", "check_palette", "chord", "citation", "color", "colormap", "colors", "correlation",
     "current_settings", "donut", "dotplot", "figure", "forest", "format_interval", "format_number", "format_percent",
-    "frame", "funnel", "kaplan_meier", "lanes", "levels", "load_brand", "load_tokens", "palette", "palettes",
+    "frame", "funnel", "kaplan_meier", "lanes", "levels", "likert", "load_brand", "load_tokens", "palette", "palettes",
     "partition", "prisma", "raincloud", "ramp", "report", "ridgeline", "risk_of_bias", "sankey", "save", "scatter",
     "scope", "spread", "study", "swatches", "swimlanes", "table", "timeseries", "use", "venn",
 ]

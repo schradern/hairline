@@ -54,10 +54,13 @@ legend_items <- function(built) {
   items
 }
 
+# An open marker's outline (the mean's diamond) as a share of the data line width.
+open_edge <- 0.6
+
 swatch_width <- function(kind, base, spacing) {
   # A key's title (the binned colour key of hl_legend_ramp()) is text without a swatch.
   if (identical(kind, "title")) return(0)
-  factor <- if (kind %in% c("dot", "square")) spacing$legend_swatch_square else spacing$legend_swatch_line
+  factor <- if (kind %in% c("dot", "square", "diamond")) spacing$legend_swatch_square else spacing$legend_swatch_line
   factor * base
 }
 
@@ -108,6 +111,13 @@ swatch_grob <- function(entry, center, height, base, spacing, lines) {
   width <- swatch_width(entry$kind, base, spacing)
   if (identical(entry$kind, "title")) return(grid::nullGrob())
   y <- height - center
+  if (entry$kind == "diamond") {
+    half <- width / 2
+    return(grid::polygonGrob(grid::unit(entry$x + c(0, half, width, half), "pt"),
+                             grid::unit(y + c(0, half, 0, -half), "pt"),
+                             gp = grid::gpar(fill = lines$surface, col = entry$colour, linejoin = "mitre",
+                                             lwd = lines$data * base * open_edge / 0.75)))
+  }
   if (entry$kind == "thin") {
     return(grid::segmentsGrob(grid::unit(entry$x, "pt"), grid::unit(y, "pt"), grid::unit(entry$x + width, "pt"),
                               grid::unit(y, "pt"), gp = grid::gpar(col = entry$colour, lineend = "butt",
@@ -145,10 +155,12 @@ scaled_lines <- function(scale) {
   lines
 }
 
-legend_grobs <- function(placed, centers, style, base, height, cap_height, scale = 1, outline = NULL) {
+legend_grobs <- function(placed, centers, style, base, height, cap_height, scale = 1, outline = NULL,
+                         surface = "#ffffff") {
   spacing <- hl_tokens()$spacing
   lines <- scaled_lines(scale)
   lines$outline_colour <- outline
+  lines$surface <- surface
   grobs <- list()
   for (entry in placed) {
     center <- centers[entry$row + 1]
@@ -169,7 +181,7 @@ hairline_legend <- S7::new_class("hairline_legend", package = "hairline", proper
 #' with these items, e.g. to explain line kinds instead of groups.
 #'
 #' @param items List of `list(kind, colour, label)`; `kind` is one of `"line"`, `"thin"`, `"dash"`,
-#'   `"band"`, `"dot"`, `"square"`.
+#'   `"band"`, `"dot"`, `"square"`, `"diamond"` (an open marker, such as a mean).
 #' @return An object to add to a ggplot with `+`.
 #' @examples
 #' ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +
@@ -177,7 +189,7 @@ hairline_legend <- S7::new_class("hairline_legend", package = "hairline", proper
 #'   hl_legend(list(list(kind = "dot", colour = hl_palette(n = 1), label = "Car")))
 #' @export
 hl_legend <- function(items) {
-  kinds <- c("line", "thin", "dash", "band", "dot", "square")
+  kinds <- c("line", "thin", "dash", "band", "dot", "square", "diamond")
   for (item in items) {
     if (!item$kind %in% kinds) {
       stop(sprintf("hairline: unknown legend kind '%s' for '%s'; use one of %s", item$kind, item$label,

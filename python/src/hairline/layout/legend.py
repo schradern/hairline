@@ -12,11 +12,13 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
-from hairline.layout.draw import add_line, add_rect, add_text
+from hairline.layout.draw import add_line, add_polygon, add_rect, add_text
 from hairline.layout.measure import text_width
 from hairline.tokens import load_tokens
 
-KINDS = ("line", "thin", "dash", "band", "dot", "square")
+KINDS = ("line", "thin", "dash", "band", "dot", "square", "diamond")
+# An open marker's outline (the mean's diamond) as a share of the data line width.
+OPEN_EDGE = 0.6
 # A key's title: text without a swatch (the binned colour key of legend_ramp()).
 TITLE = "title"
 
@@ -77,7 +79,7 @@ def validate_items(items: Sequence[tuple[str, str, str]]) -> list[LegendItem]:
 def swatch_width(kind: str, base: float, spacing: dict) -> float:
     if kind == TITLE:
         return 0.0
-    factor = spacing["legend_swatch_square"] if kind in ("dot", "square") else spacing["legend_swatch_line"]
+    factor = spacing["legend_swatch_square"] if kind in ("dot", "square", "diamond") else spacing["legend_swatch_line"]
     return factor * base
 
 
@@ -116,6 +118,10 @@ def draw_swatch(fig: Figure, item: LegendItem, x: float, center: float, base: fl
     width = swatch_width(item.kind, base, spacing)
     if item.kind == TITLE:
         return []
+    if item.kind == "diamond":
+        half = width / 2
+        points = [(x, center), (x + half, center - half), (x + width, center), (x + half, center + half)]
+        return [add_polygon(fig, points, lines.get("surface", "#ffffff"), item.color, lines["data"] * base * OPEN_EDGE)]
     if item.kind in ("square", "dot", "band"):
         side = width if item.kind != "band" else swatch_width("square", base, spacing)
         edge = load_tokens()["legend_ramp"]["outline"] * base if item.outline else 0.0

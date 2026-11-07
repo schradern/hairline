@@ -10,7 +10,8 @@ hl_legend_ramp(
   title = NULL,
   format = "percent",
   limits = c(0, 1),
-  digits = NULL
+  digits = NULL,
+  labels = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ hl_legend_ramp(
 \item{limits}{The range the ramp spans.}
 
 \item{digits}{Decimals of the step labels; by default as many as each step needs.}
+
+\item{labels}{Names of the steps instead of their values, e.g. the bins of a rating scale (\code{"1-2"}, \code{"3-5"}).}
 }
 \value{
 An object to add to a ggplot with \code{+}.
@@ -33,7 +36,7 @@ An object to add to a ggplot with \code{+}.
 A key for colours that stand for amounts: its title, then one small square
 per step with a hairline outline (so the lightest step stays visible on the
 surface), right-aligned in the legend row beside the series items. Charts
-with a ramp (\code{\link[=hl_lanes]{hl_lanes()}}, \code{\link[=hl_levels]{hl_levels()}}, \code{\link[=hl_correlation]{hl_correlation()}}) add it
+with a ramp (\code{\link[=hl_lanes]{hl_lanes()}}, \code{\link[=hl_levels]{hl_levels()}}, \code{\link[=hl_correlation]{hl_correlation()}}, \code{\link[=hl_likert]{hl_likert()}}) add it
 themselves.
 }
 \examples{

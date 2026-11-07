@@ -45,6 +45,7 @@ class FrameInput:
     x_tick_rows: tuple[bool, ...] = ()
     x_title_rows: tuple[bool, ...] = ()
     row_weights: tuple[float, ...] = ()
+    side_widths: tuple[float, ...] = ()
 
 
 @dataclass
@@ -78,7 +79,7 @@ def load_font_metrics() -> FontMetrics:
 
 def frame_input_from_dict(values: dict) -> FrameInput:
     tuples = {key: tuple(values.get(key, ())) for key in ("panel_header_lines", "column_label_widths", "x_tick_rows",
-                                                          "x_title_rows", "row_weights")}
+                                                          "x_title_rows", "row_weights", "side_widths")}
     return FrameInput(**{**values, **tuples})
 
 

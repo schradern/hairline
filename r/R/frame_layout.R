@@ -13,7 +13,10 @@ place_panel_rows <- function(state, spec, layout, spacing, heights) {
   base <- spec$base_size
   gap <- spacing$panel_columns * base
   offsets <- column_offsets(spec, spacing)
-  width <- (layout$right - layout$plot_left - gap * (spec$panel_columns - 1) - sum(offsets)) / spec$panel_columns
+  # Room right of each column's panels for its numbers column (an n per bar), when it has one.
+  sides <- c(unlist(spec$side_widths), rep(0, spec$panel_columns))[seq_len(spec$panel_columns)]
+  width <- (layout$right - layout$plot_left - gap * (spec$panel_columns - 1) - sum(offsets) - sum(sides)) /
+    spec$panel_columns
   check_panel_width(spec, width, spacing)
   for (row in seq_len(spec$panel_rows)) {
     if (row > 1) state$y <- state$y + spacing$panel_rows * base
@@ -29,7 +32,8 @@ place_panel_rows <- function(state, spec, layout, spacing, heights) {
       state$y <- state$y + spacing$y_title * base
     }
     for (column in seq_len(spec$panel_columns)) {
-      x <- layout$plot_left + (column - 1) * (width + gap) + sum(offsets[seq_len(column)])
+      x <- layout$plot_left + (column - 1) * (width + gap) + sum(offsets[seq_len(column)]) +
+        sum(sides[seq_len(column - 1)])
       layout$panels[[length(layout$panels) + 1]] <- c(x, state$y, width, heights[row])
     }
     state$y <- state$y + heights[row] + inner_tick_band(spec, row, spacing)

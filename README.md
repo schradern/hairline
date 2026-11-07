@@ -15,7 +15,7 @@ language: one frame for titles, legends, panels and captions, one type scale, co
 and files ready for a journal, a report or a slide. You choose the data and the chart; hairline makes the
 hundred small layout decisions, the same way every time.
 
-- **One call per chart.** Twenty-three chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
+- **One call per chart.** Twenty-four chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
   and PRISMA diagrams, lanes and staffing levels over the day, and tables for documents, each from a data frame
   and its column names.
 - **Report-ready by default.** Facets with their own scale, incomplete periods drawn lighter, n per group,
@@ -140,6 +140,13 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 <tr><td width="33%" valign="top"><a href="gallery/python/bars_facets.py"><img src="docs/images/gallery/bars_facets.png" alt="Facets with their own scale"></a><br><sub>Facets with their own scale</sub></td><td width="33%" valign="top"><a href="gallery/python/spread_doses.py"><img src="docs/images/gallery/spread_doses.png" alt="Spread rows on discrete levels"></a><br><sub>Spread rows on discrete levels</sub></td><td width="33%" valign="top"><a href="gallery/python/table_characteristics.py"><img src="docs/images/gallery/table_characteristics.png" alt="Table for documents"></a><br><sub>Table for documents</sub></td></tr>
 <tr><td width="33%" valign="top"><a href="gallery/python/dotplot_rates.py"><img src="docs/images/gallery/dotplot_rates.png" alt="Dot plot with intervals"></a><br><sub>Dot plot with intervals</sub></td><td width="33%" valign="top"><a href="gallery/python/spread_occupancy.py"><img src="docs/images/gallery/spread_occupancy.png" alt="Spread rows"></a><br><sub>Spread rows</sub></td><td width="33%" valign="top"><a href="gallery/python/raincloud_stay.py"><img src="docs/images/gallery/raincloud_stay.png" alt="Raincloud"></a><br><sub>Raincloud</sub></td></tr>
 <tr><td width="33%" valign="top"><a href="gallery/python/ridgeline_ages.py"><img src="docs/images/gallery/ridgeline_ages.png" alt="Ridgeline"></a><br><sub>Ridgeline</sub></td><td width="33%" valign="top"><a href="gallery/python/scatter_fit.py"><img src="docs/images/gallery/scatter_fit.png" alt="Scatter with fit"></a><br><sub>Scatter with fit</sub></td><td width="33%" valign="top"><a href="gallery/python/correlation_patients.py"><img src="docs/images/gallery/correlation_patients.png" alt="Correlation heatmap"></a><br><sub>Correlation heatmap</sub></td></tr>
+</table>
+
+### Surveys
+
+<table>
+<tr><td width="33%" valign="top"><a href="gallery/python/likert_visits.py"><img src="docs/images/gallery/likert_visits.png" alt="Diverging bars for ratings"></a><br><sub>Diverging bars for ratings</sub></td><td width="33%" valign="top"><a href="gallery/python/spread_importance.py"><img src="docs/images/gallery/spread_importance.png" alt="Spread rows in sections"></a><br><sub>Spread rows in sections</sub></td><td width="33%" valign="top"><a href="gallery/python/bars_sources.py"><img src="docs/images/gallery/bars_sources.png" alt="Multiple choice, share of respondents"></a><br><sub>Multiple choice, share of respondents</sub></td></tr>
+<tr><td width="33%" valign="top"><a href="gallery/python/bars_answers.py"><img src="docs/images/gallery/bars_answers.png" alt="Answers named inside"></a><br><sub>Answers named inside</sub></td></tr>
 </table>
 
 ### Survival and evidence

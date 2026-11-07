@@ -72,11 +72,14 @@ fitted_box <- function(box, aspect) {
   c(box[1] + (box[3] - width) / 2, box[2], width, width * aspect)
 }
 
-# Per-panel extras a chart stores in its meta, by panel order: row blocks (lanes, swimlanes).
+# Per-panel extras a chart stores in its meta, by panel order: row blocks (lanes, swimlanes) and a numbers column
+# right of the panel (an n per bar: a list of list(position, label, value) in the panel's y data).
 with_panel_extras <- function(panels, meta) {
   blocks <- meta$hairline_blocks %||% list()
+  numbers <- meta$hairline_side_numbers %||% list()
   for (index in seq_along(panels)) {
     if (index <= length(blocks)) panels[[index]]["blocks"] <- list(blocks[[index]])
+    if (index <= length(numbers)) panels[[index]]["side_numbers"] <- list(numbers[[index]])
   }
   panels
 }

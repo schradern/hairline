@@ -367,7 +367,13 @@
         "weekends": "Weekends",
         "all_days": "All days",
         "figure": "Figure",
-        "table": "Table"
+        "table": "Table",
+        "reversed": "reversed",
+        "respondents_share": "% of respondents",
+        "several_answers": "Several answers were possible.",
+        "median": "Median",
+        "mean": "Mean",
+        "iqr": "IQR"
       }
     },
     "de": {
@@ -427,7 +433,13 @@
         "weekends": "Wochenenden",
         "all_days": "Alle Tage",
         "figure": "Abbildung",
-        "table": "Tabelle"
+        "table": "Tabelle",
+        "reversed": "umgepolt",
+        "respondents_share": "% der Befragten",
+        "several_answers": "Mehrfachnennungen möglich.",
+        "median": "Median",
+        "mean": "Mittelwert",
+        "iqr": "IQR"
       }
     }
   },
@@ -840,6 +852,7 @@
     "group_gap": 0.6,
     "label_gap": 1.0
   },
+  "likert": {"bar": 0.62, "gap_pt": 0.6, "centre_width": 0.065, "levels_per_side": 3},
   "table": {
     "row_pitch": 1.7,
     "column_gap": 1.5,

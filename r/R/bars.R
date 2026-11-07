@@ -72,9 +72,12 @@ facet_panels <- function(data, category, value, by, facet, order, sort, groups, 
     rows <- if (is.null(facet)) data else data[as.character(data[[facet]]) == name, , drop = FALSE]
     parts <- fold_top(bar_table(rows, category, value, by, order, sort, groups), options$top, options$other, category,
                       by)
+    # An answer outside the ranking (an exclusive "none") goes last.
+    if (identical(sort, "value")) parts$names <- c(setdiff(parts$names, options$context),
+                                                   intersect(parts$names, options$context))
     counts <- category_n(parts, category)
     c(parts, list(facet = name, n = counts, total = sum(parts$table$.value, na.rm = TRUE),
-                  labels = if (options$show_n) labels_with_n(parts$names, counts) else parts$names))
+                  labels = if (isTRUE(options$show_n)) labels_with_n(parts$names, counts) else parts$names))
   })
 }
 
@@ -108,11 +111,11 @@ upright_values <- function(frame, stacked, labels, percent) {
 
 # Many or long labels (as drawn, with their n) lie down, and so do labels too wide for upright bars at the width of
 # `size` (the host's column, else the preset's width), shared by the panel columns; one decision for every panel.
-bars_lie_down <- function(panels, category, by, stacked, labels, percent, size, columns = 1) {
+bars_lie_down <- function(panels, category, by, stacked, labels, percent, size, columns = 1, divide = percent) {
   if (any(vapply(panels, function(parts) bars_horizontal(parts$labels), logical(1)))) return(TRUE)
   figure <- default_figure(size)
   !all(vapply(panels, function(parts) {
-    values <- upright_values(bar_frame(parts, category, by, FALSE, percent, stacked), stacked, labels, percent)
+    values <- upright_values(bar_frame(parts, category, by, FALSE, percent, stacked, divide), stacked, labels, percent)
     fits_upright(parts$labels, values, if (stacked) 1 else length(parts$groups), figure$width_pt / columns,
                  figure$settings)
   }, logical(1)))
@@ -127,11 +130,11 @@ bar_numbers <- function(table, category, stacked) {
     list(digits = hl_tokens()$numbers$compact_digits, unit = unit)
 }
 
-bar_frame <- function(parts, category, by, horizontal, percent, stacked = FALSE) {
+bar_frame <- function(parts, category, by, horizontal, percent, stacked = FALSE, divide = percent) {
   table <- parts$table
   numbers <- bar_numbers(table, category, stacked)
   digits <- numbers$digits
-  if (percent) {
+  if (divide) {
     negative <- which(table$.value < 0)
     if (length(negative)) {
       stop(sprintf("hairline: bars: percent needs values of zero or more; '%s' has %s", table[[category]][negative[1]],
@@ -203,11 +206,12 @@ stacked_text_layers <- function(frame, colours, horizontal, percent) {
 bar_dodge <- function(horizontal) ggplot2::position_dodge(width = hl_tokens()$bars$width, reverse = horizontal)
 
 # Room on the value axis for the labels at the bar ends.
-bar_headroom <- function(frame, horizontal, percent, stacked) {
+# Shares of respondents end at 100 % (`cap`); a label past it may run into the margin.
+bar_headroom <- function(frame, horizontal, percent, stacked, cap = Inf) {
   if (stacked && percent) return(list())
   largest <- if (stacked) max(tapply(pmax(frame$value, 0), frame$category, sum), na.rm = TRUE) else max(frame$value)
   reach <- with_facet(data.frame(category = factor(levels(frame$category)[1], levels = levels(frame$category)),
-                                 value = largest * (1 + hl_tokens()$bars$label_headroom)), frame)
+                                 value = min(largest * (1 + hl_tokens()$bars$label_headroom), cap)), frame)
   mapping <- if (horizontal) ggplot2::aes(.data$value, .data$category) else ggplot2::aes(.data$category, .data$value)
   list(ggplot2::geom_blank(mapping, data = reach, inherit.aes = FALSE))
 }
@@ -235,7 +239,8 @@ bar_fill_scale <- function(colours, series) {
                              guide = if (shown) "legend" else "none")
 }
 
-bar_layers <- function(frames, colours, horizontal, stacked, labels, percent, series = NULL, partial = FALSE) {
+bar_layers <- function(frames, colours, horizontal, stacked, labels, percent, series = NULL, partial = FALSE,
+                       context = character(), cap = Inf) {
   rules <- hl_tokens()$bars
   settings <- hl_settings()
   frame <- if (length(frames) == 1) frames[[1]] else do.call(rbind, frames)
@@ -245,10 +250,18 @@ bar_layers <- function(frames, colours, horizontal, stacked, labels, percent, se
   if (partial) mapping$alpha <- quote(.data$.alpha)
   edge <- if (stacked) list(colour = settings$neutral$surface, linewidth = pt_to_linewidth(rules$gap_pt / 2)) else
     list(colour = NA)
+  receding <- frame$.name %in% context
+  if (any(receding)) {
+    mapping$alpha <- quote(.data$.alpha)
+    frame$.alpha[receding] <- 0
+  }
   layers <- list(do.call(ggplot2::geom_col, c(list(mapping, data = frame, position = position,
                                                    width = rules$width * 0.92,
                                                    orientation = if (horizontal) "y" else "x"), edge)),
                  bar_fill_scale(colours, series))
+  if (any(receding)) layers[[length(layers) + 1]] <- ggplot2::scale_alpha_identity()
+  if (any(receding)) layers <- c(layers, list(context_layer(frame[receding, , drop = FALSE], mapping, position,
+                                                            horizontal, edge)))
   if (partial) layers[[length(layers) + 1]] <- ggplot2::scale_alpha_identity()
   if (!labels) return(layers)
   if (stacked) {
@@ -258,8 +271,8 @@ bar_layers <- function(frames, colours, horizontal, stacked, labels, percent, se
     return(c(layers, unlist(texts, recursive = FALSE)))
   }
   gap <- rules$label_gap
-  c(layers, unlist(lapply(frames, bar_headroom, horizontal = horizontal, percent = percent, stacked = FALSE),
-                   recursive = FALSE),
+  c(layers, unlist(lapply(frames, bar_headroom, horizontal = horizontal, percent = percent, stacked = FALSE,
+                          cap = cap), recursive = FALSE),
     list(bar_text(bar_value_mapping(horizontal), frame, bar_dodge(horizontal),
                   settings$neutral$muted, settings, hjust = if (horizontal) -gap else 0.5,
                   vjust = if (horizontal) 0.5 else -gap)))
@@ -273,12 +286,12 @@ bars_title <- function(value, category, by) {
 
 # One frame per panel. Facets key each category by its facet (each panel has its own categories and their n), so
 # `labels` maps the keys back to the text drawn; incomplete periods get their lighter opacity.
-bar_frames <- function(panels, category, by, horizontal, percent, stacked, facet, partial) {
+bar_frames <- function(panels, category, by, horizontal, percent, stacked, facet, partial, divide = percent) {
   faceted <- !is.null(facet)
   labels <- character()
   opacity <- hl_tokens()$partial$opacity
   frames <- lapply(panels, function(parts) {
-    frame <- bar_frame(parts, category, by, horizontal, percent, stacked)
+    frame <- bar_frame(parts, category, by, horizontal, percent, stacked, divide)
     keys <- if (faceted) paste0(parts$facet, "\037", parts$names) else parts$names
     labels[keys] <<- parts$labels
     levels <- if (horizontal) rev(keys) else keys
@@ -298,10 +311,15 @@ bar_facet_scales <- function(scales, horizontal) {
 }
 
 # Each facet's name and total in its panel header.
-bar_facet_headers <- function(panels) {
+# Each facet's name and its total, or its n: the respondents of a multiple-choice panel, else its total count.
+bar_facet_headers <- function(panels, header = "total", respondent_n = list()) {
   lapply(panels, function(parts) {
-    total <- hl_format_number(parts$total, auto_digits(parts$total))
-    hl_panel_header(panel = parts$facet, stats = stats::setNames(total, word("total")))
+    stat <- if (header == "n") {
+      stats::setNames(hl_format_number(respondent_n[[parts$facet]] %||% parts$total, 0), "n")
+    } else {
+      stats::setNames(hl_format_number(parts$total, auto_digits(parts$total)), word("total"))
+    }
+    hl_panel_header(panel = parts$facet, stats = stat)
   })
 }
 
@@ -344,11 +362,19 @@ bar_colours <- function(data, by, groups, color_by, colors, dimension) {
 #' @param other Name of the folded bar (default: the locale's "Other").
 #' @param partial Incomplete periods and what they hold, e.g. `c("2021" = "2 months")`: drawn lighter and named in
 #'   the caption, in the locale.
-#' @param show_n Write each category's n after its label; colours and `order` keep keying on the bare name.
+#' @param show_n Write each category's n after its label (`TRUE`), or in a column right of the bars
+#'   (`"column"`); colours and `order` keep keying on the bare name.
 #' @param normalize Draw shares of each category's total (as `percent`) and keep the n in the labels.
 #' @param color_by Colour the groups of `by` by a coarser column, whose values the legend lists.
 #' @param dimension What the groups are, so their colours keep off the slots another dimension holds (see
 #'   [hl_scope()]).
+#' @param context Categories drawn in the context grey (an exclusive "none" answer), last when sorted by value.
+#' @param header `"total"` or `"n"`: what each facet's panel header gives beside its name.
+#' @param inside `"name"` writes each stacked segment's name and value inside it, in greys by position, so rows may
+#'   hold different answers and no legend is needed.
+#' @param respondents Column naming the respondent of each multiple-choice answer (one row per answer): each
+#'   respondent counts once per answer, as a share of the panel's respondents; the caption says several answers
+#'   were possible.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' admissions <- data.frame(
@@ -364,42 +390,74 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
                     stacked = FALSE, percent = FALSE, horizontal = NULL, sort = NULL, order = NULL, labels = TRUE,
                     colors = NULL, size = NULL, facet = NULL, scales = "free", columns = NULL, top = NULL,
                     other = NULL, partial = NULL, show_n = FALSE, normalize = FALSE, color_by = NULL,
-                    dimension = NULL) {
+                    dimension = NULL, context = NULL, header = "total", inside = NULL, respondents = NULL) {
   if (!is.null(size)) check_size_preset(size)
+  respondent_n <- list()
+  if (!is.null(respondents)) {
+    check_respondents(value, by, percent || normalize)
+    shared <- respondent_shares(data, category, facet, respondents)
+    data <- shared$data
+    value <- ".share"
+    respondent_n <- shared$n
+  }
   counted <- with_counts(data, value)
   check_columns(counted$data, c(category, counted$value, by, facet, color_by))
   stacked <- stacked && !is.null(by)
-  percent <- percent || normalize
+  divide <- percent || normalize
+  percent <- divide || !is.null(respondents)
   if (!is.null(color_by) && is.null(by)) {
     stop("hairline: bars: color_by needs by =, the groups it colours", call. = FALSE)
   }
+  check_bar_survey(show_n, header, inside, context, by, stacked, facet)
   check_labels(counted$data, c(by, facet), "bars")
   check_top(top, scales)
   groups <- if (is.null(by)) "" else group_names(counted$data[[by]])
-  options <- list(top = top, other = other %||% word("other"), show_n = show_n || normalize)
+  column <- identical(show_n, "column")
+  options <- list(top = top, other = other %||% word("other"), show_n = !column && (isTRUE(show_n) || normalize),
+                  context = as.character(context))
   panels <- facet_panels(counted$data, category, counted$value, by, facet, order,
                          sort %||% if (is.null(by) || stacked) "value" else "given", groups, options)
-  check_partial(partial, unique(unlist(lapply(panels, `[[`, "names"))), "bars")
+  every <- unique(unlist(lapply(panels, `[[`, "names")))
+  check_partial(partial, every, "bars")
+  check_context(as.character(context), every)
   columns <- columns %||% if (is.null(facet)) 1 else min(length(panels), 2)
+  if ((column || !is.null(inside)) && isFALSE(horizontal)) {
+    stop("hairline: bars: show_n = 'column' and inside = 'name' need horizontal bars", call. = FALSE)
+  }
+  if (column || !is.null(inside)) horizontal <- TRUE
   horizontal <- horizontal %||% bars_lie_down(panels, category, by, stacked, labels, percent, size %||% "onehalf",
-                                              columns)
-  coloured <- bar_colours(counted$data, by, groups, color_by, colors, dimension)
-  built <- bar_frames(panels, category, by, horizontal, percent, stacked, facet, partial)
-  plot <- ggplot2::ggplot() +
-    bar_layers(built$frames, coloured$colours, horizontal, stacked, labels, percent, coloured$series,
-               length(partial) > 0) +
-    ggplot2::labs(title = title %||% bars_title(counted$value, category, by),
-                  subtitle = subtitle, caption = with_caption(caption, partial_caption(partial)), x = NULL,
-                  y = NULL) + theme_hairline() +
-    bar_category_scale(horizontal, built$labels) +
+                                              columns, divide)
+  caption <- with_caption(caption, partial_caption(partial), if (!is.null(respondents)) word("several_answers"))
+  drawn <- list(horizontal = horizontal, stacked = stacked, labels = labels, percent = percent, divide = divide,
+                partial = partial, facet = facet, context = as.character(context), inside = inside,
+                cap = if (!is.null(respondents)) 1 else Inf,
+                coloured = bar_colours(counted$data, by, groups, color_by, colors, dimension))
+  plot <- bar_plot(panels, counted, category, by, drawn) +
+    ggplot2::labs(title = title %||% bars_title(counted$value, category, by), subtitle = subtitle, caption = caption,
+                  x = NULL, y = NULL) + theme_hairline() +
     # Value labels may reach past the last break, as in Python, where they are never clipped.
     ggplot2::coord_cartesian(clip = "off")
   if (!is.null(facet)) {
     plot <- plot + ggplot2::facet_wrap(ggplot2::vars(.data$.facet), ncol = columns,
                                        scales = bar_facet_scales(scales, horizontal))
-    for (header in bar_facet_headers(panels)) plot <- plot + header
+    for (entry in bar_facet_headers(panels, header, respondent_n)) plot <- plot + entry
   }
   if (percent) plot <- plot + if (horizontal) scale_x_hairline(percent = TRUE) else scale_y_hairline(percent = TRUE)
+  if (column) plot@meta$hairline_side_numbers <- bar_side_numbers(panels)
   plot@meta$hairline_size <- size
   plot
+}
+
+# The bars of every panel (or, with `inside = "name"`, the named segments of one) on their category axis.
+bar_plot <- function(panels, counted, category, by, options) {
+  if (!is.null(options$inside)) {
+    return(named_plot(ggplot2::ggplot(), panels[[1]], category, by, options$divide, options$percent))
+  }
+  built <- bar_frames(panels, category, by, options$horizontal, options$percent, options$stacked, options$facet,
+                      options$partial, options$divide)
+  ggplot2::ggplot() +
+    bar_layers(built$frames, options$coloured$colours, options$horizontal, options$stacked, options$labels,
+               options$percent, options$coloured$series, length(options$partial) > 0, options$context,
+               options$cap) +
+    bar_category_scale(options$horizontal, built$labels)
 }

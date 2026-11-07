@@ -5,7 +5,8 @@ hairline_ramp_key <- S7::new_class("hairline_ramp_key", package = "hairline", pr
 
 # The key's title, step labels and colours. Colours given one per step are the bins themselves (lanes, levels); a ramp
 # is read at each step.
-ramp_key <- function(ramp = NULL, steps = NULL, title = NULL, format = "percent", limits = c(0, 1), digits = NULL) {
+ramp_key <- function(ramp = NULL, steps = NULL, title = NULL, format = "percent", limits = c(0, 1), digits = NULL,
+                     labels = NULL) {
   if (!format %in% c("percent", "number")) {
     stop(sprintf("hairline: legend_ramp: format '%s' must be 'percent' or 'number'", format), call. = FALSE)
   }
@@ -22,7 +23,11 @@ ramp_key <- function(ramp = NULL, steps = NULL, title = NULL, format = "percent"
                  format(limits[1]), format(limits[2])), call. = FALSE)
   }
   binned <- !named && length(colours) == length(steps)
-  labels <- vapply(steps, function(step) {
+  if (!is.null(labels) && length(labels) != length(steps)) {
+    stop(sprintf("hairline: legend_ramp: labels gives %d names for %d steps", length(labels), length(steps)),
+         call. = FALSE)
+  }
+  labels <- if (!is.null(labels)) as.character(labels) else vapply(steps, function(step) {
     places <- digits %||% exact_places(step * if (format == "percent") 100 else 1)
     if (format == "percent") hl_format_percent(step, places) else hl_format_number(step, places)
   }, character(1))
@@ -36,7 +41,7 @@ ramp_key <- function(ramp = NULL, steps = NULL, title = NULL, format = "percent"
 #' A key for colours that stand for amounts: its title, then one small square
 #' per step with a hairline outline (so the lightest step stays visible on the
 #' surface), right-aligned in the legend row beside the series items. Charts
-#' with a ramp ([hl_lanes()], [hl_levels()], [hl_correlation()]) add it
+#' with a ramp ([hl_lanes()], [hl_levels()], [hl_correlation()], [hl_likert()]) add it
 #' themselves.
 #'
 #' @param ramp A ramp name, or its colours; colours given one per step are the bins themselves.
@@ -45,6 +50,7 @@ ramp_key <- function(ramp = NULL, steps = NULL, title = NULL, format = "percent"
 #' @param format `"percent"` or `"number"`.
 #' @param limits The range the ramp spans.
 #' @param digits Decimals of the step labels; by default as many as each step needs.
+#' @param labels Names of the steps instead of their values, e.g. the bins of a rating scale (`"1-2"`, `"3-5"`).
 #' @return An object to add to a ggplot with `+`.
 #' @examples
 #' ggplot2::ggplot(datasets::faithful, ggplot2::aes(eruptions, waiting)) + ggplot2::geom_point() +
@@ -52,8 +58,8 @@ ramp_key <- function(ramp = NULL, steps = NULL, title = NULL, format = "percent"
 #'   hl_legend_ramp("blues", title = "Share")
 #' @export
 hl_legend_ramp <- function(ramp = NULL, steps = NULL, title = NULL, format = "percent", limits = c(0, 1),
-                           digits = NULL) {
-  hairline_ramp_key(key = ramp_key(ramp, steps, title, format, limits, digits))
+                           digits = NULL, labels = NULL) {
+  hairline_ramp_key(key = ramp_key(ramp, steps, title, format, limits, digits, labels))
 }
 
 add_hairline_ramp_key <- function(object, plot, ...) {

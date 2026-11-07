@@ -20,6 +20,26 @@ block_width <- function(panel, settings) {
   names + hl_tokens()$lanes$label_gap * settings$base_size
 }
 
+# A key number's width: its label in the label style, then its value at the value weight.
+side_pair_width <- function(settings, label, value) {
+  text_width_pt(paste0(label, " "), role_style(settings, "label")) +
+    text_width_pt(value, role_style(settings, "label", hl_tokens()$type$value_weight))
+}
+
+# Room right of each column's panels for their numbers column and the gap before it.
+side_widths <- function(parts) {
+  widths <- numeric(parts$columns)
+  gap <- hl_tokens()$spacing$y_labels_plot * parts$settings$base_size
+  for (panel in parts$panels) {
+    if (!length(panel$side_numbers)) next
+    widest <- max(vapply(panel$side_numbers, function(entry) {
+      side_pair_width(parts$settings, entry$label, entry$value)
+    }, numeric(1)))
+    widths[panel$col] <- max(widths[panel$col], widest + gap)
+  }
+  widths
+}
+
 column_label_widths <- function(parts) {
   widths <- numeric(parts$columns)
   for (panel in parts$panels) {
@@ -57,7 +77,7 @@ frame_spec <- function(parts, texts, size, legend_rows, header_lines) {
        y_label_width_pt = if (parts$bare) 0 else texts$column_widths[1],
        column_label_widths = if (parts$bare) numeric(parts$columns) else texts$column_widths,
        x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts), x_title_rows = x_title_rows(parts),
-       row_weights = parts$row_weights %||% numeric())
+       row_weights = parts$row_weights %||% numeric(), side_widths = side_widths(parts))
 }
 
 compose_all_headers <- function(parts, layout) {

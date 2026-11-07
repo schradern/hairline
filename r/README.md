@@ -52,7 +52,7 @@ Each chart is one call with the data and its column names, and returns a ggplot 
 `hl_bars()`, `hl_scatter()`, `hl_timeseries()`, `hl_spread()`, `hl_raincloud()`, `hl_ridgeline()`,
 `hl_kaplan_meier()`, `hl_forest()`, `hl_dotplot()`, `hl_funnel()`, `hl_correlation()`, `hl_donut()`,
 `hl_partition()`, `hl_sankey()`, `hl_chord()`, `hl_arcs()`, `hl_venn()`, `hl_prisma()`, `hl_risk_of_bias()`,
-`hl_lanes()`, `hl_levels()`, `hl_swimlanes()` and `hl_table()`.
+`hl_lanes()`, `hl_levels()`, `hl_swimlanes()`, `hl_likert()` and `hl_table()`.
 
 ```r
 admissions <- data.frame(diagnosis = c("Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac"),
@@ -122,6 +122,29 @@ hl_save(figure, "unit_day", size = "double")
   a darker band, and `assign = "first_free"` to turn tasks into rows of people.
 - **`hl_rows()`** stacks plots as panel rows sized by `heights` on one time axis, labelled once at the bottom, with
   one legend row and caption: the R counterpart of the Python `figure(heights=, sharex=)` with `into=`.
+
+### Surveys
+
+```r
+hl_likert(survey, "statement", "rating", levels = 1:10, group = "section",            # 1-2, 3-5 | 6-8, 9-10
+          reverse = "Waited too long on the day")                                     # recoded and marked
+hl_spread(importance, "feature", "rating", section = "area", panel_letters = TRUE,    # a, b, c blocks
+          mean = TRUE, sort = "median")                                               # mean as an open diamond
+hl_bars(sources, "answer", facet = "question", respondents = "respondent",            # % of respondents, n per panel
+        context = "None of these", header = "n")                                      # the exclusive answer in grey
+hl_bars(answers, "question", "count", by = "answer", stacked = TRUE, percent = TRUE,  # each answer named inside,
+        inside = "name", show_n = "column")                                           # n in a column on the right
+```
+
+- **`hl_likert()`**: diverging bars for rating scales, the levels in a few named bins (a ten-point scale reads
+  1–2, 3–5 | 6–8, 9–10), a middle level centred on the split, negatively worded items recoded and marked, sections
+  as blocks, median, IQR and n beside each row, the binned key in the legend row.
+- **`hl_spread(section =, panel_letters =, mean =, sort = "median")`**: rows in lettered blocks, the mean as an open
+  diamond beside the median dot, rows ordered by median.
+- **`hl_bars(respondents =)`** counts each respondent once per answer, as a share of the panel's respondents, and
+  says that several answers were possible; **`context =`** draws an answer outside the ranking in grey;
+  **`header = "n"`** gives each facet its n; **`show_n = "column"`** writes each bar's n right of it;
+  **`inside = "name"`** names each stacked segment inside it, so rows may hold different answers.
 
 ## Colours
 

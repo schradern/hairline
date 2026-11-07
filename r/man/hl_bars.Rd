@@ -29,7 +29,11 @@ hl_bars(
   show_n = FALSE,
   normalize = FALSE,
   color_by = NULL,
-  dimension = NULL
+  dimension = NULL,
+  context = NULL,
+  header = "total",
+  inside = NULL,
+  respondents = NULL
 )
 }
 \arguments{
@@ -76,7 +80,8 @@ shared axis (\code{scales = "shared"}), the facet's name and total in its panel 
 \item{partial}{Incomplete periods and what they hold, e.g. \code{c("2021" = "2 months")}: drawn lighter and named in
 the caption, in the locale.}
 
-\item{show_n}{Write each category's n after its label; colours and \code{order} keep keying on the bare name.}
+\item{show_n}{Write each category's n after its label (\code{TRUE}), or in a column right of the bars
+(\code{"column"}); colours and \code{order} keep keying on the bare name.}
 
 \item{normalize}{Draw shares of each category's total (as \code{percent}) and keep the n in the labels.}
 
@@ -84,6 +89,17 @@ the caption, in the locale.}
 
 \item{dimension}{What the groups are, so their colours keep off the slots another dimension holds (see
 \code{\link[=hl_scope]{hl_scope()}}).}
+
+\item{context}{Categories drawn in the context grey (an exclusive "none" answer), last when sorted by value.}
+
+\item{header}{\code{"total"} or \code{"n"}: what each facet's panel header gives beside its name.}
+
+\item{inside}{\code{"name"} writes each stacked segment's name and value inside it, in greys by position, so rows may
+hold different answers and no legend is needed.}
+
+\item{respondents}{Column naming the respondent of each multiple-choice answer (one row per answer): each
+respondent counts once per answer, as a share of the panel's respondents; the caption says several answers
+were possible.}
 }
 \value{
 A ggplot with the hairline frame.

@@ -16,6 +16,19 @@ figures in both languages (`bars_facets`, `spread_doses`, `table_characteristics
 all in `tools/parity.py`: every gallery figure agrees within 1 pt, frame positions and tooltips. The correlation
 heatmap now adds the binned key of item 18 itself, in both languages.
 
+**Third report (items 20 to 25): in both packages**, with four gallery figures in both languages
+(`likert_visits`, `spread_importance`, `bars_sources`, `bars_answers`), all in `tools/parity.py`. Where the shipped
+form differs from the proposal:
+
+* Item 20: `likert(..., group=)` as proposed. Agreement takes the diverging ramp's first pole (blue on the default
+  ramp) and disagreement the other, as readers of rating charts expect; `ramp=` picks another diverging ramp. The
+  binned key names its bins (`legend_ramp(labels=)`).
+* Item 21: on `spread` the section column is `section=`, since `group` already names the rows.
+* Item 23: `show_n="column"` needs horizontal bars (they lie down when it is given).
+* Item 24: `inside="name"` draws one panel (no `facet`); its segments are tooltip targets of their own.
+* Item 25: `respondents=` takes one answer per row and no `value`, `by` or `percent`; the axis of a share of
+  respondents ends at 100 %.
+
 Where the shipped form differs from the proposal:
 
 * Item 1: `facet` is on `bars`; the location figure is `bars(facet=..., top=6)`. `spread` and `dotplot` have no
@@ -293,3 +306,115 @@ was tried and dropped: with a tolerance of 0 the chosen bar has height 0.
   them today, only the chart and its key are missing.
 * The legend row takes `square` items (`HairlineFigure.legend([("square", color, label), …])`); a binned key can be
   built from them by hand until item 18, apart from the outline.
+
+# Third report: a questionnaire survey
+
+Source: four figures of a questionnaire survey (2026-11), drawn without hairline: statements rated on a 10-point
+scale in sections, importance ratings of many items in lettered panels, multiple-choice questions with an exclusive
+"none" answer, and single-choice questions as stacked bars. Not everyone answered every question, so the n differs on
+almost every row. Items 20 to 25 are what each figure would need from hairline, and where the figure itself is the
+wrong form. The gallery shows them on synthetic data of another topic.
+
+## 20. Diverging bars for rating scales
+
+**Seen:** statements rated 1 to 10, one row each in sections, the share of each rating stacked to the left
+(1–5) and right (6–10) of a centre line, ten shades from red to blue, a key under the axis and a numbers column with
+median [IQR] and n. The split shows the balance per statement at a glance; the ten shades do not: no reader maps a
+shade back to its rating, the palest steps (5 and 6) meet at the centre and read as a gap, and the key sits far from
+the bars. Some statements are worded negatively, marked only in their label, so on those rows red is the good
+answer.
+
+**Today:** nothing in hairline; `bars(percent=True, stacked=True)` stacks from zero, not from a split.
+
+**Proposal:** `likert(data, item, rating, *, levels=range(1, 11), split=5.5, bins=None, group=None, reverse=None,
+stats=("median", "iqr", "n"))` / `hl_likert(...)`: per item the share of each level, stacked away from the split (a
+middle level, when the scale has one, centred on it), on a percent axis that reads outward from 0. `bins` collapses
+levels into a few labelled steps (`{"1–2": (1, 2), "3–5": (3, 5), "6–8": (6, 8), "9–10": (9, 10)}`), so the colours
+can be told apart; the default for more than six levels is two or three bins per side. `group` draws the items as
+blocks with their name once, as item 12's rows; `reverse` names the negatively worded items, recoded and marked
+("reversed") so colour keeps one meaning; `stats` is spread's numbers column (median [IQR] and n per row, on the
+data's levels as item 9). The key is item 18's binned key on a diverging ramp, in the legend row. Rows keep their
+given order within a block, or `sort="balance"`.
+
+## 21. Mean beside median, items in sections
+
+**Seen:** importance ratings of many items in lettered panels (a, b, c), each row with its IQR as a grey bar, the
+median as a dot, the mean as an open diamond and its n in the label, rows sorted by median.
+
+**Today:** `spread(stats=("median", "iqr", "n"), show_n=True)` draws one panel of these rows with the numbers beside
+them; the mean is a number, not a mark, and there are no sections or panel letters. On a 10-point scale the median
+and IQR are whole or half steps, which `discrete=True` keeps on the levels.
+
+**Proposal:** `spread(..., mean=True)` draws the mean as an open marker on the row (the legend row then names median,
+mean and IQR), `group=` draws blocks of rows with their name as a panel header, `panel_letters=True` letters them
+as `figure()` does, and `sort="median"` orders rows within a block. The rows of one block keep one axis; blocks
+share it.
+
+## 22. One category drawn as context
+
+**Seen:** two multiple-choice questions as horizontal bars of the share of respondents, the exclusive "none" answer
+as a grey bar among the blue ones. Two panels side by side, each with its own n written into its axis title.
+
+**Today:** `bars(...)` with `horizontal=True`; one category in grey needs `colors=` per group, which a single series
+does not have, and the n per panel goes into the axis title by hand. Two panels from different questions are two
+calls and a composition.
+
+**Proposal:** `context=` on `bars` names categories drawn in the context grey, kept in their sorted place (or last
+with `sort="value"`, as an answer outside the ranking). With `facet=`, `header="n"` writes each panel's n in its
+header ("n = 160") instead of the total, so shares from questions of different n sit side by side.
+
+## 23. An n column on stacked bars
+
+**Seen:** 100 % stacked bars of single-choice questions, one row per question, n written right of each bar, as the
+rating figures write theirs.
+
+**Today:** `bars(percent=True, stacked=True)` with values inside the segments; `show_n` puts the n after the label,
+not in a column.
+
+**Proposal:** `show_n="column"` on `bars` (and on item 20): the n right-aligned in a column beside the bars, in the
+key-number style of spread's numbers column, so rows with different n read alike in every chart.
+
+## 24. Rows with their own answers
+
+**Seen:** a panel of questions whose answers differ per row (yes/no/unsure on one row, two named options on the
+next), each segment named and valued inside in greys, without a legend.
+
+**Today:** stacked bars need one set of groups for every row; their names go to the legend row, and inside a
+segment only the value is written.
+
+**Proposal:** `inside="name"` on stacked bars: the segment's name and value inside it, where it fits (as item 17's
+labels), and no legend entry for names written inside. Rows may then hold different groups; their colours come from
+a neutral ramp by position (first answer darkest), since colour would otherwise suggest that the first answers of
+two different questions are the same thing. Questions with different answers are usually better as separate rows of
+item 23 or as a table (item 10); worth keeping the option small.
+
+## 25. Shares of respondents for multiple choice
+
+**Seen:** a multiple-choice question: several answers per respondent, so the shares add up to more than 100 %, and
+the exclusive answer excludes the others.
+
+**Today:** shares computed before `bars`, the n written into the axis title.
+
+**Proposal:** `bars(data, category, respondents="id")` counts each respondent once per answer and divides by the
+number of respondents (not answers), the axis says so ("% of respondents, n = 160"), and the caption notes that
+several answers were possible, in the locale. Combined with item 22's `context=` for the exclusive answer.
+
+## Rules this report confirmed
+
+* **A key no one can read is no key.** Ten shades on one scale are decoration; bin to what a reader can tell apart
+  (two or three steps per side) and name the bins.
+* **Colour keeps one meaning.** Negatively worded items are recoded or marked, so red never means agreement in one
+  row and disagreement in the next.
+* **The n belongs to every row** when the rows come from questions that not everyone answered: one column, in the
+  same place in every chart (items 20 and 23).
+* **Mean and median together only on a coarse scale.** On a 10-point rating they differ enough to tell skew; on
+  continuous data the median and IQR alone are the cleaner form (spread).
+
+## Already there, used too little
+
+* `spread(stats=("median", "iqr", "n"), show_n=True, discrete=True)` draws item 21's rows today, with the numbers
+  column the rating figure also wants.
+* `bars(facet=..., scales="shared")` draws item 22's two panels from one long frame, each panel with its own
+  categories.
+* `legend_ramp()` / `hl_legend_ramp()` takes a diverging ramp and any steps, so a binned key for item 20 can be
+  added by hand until the chart exists.
