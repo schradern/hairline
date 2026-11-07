@@ -75,6 +75,13 @@ forest_drawing <- function(spec, box, measure, style) {
               list(forest_rule(columns$study, columns$right, top, style)))
   for (index in seq_along(spec$rows)) {
     centre <- top + pitch * (index - 1) + line_pitch / 2
+    if (!is.null(spec$rows[[index]]$heading)) {
+      # A block's name (a facet of the dot plot) over its rows, as spread draws its sections.
+      shapes[[length(shapes) + 1]] <- shape_text(columns$study, baseline_for(centre, style, "label"),
+                                                 spec$rows[[index]]$heading, "label", style$neutral$ink, "left",
+                                                 hl_tokens()$type$key_weight)
+      next
+    }
     shapes <- c(shapes, forest_table_texts(spec, columns, baseline_for(centre, style, "label"), spec$rows[[index]],
                                            style),
                 forest_marks(spec$rows[[index]], centre, scale, columns$plot, sides[index], spec, style))

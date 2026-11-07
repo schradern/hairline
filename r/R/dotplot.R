@@ -16,6 +16,7 @@
 #' @param n Column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").
 #' @param percent `TRUE` draws shares (0.15) as percent (15), the heading naming the unit.
 #' @param order Row order instead of sorting by value.
+#' @param facet Column whose values each get a block of rows under their name, each block sorted on its own.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -25,8 +26,8 @@
 #' @export
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
                        sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL, percent = FALSE,
-                       order = NULL, min_n = NULL, x_title = NULL, highlight = NULL) {
-  check_columns(data, c(label, estimate, low, high, n))
+                       order = NULL, min_n = NULL, x_title = NULL, highlight = NULL, facet = NULL) {
+  check_columns(data, c(label, estimate, low, high, n, facet))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
                  if (is.null(low)) "high" else "low", low %||% high), call. = FALSE)
@@ -34,7 +35,8 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   interval <- !is.null(low) && !is.null(high)
   if (isTRUE(percent)) data <- dotplot_percent(data, c(estimate, low, high))
   kept <- dotplot_min_n(data, label, n, min_n)
-  data <- dotplot_ordered(kept$data, label, estimate, sort, order)
+  arranged <- dotplot_faceted(kept$data, label, estimate, sort, order, facet)
+  data <- arranged$data
   names <- as.character(data[[label]])
   chosen <- checked_highlight(highlight, names, "dotplot")
   if (!is.null(n)) {
@@ -58,6 +60,7 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
       spec$rows[[index]]$color <- if (names[index] %in% chosen) spec$color else context_colour()
     }
   }
+  if (length(arranged$blocks)) spec$rows <- dotplot_headings(spec$rows, arranged$blocks)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(estimate), "by", gsub("_", " ", label)), subtitle = subtitle,
                   caption = with_caption(caption, kept$note), x = NULL, y = NULL) + theme_hairline(axes = FALSE)
@@ -84,6 +87,32 @@ dotplot_ordered <- function(data, label, estimate, sort, order) {
     return(data[match(names, as.character(data[[label]])), , drop = FALSE])
   }
   if (sort) data[order(-data[[estimate]], seq_len(nrow(data))), , drop = FALSE] else data
+}
+
+# The rows, block after block when faceted (each block ordered on its own), and each row's block. As Python's
+# faceted_rows().
+dotplot_faceted <- function(data, label, estimate, sort, order, facet) {
+  if (is.null(facet)) return(list(data = dotplot_ordered(data, label, estimate, sort, order), blocks = character()))
+  parts <- lapply(unique(as.character(data[[facet]])), function(block) {
+    rows <- data[as.character(data[[facet]]) == block, , drop = FALSE]
+    present <- as.character(order)[as.character(order) %in% as.character(rows[[label]])]
+    dotplot_ordered(rows, label, estimate, sort, if (is.null(order)) NULL else present)
+  })
+  data <- do.call(rbind, parts)
+  list(data = data, blocks = as.character(data[[facet]]))
+}
+
+# A heading row before the first row of each block. As Python's with_headings().
+dotplot_headings <- function(rows, blocks) {
+  found <- list()
+  for (index in seq_along(rows)) {
+    if (index == 1 || blocks[index] != blocks[index - 1]) {
+      found[[length(found) + 1]] <- list(heading = blocks[index], study = blocks[index], cells = list(),
+                                         effect_text = "", weight_text = "")
+    }
+    found[[length(found) + 1]] <- rows[[index]]
+  }
+  found
 }
 
 # Shares as percent: each named column x 100.

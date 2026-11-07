@@ -366,6 +366,34 @@ spread_drawing <- function(spec, box, measure, style) {
     spread_title_shape(spec, right, bottom, style, rules))
 }
 
+# spread_spec() with a block of rows per value of `facet`: every row keyed by facet and group, the blocks drawn as
+# sections, each group in its own colour in every block (as `colors`), names shown without the facet. As Python's
+# faceted_spec().
+faceted_spread_spec <- function(data, group, value, facet, order, options) {
+  if (!is.null(options$section)) {
+    stop("hairline: spread: facet and section both draw blocks of rows; give one of them", call. = FALSE)
+  }
+  keyed <- facet_rows(data, group, facet, order, "spread")
+  names <- unique(unname(keyed$groups))
+  coloured <- series_colours(names, data, group, options$color_by, options$colors, options$dimension, "spread",
+                             options$highlight)
+  coarse_shown <- !is.null(options$color_by)
+  marks <- options$marks
+  keyed_marks <- if (length(marks)) {
+    found <- keyed$keys[keyed$groups %in% names(marks)]
+    stats::setNames(unname(marks[keyed$groups[found]]), found)
+  }
+  options[c("color_by", "dimension", "highlight")] <- list(NULL)
+  options$colors <- stats::setNames(unname(coloured$palette[keyed$groups]), keyed$keys)
+  options$marks <- if (length(keyed_marks)) keyed_marks else NULL
+  options$section <- facet_block
+  spec <- do.call(spread_spec, c(list(keyed$data, facet_key, value, order = keyed$keys), options))
+  for (index in seq_along(spec$rows)) spec$rows[[index]]$name <- unname(keyed$groups[spec$rows[[index]]$name])
+  plain <- Filter(function(entry) !identical(entry$kind, "square"), spec$legend)
+  spec$legend <- c(if (coarse_shown) coarse_legend(coloured), plain)
+  spec
+}
+
 #' Spread rows: distributions per group on one axis
 #'
 #' Per group, first on top: the range as a thin line, the interquartile range
@@ -415,10 +443,14 @@ hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption
                       zero = FALSE, axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
                       clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
                       panel_letters = FALSE, mean = FALSE, sort = NULL, x_title = NULL, reference = NULL,
-                      highlight = NULL, key_title = NULL) {
-  spec <- spread_spec(data, group, value, order, marks, mark_label, stats, percent, digits, zero,
-                      axis_title %||% x_title, colors, show_n, min_n, clip, clip_stats, color_by, dimension, discrete,
-                      section, panel_letters, mean, sort, reference, highlight)
+                      highlight = NULL, key_title = NULL, facet = NULL) {
+  options <- list(marks = marks, mark_label = mark_label, stats = stats, percent = percent, digits = digits,
+                  zero = zero, axis_title = axis_title %||% x_title, colors = colors, show_n = show_n, min_n = min_n,
+                  clip = clip, clip_stats = clip_stats, color_by = color_by, dimension = dimension,
+                  discrete = discrete, section = section, panel_letters = panel_letters, mean = mean, sort = sort,
+                  reference = reference, highlight = highlight)
+  spec <- if (is.null(facet)) do.call(spread_spec, c(list(data, group, value, order = order), options)) else
+    faceted_spread_spec(data, group, value, facet, order, options)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
                   caption = with_caption(caption, spec$notes), x = NULL, y = NULL) + theme_hairline(axes = FALSE)

@@ -230,6 +230,11 @@ def forest_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     shapes = table_texts(spec, columns, heading, None, style) + [rule(columns["study"], columns["right"], top, style)]
     sides = [dot_size(style)] * len(spec["rows"]) if spec.get("marker") == "dot" else square_sides(spec, rules, base)
     for row, centre, side in zip(spec["rows"], centres, sides, strict=True):
+        if "heading" in row:
+            # A block's name (a facet of the dot plot) over its rows, as spread draws its sections.
+            shapes.append(text(columns["study"], baseline_for(centre, style, "label"), row["heading"], "label",
+                               style["neutral"]["ink"], "left", load_tokens()["type"]["key_weight"]))
+            continue
         shapes += table_texts(spec, columns, baseline_for(centre, style, "label"), row, style)
         shapes += interval_marks(row, centre, scale, columns["plot"], side, spec, style)
     if spec["null"] is not None:

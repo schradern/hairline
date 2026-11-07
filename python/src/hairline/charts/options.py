@@ -125,3 +125,24 @@ def reference_shapes(spec: dict, scale, top: float, bottom: float, style: dict) 
             shapes.append(text(x + rules["label_gap"] * style["sizes"]["caption"], baseline, label, "caption",
                                style["neutral"]["faint"]))
     return shapes
+
+
+FACET_KEY, FACET_BLOCK = "_hairline_facet_key", "_hairline_facet_block"
+
+
+def facet_rows(data, group: str, facet: str, order: Sequence[str] | None, chart: str):
+    """For charts that draw facets as blocks of rows on one axis (spread, Likert, dot plot): each row keyed by its
+    facet and group ("2025 · Unit A", the name a caption uses), blocks in the order the facet's values first
+    appear, groups in `order` within each. Returns the data with the key and block columns, the keys in order and
+    each key's group."""
+    from hairline.charts.common import check_columns, check_labels, ordered_names
+    check_columns(data, [group, facet])
+    check_labels(data, [facet], chart)
+    names = ordered_names(data[group], order, chart, group)
+    data = data[data[group].astype(str).isin(names)]
+    keyed = data.assign(**{FACET_KEY: data[facet].astype(str) + " · " + data[group].astype(str),
+                           FACET_BLOCK: data[facet].astype(str)})
+    blocks = list(dict.fromkeys(keyed[FACET_BLOCK]))
+    present = set(keyed[FACET_KEY])
+    keys = [f"{block} · {name}" for block in blocks for name in names if f"{block} · {name}" in present]
+    return keyed, keys, {key: key.split(" · ", 1)[1] for key in keys}

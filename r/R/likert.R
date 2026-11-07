@@ -208,6 +208,7 @@ likert_spec <- function(data, item, rating, levels = NULL, split = NULL, bins = 
 #' @param ramp A diverging ramp's name; the high half takes its first pole.
 #' @param title,subtitle,caption Frame texts.
 #' @param size Size preset, as in [hl_save()].
+#' @param facet Column whose values each get a block of items under their name, as `group` draws sections.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -220,16 +221,29 @@ likert_spec <- function(data, item, rating, levels = NULL, split = NULL, bins = 
 hl_likert <- function(data, item, rating, levels = NULL, split = NULL, bins = NULL, group = NULL,
                       reverse = character(), order = NULL, sort = NULL, stats = likert_stats, axis_title = NULL,
                       key_title = NULL, ramp = NULL, title = NULL, subtitle = NULL, caption = NULL, size = "double",
-                      min_n = NULL, x_title = NULL) {
+                      min_n = NULL, x_title = NULL, facet = NULL) {
   check_size_preset(size)
   check_columns(data, c(item, rating))
+  title <- title %||% paste(humanise(rating), "by", gsub("_", " ", item))
+  if (!is.null(facet)) {
+    keyed <- likert_faceted_items(data, item, facet, group, order, reverse)
+    data <- keyed$data
+    item <- facet_key
+    group <- facet_block
+    order <- keyed$keys
+    reverse <- keyed$reverse
+  }
   kept <- if (is.null(min_n)) list(data = data, note = NULL) else
     without_small_categories(data[!is.na(data[[rating]]), , drop = FALSE], item, min_n, "likert")
   spec <- likert_spec(kept$data, item, rating, levels, split, bins, group, reverse, order, sort, stats,
                       axis_title %||% x_title, ramp)
+  if (!is.null(facet)) {
+    for (index in seq_along(spec$rows)) spec$rows[[index]]$name <- sub("^.*? \u00b7 ", "", spec$rows[[index]]$name,
+                                                                         perl = TRUE)
+  }
   count <- length(spec$bins)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
-    ggplot2::labs(title = title %||% paste(humanise(rating), "by", gsub("_", " ", item)), subtitle = subtitle,
+    ggplot2::labs(title = title, subtitle = subtitle,
                   caption = with_caption(caption, kept$note), x = NULL, y = NULL) + theme_hairline(axes = FALSE) +
     hl_legend(list()) +
     hl_legend_ramp(vapply(spec$bins, `[[`, "", "color"), seq_len(count) / count, key_title,
@@ -318,4 +332,19 @@ likert_drawing <- function(spec, box, measure, style) {
   axis <- list(axis = spec$axis, favours = NULL, null = NULL)
   c(shapes, list(split), forest_axis_shapes(axis, scale, c(left, right), bottom, style, rules),
     spread_title_shape(spec, right, bottom, style, rules))
+}
+
+# The data keyed by facet and item, drawn in blocks as sections; the reversed items named by key. As Python's
+# faceted_items().
+likert_faceted_items <- function(data, item, facet, group, order, reverse) {
+  if (!is.null(group)) {
+    stop("hairline: likert: facet and group both draw blocks of items; give one of them", call. = FALSE)
+  }
+  keyed <- facet_rows(data, item, facet, order, "likert")
+  unknown <- setdiff(as.character(reverse), keyed$groups)
+  if (length(unknown)) {
+    stop(sprintf("hairline: likert: reverse names '%s', which is not an item; items: %s", unknown[1],
+                 paste(unique(keyed$groups), collapse = ", ")), call. = FALSE)
+  }
+  list(data = keyed$data, keys = keyed$keys, reverse = keyed$keys[keyed$groups %in% as.character(reverse)])
 }

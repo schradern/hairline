@@ -24,7 +24,7 @@ from hairline.charts.common import (
     within,
 )
 from hairline.charts.forest import decimals
-from hairline.charts.options import Reference, references
+from hairline.charts.options import FACET_BLOCK, FACET_KEY, Reference, facet_rows, references
 from hairline.charts.spread_geometry import spread_drawing
 from hairline.charts.timeseries import groups_of
 from hairline.drawing import fit_height
@@ -231,7 +231,8 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
            clip_stats: bool = False, color_by: str | None = None, dimension: str | None = None,
            discrete: bool = False, section: str | None = None, panel_letters: bool = False, mean: bool = False,
            sort: str | None = None, x_title: str | None = None, reference: Reference = None,
-           highlight: Sequence[str] | str | None = None, key_title: str | None = None) -> HairlineFigure:
+           highlight: Sequence[str] | str | None = None, key_title: str | None = None,
+           facet: str | None = None) -> HairlineFigure:
     """Distributions per group compared on one axis, first group on top; `marks` adds a reference tick per group
     (a capacity, a target), `mark_label` names it in the numbers column; `axis_title` (e.g. the unit) goes under
     the axis numbers. On a figure too narrow for the numbers beside the plot, they sit on a line under each row.
@@ -248,12 +249,21 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
     `mean` marks each row's mean as an open diamond, and the legend row names median and mean.
 
     Shared with the other charts: `x_title` (the same as `axis_title`), `reference` (dashed lines across the rows,
-    labelled above them), `highlight` (groups kept in colour) and `key_title`."""
-    spec = spread_spec(data, group, value, order=order, marks=marks, mark_label=mark_label, stats=stats,
-                       percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title, colors=colors,
-                       show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats, color_by=color_by,
-                       dimension=dimension, discrete=discrete, section=section, panel_letters=panel_letters,
-                       mean=mean, sort=sort, reference=reference, highlight=highlight)
+    labelled above them), `highlight` (groups kept in colour), `key_title` and `facet` (a block of rows per value
+    of that column, under its name, on the one axis; a group keeps its colour in every block)."""
+    if facet is not None:
+        spec = faceted_spec(data, group, value, facet, order=order, marks=marks, mark_label=mark_label, stats=stats,
+                            percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title,
+                            colors=colors, show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats,
+                            color_by=color_by, dimension=dimension, discrete=discrete, section=section,
+                            panel_letters=panel_letters, mean=mean, sort=sort, reference=reference,
+                            highlight=highlight)
+    else:
+        spec = spread_spec(data, group, value, order=order, marks=marks, mark_label=mark_label, stats=stats,
+                           percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title, colors=colors,
+                           show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats, color_by=color_by,
+                           dimension=dimension, discrete=discrete, section=section, panel_letters=panel_letters,
+                           mean=mean, sort=sort, reference=reference, highlight=highlight)
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *spec["notes"]), size=size)
     result.draw(0, lambda box, measure, style: spread_drawing(spec, box, measure, style))
@@ -261,3 +271,24 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
         result.legend(spec["legend"])
     result.key_title(key_title)
     return fit_height(result)
+
+
+def faceted_spec(data: pd.DataFrame, group: str, value: str, facet: str, **options) -> dict:
+    """spread_spec() with a block of rows per value of `facet`: every row keyed by facet and group, the blocks drawn
+    as sections, each group in its own colour in every block (as `colors`), names shown without the facet."""
+    if options.pop("section") is not None:
+        raise ValueError("hairline: spread: facet and section both draw blocks of rows; give one of them")
+    keyed, keys, groups = facet_rows(data, group, facet, options.pop("order"), "spread")
+    names = list(dict.fromkeys(groups.values()))
+    palette, coarse = series_colors(names, data, group, options.pop("color_by"), options.pop("colors"),
+                                    options.pop("dimension"), "spread", options.pop("highlight"))
+    marks = options.pop("marks") or {}
+    spec = spread_spec(keyed, FACET_KEY, value, order=keys, section=FACET_BLOCK,
+                       colors={key: palette[groups[key]] for key in keys},
+                       marks={key: marks[groups[key]] for key in keys if groups[key] in marks} or None, **options)
+    for row in spec["rows"]:
+        row["name"] = groups[row["name"]]
+    legend = [entry for entry in spec["legend"] if entry[0] != "square"]
+    squares = [("square", palette[name], coarse[name]) for name in names] if coarse != {n: n for n in names} else []
+    spec["legend"] = list(dict.fromkeys(squares)) + legend
+    return spec

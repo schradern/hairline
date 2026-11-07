@@ -22,7 +22,8 @@ hl_dotplot(
   order = NULL,
   min_n = NULL,
   x_title = NULL,
-  highlight = NULL
+  highlight = NULL,
+  facet = NULL
 )
 }
 \arguments{
@@ -54,6 +55,8 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{x_title}{Axis title under the plot.}
 
 \item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
+
+\item{facet}{Column whose values each get a block of rows under their name, each block sorted on its own.}
 }
 \value{
 A ggplot with the hairline frame.

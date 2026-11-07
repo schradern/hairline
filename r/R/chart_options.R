@@ -135,3 +135,32 @@ drawn_reference_shapes <- function(spec, scale, top, bottom, style) {
   }
   shapes
 }
+
+# Every layer's data tagged with its panel, for facet_wrap(vars(.facet)): a chart builds one panel's layers as it
+# would for a single panel, and this places them.
+in_facet <- function(layers, panel, panels) {
+  lapply(layers, function(layer) {
+    if (is.data.frame(layer$data)) layer$data$.facet <- factor(panel, levels = panels)
+    layer
+  })
+}
+
+facet_key <- ".hairline_facet_key"
+facet_block <- ".hairline_facet_block"
+
+# For charts that draw facets as blocks of rows on one axis (spread, Likert, dot plot): each row keyed by its facet and
+# group ("2025 · Unit A", the name a caption uses), blocks in the order the facet's values first appear, groups in
+# `order` within each. The data with the key and block columns, the keys in order and each key's group. As Python's
+# facet_rows().
+facet_rows <- function(data, group, facet, order, chart) {
+  check_columns(data, c(group, facet))
+  check_labels(data, facet, chart)
+  names <- ordered_names(data[[group]], order, chart, group)
+  data <- data[as.character(data[[group]]) %in% names, , drop = FALSE]
+  data[[facet_key]] <- paste(as.character(data[[facet]]), "\u00b7", as.character(data[[group]]))
+  data[[facet_block]] <- as.character(data[[facet]])
+  blocks <- unique(data[[facet_block]])
+  keys <- unlist(lapply(blocks, function(block) paste(block, "\u00b7", names)))
+  keys <- keys[keys %in% data[[facet_key]]]
+  list(data = data, keys = keys, groups = stats::setNames(sub("^.*? \u00b7 ", "", keys, perl = TRUE), keys))
+}

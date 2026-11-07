@@ -31,7 +31,7 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
             ratio: bool = False, reference: Reference = None, digits: int | None = None,
             size: str = "onehalf", n: str | None = None, percent: bool = False, order: Sequence[str] | None = None,
             min_n: int | None = None, x_title: str | None = None,
-            highlight: Sequence[str] | str | None = None) -> HairlineFigure:
+            highlight: Sequence[str] | str | None = None, facet: str | None = None) -> HairlineFigure:
     """One dot per row, largest at the top; with `low` and `high` an interval and its numbers on the right.
     `n` names the column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").
     `percent=True` draws shares (0.15) as percent (15), the heading naming the unit. `order` gives the rows'
@@ -39,15 +39,16 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
 
     Shared with the other charts: `reference` draws dashed lines (a target, a null value: 0.1, (0.1, "Target") or
     {"Target": 0.1}); `min_n` leaves out rows whose `n` is smaller and names them; `x_title` titles the axis;
-    `highlight` keeps these rows in colour."""
-    check_columns(data, [label, estimate, low, high, n])
+    `highlight` keeps these rows in colour; `facet` draws a block of rows per value of that column under its name,
+    on the one axis, each block sorted on its own."""
+    check_columns(data, [label, estimate, low, high, n, facet])
     if (low is None) != (high is None):
         raise ValueError(f"hairline: dotplot: an interval needs both low and high; got only "
                          f"{'low' if low is not None else 'high'}={low if low is not None else high!r}")
     interval = low is not None and high is not None
     data = as_percent(data, [estimate, low, high]) if percent else data
     data, small = rows_with_min_n(data, label, n, min_n)
-    rows = ordered_rows(data, label, estimate, sort, order)
+    rows, blocks = faceted_rows(data, label, estimate, sort, order, facet)
     names = [str(name) for name in rows[label]]
     chosen = checked_highlight(highlight, names, "dotplot")
     if n is not None:
@@ -66,6 +67,8 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
         grey = context_color(current_settings())
         for row, row_name in zip(spec["rows"], names, strict=True):
             row["color"] = spec["color"] if row_name in chosen else grey
+    if blocks:
+        spec["rows"] = with_headings(spec["rows"], blocks)
     result = figure(title or f"{humanise(estimate)} by {str(label).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, small), size=size)
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))
@@ -99,3 +102,29 @@ def as_percent(data: pd.DataFrame, columns: list[str | None]) -> pd.DataFrame:
     """Shares as percent: each named column × 100."""
     check_numeric(data, [column for column in columns if column], "dotplot")
     return data.assign(**{column: data[column] * 100 for column in columns if column})
+
+
+def faceted_rows(data: pd.DataFrame, label: str, estimate: str, sort: bool, order: Sequence[str] | None,
+                 facet: str | None) -> tuple[pd.DataFrame, list[str]]:
+    """The rows, block after block when faceted (each block ordered on its own), and each row's block."""
+    if facet is None:
+        return ordered_rows(data, label, estimate, sort, order), []
+    parts = []
+    for block in dict.fromkeys(data[facet].astype(str)):
+        rows = data[data[facet].astype(str) == block]
+        present = set(rows[label].astype(str))
+        parts.append(ordered_rows(rows, label, estimate, sort,
+                                  None if order is None else [name for name in order if str(name) in present]))
+    rows = pd.concat(parts)
+    return rows, rows[facet].astype(str).tolist()
+
+
+def with_headings(rows: list[dict], blocks: list[str]) -> list[dict]:
+    """A heading row before the first row of each block."""
+    found, previous = [], None
+    for row, block in zip(rows, blocks, strict=True):
+        if block != previous:
+            found.append({"heading": block, "study": block, "cells": [], "effect_text": "", "weight_text": ""})
+            previous = block
+        found.append(row)
+    return found

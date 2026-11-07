@@ -136,6 +136,21 @@ def check_comparisons(comparisons: Sequence[tuple[str, str, str]], names: list[s
                 raise ValueError(f"hairline: raincloud: comparison group {name!r} is not one of: {', '.join(names)}")
 
 
+def draw_panel(ax, drawn: list, counted: list, comparisons: str | Sequence[tuple], value: str,
+               palette: dict) -> int:
+    """One panel's groups at their positions (a group without values here is left empty) and its comparisons,
+    tested on this panel's values; returns the bracket levels."""
+    rules, names = load_tokens()["raincloud"], [name for name, _ in drawn]
+    present = [(name, rows) for name, rows in counted if len(rows)]
+    for position, ((name, rows), (_, all_rows)) in enumerate(zip(drawn, counted, strict=True)):
+        if len(rows):
+            draw_group(ax, rows[value], position, palette[name], rules, all_rows[value])
+    pairs = resolve_comparisons(comparisons, present, value)
+    check_comparisons(pairs, [name for name, _ in present])
+    shown = pd.concat([rows[value] for _, rows in drawn if len(rows)])
+    return draw_brackets(ax, pairs, names, shown, rules)
+
+
 def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
               caption: str | None = None, y_title: str | None = None, order: Sequence[str] | None = None,
               comparisons: str | Sequence[tuple] = (), colors: Mapping[str, str] | None = None,
@@ -143,14 +158,16 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               clip: float | tuple[float | None, float | None] | None = None, clip_stats: bool = False,
               color_by: str | None = None, dimension: str | None = None, sort: str | None = None,
               percent: bool = False, show_n: bool = True, x_title: str | None = None, reference: Reference = None,
-              highlight: Sequence[str] | str | None = None, key_title: str | None = None) -> HairlineFigure:
+              highlight: Sequence[str] | str | None = None, key_title: str | None = None, facet: str | None = None,
+              columns: int | None = None) -> HairlineFigure:
     """Distributions per group. `comparisons`: "all" or "adjacent" pairs, (group, group) pairs, or
     (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p. Missing values are
     left out, and "n = …" counts the values the statistics use (`show_n=False` leaves it out). `min_n`, `clip`,
     `color_by` and `dimension` work as in `spread()`: groups too small and values clipped off are named in the
     caption. Shared with the other charts: `sort` ("median", "mean", "n"), `percent`, `x_title`, `reference`
-    (lines on the value axis), `highlight` (groups kept in colour) and `key_title`."""
-    check_columns(data, [group, value, color_by])
+    (lines on the value axis), `highlight` (groups kept in colour), `key_title` and `facet` (one panel per value,
+    in `columns` columns, on a shared value axis; each panel's n in its header, its comparisons within it)."""
+    check_columns(data, [group, value, color_by, facet])
     check_present(data, value, "raincloud")
     data = data[data[value].notna()]
     check_numeric(data, [value], "raincloud")
@@ -166,24 +183,31 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     counted = drawn if clip_stats else groups
     names = [name for name, _ in groups]
     title = title or f"{humanise(value)} by {str(group).replace('_', ' ')}"
-    comparisons = resolve_comparisons(comparisons, counted, value)
-    check_comparisons(comparisons, names)
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None]
-    rules = load_tokens()["raincloud"]
-    result = figure(title, subtitle=subtitle, caption=with_caption(caption, *notes), size=size)
+    panels = groups_of(data, facet, None, "raincloud") if facet else [(None, data)]
+    result = figure(title, subtitle=subtitle, caption=with_caption(caption, *notes), size=size, panels=len(panels),
+                    layout="grid" if facet else "rows", columns=columns or (min(len(panels), 2) if facet else 1),
+                    sharey=bool(facet))
     palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "raincloud", highlight)
-    for position, ((name, rows), (_, all_rows)) in enumerate(zip(drawn, counted, strict=True)):
-        draw_group(result.ax, rows[value], position, palette[name], rules, all_rows[value])
-    shown = pd.concat([rows[value] for _, rows in drawn])
+    levels = 0
+    for index, (panel, _) in enumerate(panels):
+        def in_panel(rows: pd.DataFrame, panel: str | None = panel) -> pd.DataFrame:
+            return rows if panel is None else rows[rows[facet].astype(str) == panel]
+        drawn_here = [(name, in_panel(rows)) for name, rows in drawn]
+        counted_here = [(name, in_panel(rows)) for name, rows in counted]
+        levels = max(levels, draw_panel(result.axes[index], drawn_here, counted_here, comparisons, value, palette))
+        result.categories(index, names)
+        result.axes[index].set_xlim(-0.6, len(names) - 0.4)
+        if panel is not None:
+            total = sum(len(rows) for _, rows in counted_here)
+            result.panel_header(index, panel, stats=[("n", format_number(total, 0, locale))] if show_n else None)
+        if percent:
+            result.percent_axis(index, "y")
     # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
-    result.min_plot = bracket_plot_height(draw_brackets(result.ax, comparisons, names, shown, rules))
-    result.categories(0, names)
-    result.ax.set_xlim(-0.6, len(names) - 0.4)
-    if show_n:
+    result.min_plot = bracket_plot_height(levels)
+    if show_n and not facet:
         result.table([("", None, [(float(position), word("n_equals", locale, n=format_number(len(rows), 0, locale)))
                                   for position, (_, rows) in enumerate(counted)])])
-    if percent:
-        result.percent_axis(0, "y")
     if color_by:
         result.legend([("square", color, label) for label, color in
                        dict.fromkeys((coarse[name], palette[name]) for name in names)])

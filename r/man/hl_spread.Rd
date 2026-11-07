@@ -34,7 +34,8 @@ hl_spread(
   x_title = NULL,
   reference = NULL,
   highlight = NULL,
-  key_title = NULL
+  key_title = NULL,
+  facet = NULL
 )
 }
 \arguments{
@@ -96,6 +97,8 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
 
 \item{key_title}{Title at the start of the legend row, naming what the groups are.}
+
+\item{facet}{Column whose values each get a panel.}
 }
 \value{
 A ggplot with the hairline frame.

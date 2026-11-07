@@ -24,7 +24,8 @@ hl_likert(
   caption = NULL,
   size = "double",
   min_n = NULL,
-  x_title = NULL
+  x_title = NULL,
+  facet = NULL
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ hl_likert(
 \item{min_n}{Groups (or categories) with fewer values (rows) are left out and named in the caption.}
 
 \item{x_title}{Axis title under the plot.}
+
+\item{facet}{Column whose values each get a block of items under their name, as \code{group} draws sections.}
 }
 \value{
 A ggplot with the hairline frame.

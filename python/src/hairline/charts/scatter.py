@@ -65,14 +65,15 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
             color_by: str | None = None, dimension: str | None = None, min_n: int | None = None,
             percent: bool = False, x_title: str | None = None, y_title: str | None = None,
             reference: Reference = None, highlight: Sequence[str] | str | None = None,
-            key_title: str | None = None) -> HairlineFigure:
+            key_title: str | None = None, facet: str | None = None, columns: int | None = None) -> HairlineFigure:
     """Points per group (entity colours) and, with `fit="linear"`, a fit over all points drawn (the groups in
     `order`, when given) with n, r and slope. `clip` hides implausible y values (as in `spread()`) and says so in
     the caption; the fit still uses every point unless `clip_stats`. `color_by` colours the groups of `by` by a
     coarser column, which the legend lists; `dimension` keeps them off another dimension's slots. Shared with the
     other charts: `min_n` (groups of `by` with fewer points are left out and named), `percent` (the y axis),
-    `x_title`, `y_title`, `reference` (lines at y values), `highlight` (groups kept in colour) and `key_title`."""
-    check_columns(data, [x, y, by, color_by])
+    `x_title`, `y_title`, `reference` (lines at y values), `highlight` (groups kept in colour), `key_title` and
+    `facet` (one panel per value, in `columns` columns, on shared axes, each with its own fit)."""
+    check_columns(data, [x, y, by, color_by, facet])
     check_numeric(data, [y], "scatter")
     check_finite(data, x, "scatter")
     if fit not in ("linear", None):
@@ -88,26 +89,39 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
     every = pd.concat([group for _, group in groups])[y].to_numpy(dtype=float)
     limits = clip_limits(every, clip, "scatter")
     note = clip_caption(every, limits, clip_stats, locale) if clip is not None else None
+    rows = pd.concat([group for _, group in groups])
+    panels = groups_of(rows, facet, None, "scatter") if facet else [(None, rows)]
     result = figure(title or f"{humanise(y)} and {str(x).replace('_', ' ')}", subtitle=subtitle,
-                    caption=with_caption(caption, note, small), size=size)
+                    caption=with_caption(caption, note, small), size=size, panels=len(panels),
+                    layout="grid" if facet else "rows", columns=columns or (min(len(panels), 2) if facet else 1),
+                    sharex=bool(facet), sharey=bool(facet))
     names = [name for name, _ in groups]
     palette, coarse = series_colors(names, rows, by, color_by, colors, dimension, "scatter",
                                     highlight) if by else ({}, {})
-    for name, group in groups:
-        shown = group[group[y].between(*limits)]
-        color = palette[name] if by else lone_color()
-        # Limits end on a break, so a point at the limit would be cut in half by the panel's edge.
-        result.ax.scatter(shown[x], shown[y], color=color, label=coarse[name] if by else "_nolegend_", clip_on=False)
-    if fit:
-        drawn = pd.concat([group for _, group in groups])
-        if clip_stats:
-            drawn = drawn[drawn[y].between(*limits)]
-        check_fit(drawn[x])
-        draw_fit(result.ax, drawn[x], drawn[y])
-        result.panel_header(0, "Linear fit", stats=fit_stats(drawn[x], drawn[y], locale))
-    if percent:
-        result.percent_axis(0, "y")
+    for index, (panel, panel_rows) in enumerate(panels):
+        draw_points(result.axes[index], panel_rows, x, y, by, names, palette, coarse, limits)
+        if fit:
+            drawn = panel_rows[panel_rows[y].between(*limits)] if clip_stats else panel_rows
+            check_fit(drawn[x])
+            draw_fit(result.axes[index], drawn[x], drawn[y])
+            result.panel_header(index, "Linear fit" if panel is None else panel,
+                                stats=fit_stats(drawn[x], drawn[y], locale))
+        elif panel is not None:
+            result.panel_header(index, panel)
+        if percent:
+            result.percent_axis(index, "y")
     if by:
         result.legend()
     return apply_options(result, "scatter", names=names, x_title=x_title or humanise(x),
                          y_title=y_title or humanise(y), reference=reference, key_title=key_title)
+
+
+def draw_points(ax, rows: pd.DataFrame, x: str, y: str, by: str | None, names: list[str], palette: dict,
+                coarse: dict, limits: tuple[float, float]) -> None:
+    """One panel's points, a group at a time in its colour, those outside the clip limits left out."""
+    for name in names:
+        group = rows[rows[by].astype(str) == name] if by else rows
+        shown = group[group[y].between(*limits)]
+        # Limits end on a break, so a point at the limit would be cut in half by the panel's edge.
+        ax.scatter(shown[x], shown[y], color=palette[name] if by else lone_color(),
+                   label=coarse[name] if by else "_nolegend_", clip_on=False)
