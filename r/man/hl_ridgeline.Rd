@@ -25,7 +25,9 @@ hl_ridgeline(
   x_title = NULL,
   reference = NULL,
   highlight = NULL,
-  key_title = NULL
+  key_title = NULL,
+  facet = NULL,
+  columns = NULL
 )
 }
 \arguments{
@@ -43,7 +45,7 @@ hl_ridgeline(
 for the number of groups and are not remembered for other charts.
 A ramp name such as \code{"blues"} colours ordered groups light to dark, in the chart's order.}
 
-\item{show_n}{Write each group's n after its name, in the locale.}
+\item{show_n}{Write each group's n after its name, in the locale; with \code{facet}, each panel's n in its header.}
 
 \item{min_n, clip, clip_stats, color_by, dimension}{As in \code{\link[=hl_spread]{hl_spread()}}: groups too small and values clipped off are
 named in the caption.}
@@ -60,6 +62,10 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
 
 \item{key_title}{Title at the start of the legend row, naming what the groups are.}
+
+\item{facet}{Column whose values each get a panel.}
+
+\item{columns}{Panels per row with \code{facet} (two by default).}
 }
 \value{
 A ggplot with the hairline frame.

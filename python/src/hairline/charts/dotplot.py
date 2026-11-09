@@ -31,11 +31,12 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
             ratio: bool = False, reference: Reference = None, digits: int | None = None,
             size: str = "onehalf", n: str | None = None, percent: bool = False, order: Sequence[str] | None = None,
             min_n: int | None = None, x_title: str | None = None,
-            highlight: Sequence[str] | str | None = None, facet: str | None = None) -> HairlineFigure:
+            highlight: Sequence[str] | str | None = None, facet: str | None = None,
+            show_n: bool = True) -> HairlineFigure:
     """One dot per row, largest at the top; with `low` and `high` an interval and its numbers on the right.
     `n` names the column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").
     `percent=True` draws shares (0.15) as percent (15), the heading naming the unit. `order` gives the rows'
-    order instead of sorting by value.
+    order instead of sorting by value. `show_n=False` leaves the n out of the labels (it still counts for `min_n`).
 
     Shared with the other charts: `reference` draws dashed lines (a target, a null value: 0.1, (0.1, "Target") or
     {"Target": 0.1}); `min_n` leaves out rows whose `n` is smaller and names them; `x_title` titles the axis;
@@ -53,6 +54,7 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     chosen = checked_highlight(highlight, names, "dotplot")
     if n is not None:
         check_numeric(rows, [n], "dotplot")
+    if n is not None and show_n:
         rows = rows.assign(**{label: labels_with_n(names, dict(zip(names, rows[n], strict=True)),
                                                     current_settings().locale)})
     if not interval:

@@ -17,6 +17,7 @@
 #' @param percent `TRUE` draws shares (0.15) as percent (15), the heading naming the unit.
 #' @param order Row order instead of sorting by value.
 #' @param facet Column whose values each get a block of rows under their name, each block sorted on its own.
+#' @param show_n `FALSE` leaves the n out of the labels (it still counts for `min_n`).
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -26,7 +27,7 @@
 #' @export
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
                        sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL, percent = FALSE,
-                       order = NULL, min_n = NULL, x_title = NULL, highlight = NULL, facet = NULL) {
+                       order = NULL, min_n = NULL, x_title = NULL, highlight = NULL, facet = NULL, show_n = TRUE) {
   check_columns(data, c(label, estimate, low, high, n, facet))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
@@ -39,8 +40,8 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   data <- arranged$data
   names <- as.character(data[[label]])
   chosen <- checked_highlight(highlight, names, "dotplot")
-  if (!is.null(n)) {
-    check_numeric(data, n, "dotplot")
+  if (!is.null(n)) check_numeric(data, n, "dotplot")
+  if (!is.null(n) && isTRUE(show_n)) {
     data[[label]] <- labels_with_n(names, stats::setNames(as.list(data[[n]]), names))
   }
   if (!interval) {

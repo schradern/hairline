@@ -16,10 +16,10 @@ package (`charts/options.py`, `chart_options.R`), so a chart that offers it cann
 | `y_title` | ● |  |  | ● |  | ● | ● |  |  |  |  |  |
 | `reference` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |
 | `percent` | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  |
-| `show_n` | ● | ● |  | ● | ● |  |  |  |  |  |  |  |
+| `show_n` | ● | ● | ● | ● | ● |  |  |  | ● |  |  |  |
 | `min_n` | ● | ● | ● | ● | ● | ● |  |  | ● |  |  |  |
 | `clip` |  | ● |  | ● | ● | ● | ● |  |  |  |  |  |
-| `facet` | ● | ● | ● | ● |  | ● |  |  | ● |  |  |  |
+| `facet` | ● | ● | ● | ● | ● | ● |  |  | ● |  |  |  |
 
 An empty cell is a chart without the concept: a Likert row has no single value to draw a reference at, a dot plot
 has one series and so no legend, and the dot plot takes its n from a column (`n=`) instead of counting rows.
@@ -36,10 +36,10 @@ has one series and so no legend, and the dot plot takes its n from a column (`n=
 | `x_title`, `y_title` | Axis titles: under the plot on the right, above the plot on the left. |
 | `reference` | Dashed lines on the value axis: a value, several, or labelled ones, `{"Target": 0.9}` (`c(Target = 0.9)` in R). Labels sit at the line's end, or above the rows on charts drawn as rows. |
 | `percent` | Shares (0 to 1) drawn and labelled as percent. |
-| `show_n` | Each group's n after its name (on raincloud under it, `show_n=False` leaves it out). |
+| `show_n` | Each group's n: after its name, under it on raincloud, among the key numbers on Likert, in the panel header with `facet`. Where it is on by default (raincloud, Likert, the dot plot's `n=` column), `show_n=False` leaves it out. |
 | `min_n` | Groups with fewer values (rows) are left out; the caption names them. |
 | `clip` | Implausible values hidden: `0.99` hides those above the 99th percentile, `(low, high)` those outside; the caption says how many, and the statistics use every value unless `clip_stats`. |
-| `facet` | One panel per value of a column. Charts with axes (bars, scatter, raincloud) draw panels side by side on shared axes, each with its own key numbers; charts drawn as rows (spread, dot plot, Likert) draw a block of rows per value under its name, on one axis. A group keeps its colour in every panel. |
+| `facet` | One panel per value of a column. Charts with axes (bars, scatter, raincloud, ridgeline) draw panels side by side on shared axes, each with its own key numbers; charts drawn as rows (spread, dot plot, Likert) draw a block of rows per value under its name, on one axis. A group keeps its colour in every panel. |
 
 ## Examples
 

@@ -87,8 +87,10 @@ positions and tooltips are unchanged.
   and `likert`).
 * `min_n=` on `bars`, `scatter`, `likert` and `dotplot` (with `n=`); `sort=` ("median", "mean", "n") on `raincloud`
   and `ridgeline`; `percent=` on `raincloud`, `ridgeline` and `scatter`; `clip=` on `timeseries`;
-  `raincloud(show_n=False)`; `dotplot(order=)`.
-* `facet=` on `scatter` and `raincloud` (panels on shared axes, each with its own fit or comparisons) and on
+  `show_n=False` on `raincloud`, `dotplot` (the n column then only counts for `min_n`) and `likert` (n left out of
+  the key numbers); `dotplot(order=)`.
+* `facet=` on `scatter`, `raincloud` and `ridgeline` (panels on shared axes, each with its own fit or comparisons;
+  ridges on one height scale) and on
   `spread`, `dotplot` and `likert` (a block of rows per value under its name, on one axis; a group keeps its colour
   in every block).
 * Two gallery figures in both languages: `scatter_sites` and `spread_years`; `dotplot_rates` draws a benchmark.
