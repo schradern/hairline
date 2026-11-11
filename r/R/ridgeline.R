@@ -66,6 +66,16 @@ ridgeline_panel_layers <- function(drawn, curves, counted, scale, medians, palet
   layers
 }
 
+# The share of the plot height a reference label hangs into from the top (its gap, cap height and gap at the caption
+# size), on the least plot height, so the top ridge stays clear of it; 0 without labels. As Python's label_room().
+ridgeline_label_room <- function(reference) {
+  labelled <- any(vapply(option_references(reference, "ridgeline"), function(line) !is.null(line$label), logical(1)))
+  if (!labelled) return(0)
+  tokens <- hl_tokens()
+  label <- tokens$type$roles$caption$factor * (2 * tokens$reference$label_gap + font_metrics()$cap_height)
+  label / tokens$spacing$min_plot_height
+}
+
 #' Ridgeline plot
 #'
 #' One density ridge per group on a shared x-axis, the first group on top,
@@ -137,8 +147,9 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   }
   labels <- if (show_n && is.null(facet)) labels_with_n(names, lengths(groups)) else names
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats))
+  top <- (length(names) + rules$overlap + rules$headroom) / (1 - ridgeline_label_room(reference))
   plot <- plot + ggplot2::scale_y_continuous(breaks = rev(seq_along(names) - 1), labels = labels, expand = c(0, 0),
-                                             limits = c(0, length(names) + rules$overlap + rules$headroom)) +
+                                             limits = c(0, top)) +
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
                   caption = with_caption(caption, notes), x = humanise(value), y = NULL) + theme_hairline()
   if (!is.null(facet)) {

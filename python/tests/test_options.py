@@ -116,3 +116,10 @@ def test_show_n_false_leaves_n_out_of_dotplot_and_likert():
     labels = [[text.strip() for text in texts(hl.likert(ratings, "item", "rating", show_n=shown))]
               for shown in (True, False)]
     assert "n" in labels[0] and "n" not in labels[1]
+
+
+def test_ridgeline_keeps_room_for_reference_labels():
+    data = patients()
+    plain = hl.ridgeline(data, "group", "lactate", reference=2).ax.get_ylim()[1]
+    labelled = hl.ridgeline(data, "group", "lactate", reference={"Upper normal": 2}).ax.get_ylim()[1]
+    assert labelled > plain

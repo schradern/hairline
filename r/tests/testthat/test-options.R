@@ -100,3 +100,11 @@ test_that("show_n = FALSE leaves n out of the dot plot and Likert", {
   expect_true("n" %in% trimws(drawn_texts(hl_likert(ratings, "item", "rating"))))
   expect_false("n" %in% trimws(drawn_texts(hl_likert(ratings, "item", "rating", show_n = FALSE))))
 })
+
+test_that("the ridgeline keeps room for reference labels", {
+  hl_use(brand = FALSE)
+  top <- function(reference) {
+    ggplot2::layer_scales(hl_ridgeline(patients(), "group", "lactate", reference = reference))$y$limits[2]
+  }
+  expect_gt(top(c(`Upper normal` = 2)), top(2))
+})
