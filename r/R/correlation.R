@@ -39,13 +39,51 @@ correlation_spec <- function(data, columns = NULL, method = "pearson") {
        colors = apply(matrix, c(1, 2), correlation_colour))
 }
 
+# The smallest cell that holds its value: the widest value and the cell's gap on either side. As Python's least_cell().
+correlation_least_cell <- function(spec, measure, rules) {
+  count <- length(spec$names)
+  texts <- unlist(lapply(seq_len(count), function(row) {
+    vapply(seq_len(row - 1), function(column) spec$texts[[row, column]], character(1))
+  }))
+  max(vapply(texts, measure, numeric(1), role = "label")) + 2 * rules$gap_pt
+}
+
+# Values print in the cells while cells that hold them leave the names room for their widest word; otherwise the cells
+# keep only their colour, which the key reads. As Python's shows_values().
+correlation_shows_values <- function(spec, box, measure, rules, style) {
+  names <- unlist(spec$names)
+  room <- box[3] - length(names) * correlation_least_cell(spec, measure, rules) - rules$label_gap * style$base
+  words <- unlist(strsplit(names, "\\s+"))
+  room + wrap_tolerance >= max(vapply(words, measure, numeric(1), role = "label"))
+}
+
+# Each name on one line while the cells keep their least size; otherwise wrapped into the width that leaves, and a
+# word wider than that is refused with the room it needs. As Python's name_lines().
+correlation_name_lines <- function(spec, box, measure, style, rules, values) {
+  names <- unlist(spec$names)
+  least <- if (values) correlation_least_cell(spec, measure, rules) else line_height(style, "label") + 2 * rules$gap_pt
+  room <- box[3] - length(names) * least - rules$label_gap * style$base
+  lapply(names, fit_lines, room = room, measure = measure, chart = "correlation", what = "the name")
+}
+
+# Square cells, as large as the box allows beside the names but at most `max_cell` times the base size, and never
+# lower than a name's lines. As Python's cell_side().
+correlation_side <- function(spec, box, measure, style, rules, lines) {
+  count <- length(lines)
+  widest <- max(vapply(lines, widest_line, numeric(1), measure = measure))
+  side <- min(rules$max_cell * style$base, box[4] / count, (box[3] - widest - rules$label_gap * style$base) / count)
+  max(side, max(lengths(lines)) * line_height(style, "label"))
+}
+
 correlation_drawing <- function(spec, box, measure, style) {
   rules <- hl_tokens()$correlation
   names <- unlist(spec$names)
   count <- length(names)
-  widest <- max(vapply(names, measure, numeric(1), role = "label"))
-  side <- min(rules$max_cell * style$base, box[4] / count, (box[3] - widest) / count)
+  shown <- correlation_shows_values(spec, box, measure, rules, style)
+  lines <- correlation_name_lines(spec, box, measure, style, rules, shown)
+  side <- correlation_side(spec, box, measure, style, rules, lines)
   inset <- rules$gap_pt / 2
+  pitch <- line_height(style, "label")
   cells <- values <- labels <- list()
   for (row in seq_len(count)) {
     top <- box[2] + (row - 1) * side
@@ -57,13 +95,17 @@ correlation_drawing <- function(spec, box, measure, style) {
       pair <- paste(names[row], "\u00d7", names[column])
       cells[[length(cells) + 1]] <- tagged_shape(list(kind = "polygon", role = "cell", fill = fill, points = corners),
                                                  pair, paste0(pair, ": ", spec$texts[[row, column]]))
+      if (!shown) next
       values[[length(values) + 1]] <- c(shape_text(left + side / 2, baseline_for(top + side / 2, style, "label"),
                                                    spec$texts[[row, column]], "label", contrast_text(fill, style),
                                                    "center"), part = "value")
     }
-    labels[[length(labels) + 1]] <- c(shape_text(box[1] + (row - 1) * side + rules$label_gap * style$base,
-                                                 baseline_for(top + side / 2, style, "label"), names[row], "label",
-                                                 style$neutral$ink), part = "name")
+    first <- top + side / 2 - (length(lines[[row]]) - 1) * pitch / 2
+    for (index in seq_along(lines[[row]])) {
+      labels[[length(labels) + 1]] <- c(shape_text(box[1] + (row - 1) * side + rules$label_gap * style$base,
+                                                   baseline_for(first + (index - 1) * pitch, style, "label"),
+                                                   lines[[row]][index], "label", style$neutral$ink), part = "name")
+    }
   }
   c(cells, values, labels)
 }

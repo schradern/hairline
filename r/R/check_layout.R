@@ -50,27 +50,34 @@ svg_text_content <- function(line) {
   content
 }
 
-# Where a text's glyphs reach: from its baseline up by the cap height and down by the descender, along its width.
-# As Python's ink_box().
+# Where a text's glyphs reach: from its baseline up by the cap height and down by the descender, along its width
+# from its anchor. A text turned by -90 degrees reads upwards, its glyphs' tops to the left. As Python's ink_box().
 svg_text_box <- function(line) {
   size <- as.numeric(sub(".*font-size: ([0-9.]+)px.*", "\\1", line))
   width <- svg_number(line, "textLength")
   anchor <- svg_attribute(line, "text-anchor")
+  share <- switch(if (is.na(anchor)) "start" else anchor, middle = 0.5, end = 1, 0)
   metrics <- font_metrics()
   x <- svg_number(line, "x")
   y <- svg_number(line, "y")
+  x <- if (is.na(x)) 0 else x
+  y <- if (is.na(y)) 0 else y
   transform <- svg_attribute(line, "transform")
   if (!is.na(transform)) {
     moved <- as.numeric(regmatches(transform, regexec("translate\\(([-0-9.]+),([-0-9.]+)\\)", transform))[[1]][2:3])
     x <- x + moved[1]
     y <- y + moved[2]
   }
-  start <- x - width * switch(if (is.na(anchor)) "start" else anchor, middle = 0.5, end = 1, 0)
-  box <- c(start, y - size * metrics$cap_height, start + width, y + size * metrics$descender)
-  if (!is.na(transform) && grepl("rotate\\(-?90", transform)) {
-    box <- c(x - size * metrics$descender, y - width, x + size * metrics$cap_height, y)
+  content <- svg_text_content(line)
+  style <- list(family = "Hairline Sans", size = size, weight = 400)
+  lead <- text_width_pt(sub("^(\\s*).*$", "\\1", content), style)
+  trail <- text_width_pt(sub("^.*?(\\s*)$", "\\1", content, perl = TRUE), style)
+  if (!is.na(transform) && grepl("rotate\\(-90", transform)) {
+    return(c(x - size * metrics$cap_height, y - width * (1 - share), x + size * metrics$descender, y + width * share))
   }
-  box
+  start <- x - width * share
+  # Leading and trailing spaces carry no ink (a key number's label run ends in one before its value).
+  c(start + lead, y - size * metrics$cap_height, start + width - trail, y + size * metrics$descender)
 }
 
 svg_mark_box <- function(line) {
@@ -119,8 +126,8 @@ svg_contents <- function(lines) {
       texts[[length(texts) + 1]] <- list(text = svg_text_content(line), box = svg_text_box(line))
     } else if (!is.null(current) && grepl("^\\s*<(circle|rect|polygon|polyline)", line)) {
       box <- svg_mark_box(line)
-      if (!is.null(box)) marks[[length(marks) + 1]] <- list(mark = sub("^\\s*<([a-z]+).*", "\\1", line), box = box,
-                                                             clip = current)
+      kind <- sub("^\\s*<([a-z]+).*", "\\1", line)
+      if (!is.null(box)) marks[[length(marks) + 1]] <- list(mark = kind, box = box, clip = current)
     }
   }
   list(texts = Filter(function(item) nzchar(trimws(item$text)), texts), marks = marks)

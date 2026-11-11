@@ -118,13 +118,13 @@ mark_margin <- function(plot) {
 default_position_scales <- function(plot, built) {
   rows <- max(built@layout$layout$ROW)
   margin <- mark_margin(plot)
-  scales <- list()
+  scales <- Filter(Negate(is.null), list(wrapped_names_scale(plot, built)))
   if (!plot@scales$has_scale("y") && is_plain_continuous(built@layout$panel_scales_y[[1]])) {
     scales[[length(scales) + 1]] <- hairline_position_scale("y", FALSE, row_target(rows), NULL, margin = margin)
   } else if (!is.null(replacement <- adjusted_scale(plot, "y", row_target(rows), margin))) {
     scales[[length(scales) + 1]] <- replacement
   }
-  columns <- row_target(max(built@layout$layout$COL))
+  columns <- fitting_target(plot, built, row_target(max(built@layout$layout$COL)), margin)
   if (!plot@scales$has_scale("x") && is_plain_continuous(built@layout$panel_scales_x[[1]])) {
     scales[[length(scales) + 1]] <- hairline_position_scale("x", FALSE, columns, NULL, margin = margin)
   } else if (!is.null(replacement <- adjusted_scale(plot, "x", columns, margin))) {
@@ -133,4 +133,81 @@ default_position_scales <- function(plot, built) {
     scales[[length(scales) + 1]] <- hairline_date_scale()
   }
   scales
+}
+
+# A panel's plot width before the layout: the device's width less the margins, the gaps between columns and the y
+# labels with their gap. As Python's estimated_plot_width().
+estimated_plot_width <- function(built, settings) {
+  spacing <- hl_tokens()$spacing
+  base <- settings$base_size
+  columns <- max(built@layout$layout$COL)
+  usable <- grDevices::dev.size("in")[1] * 72 - 2 * spacing$margin * base
+  column <- (usable - (columns - 1) * spacing$panel_columns * base) / columns
+  labels <- tryCatch(as.character(built@layout$panel_params[[1]]$y$get_labels()), error = function(error) character())
+  labels <- labels[!is.na(labels)]
+  style <- role_style(settings, "label")
+  widest <- if (length(labels)) max(vapply(labels, text_width_pt, numeric(1), style = style)) else 0
+  column - if (widest > 0) widest + spacing$y_labels_plot * base else 0
+}
+
+# Whether neighbouring x labels keep `ticks.label_rows_gap` between them: each centred on its break, or aligned
+# inward at the plot's edges, as they are drawn. As Python's labels_fit().
+labels_fit <- function(breaks, labels, limits, width, settings) {
+  style <- role_style(settings, "label")
+  gap <- hl_tokens()$ticks$label_rows_gap * style$size
+  offsets <- (breaks - limits[1]) / diff(limits)
+  sizes <- vapply(labels, text_width_pt, numeric(1), style = style)
+  starts <- offsets * width - sizes * edge_hjust(offsets)
+  all(utils::head(starts, -1) + utils::head(sizes, -1) + gap <= starts[-1] + 1e-9)
+}
+
+# The largest tick target for the x axis, from the panel grid's down to three, whose labels stand apart on the plot's
+# estimated width. As Python's fitting_target().
+fitting_target <- function(plot, built, target, margin) {
+  scale <- built@layout$panel_scales_x[[1]]
+  range <- if (is_plain_continuous(scale)) scale$range$range else NULL
+  if (is.null(range) || !all(is.finite(range)) || grDevices::dev.cur() == 1) return(target)
+  given <- plot@scales$get_scales("x")$hairline
+  if (!is.null(given) && is.null(given$margin)) return(target)
+  settings <- plot@meta$hairline_settings %||% hl_settings()
+  width <- estimated_plot_width(built, settings)
+  percent <- isTRUE(given$percent)
+  whole <- isTRUE(given$whole)
+  for (candidate in seq(target, 3)) {
+    breaks <- nice_breaks(range[1], range[2], candidate, whole)
+    labels <- axis_labels(percent)(breaks)
+    if (labels_fit(breaks, labels, axis_limits(range[1], range[2], breaks, margin), width, settings)) {
+      return(candidate)
+    }
+  }
+  3
+}
+
+# Names on an x axis, each wrapped to its slot (the plot's estimated width over the axis range, less the label gap),
+# so neighbours never meet; NULL when they already fit on one line. A word wider than its slot cannot be placed: the
+# plot is refused with what would fit. As Python's wrapped_names().
+wrapped_names_scale <- function(plot, built) {
+  params <- built@layout$panel_params[[1]]$x
+  if (is.null(params) || grDevices::dev.cur() == 1 || !plot@scales$has_scale("x")) return(NULL)
+  labels <- tryCatch(as.character(params$get_labels()), error = function(error) character())
+  if (!length(labels) || !any(grepl("[[:alpha:]]", labels)) || inherits(params$scale, "ScaleContinuousDate")) {
+    return(NULL)
+  }
+  settings <- plot@meta$hairline_settings %||% hl_settings()
+  style <- role_style(settings, "label")
+  span <- diff(range(params$continuous_range))
+  gap <- hl_tokens()$ticks$label_rows_gap * style$size
+  slot <- estimated_plot_width(built, settings) / span - gap
+  lines <- lapply(gsub("\n", " ", labels, fixed = TRUE), wrap_text, style = style, max_width = slot)
+  widest <- max(vapply(unlist(lines), text_width_pt, numeric(1), style = style))
+  if (widest > slot + 1e-6) {
+    stop(sprintf(paste0("hairline: the %d names on the x axis do not fit side by side: a word needs %.0f pt and each ",
+                        "name has %.0f pt; use a wider size, fewer groups, or a chart that lists the groups as rows ",
+                        "(bars, spread, ridgeline, dotplot)"), length(labels), widest, max(slot, 0)), call. = FALSE)
+  }
+  wrapped <- vapply(lines, paste, character(1), collapse = "\n")
+  if (identical(wrapped, labels)) return(NULL)
+  scale <- plot@scales$get_scales("x")$clone()
+  scale$labels <- wrapped
+  scale
 }

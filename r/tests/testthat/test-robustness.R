@@ -1020,8 +1020,9 @@ test_that("a bar without a value has no bar, label or tooltip", {
   labels <- unlist(lapply(built@data, function(layer) layer$label))
   expect_equal(sort(labels), sort(c("3.0", "5.5", "2.0")))
   grouped <- data.frame(name = c("A", "A", "B", "B"), g = c("x", "y", "x", "y"), value = c(3, NA, 2, 1))
-  stacked <- ggplot2::ggplot_build(hl_bars(grouped, "name", "value", by = "g", stacked = TRUE))
-  labels <- unlist(lapply(stacked@data, function(layer) layer$label))
+  plot <- hl_bars(grouped, "name", "value", by = "g", stacked = TRUE)
+  labels <- c(unlist(lapply(ggplot2::ggplot_build(plot)@data, function(layer) layer$label)),
+              vapply(plot@meta$hairline_inside, `[[`, "", "text"))
   expect_equal(sort(labels[nzchar(labels)]), sort(c("3", "2", "1", "3", "3")))
 })
 

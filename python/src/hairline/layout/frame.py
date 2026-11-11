@@ -19,7 +19,7 @@ def header_lines(spec: FrameInput, row: int) -> int:
 def inner_tick_band(spec: FrameInput, row: int, spacing: dict) -> float:
     """Height for x tick labels under a row that is not the last one (0 unless that row shows them)."""
     shows = row < len(spec.x_tick_rows) and spec.x_tick_rows[row] and row < spec.panel_rows - 1
-    return spacing["x_tick_labels"] * spec.sizes["label"] if shows else 0.0
+    return spacing["x_tick_labels"] * spec.sizes["label"] + spec.x_tick_extra_pt if shows else 0.0
 
 
 def has_row_titles(spec: FrameInput, row: int) -> bool:
@@ -76,7 +76,7 @@ def fixed_row_height(spec: FrameInput, row: int, spacing: dict, metrics: FontMet
 
 def fixed_bottom_height(spec: FrameInput, spacing: dict, metrics: FontMetrics, line_gap: float) -> float:
     base, label, caption = spec.base_size, spec.sizes["label"], spec.sizes["caption"]
-    height = spacing["x_tick_labels"] * label if spec.x_tick_labels else 0.0
+    height = spacing["x_tick_labels"] * label + spec.x_tick_extra_pt if spec.x_tick_labels else 0.0
     if bottom_title(spec):
         height += spacing["x_title"] * base + label * (metrics.cap_height + metrics.descender)
     if spec.table_lines:
@@ -172,7 +172,7 @@ def place_panels(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: d
 def place_bottom(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: dict) -> None:
     base = spec.base_size
     if spec.x_tick_labels:
-        stack.skip(spacing["x_tick_labels"] * spec.sizes["label"])
+        stack.skip(spacing["x_tick_labels"] * spec.sizes["label"] + spec.x_tick_extra_pt)
     if bottom_title(spec):
         stack.skip(spacing["x_title"] * base)
         layout.x_title_baseline = stack.lines(spec.sizes["label"], 1)[0]

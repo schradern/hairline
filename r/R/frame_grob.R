@@ -77,7 +77,20 @@ frame_spec <- function(parts, texts, size, legend_rows, header_lines) {
        y_label_width_pt = if (parts$bare) 0 else texts$column_widths[1],
        column_label_widths = if (parts$bare) numeric(parts$columns) else texts$column_widths,
        x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts), x_title_rows = x_title_rows(parts),
-       row_weights = parts$row_weights %||% numeric(), side_widths = side_widths(parts))
+       row_weights = parts$row_weights %||% numeric(), side_widths = side_widths(parts),
+       x_tick_extra_pt = if (parts$bare) 0 else x_tick_extra(parts, sizes$label))
+}
+
+# The height x labels of more than one line add under the plot: one line pitch (cap height, descender and the line
+# gap) per line after the first. As Python's x_tick_extra().
+x_tick_extra <- function(parts, size) {
+  labels <- unlist(lapply(parts$built@layout$panel_params, function(params) {
+    tryCatch(as.character(params$x$get_labels()), error = function(error) character())
+  }))
+  labels <- labels[!is.na(labels)]
+  lines <- if (length(labels)) max(lengths(strsplit(labels, "\n", fixed = TRUE)), 1) else 1
+  metrics <- font_metrics()
+  (lines - 1) * size * (metrics$cap_height + metrics$descender + hl_tokens()$type$line_gap)
 }
 
 compose_all_headers <- function(parts, layout) {

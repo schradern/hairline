@@ -65,7 +65,22 @@ def ink_box(fig: Figure, text: Text, renderer) -> Box:
                                                             ismath=False)
     descent *= POINTS_PER_INCH / fig.dpi
     baseline = box.bottom - descent
-    return Box(box.left, baseline - size * metrics.cap_height, box.right, baseline + size * metrics.descender)
+    left, right = without_spaces(text, box, renderer, fig)
+    return Box(left, baseline - size * metrics.cap_height, right, baseline + size * metrics.descender)
+
+
+def without_spaces(text: Text, box: Box, renderer, fig: Figure) -> tuple[float, float]:
+    """The box's left and right without leading and trailing spaces, which carry no ink (a key number's label run
+    ends in one before its value). Same in R."""
+    content = text.get_text()
+    scale = POINTS_PER_INCH / fig.dpi
+
+    def width(part: str) -> float:
+        return renderer.get_text_width_height_descent(part, text.get_fontproperties(), ismath=False)[0] * scale \
+            if part else 0.0
+    lead = width(content[:len(content) - len(content.lstrip())])
+    trail = width(content[len(content.rstrip()):])
+    return box.left + lead, box.right - trail
 
 
 def shown_texts(fig: Figure) -> list[Text]:

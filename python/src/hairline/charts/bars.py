@@ -200,21 +200,26 @@ def value_label(ax, value: float, position: tuple[float, float], horizontal: boo
 
 
 def segment_label(ax, value: float, centre: tuple[float, float], color: str, percent: bool,
-                  numbers: tuple = (0, None)) -> None:
+                  numbers: tuple = (0, None)):
     """The segment's value in its middle, in ink or surface, whichever contrasts more with the fill."""
     settings = current_settings()
-    ax.text(*centre, value_text(value, percent, numbers), ha="center", va="center",
-            fontsize=role_size(settings, "label"), color=text_color(color, {"neutral": settings.neutral}),
-            fontfamily=families(settings.font), gid="hairline-segment")
+    return ax.text(*centre, value_text(value, percent, numbers), ha="center", va="center",
+                   fontsize=role_size(settings, "label"), color=text_color(color, {"neutral": settings.neutral}),
+                   fontfamily=families(settings.font), gid="hairline-segment")
 
 
-def stacked_labels(ax, spots: list[float], base: list[float], heights: list[float], color: str, options: dict) -> None:
+def stacked_labels(ax, spots: list[float], base: list[float], heights: list[float], color: str, options: dict,
+                   thickness: float) -> None:
+    """Each segment's value inside it; the layout shows it only where the segment holds it both ways (same in R)."""
     smallest = load_tokens()["bars"]["segment_min"] * options["largest"]
+    figure = ax.figure.hairline_figure
     for spot, low, height in zip(spots, base, heights, strict=True):
         if height >= smallest and height > 0:
             middle = low + height / 2
-            segment_label(ax, height, (middle, spot) if options["horizontal"] else (spot, middle), color,
-                          options["percent"], options["numbers"])
+            artist = segment_label(ax, height, (middle, spot) if options["horizontal"] else (spot, middle), color,
+                                   options["percent"], options["numbers"])
+            figure.inside_labels.append((figure.axes.index(ax), artist, low, low + height,
+                                         not options["horizontal"], thickness))
 
 
 def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], options: dict) -> None:
@@ -244,7 +249,7 @@ def draw_bars(ax, table: pd.DataFrame, names: list[str], groups: list[str], opti
         ends = max([ends, *without_missing(heights)])
         present = [shown or not math.isnan(height) for shown, height in zip(present, heights, strict=True)]
         if stacked and options["labels"]:
-            stacked_labels(ax, where, base, heights, color, options)
+            stacked_labels(ax, where, base, heights, color, options, single * 0.92)
         elif options["labels"]:
             for spot, height in zip(where, heights, strict=True):
                 if not math.isnan(height):

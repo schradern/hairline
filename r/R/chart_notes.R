@@ -116,7 +116,8 @@ within_limits <- function(values, limits) values[values >= limits[1] & values <=
 series_colours <- function(names, data, group, color_by, colors, dimension, chart, highlight = NULL, named = FALSE) {
   if (named && is.null(colors) && is.null(color_by) && length(unique(names)) > length(hl_palette())) {
     colours <- stats::setNames(rep(lone_colour(), length(names)), names)
-    return(list(palette = highlighted_colours(colours, highlight, names, chart), coarse = stats::setNames(names, names)))
+    return(list(palette = highlighted_colours(colours, highlight, names, chart),
+                coarse = stats::setNames(names, names)))
   }
   coarse <- if (is.null(color_by)) stats::setNames(names, names) else coarse_groups(data, group, color_by, chart)
   palette <- colours_for(unique(unname(coarse[names])), colors, dimension)

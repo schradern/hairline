@@ -105,15 +105,13 @@ arcs_drawing <- function(spec, box, measure, style) {
   first <- measure(names[1], "label") / 2
   last <- measure(names[length(names)], "label") / 2
   xs <- box[1] + first + (box[3] - first - last) * (seq_along(names) - 1) / max(length(names) - 1, 1)
-  labels <- arc_label_shapes(names, xs, box[2] + box[4], measure, style, rules)
-  ground <- box[2] + box[4] - labels$height - rules$label_gap * base
+  height <- arc_label_shapes(names, xs, box[2] + box[4], measure, style, rules)$height
   ceiling <- box[2] + line_height(style, "label") + rules$key_gap * base
+  # The arcs keep `min_room`; labels too tall for the panel then sit lower, and the figure grows to hold them.
+  ground <- max(box[2] + box[4] - height - rules$label_gap * base, ceiling + rules$min_room * base)
+  labels <- arc_label_shapes(names, xs, ground + rules$label_gap * base + height, measure, style, rules)
   position <- stats::setNames(xs, names)
   spans <- vapply(spec$links, function(link) abs(position[[link$target]] - position[[link$source]]) / 2, numeric(1))
-  if (ground <= ceiling) {
-    stop(sprintf(paste("hairline: arcs: the node labels take %.0f pt and leave no room for the arcs; shorten the",
-                       "longest labels or give the figure more height"), labels$height), call. = FALSE)
-  }
   squeeze <- min(1, (ground - ceiling) / max(spans))
   shapes <- list()
   for (index in order(-values, seq_along(values))) {

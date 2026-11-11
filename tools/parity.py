@@ -1,6 +1,7 @@
 """Run the gallery in Python and R and compare the frame positions each language computed.
 
-Every layout key must have the same shape in both reports and every position must agree within 1 pt.
+Every layout key must have the same shape in both reports and every position must agree within 1 pt, and neither
+language may find a collision in any figure (check_layout(), hl_check_layout()).
 Exit status 0 means parity; otherwise a table lists figure, key, Python value and R value.
 """
 
@@ -85,12 +86,22 @@ def compare_targets(name: str) -> list[tuple[str, str, str, str]]:
     return problems
 
 
+def collisions(name: str) -> list[tuple[str, str, str, str]]:
+    """Findings of each language's own collision check: text over text, text off the figure, marks outside."""
+    problems = []
+    for language in ("python", "r"):
+        found = json.loads((GALLERY / "out" / language / f"{name}.audit.json").read_text())
+        problems += [(name, f"collision ({language})", finding["rule"], str(finding.get("text", finding.get("mark"))))
+                     for finding in found]
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--no-run", action="store_true", help="compare existing reports without re-running")
     if not parser.parse_args().no_run:
         run_gallery()
-    problems = [problem for name in FIGURES for problem in compare(name) + compare_targets(name)]
+    problems = [problem for name in FIGURES for problem in compare(name) + compare_targets(name) + collisions(name)]
     for figure, key, python, r in problems:
         sys.stderr.write(f"{figure:<16} {key:<24} python {python}\n{'':<41} r      {r}\n")
     return 1 if problems else 0

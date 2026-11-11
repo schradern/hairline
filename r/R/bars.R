@@ -178,13 +178,8 @@ bar_text <- function(mapping, frame, position, colour, settings, ...) {
 stacked_text_layers <- function(frame, colours, horizontal, percent) {
   rules <- hl_tokens()$bars
   settings <- hl_settings()
-  largest <- if (percent) 1 else max(tapply(pmax(frame$value, 0), frame$category, sum), na.rm = TRUE)
-  shown <- frame
-  shown$label[shown$value < rules$segment_min * largest | shown$value <= 0] <- ""
-  style <- list(neutral = settings$neutral)
-  inks <- vapply(as.character(shown$group), function(name) contrast_text(colours[[name]], style), character(1))
-  layers <- list(bar_text(bar_value_mapping(horizontal), shown, ggplot2::position_stack(vjust = 0.5, reverse = TRUE),
-                          inks, settings))
+  # The segments' own values are inside labels (stacked_inside()), shown where their segment holds them.
+  layers <- list()
   if (!percent) {
     ups <- tapply(pmax(frame$value, 0), frame$category, sum)
     downs <- tapply(pmin(frame$value, 0), frame$category, sum)
@@ -486,9 +481,40 @@ bar_plot <- function(panels, counted, category, by, options) {
   }
   built <- bar_frames(panels, category, by, options$horizontal, options$percent, options$stacked, options$facet,
                       options$partial, options$divide)
-  ggplot2::ggplot() +
+  plot <- ggplot2::ggplot() +
     bar_layers(built$frames, options$coloured$colours, options$horizontal, options$stacked, options$labels,
                options$percent, options$coloured$series, length(options$partial) > 0, options$context,
                options$cap) +
     bar_category_scale(options$horizontal, built$labels)
+  if (options$stacked && options$labels) {
+    plot@meta$hairline_inside <- stacked_inside(built$frames, options$coloured$colours, options$horizontal,
+                                                options$percent)
+  }
+  plot
+}
+
+# Each segment's value inside it, a label the frame shows only where the segment holds it both ways (its length, less
+# a pad either side, and its thickness). As Python's stacked_labels().
+stacked_inside <- function(frames, colours, horizontal, percent) {
+  rules <- hl_tokens()$bars
+  style <- list(neutral = hl_settings()$neutral)
+  entries <- list()
+  for (panel in seq_along(frames)) {
+    frame <- frames[[panel]]
+    largest <- if (percent) 1 else max(tapply(pmax(frame$value, 0), frame$category, sum), na.rm = TRUE)
+    frame <- frame[order(frame$category, frame$group), , drop = FALSE]
+    ups <- downs <- stats::setNames(numeric(nlevels(frame$category)), levels(frame$category))
+    for (row in seq_len(nrow(frame))) {
+      value <- frame$value[row]
+      key <- as.character(frame$category[row])
+      low <- if (value >= 0) ups[[key]] else downs[[key]]
+      if (value >= 0) ups[[key]] <- low + value else downs[[key]] <- low + value
+      if (value <= 0 || value < rules$segment_min * largest) next
+      entries[[length(entries) + 1]] <- list(panel = panel, start = low, end = low + value,
+                                             at = as.integer(frame$category[row]), vertical = !horizontal,
+                                             thickness = rules$width * 0.92, text = frame$label[row],
+                                             colour = contrast_text(colours[[as.character(frame$group[row])]], style))
+    }
+  }
+  entries
 }

@@ -50,7 +50,9 @@ place_panel_rows <- function(state, spec, layout, spacing, heights) {
 
 place_bottom_block <- function(state, spec, layout, spacing) {
   base <- spec$base_size
-  if (isTRUE(spec$x_tick_labels)) state$y <- state$y + spacing$x_tick_labels * spec$sizes$label
+  if (isTRUE(spec$x_tick_labels)) {
+    state$y <- state$y + spacing$x_tick_labels * spec$sizes$label + (spec$x_tick_extra_pt %||% 0)
+  }
   if (bottom_title(spec)) {
     state$y <- state$y + spacing$x_title * base
     placed <- stack_lines(state, spec$sizes$label, 1)

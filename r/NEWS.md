@@ -91,6 +91,23 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
 * Three gallery figures in both languages: `scatter_sites`, `spread_years` and `ridgeline_sites`; `dotplot_rates`
   draws a benchmark.
 
+## Nothing overlaps
+
+* `hl_check_layout()` lists what a reader would see collide in a figure: text over text, text off the figure, marks
+  outside their plot (it reads the figure's SVG and needs svglite). Every gallery figure and the hard cases in
+  `tokens/fixtures/stress.json` are checked on each test run, in both languages; `docs/guide/layout.md` has the
+  rules.
+* Marks stay inside their plot: data reaching an outer tick widens the axis by the largest mark's half-size.
+* The plot grows until no two y labels meet; x axes take fewer ticks where their numbers would meet; names on an x
+  axis wrap to their slot, and labels of several lines get their room under the axis.
+* Values inside stacked bars show only where the segment holds them.
+* Count axes tick at whole numbers; numbered categories (years) keep their order in `hl_bars()`; titles follow bars
+  that turn horizontal.
+* More groups than colours: `hl_raincloud()`, `hl_spread()`, `hl_ridgeline()` and `hl_chord()` draw them in one
+  colour instead of refusing.
+* `hl_correlation()` wraps long names and leaves values out of cells too small for them; `hl_arcs()` grows the figure
+  for tall labels instead of refusing.
+
 ## Fixes
 
 * Bar value labels are no longer cut off at the panel's top edge when they reach past the last break, as in Python.

@@ -11,7 +11,9 @@ from hairline.charts.chord_geometry import chord_drawing
 from hairline.charts.common import flow_rows, humanise, with_counts
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
+from hairline.marks import lone_color
 from hairline.numbers import auto_digits, format_number
+from hairline.palettes import palette as hl_palette
 from hairline.settings import current_settings
 
 
@@ -27,7 +29,10 @@ def chord_spec(data: pd.DataFrame, source: str, target: str, value: str | None =
             totals[key] = totals.get(key, 0.0) + float(amount)
     links = [{"source": first, "target": second, "value": amount} for (first, second), amount in totals.items()
              if amount > 0]
-    locale, palette = current_settings().locale, entities.colors_for(names, colors)
+    locale = current_settings().locale
+    # The units are named around the circle, so more of them than the palette has colours share one colour.
+    many = colors is None and len(names) > len(hl_palette())
+    palette = {name: lone_color() for name in names} if many else entities.colors_for(names, colors)
     flows = {name: sum(link["value"] for link in links if name in (link["source"], link["target"])) for name in names}
     digits = auto_digits([link["value"] for link in links])
     nodes = [{"name": name, "value": flows[name], "value_text": format_number(flows[name], digits, locale),

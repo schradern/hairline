@@ -28,7 +28,12 @@ chord_spec <- function(data, source, target, value = NULL, order = NULL, colors 
   links <- lapply(keys[totals[keys] > 0], function(key) {
     list(source = ends[[key]][1], target = ends[[key]][2], value = totals[[key]])
   })
-  palette <- colours_for(names, colors)
+  # The units are named around the circle, so more of them than the palette has colours share one colour.
+  palette <- if (is.null(colors) && length(names) > length(hl_palette())) {
+    stats::setNames(as.list(rep(lone_colour(), length(names))), names)
+  } else {
+    colours_for(names, colors)
+  }
   flows <- vapply(names, function(name) {
     sum(vapply(links, function(link) if (name %in% c(link$source, link$target)) link$value else 0, numeric(1)))
   }, numeric(1))

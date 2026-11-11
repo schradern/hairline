@@ -142,7 +142,22 @@ side_number_grobs <- function(parts, plan) {
   grobs
 }
 
-# Labels inside bars (swimlanes) show only where their bar is wide enough for them.
+# Labels inside bars (swimlanes, stacked segments) show only where their bar holds them: along the bar (its length,
+# less a pad either side) and across it (its thickness, when given). As Python's fit_inside_labels().
+inside_fits <- function(label, box, x_range, y_range, style, pad) {
+  metrics <- font_metrics()
+  tall <- style$size * (metrics$cap_height + metrics$descender)
+  wide <- text_width_pt(label$text, style)
+  vertical <- isTRUE(label$vertical)
+  along <- (label$end - label$start) / diff(if (vertical) y_range else x_range) * (if (vertical) box[4] else box[3])
+  fits <- (if (vertical) tall else wide) <= along - 2 * pad
+  if (!is.null(label$thickness)) {
+    across <- label$thickness / diff(if (vertical) x_range else y_range) * (if (vertical) box[3] else box[4])
+    fits <- fits && (if (vertical) wide else tall) <= across
+  }
+  fits
+}
+
 inside_grobs <- function(parts, plan) {
   settings <- parts$settings
   cap <- font_metrics()$cap_height
@@ -153,10 +168,15 @@ inside_grobs <- function(parts, plan) {
     x_range <- parts$x_ranges[[label$panel]]
     y_range <- parts$y_ranges[[label$panel]]
     style <- role_style(settings, "label", NULL, label$colour)
-    room <- (label$end - label$start) / diff(x_range) * box[3] - 2 * pad
-    if (text_width_pt(label$text, style) > room) next
-    x <- box[1] + ((label$start + label$end) / 2 - x_range[1]) / diff(x_range) * box[3]
-    centre <- box[2] + (y_range[2] - label$y) / diff(y_range) * box[4]
+    if (!inside_fits(label, box, x_range, y_range, style, pad)) next
+    middle <- (label$start + label$end) / 2
+    if (isTRUE(label$vertical)) {
+      x <- box[1] + (label$at - x_range[1]) / diff(x_range) * box[3]
+      centre <- box[2] + (y_range[2] - middle) / diff(y_range) * box[4]
+    } else {
+      x <- box[1] + (middle - x_range[1]) / diff(x_range) * box[3]
+      centre <- box[2] + (y_range[2] - (label$y %||% label$at)) / diff(y_range) * box[4]
+    }
     grobs[[length(grobs) + 1]] <- text_grob_pt(label$text, x, centre + style$size * cap / 2, style, plan$size[2],
                                                "center")
   }

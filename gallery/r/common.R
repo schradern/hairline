@@ -15,6 +15,8 @@ finish <- function(plot, name, size) {
   targets <- hairline:::interactive_targets(plot, size = size)
   jsonlite::write_json(targets, file.path(out_dir, paste0(name, ".targets.json")), auto_unbox = TRUE, digits = NA,
                        pretty = TRUE)
+  jsonlite::write_json(hairline::hl_check_layout(plot, size = size), file.path(out_dir, paste0(name, ".audit.json")),
+                       auto_unbox = TRUE, digits = NA, pretty = TRUE)
   report <- hairline::hl_layout_report(plot, size = size)
   jsonlite::write_json(report[frame_keys], file.path(out_dir, paste0(name, ".layout.json")), auto_unbox = TRUE,
                        digits = NA, null = "null", pretty = TRUE)

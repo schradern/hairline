@@ -97,6 +97,22 @@ positions and tooltips are unchanged.
 * Three gallery figures in both languages: `scatter_sites`, `spread_years` and `ridgeline_sites`; `dotplot_rates`
   draws a benchmark.
 
+### Nothing overlaps
+
+* `check_layout()` lists what a reader would see collide in a figure: text over text, text off the figure, marks
+  outside their plot. Every gallery figure and the hard cases in `tokens/fixtures/stress.json` are checked on each
+  test run, in both languages; `docs/guide/layout.md` has the rules.
+* Marks stay inside their plot: data reaching an outer tick widens the axis by the largest mark's half-size.
+* The plot grows until no two y labels meet; x axes take fewer ticks where their numbers would meet; names on an x
+  axis wrap to their slot, and labels of several lines get their room under the axis.
+* Values inside stacked bars show only where the segment holds them.
+* Count axes tick at whole numbers; numbered categories (years) keep their order in `bars`; titles follow bars
+  that turn horizontal.
+* More groups than colours: `raincloud`, `spread`, `ridgeline` and `chord` draw them in one colour instead of
+  refusing.
+* `correlation` wraps long names and leaves values out of cells too small for them; `arcs` grows the figure for
+  tall labels instead of refusing.
+
 The R package mirrors all of this under the same names (`hl_bars(facet = ...)`, `hl_lanes()`, ...); a composed
 figure there is `hl_rows()`.
 
