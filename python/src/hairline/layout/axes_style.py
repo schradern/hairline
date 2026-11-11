@@ -74,7 +74,7 @@ def tick_formatter(breaks: list[float], percent: bool, locale: str) -> FuncForma
 
 
 def configure_ticks(ax: Axes, which: str, interval: tuple[float, float] | None, percent: bool, locale: str,
-                    target: int = 5) -> list[str]:
+                    target: int = 5, margin: float = 0.0) -> list[str]:
     """Set nice breaks and locale labels on a numeric axis; `interval` None keeps the user's limits."""
     axis = ax.yaxis if which == "y" else ax.xaxis
     if which == "x" and is_date_axis(axis):
@@ -85,7 +85,7 @@ def configure_ticks(ax: Axes, which: str, interval: tuple[float, float] | None, 
         return [label.get_text() for label in axis.get_ticklabels()]
     breaks = axis_breaks(ax, which, interval, target)
     if interval is not None:
-        (ax.set_ylim if which == "y" else ax.set_xlim)(*axis_limits(*interval, breaks), auto=False)
+        (ax.set_ylim if which == "y" else ax.set_xlim)(*axis_limits(*interval, breaks, margin), auto=False)
     axis.set_major_locator(FixedLocator(breaks))
     formatter = tick_formatter(breaks, percent, locale)
     axis.set_major_formatter(formatter)

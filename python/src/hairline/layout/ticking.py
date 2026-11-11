@@ -6,6 +6,8 @@ import math
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
+import numpy as np
+from matplotlib.collections import PathCollection
 from matplotlib.ticker import FixedFormatter, FixedLocator, FuncFormatter
 
 from hairline.layout.axes_style import configure_ticks, data_interval
@@ -88,6 +90,23 @@ def configure_time_ticks(figure: HairlineFigure, index: int) -> list[str]:
     return [hour_label(value) for value in breaks]
 
 
+def mark_half_size(ax) -> float:
+    """Half the size, in pt, of the largest mark with a size of its own: a scatter dot or a line's marker (a
+    censor tick); 0 without such marks."""
+    dots = [float(np.sqrt(item.get_sizes().max())) / 2 for item in ax.collections
+            if isinstance(item, PathCollection) and len(item.get_offsets()) and len(item.get_sizes())]
+    markers = [line.get_markersize() / 2 for line in ax.lines if line.get_marker() not in (None, "", "None", "none")]
+    return max(dots + markers, default=0.0)
+
+
+def mark_margin(figure: HairlineFigure, axes) -> float:
+    """The share of an axis the largest mark's half-size takes on the least plot height: data that close to an
+    outer break widens the axis by it, so no mark is cut by the plot's edge (same rule in R)."""
+    half = max((mark_half_size(ax) for ax in axes), default=0.0)
+    least = load_tokens()["spacing"]["min_plot_height"] * figure.settings.base_size
+    return half / least
+
+
 def integer_breaks(low: float, high: float) -> list[float]:
     """Whole-number ticks from the lowest to the highest whole number in range, at most six of them."""
     first, last = math.ceil(low - 1e-9), math.floor(high + 1e-9)
@@ -124,8 +143,10 @@ def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
                     labels.append(result)
                 continue
             percent = (index, which) in figure.percent_axes
+            shared = figure.sharey if which == "y" else figure.sharex
             result = configure_ticks(ax, which, tick_interval(figure, index, which), percent,
-                                     figure.settings.locale, tick_target(figure, which))
+                                     figure.settings.locale, tick_target(figure, which),
+                                     mark_margin(figure, figure.axes if shared else [ax]))
             figure.applied_limits[(index, which)] = current_limits(ax, which)
             if which == "y":
                 labels.append(result)

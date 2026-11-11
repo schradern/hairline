@@ -75,9 +75,12 @@ def nice_breaks(low: float, high: float, target: int = 5) -> list[float]:
     return [float(f"{start + index * step:.10g}") for index in range(count)]
 
 
-def axis_limits(low: float, high: float, breaks: list[float]) -> tuple[float, float]:
-    """Axis range: the breaks, widened to any data that passes them."""
-    return min(low, breaks[0]), max(high, breaks[-1])
+def axis_limits(low: float, high: float, breaks: list[float], margin: float = 0.0) -> tuple[float, float]:
+    """Axis range: the breaks, widened to any data that passes them. `margin` (a share of the break range) keeps
+    marks with a size, such as points, whole: data within it of an outer break widens the axis by it (same rule
+    in R)."""
+    pad = margin * (breaks[-1] - breaks[0])
+    return min(low - pad, breaks[0]), max(high + pad, breaks[-1])
 
 
 def month_starts(low: dt.date, high: dt.date, step: int) -> list[dt.date]:

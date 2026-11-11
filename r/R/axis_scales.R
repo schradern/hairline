@@ -36,17 +36,17 @@ check_axis_digits <- function(digits) {
   digits
 }
 
-hairline_position_scale <- function(aesthetic, percent, target, digits, ...) {
+hairline_position_scale <- function(aesthetic, percent, target, digits, ..., margin = 0) {
   check_axis_digits(digits)
   constructor <- if (aesthetic == "y") ggplot2::scale_y_continuous else ggplot2::scale_x_continuous
   resolved <- target %||% 5
   usable <- function(limits) length(limits) == 2 && all(is.finite(limits))
   breaks <- function(limits) if (usable(limits)) nice_breaks(limits[1], limits[2], resolved) else NULL
-  limits <- function(limits) if (usable(limits)) axis_limits(limits[1], limits[2], breaks(limits)) else limits
+  limits <- function(limits) if (usable(limits)) axis_limits(limits[1], limits[2], breaks(limits), margin) else limits
   scale <- constructor(breaks = breaks, limits = limits, labels = axis_labels(percent),
                        expand = ggplot2::expansion(0, 0), ...)
-  scale$hairline <- list(percent = percent, digits = digits, target_given = !is.null(target),
-                         arguments = list(...))
+  scale$hairline <- list(percent = percent, digits = digits, target_given = !is.null(target), target = target,
+                         margin = margin, arguments = list(...))
   scale
 }
 
@@ -93,23 +93,42 @@ is_plain_continuous <- function(scale) {
     !is.null(scale$range$range)
 }
 
-auto_target_scale <- function(plot, built, rows) {
-  scale <- plot@scales$get_scales("y")
-  if (is.null(scale$hairline) || scale$hairline$target_given || row_target(rows) == 5) return(NULL)
-  do.call(hairline_position_scale, c(list("y", scale$hairline$percent, row_target(rows), scale$hairline$digits),
-                                     scale$hairline$arguments))
+# A hairline scale the plot already has, rebuilt with the panel grid's target (unless one was given) and the
+# margin its marks need; NULL when it needs neither.
+adjusted_scale <- function(plot, aesthetic, target, margin) {
+  scale <- plot@scales$get_scales(aesthetic)
+  if (is.null(scale$hairline$margin)) return(NULL)
+  wanted <- if (scale$hairline$target_given) scale$hairline$target else target
+  if (identical(wanted, scale$hairline$target %||% 5) && margin == scale$hairline$margin) return(NULL)
+  do.call(hairline_position_scale, c(list(aesthetic, scale$hairline$percent, wanted, scale$hairline$digits),
+                                     scale$hairline$arguments, list(margin = margin)))
+}
+
+# The share of an axis the largest mark's half-size takes on the least plot height: points (their radius) and censor
+# ticks (half their height). Data that close to an outer break widens the axis by it, so no mark is cut by the plot's
+# edge. As Python's mark_margin().
+mark_margin <- function(plot) {
+  tokens <- hl_tokens()
+  geoms <- lapply(plot@layers, function(layer) layer$geom)
+  half <- max(c(0, if (any(vapply(geoms, inherits, logical(1), "GeomPoint"))) tokens$lines$point_radius,
+                if (any(vapply(geoms, inherits, logical(1), "GeomCensorTick"))) tokens$survival$censor_tick / 2))
+  half / tokens$spacing$min_plot_height
 }
 
 default_position_scales <- function(plot, built) {
   rows <- max(built@layout$layout$ROW)
+  margin <- mark_margin(plot)
   scales <- list()
   if (!plot@scales$has_scale("y") && is_plain_continuous(built@layout$panel_scales_y[[1]])) {
-    scales[[length(scales) + 1]] <- scale_y_hairline(target = row_target(rows))
-  } else if (!is.null(replacement <- auto_target_scale(plot, built, rows))) {
+    scales[[length(scales) + 1]] <- hairline_position_scale("y", FALSE, row_target(rows), NULL, margin = margin)
+  } else if (!is.null(replacement <- adjusted_scale(plot, "y", row_target(rows), margin))) {
     scales[[length(scales) + 1]] <- replacement
   }
+  columns <- row_target(max(built@layout$layout$COL))
   if (!plot@scales$has_scale("x") && is_plain_continuous(built@layout$panel_scales_x[[1]])) {
-    scales[[length(scales) + 1]] <- scale_x_hairline(target = row_target(max(built@layout$layout$COL)))
+    scales[[length(scales) + 1]] <- hairline_position_scale("x", FALSE, columns, NULL, margin = margin)
+  } else if (!is.null(replacement <- adjusted_scale(plot, "x", columns, margin))) {
+    scales[[length(scales) + 1]] <- replacement
   } else if (!plot@scales$has_scale("x") && is_date_scale(built@layout$panel_scales_x[[1]])) {
     scales[[length(scales) + 1]] <- hairline_date_scale()
   }

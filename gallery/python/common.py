@@ -28,5 +28,6 @@ def finish(figure: hl.HairlineFigure, name: str) -> None:
     formats = ("pdf", "png", "html") if os.environ.get("HAIRLINE_GALLERY_HTML") else ("pdf", "png")
     hl.save(figure, OUT / name, formats=formats)
     (OUT / f"{name}.targets.json").write_text(json.dumps(figure_targets(figure), indent=1, ensure_ascii=False))
+    (OUT / f"{name}.audit.json").write_text(json.dumps(hl.check_layout(figure), indent=1, ensure_ascii=False))
     report = figure.layout_report()
     (OUT / f"{name}.layout.json").write_text(json.dumps({key: report.get(key) for key in FRAME_KEYS}, indent=1))

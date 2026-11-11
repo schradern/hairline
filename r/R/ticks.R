@@ -70,7 +70,12 @@ nice_breaks <- function(low, high, target = 5) {
   signif(best$start + (seq_len(best$count) - 1) * best$step, 10)
 }
 
-axis_limits <- function(low, high, breaks) c(min(low, breaks[1]), max(high, breaks[length(breaks)]))
+# The breaks, widened to any data that passes them. `margin` (a share of the break range) keeps marks with a size,
+# such as points, whole: data within it of an outer break widens the axis by it. As Python's axis_limits().
+axis_limits <- function(low, high, breaks, margin = 0) {
+  pad <- margin * (breaks[length(breaks)] - breaks[1])
+  c(min(low - pad, breaks[1]), max(high + pad, breaks[length(breaks)]))
+}
 
 month_starts <- function(low, high, step) {
   first <- as.Date(format(low, "%Y-%m-01"))
