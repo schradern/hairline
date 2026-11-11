@@ -146,7 +146,8 @@ def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
             shared = figure.sharey if which == "y" else figure.sharex
             result = configure_ticks(ax, which, tick_interval(figure, index, which), percent,
                                      figure.settings.locale, tick_target(figure, which),
-                                     mark_margin(figure, figure.axes if shared else [ax]))
+                                     mark_margin(figure, figure.axes if shared else [ax]),
+                                     (index, which) in figure.whole_axes)
             figure.applied_limits[(index, which)] = current_limits(ax, which)
             if which == "y":
                 labels.append(result)

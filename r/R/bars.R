@@ -421,6 +421,11 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
   column <- identical(show_n, "column")
   options <- list(top = top, other = other %||% word("other"), show_n = !column && (isTRUE(show_n) || normalize),
                   context = as.character(context))
+  if (is.null(sort) && is.null(order) && numbered(counted$data[[category]])) {
+    # Years and other numbered categories keep their own order, lowest first, as on any axis.
+    shown <- unique(as.character(stats::na.omit(counted$data[[category]])))
+    order <- shown[order(as.numeric(shown))]
+  }
   panels <- facet_panels(counted$data, category, counted$value, by, facet, order,
                          sort %||% if (is.null(by) || stacked) "value" else "given", groups, options)
   every <- unique(unlist(lapply(panels, `[[`, "names")))
@@ -431,8 +436,15 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
     stop("hairline: bars: show_n = 'column' and inside = 'name' need horizontal bars", call. = FALSE)
   }
   if (column || !is.null(inside)) horizontal <- TRUE
-  horizontal <- horizontal %||% bars_lie_down(panels, category, by, stacked, labels, percent, size %||% "onehalf",
-                                              columns, divide)
+  if (is.null(horizontal)) {
+    horizontal <- bars_lie_down(panels, category, by, stacked, labels, percent, size %||% "onehalf", columns, divide)
+    # Titles name what an axis shows, so bars hairline turns take their titles along.
+    if (horizontal) {
+      swapped <- x_title
+      x_title <- y_title
+      y_title <- swapped
+    }
+  }
   caption <- with_caption(caption, partial_caption(partial), if (!is.null(respondents)) word("several_answers"),
                           kept$note)
   drawn <- list(horizontal = horizontal, stacked = stacked, labels = labels, percent = percent, divide = divide,
@@ -449,12 +461,22 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
                                        scales = bar_facet_scales(scales, horizontal))
     for (entry in bar_facet_headers(panels, header, respondent_n)) plot <- plot + entry
   }
-  if (percent) plot <- plot + if (horizontal) scale_x_hairline(percent = TRUE) else scale_y_hairline(percent = TRUE)
+  if (percent) {
+    plot <- plot + if (horizontal) scale_x_hairline(percent = TRUE) else scale_y_hairline(percent = TRUE)
+  } else if (is_whole(stats::na.omit(unlist(lapply(panels, function(panel) panel$table$.value))))) {
+    plot <- plot + hairline_position_scale(if (horizontal) "x" else "y", FALSE, NULL, NULL, whole = TRUE)
+  }
   if (column) plot@meta$hairline_side_numbers <- bar_side_numbers(panels)
   plot@meta$hairline_size <- size
   series <- if (is.null(by)) character() else unique(unname(drawn$coloured$series %||% groups))
   chart_options(plot, "bars", series, x_title = x_title, y_title = y_title, reference = reference,
                 reference_axis = if (horizontal) "x" else "y", highlight = highlight, key_title = key_title)
+}
+
+# Categories that are all numbers (years, 1, 2, ...), so their order is their own. As Python's numbered().
+numbered <- function(values) {
+  shown <- as.character(stats::na.omit(values))
+  length(shown) > 0 && !anyNA(suppressWarnings(as.numeric(shown)))
 }
 
 # The bars of every panel (or, with `inside = "name"`, the named segments of one) on their category axis.

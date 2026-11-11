@@ -69,17 +69,22 @@ def ink_box(fig: Figure, text: Text, renderer) -> Box:
 
 
 def shown_texts(fig: Figure) -> list[Text]:
+    hidden = {id(text) for text in hidden_axis_texts(fig)}
+    return [text for text in fig.findobj(Text) if id(text) not in hidden and text.get_text().strip()
+            and text.get_visible() and (text.get_alpha() or 1) > 0]
+
+
+def hidden_axis_texts(fig: Figure) -> list[Text]:
+    """Tick labels, axis labels and offsets of axes that are not drawn (hidden, or switched off as a drawn chart's
+    panel): they keep their own visibility, but their axes decide what is drawn."""
     texts = []
-    for text in fig.findobj(Text):
-        if text.get_text().strip() and text.get_visible() and all_visible(text) and (text.get_alpha() or 1) > 0:
-            texts.append(text)
+    for ax in fig.axes:
+        if ax.get_visible() and ax.axison:
+            continue
+        for axis in (ax.xaxis, ax.yaxis):
+            texts += [*axis.get_ticklabels(), *axis.get_ticklabels(minor=True), axis.label, axis.get_offset_text()]
+        texts += [] if ax.get_visible() else list(ax.texts)
     return texts
-
-
-def all_visible(artist) -> bool:
-    """Tick labels of hidden axes or ticks keep their own visibility; their parents decide what is drawn."""
-    axes = artist.axes
-    return axes is None or axes.get_visible()
 
 
 def text_findings(fig: Figure, renderer, tolerance: float) -> list[dict]:

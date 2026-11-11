@@ -50,11 +50,13 @@ def data_interval(axes: list[Axes], which: str) -> tuple[float, float]:
     return (min(values), max(values)) if values else (0.0, 1.0)
 
 
-def axis_breaks(ax: Axes, which: str, interval: tuple[float, float] | None, target: int) -> list[float]:
+def axis_breaks(ax: Axes, which: str, interval: tuple[float, float] | None, target: int,
+                whole: bool = False) -> list[float]:
     if interval is not None:
-        return nice_breaks(*interval, target=target)
+        return nice_breaks(*interval, target=target, whole=whole)
     low, high = sorted(ax.get_ylim() if which == "y" else ax.get_xlim())
-    return [value for value in nice_breaks(low, high, target=target) if low - 1e-12 <= value <= high + 1e-12]
+    return [value for value in nice_breaks(low, high, target=target, whole=whole)
+            if low - 1e-12 <= value <= high + 1e-12]
 
 
 def tick_formatter(breaks: list[float], percent: bool, locale: str) -> FuncFormatter:
@@ -74,7 +76,7 @@ def tick_formatter(breaks: list[float], percent: bool, locale: str) -> FuncForma
 
 
 def configure_ticks(ax: Axes, which: str, interval: tuple[float, float] | None, percent: bool, locale: str,
-                    target: int = 5, margin: float = 0.0) -> list[str]:
+                    target: int = 5, margin: float = 0.0, whole: bool = False) -> list[str]:
     """Set nice breaks and locale labels on a numeric axis; `interval` None keeps the user's limits."""
     axis = ax.yaxis if which == "y" else ax.xaxis
     if which == "x" and is_date_axis(axis):
@@ -83,7 +85,7 @@ def configure_ticks(ax: Axes, which: str, interval: tuple[float, float] | None, 
         return configure_date_ticks(ax, locale)
     if not is_numeric_axis(axis):
         return [label.get_text() for label in axis.get_ticklabels()]
-    breaks = axis_breaks(ax, which, interval, target)
+    breaks = axis_breaks(ax, which, interval, target, whole)
     if interval is not None:
         (ax.set_ylim if which == "y" else ax.set_xlim)(*axis_limits(*interval, breaks, margin), auto=False)
     axis.set_major_locator(FixedLocator(breaks))

@@ -219,8 +219,33 @@ def keeps_plot_room(figure: HairlineFigure) -> bool:
 
 
 def least_plot_height(figure: HairlineFigure) -> float:
-    """The least height in pt the axes panels keep together: the chart's own or `spacing.min_plot_height`."""
-    return (figure.min_plot or load_tokens()["spacing"]["min_plot_height"]) * figure.settings.base_size
+    """The least height in pt the axes panels keep together: the chart's own or `spacing.min_plot_height`, and
+    never less than the y labels need to stand apart."""
+    own = (figure.min_plot or load_tokens()["spacing"]["min_plot_height"]) * figure.settings.base_size
+    return max(own, label_rows_height(figure))
+
+
+def label_rows_height(figure: HairlineFigure) -> float:
+    """The plot height at which no two y labels of a panel meet: each label's lines (cap height and descender,
+    with the line gap between lines) and `ticks.label_rows_gap` between labels, at the closest pair of labels,
+    for every row of panels (same rule in R)."""
+    tokens, metrics = load_tokens(), load_font_metrics()
+    gap, line_gap = tokens["ticks"]["label_rows_gap"], tokens["type"]["line_gap"]
+    need = 0.0
+    for index, ax in enumerate(figure.axes):
+        shown = [label for label in ax.yaxis.get_ticklabels() if label.get_visible() and label.get_text().strip()]
+        low, high = sorted(ax.get_ylim())
+        places = sorted(float(label.get_position()[1]) for label in shown
+                        if low - 1e-9 <= float(label.get_position()[1]) <= high + 1e-9)
+        steps = [second - first for first, second in zip(places, places[1:], strict=False) if second > first]
+        if index in figure.bare_panels or not steps or high <= low:
+            continue
+        lines = max(label.get_text().count("\n") + 1 for label in shown)
+        size = shown[0].get_fontsize()
+        pitch = size * (lines * (metrics.cap_height + metrics.descender) + (lines - 1) * line_gap + gap)
+        need = max(need, pitch * (high - low) / min(steps))
+    rows = math.ceil(len(figure.axes) / figure.columns)
+    return need * rows
 
 
 def kept_plot_room(figure: HairlineFigure, spec: FrameInput, metrics) -> FrameInput:

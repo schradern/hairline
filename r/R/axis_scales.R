@@ -36,17 +36,17 @@ check_axis_digits <- function(digits) {
   digits
 }
 
-hairline_position_scale <- function(aesthetic, percent, target, digits, ..., margin = 0) {
+hairline_position_scale <- function(aesthetic, percent, target, digits, ..., margin = 0, whole = FALSE) {
   check_axis_digits(digits)
   constructor <- if (aesthetic == "y") ggplot2::scale_y_continuous else ggplot2::scale_x_continuous
   resolved <- target %||% 5
   usable <- function(limits) length(limits) == 2 && all(is.finite(limits))
-  breaks <- function(limits) if (usable(limits)) nice_breaks(limits[1], limits[2], resolved) else NULL
+  breaks <- function(limits) if (usable(limits)) nice_breaks(limits[1], limits[2], resolved, whole) else NULL
   limits <- function(limits) if (usable(limits)) axis_limits(limits[1], limits[2], breaks(limits), margin) else limits
   scale <- constructor(breaks = breaks, limits = limits, labels = axis_labels(percent),
                        expand = ggplot2::expansion(0, 0), ...)
   scale$hairline <- list(percent = percent, digits = digits, target_given = !is.null(target), target = target,
-                         margin = margin, arguments = list(...))
+                         margin = margin, whole = whole, arguments = list(...))
   scale
 }
 
@@ -101,7 +101,7 @@ adjusted_scale <- function(plot, aesthetic, target, margin) {
   wanted <- if (scale$hairline$target_given) scale$hairline$target else target
   if (identical(wanted, scale$hairline$target %||% 5) && margin == scale$hairline$margin) return(NULL)
   do.call(hairline_position_scale, c(list(aesthetic, scale$hairline$percent, wanted, scale$hairline$digits),
-                                     scale$hairline$arguments, list(margin = margin)))
+                                     scale$hairline$arguments, list(margin = margin, whole = scale$hairline$whole)))
 }
 
 # The share of an axis the largest mark's half-size takes on the least plot height: points (their radius) and censor

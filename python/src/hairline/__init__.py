@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 from hairline.brand import brand_report, load_brand
 from hairline.citation import citation
 from hairline.color.check import PaletteReport, check_palette
-from hairline.layout.audit import check_layout
 from hairline.entities import color, colors
 from hairline.errors import HairlineLayoutError
 from hairline.export import save
 from hairline.figure import HairlineFigure, figure, frame
+from hairline.layout.audit import check_layout
 from hairline.numbers import format_interval, format_number, format_percent
 from hairline.palettes import colormap, palette, palettes, ramp
 from hairline.settings import Settings, current_settings, use

@@ -106,9 +106,39 @@ header_rows <- function(parts, composed, provisional = FALSE) {
 }
 
 # The least height in pt the axes panels keep together: the chart's own (plot@meta$hairline_min_plot, x the base
-# size) or `spacing.min_plot_height`.
+# size) or `spacing.min_plot_height`, and never less than the y labels need to stand apart.
 least_plot_height <- function(parts) {
-  (parts$min_plot %||% hl_tokens()$spacing$min_plot_height) * parts$settings$base_size
+  own <- (parts$min_plot %||% hl_tokens()$spacing$min_plot_height) * parts$settings$base_size
+  max(own, label_rows_height(parts))
+}
+
+# The plot height at which no two y labels of a panel meet: each label's lines (cap height and descender, with the
+# line gap between lines) and `ticks.label_rows_gap` between labels, at the closest pair of labels, for every row of
+# panels. As Python's label_rows_height().
+label_rows_height <- function(parts) {
+  if (isTRUE(parts$bare) || is.null(parts$built)) return(0)
+  tokens <- hl_tokens()
+  metrics <- font_metrics()
+  size <- role_style(parts$settings, "label")$size
+  need <- 0
+  for (params in parts$built@layout$panel_params) {
+    scale <- params$y
+    if (is.null(scale) || is.null(scale$breaks)) next
+    labels <- tryCatch(as.character(scale$get_labels()), error = function(error) character())
+    places <- if (is.numeric(scale$breaks)) as.numeric(scale$breaks) else attr(scale$breaks, "pos") %||%
+      seq_along(scale$breaks)
+    shown <- !is.na(places) & nzchar(trimws(labels[seq_along(places)]))
+    places <- sort(places[shown])
+    steps <- diff(places)
+    steps <- steps[steps > 0]
+    span <- diff(range(scale$continuous_range))
+    if (!length(steps) || span <= 0) next
+    lines <- max(lengths(strsplit(labels[shown], "\n")))
+    pitch <- size * (lines * (metrics$cap_height + metrics$descender) + (lines - 1) * tokens$type$line_gap +
+                       tokens$ticks$label_rows_gap)
+    need <- max(need, pitch * span / min(steps))
+  }
+  need * parts$rows
 }
 
 # `grow`: a plot with axes gets a taller figure, where needed, until its panels together keep the least plot height,

@@ -112,7 +112,12 @@ within_limits <- function(values, limits) values[values >= limits[1] & values <=
 
 # Each group's colour and the legend label it stands for: its own name, or with `color_by` the coarser column's value
 # (12 rows of procedure x age coloured by the 4 procedures; the palette counts the 4).
-series_colours <- function(names, data, group, color_by, colors, dimension, chart, highlight = NULL) {
+# `named`: the groups are named on an axis, so more groups than the palette has colours are all drawn in one colour.
+series_colours <- function(names, data, group, color_by, colors, dimension, chart, highlight = NULL, named = FALSE) {
+  if (named && is.null(colors) && is.null(color_by) && length(unique(names)) > length(hl_palette())) {
+    colours <- stats::setNames(rep(lone_colour(), length(names)), names)
+    return(list(palette = highlighted_colours(colours, highlight, names, chart), coarse = stats::setNames(names, names)))
+  }
   coarse <- if (is.null(color_by)) stats::setNames(names, names) else coarse_groups(data, group, color_by, chart)
   palette <- colours_for(unique(unname(coarse[names])), colors, dimension)
   colours <- stats::setNames(unname(palette[coarse[names]]), names)

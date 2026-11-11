@@ -192,7 +192,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
     if not discrete:
         warn_median_gaps(counted, numbers)
     names = [name for name, _ in groups]
-    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "spread", highlight)
+    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "spread", highlight,
+                                    named=True)
     lines = references(reference, "spread")
     marks = checked_marks(marks, groups)
     sections = coarse_groups(data, group, section, "spread") if section else {}
@@ -281,7 +282,7 @@ def faceted_spec(data: pd.DataFrame, group: str, value: str, facet: str, **optio
     keyed, keys, groups = facet_rows(data, group, facet, options.pop("order"), "spread")
     names = list(dict.fromkeys(groups.values()))
     palette, coarse = series_colors(names, data, group, options.pop("color_by"), options.pop("colors"),
-                                    options.pop("dimension"), "spread", options.pop("highlight"))
+                                    options.pop("dimension"), "spread", options.pop("highlight"), named=True)
     marks = options.pop("marks") or {}
     spec = spread_spec(keyed, FACET_KEY, value, order=keys, section=FACET_BLOCK,
                        colors={key: palette[groups[key]] for key in keys},

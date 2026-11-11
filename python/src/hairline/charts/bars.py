@@ -31,7 +31,7 @@ from hairline.drawing import measure_for
 from hairline.figure import MM_PER_INCH, HairlineFigure, figure, size_settings
 from hairline.fonts import families
 from hairline.marks import STATIC_ID, context_color, lone_color
-from hairline.numbers import auto_digits, format_compact, format_number, format_percent, number_unit, word
+from hairline.numbers import auto_digits, format_compact, format_number, format_percent, is_whole, number_unit, word
 from hairline.palettes import interpolate, ramp
 from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
@@ -61,6 +61,12 @@ def bar_table(data: pd.DataFrame, category: str, value: str, by: str | None, ord
         totals = table.groupby(category, sort=False)[value].sum()
         names = sorted(names, key=lambda name: -totals[name])
     return table, names, groups
+
+
+def numbered(values: pd.Series) -> bool:
+    """Categories that are all numbers (years, 1, 2, …), so their order is their own (same rule in R)."""
+    shown = values.dropna().astype(str)
+    return len(shown) > 0 and bool(pd.to_numeric(shown, errors="coerce").notna().all())
 
 
 def fold_top(table: pd.DataFrame, names: list[str], top: int | None, other: str, category: str, value: str,
@@ -408,6 +414,9 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
         raise ValueError(f"hairline: bars: sort {sort!r} must be 'value' or 'given'")
     if color_by is not None and by is None:
         raise ValueError("hairline: bars: color_by needs by=, the groups it colours")
+    if sort is None and order is None and numbered(data[category]):
+        # Years and other numbered categories keep their own order, lowest first, as on any axis.
+        order = sorted(data[category].dropna().astype(str).unique(), key=float)
     sort = sort or ("given" if by and not stacked else "value")
     check_labels(data, [column for column in (by, facet) if column], "bars")
     groups = group_names(data[by]) if by else [""]
@@ -439,6 +448,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
         horizontal = True
     if horizontal is None:
         horizontal = is_horizontal(panels, groups, options, width, columns, settings)
+        # Titles name what an axis shows, so bars hairline turns take their titles along.
+        x_title, y_title = (y_title, x_title) if horizontal else (x_title, y_title)
     options["show_n"] = show_n
     sharex, sharey = bar_sharing(scales, horizontal) if facet else (False, False)
     split = f" and {str(by).replace('_', ' ')}" if by and by != category else ""
@@ -477,6 +488,8 @@ def draw_panel(result: HairlineFigure, index: int, panel: dict, groups: list[str
     (ax.set_ylim if horizontal else ax.set_xlim)(-pad, len(names) - 1 + pad)
     if options["percent"]:
         result.percent_axis(index, "x" if horizontal else "y")
+    elif is_whole(panel["table"][options["value"]].dropna().to_numpy()):
+        result.whole_axes.add((index, "x" if horizontal else "y"))
     if facet:
         result.panel_header(index, panel["name"], stats=[header_stat(panel, options, locale)])
 

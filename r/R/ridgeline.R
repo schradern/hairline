@@ -133,7 +133,8 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   heights <- unlist(lapply(curves, function(here) lapply(here, function(curve) max(c(0, curve$height)))))
   peak <- max(c(0, heights))
   scale <- (1 + rules$overlap) / if (peak > 0) peak else 1
-  palette <- series_colours(names, data, group, color_by, colors, dimension, "ridgeline", highlight)
+  palette <- series_colours(names, data, group, color_by, colors, dimension, "ridgeline", highlight,
+                            named = TRUE)
   plot <- ggplot2::ggplot()
   for (index in seq_along(panels)) {
     statistics <- if (clip_stats) drawn[[index]] else counted[[index]]
