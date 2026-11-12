@@ -147,7 +147,10 @@ estimated_plot_width <- function(built, settings) {
   labels <- labels[!is.na(labels)]
   style <- role_style(settings, "label")
   widest <- if (length(labels)) max(vapply(labels, text_width_pt, numeric(1), style = style)) else 0
-  column - if (widest > 0) widest + spacing$y_labels_plot * base else 0
+  sides <- vapply(built@plot@meta$hairline_side_numbers %||% list(), function(entries) {
+    if (length(entries)) side_block_width(settings, entries) + spacing$y_labels_plot * base else 0
+  }, numeric(1))
+  column - (if (widest > 0) widest + spacing$y_labels_plot * base else 0) - max(c(0, sides))
 }
 
 # Whether neighbouring x labels keep `ticks.label_rows_gap` between them: each centred on its break, or aligned

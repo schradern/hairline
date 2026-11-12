@@ -35,7 +35,8 @@ hl_spread(
   reference = NULL,
   highlight = NULL,
   key_title = NULL,
-  facet = NULL
+  facet = NULL,
+  summary = NULL
 )
 }
 \arguments{
@@ -51,8 +52,9 @@ hl_spread(
 
 \item{mark_label}{Name of the reference in the numbers column, e.g. \code{"beds"}.}
 
-\item{stats}{Numbers to show: any of \code{"median"}, \code{"iqr"}, \code{"mean"}, \code{"n"}, \code{"range"}, \code{"levels"} (the most
-frequent values with their shares). A median that falls between two large levels is warned about.}
+\item{stats}{Numbers to show: any of \code{"median"}, \code{"iqr"}, \code{"mean"}, \code{"n"}, \code{"range"}, \code{"sd"}, \code{"ci"} (the
+mean's 95\% confidence interval), \code{"levels"} (the most frequent values with their shares). A median that
+falls between two large levels is warned about.}
 
 \item{percent}{Values are shares (0-1), shown as percentages.}
 
@@ -99,6 +101,10 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{key_title}{Title at the start of the legend row, naming what the groups are.}
 
 \item{facet}{Column whose values each get a panel.}
+
+\item{summary}{The marks per row: any of \code{"median"} (a dot), \code{"mean"} (an open diamond), \code{"iqr"} (the band),
+\code{"range"} (a thin line), \code{"sd"} and \code{"ci"} (the mean's SD or 95\% CI as a slim bar); one bar at most. The
+default is \code{c("median", "iqr", "range")}; a summary you give is named in the legend.}
 }
 \value{
 A ggplot with the hairline frame.

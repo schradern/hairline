@@ -18,6 +18,10 @@
 #' @param order Row order instead of sorting by value.
 #' @param facet Column whose values each get a block of rows under their name, each block sorted on its own.
 #' @param show_n `FALSE` leaves the n out of the labels (it still counts for `min_n`).
+#' @param summary Take the rows as values and draw one row per label (per block with `facet`): a centre, `"median"`
+#'   or `"mean"`, with an interval that belongs to it, `"iqr"` or `"range"` with the median, `"sd"`, `"ci"` or
+#'   `"range"` with the mean (`summary = c("mean", "ci")`). Each row's n is counted, written after its label and
+#'   used by `min_n`; the heading names the measures and the axis takes the column's name.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -27,14 +31,29 @@
 #' @export
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
                        sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL, percent = FALSE,
-                       order = NULL, min_n = NULL, x_title = NULL, highlight = NULL, facet = NULL, show_n = TRUE) {
+                       order = NULL, min_n = NULL, x_title = NULL, highlight = NULL, facet = NULL, show_n = TRUE,
+                       summary = NULL) {
   check_columns(data, c(label, estimate, low, high, n, facet))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
                  if (is.null(low)) "high" else "low", low %||% high), call. = FALSE)
   }
-  interval <- !is.null(low) && !is.null(high)
   if (isTRUE(percent)) data <- dotplot_percent(data, c(estimate, low, high))
+  heading <- NULL
+  if (!is.null(summary)) {
+    # Decimals as the other charts write a mean of these values: by magnitude, one more for whole numbers.
+    values <- suppressWarnings(as.numeric(data[[estimate]]))
+    values <- values[!is.na(values)]
+    digits <- digits %||% (auto_digits(values) + if (is_whole(values)) 1 else 0)
+    found <- dotplot_summarised(data, label, estimate, list(low, high, n), facet, summary)
+    data <- found$data
+    low <- found$low
+    high <- found$high
+    n <- found$n
+    heading <- found$heading
+    x_title <- x_title %||% if (isTRUE(percent)) paste0(humanise(estimate), " (%)") else humanise(estimate)
+  }
+  interval <- !is.null(low) && !is.null(high)
   kept <- dotplot_min_n(data, label, n, min_n)
   arranged <- dotplot_faceted(kept$data, label, estimate, sort, order, facet)
   data <- arranged$data
@@ -51,7 +70,7 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
     high <- ".high"
   }
   name <- if (isTRUE(percent)) paste0(humanise(estimate), " (%)") else humanise(estimate)
-  heading <- if (interval) word("interval", name = name) else name
+  heading <- heading %||% if (interval) word("interval", name = name) else name
   spec <- forest_spec(data, label, estimate, low, high, ratio = ratio, colour = lone_colour(),
                       study_heading = humanise(label), effect_heading = heading, digits = digits, marker = "dot",
                       interval = interval, null = NULL, references = option_references(reference, "dotplot"),
@@ -68,6 +87,42 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot
+}
+
+# One row per label (per block and label with `facet`), in the order labels first appear: the centre as the
+# estimate, the interval's ends and n; with the columns to read them from and the heading naming them. As Python's
+# summarised().
+dotplot_summarised <- function(data, label, estimate, given, facet, summary) {
+  marks <- check_paired(check_summary(summary, "dotplot"), "dotplot")
+  if (any(!vapply(given, is.null, logical(1)))) {
+    stop(paste("hairline: dotplot: summary computes each row's centre, interval and n from the values; leave out",
+               "low, high and n"), call. = FALSE)
+  }
+  check_labels(data, c(label, facet), "dotplot")
+  check_numeric(data, estimate, "dotplot")
+  keys <- if (is.null(facet)) as.character(data[[label]]) else
+    paste(as.character(data[[facet]]), as.character(data[[label]]), sep = "\r")
+  rows <- lapply(unique(keys), function(key) {
+    part <- data[keys == key, , drop = FALSE]
+    values <- as.numeric(stats::na.omit(part[[estimate]]))
+    if (!length(values)) return(NULL)
+    found <- summary_values(values)
+    name <- as.character(part[[label]][1])
+    if (!is.null(marks$interval) && marks$interval %in% c("sd", "ci") && !is.finite(found$sd)) {
+      stop(sprintf("hairline: dotplot: '%s' has one value, and an %s needs two or more; min_n = 2 leaves such rows out",
+                   name, toupper(marks$interval)), call. = FALSE)
+    }
+    ends <- if (is.null(marks$interval)) rep(found[[marks$centre]], 2) else interval_of(found, marks$interval)
+    row <- data.frame(name, found[[marks$centre]], ends[1], ends[2], found$n)
+    names(row) <- c(label, estimate, ".hairline_low", ".hairline_high", ".hairline_n")
+    if (!is.null(facet)) row[[facet]] <- part[[facet]][1]
+    row
+  })
+  heading <- if (is.null(marks$interval)) word(marks$centre) else
+    word("summary_heading", centre = word(marks$centre), interval = word(summary_legend_words[[marks$interval]]))
+  list(data = do.call(rbind, Filter(Negate(is.null), rows)),
+       low = if (!is.null(marks$interval)) ".hairline_low", high = if (!is.null(marks$interval)) ".hairline_high",
+       n = ".hairline_n", heading = heading)
 }
 
 # Rows whose `n` reaches `min_n`, and the caption note naming the others; `min_n` needs the n column. As Python's

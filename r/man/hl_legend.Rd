@@ -8,7 +8,8 @@ hl_legend(items)
 }
 \arguments{
 \item{items}{List of \code{list(kind, colour, label)}; \code{kind} is one of \code{"line"}, \code{"thin"}, \code{"dash"},
-\code{"band"}, \code{"dot"}, \code{"square"}, \code{"diamond"} (an open marker, such as a mean).}
+\code{"band"}, \code{"dot"}, \code{"square"}, \code{"diamond"} (an open marker, such as a mean), \code{"tick"} (a median across
+the value axis), \code{"bar"} and \code{"slim"} (interval bars: an IQR, an SD or CI).}
 }
 \value{
 An object to add to a ggplot with \code{+}.

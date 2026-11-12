@@ -40,6 +40,7 @@ def table_label_width(figure: HairlineFigure) -> float:
         return 0.0
     style = role_style(figure.settings, "label")
     rows = figure.table_spec["rows"]
+    # A compact row's label ("n") takes the room its full row leaves, so existing figures keep their frame.
     widest = max(text_width(label, style["family"], style["size"]) for label, _, _ in rows)
     values = max((text_width(text, style["family"], style["size"]) for _, _, items in rows for _, text in items),
                  default=0.0)
@@ -49,6 +50,46 @@ def table_label_width(figure: HairlineFigure) -> float:
 def value_x(figure: HairlineFigure, value: float) -> float:
     box, (low, high) = figure.plot_boxes[0], figure.axes[0].get_xlim()
     return box.x + (value - low) / (high - low) * box.width
+
+
+def text_span(figure: HairlineFigure, value: float, content: str, style: dict) -> tuple[float, float]:
+    """Where a table text reaches: centred at its x, or aligned inward at the plot's edges, as it is drawn."""
+    low, high = figure.axes[0].get_xlim()
+    x, width = value_x(figure, value), text_width(content, style["family"], style["size"])
+    align = edge_alignment((value - low) / (high - low))
+    start = x if align == "left" else x - width if align == "right" else x - width / 2
+    return start, start + width
+
+
+def table_collision(figure: HairlineFigure, values: list[tuple[float, str]], style: dict) -> str | None:
+    """Where neighbouring texts of a row come closer than the gap of x-axis labels (`ticks.label_rows_gap`): the
+    figure's message saying what would fit; None when they stand apart."""
+    gap = load_tokens()["ticks"]["label_rows_gap"] * style["size"]
+    placed = sorted((*text_span(figure, value, content, style), content) for value, content in values)
+    for (_, right, content), (left, _, next_content) in zip(placed, placed[1:], strict=False):
+        if left - right < gap:
+            return (f"hairline: the numbers under the x axis do not fit side by side: '{content}' and "
+                    f"'{next_content}' leave {left - right:.1f} pt between them, and need {gap:.1f} pt. Show fewer "
+                    f"stats or groups, use a wider size, or a chart that lists the numbers in a column, such as "
+                    f"spread()")
+    return None
+
+
+def fitted_rows(figure: HairlineFigure, style: dict) -> list[tuple]:
+    """Each row as drawn: in full, or in its compact form when the full texts would meet; a row that fits in
+    neither stops the figure."""
+    from hairline.errors import HairlineLayoutError
+    spec, rows = figure.table_spec, []
+    for (label, color, values), compact in zip(spec["rows"], spec.get("compact") or [None] * len(spec["rows"]),
+                                               strict=True):
+        problem = table_collision(figure, values, style)
+        if problem and compact:
+            label, values = compact
+            problem = table_collision(figure, values, style)
+        if problem:
+            raise HairlineLayoutError(problem)
+        rows.append((label, color, values))
+    return rows
 
 
 def draw_table(figure: HairlineFigure, layout: FrameLayout, lines: dict) -> list:
@@ -62,7 +103,7 @@ def draw_table(figure: HairlineFigure, layout: FrameLayout, lines: dict) -> list
     spacing, cap = load_tokens()["spacing"], load_font_metrics().cap_height * label["size"]
     keys = figure.table_keys or ["square"] * len(spec["rows"])
     figure.table_value_xs = []
-    for (name, color, values), baseline, kind in zip(spec["rows"], baselines, keys, strict=True):
+    for (name, color, values), baseline, kind in zip(fitted_rows(figure, ink), baselines, keys, strict=True):
         if color is not None:
             artists += draw_swatch(figure.figure, LegendItem(kind, color, name), layout.left, baseline - cap / 2,
                                    settings.base_size, spacing, lines)

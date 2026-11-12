@@ -134,6 +134,8 @@ def check_panel_width(spec: FrameInput, width: float, spacing: dict) -> None:
     """Long y labels (or many columns) must leave room for the data; otherwise the panel would vanish or turn over."""
     if width < spacing["min_panel_width"] * spec.base_size:
         labels = f"; the y labels take {spec.y_label_width_pt:.0f} pt" if spec.y_labels else ""
+        labels += f"; the numbers beside the plot take {max(spec.side_widths):.0f} pt" if any(spec.side_widths) \
+            else ""
         raise HairlineLayoutError(f"hairline: figure too narrow: {spec.width_pt:.0f} pt wide leaves {width:.1f} pt "
                                   f"per panel for {spec.panel_columns} panel columns{labels}; shorten the labels, use "
                                   f"fewer columns or a wider size")

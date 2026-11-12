@@ -28,7 +28,9 @@ hl_raincloud(
   highlight = NULL,
   key_title = NULL,
   facet = NULL,
-  columns = NULL
+  columns = NULL,
+  summary = NULL,
+  stats = character()
 )
 }
 \arguments{
@@ -70,6 +72,13 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{facet}{Column whose values each get a panel.}
 
 \item{columns}{Panels per row with \code{facet} (two by default).}
+
+\item{summary}{The marks at the box's place: any of \code{"median"} (a tick), \code{"mean"} (an open diamond), \code{"iqr"}
+(the box), \code{"range"} (a thin line), \code{"sd"} and \code{"ci"} (the mean's SD or 95\% CI as a slim bar); one bar at
+most. The default is \code{c("median", "iqr")}; a summary you give is named in the legend.}
+
+\item{stats}{The same measures as rows of numbers under the groups: any of \code{"median"}, \code{"mean"}, \code{"iqr"},
+\code{"range"}, \code{"sd"}, \code{"ci"}.}
 }
 \value{
 A ggplot with the hairline frame.

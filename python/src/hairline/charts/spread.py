@@ -26,57 +26,67 @@ from hairline.charts.common import (
 from hairline.charts.forest import decimals
 from hairline.charts.options import FACET_BLOCK, FACET_KEY, Reference, facet_rows, references
 from hairline.charts.spread_geometry import spread_drawing
+from hairline.charts.summaries import (
+    BARS,
+    Numbers,
+    check_summary,
+    interval_of,
+    measure_numbers,
+    stat_pairs,
+    summary_legend,
+    summary_values,
+)
 from hairline.charts.timeseries import groups_of
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import (
-    auto_digits,
     format_number,
     format_percent,
-    is_whole,
     locale_symbols,
-    quantile_places,
     snap_noise,
     word,
 )
 from hairline.settings import current_settings
-from hairline.stats.density import level_quantiles, median_gap, quantiles, top_levels
+from hairline.stats.density import median_gap
 from hairline.ticks import axis_limits, nice_breaks
 from hairline.tokens import load_tokens
 
-STATS = ("median", "iqr", "mean", "n", "range", "levels")
+STATS = ("median", "iqr", "mean", "n", "range", "levels", "sd", "ci")
 SORTS = (None, "median")
-DASH = "–"
+DEFAULT_SUMMARY = ("median", "iqr", "range")
 
 
-def number_formatter(values: np.ndarray, percent: bool, digits: int | None, extra: int = 0):
-    """Formats values with digits by magnitude (of the percentage for shares), plus `extra` decimals (one for
-    means of whole numbers); float noise snapped first."""
-    scale = 100.0 if percent else 1.0
-    places = (digits if digits is not None else auto_digits(values * scale)) + extra
-    suffix = locale_symbols(None)["percent_space"] + "%" if percent else ""
-    return lambda value: format_number(snap_noise(float(value) * scale), places) + suffix
-
-
-def levels_text(values: np.ndarray, number) -> str:
-    """The most frequent values with their shares: '25 (48 %) · 50 (41 %)'."""
-    shown = top_levels(values, load_tokens()["spread"]["levels_shown"])
-    return " · ".join(f"{number(level)} ({format_percent(share, 0)})" for level, share in shown)
-
-
-def stats_pairs(values: np.ndarray, stats: Sequence[str], numbers: tuple, mark: float | None,
+def stats_pairs(values: np.ndarray, stats: Sequence[str], numbers: Numbers, mark: float | None,
                 mark_label: str | None, discrete: bool = False) -> list[list[str]]:
-    """Key numbers as (label, value) pairs, drawn like a panel header's key numbers."""
-    number, mean_number = numbers
-    low, q1, middle, q3, high = (level_quantiles if discrete else quantiles)(values, [0, 0.25, 0.5, 0.75, 1])
-    parts = {"median": ["Median", number(middle)], "iqr": ["IQR", f"{number(q1)}{DASH}{number(q3)}"],
-             "mean": ["Mean", mean_number(np.mean(values))], "n": ["n", format_number(len(values), 0)],
-             "range": ["Range", f"{number(low)}{DASH}{number(high)}"],
-             "levels": [word("levels"), levels_text(values, number)] if "levels" in stats else None}
-    pairs = [parts[name] for name in stats]
+    """Key numbers as (label, value) pairs, drawn like a panel header's key numbers, the group's mark last."""
+    pairs = stat_pairs(values, stats, numbers, discrete)
     if mark is not None and mark_label:
-        pairs.append([mark_label, number(mark)])
+        pairs.append([mark_label, numbers[0](mark)])
     return pairs
+
+
+def summary_row(values: np.ndarray, shown: np.ndarray, names: Sequence[str], discrete: bool) -> dict:
+    """A row's marks: the range of the values drawn, the quartiles and mean held within it, and the interval bar
+    (an SD or CI may reach past the values drawn; the axis widens for it)."""
+    found = summary_values(values, discrete)
+    low, high = float(shown.min()), float(shown.max())
+
+    def held(value: float) -> float:
+        return min(max(value, low), high)
+    bar = next((name for name in names if name in BARS), None)
+    ends = None
+    if bar == "iqr":
+        ends = (held(found["q1"]), held(found["q3"]), False)
+    elif bar and math.isfinite(found["sd"]):
+        ends = (*interval_of(found, bar), True)
+    return {"low": low, "high": high, "range": "range" in names, "bar": ends, "median": held(found["median"]),
+            "show_median": "median" in names, "mean": held(found["mean"]) if "mean" in names else None}
+
+
+def chosen_summary(summary: str | Sequence[str] | None, mean: bool) -> tuple[str, ...]:
+    """The marks drawn: the default (median dot, IQR band, range line) or `summary`, with the mean when `mean`."""
+    names = DEFAULT_SUMMARY if summary is None else check_summary(summary, "spread")
+    return (*names, "mean") if mean and "mean" not in names else names
 
 
 def check_options(stats: str | Sequence[str], digits: int | None) -> tuple[str, ...]:
@@ -117,14 +127,6 @@ def spread_axis(lows: list[float], highs: list[float], percent: bool, zero: bool
     return {"breaks": breaks, "labels": labels, "low": limits[0], "high": limits[1]}
 
 
-def level_number(value: float) -> str:
-    """A level as given: 12.5 mg stays 12.5 and 50 stays 50 (up to three decimals). On discrete data a rounded
-    level would read as a dose nobody gave."""
-    from hairline.figure import exact_places
-    value = snap_noise(float(value))
-    return format_number(value, min(3, exact_places(value)))
-
-
 def warn_median_gaps(groups: list[tuple[str, np.ndarray]], numbers: tuple, chart: str = "spread") -> None:
     # The median takes one more decimal for whole numbers (37.5, not the 38 the column shows); levels as they are.
     """A median between two levels that each hold a large share matches neither (doses of 25 and 50 mg, median
@@ -159,7 +161,7 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
                 color_by: str | None = None, dimension: str | None = None, discrete: bool = False,
                 section: str | None = None, panel_letters: bool = False, mean: bool = False,
                 sort: str | None = None, reference: Reference = None,
-                highlight: Sequence[str] | str | None = None) -> dict:
+                highlight: Sequence[str] | str | None = None, summary: str | Sequence[str] | None = None) -> dict:
     check_columns(data, [group, value, color_by, section])
     if sort not in SORTS:
         raise ValueError(f"hairline: spread: sort {sort!r} must be 'median' or None")
@@ -181,14 +183,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
         empty = next(name for name, values in drawn if not len(values))
         raise ValueError(f"hairline: spread: clip hides every value of '{empty}'; widen the limits")
     counted = drawn if clip_stats else groups
-    whole = is_whole(every) and not percent
-    plain, mean_number = number_formatter(every, percent, digits), number_formatter(every, percent, digits,
-                                                                                    1 if whole else 0)
-    whole = whole and digits is None and not discrete
-    # Of whole numbers, a quantile between two of them keeps one decimal (a median of 2.5, not 3).
-    numbers = ((lambda value: mean_number(value) if quantile_places(value, 0, whole) else plain(value)), mean_number)
-    if discrete and digits is None and not percent:
-        numbers = (level_number, mean_number)
+    numbers = measure_numbers(every, percent, digits, discrete)
+    drawn_marks = chosen_summary(summary, mean)
     if not discrete:
         warn_median_gaps(counted, numbers)
     names = [name for name, _ in groups]
@@ -199,25 +195,22 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
     sections = coarse_groups(data, group, section, "spread") if section else {}
     rows = []
     for (name, values), (_, shown) in zip(counted, drawn, strict=True):
-        q1, middle, q3 = (level_quantiles if discrete else quantiles)(values, [0.25, 0.5, 0.75])
-        low, high = float(shown.min()), float(shown.max())
         mark = marks.get(name)
-        rows.append({"name": name, "color": palette[name], "low": low, "q1": min(max(q1, low), high),
-                     "median": min(max(middle, low), high), "q3": min(max(q3, low), high), "high": high,
-                     "mark": None if mark is None else float(mark),
-                     "mean": min(max(float(np.mean(values)), low), high) if mean else None,
-                     "section": sections[name] if section else None,
+        rows.append({**summary_row(values, shown, drawn_marks, discrete), "name": name, "color": palette[name],
+                     "mark": None if mark is None else float(mark), "section": sections[name] if section else None,
                      "pairs": stats_pairs(values, stats, numbers, mark, mark_label, discrete)})
     rows = arranged(rows, sort)
-    extra = [row["mark"] for row in rows if row["mark"] is not None] + [value for value, _ in lines]
+    extra = [row["mark"] for row in rows if row["mark"] is not None] + [value for value, _ in lines] + \
+        [end for row in rows if row["bar"] for end in row["bar"][:2]]
     lows, highs = [row["low"] for row in rows] + extra, [row["high"] for row in rows] + extra
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None,
              word("levels_note", locale) if discrete else None]
     legend = [("square", color, label) for label, color in dict.fromkeys((coarse[name], palette[name])
                                                                            for name in names)] if color_by else []
-    if mean:
-        ink = current_settings().neutral["ink"]
-        legend += [("dot", ink, word("median", locale)), ("diamond", ink, word("mean", locale))]
+    if summary is not None or mean:
+        # mean=True alone names the two centres, as it always has; a summary names every mark it draws.
+        named = drawn_marks if summary is not None else ("median", "mean")
+        legend += summary_legend(named, "dot", current_settings().neutral["ink"], locale)
     return {"rows": rows, "axis": spread_axis(lows, highs, percent, zero), "axis_title": axis_title,
             "notes": [note for note in notes if note], "legend": legend, "letters": panel_letters,
             "references": [list(line) for line in lines]}
@@ -233,7 +226,7 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
            discrete: bool = False, section: str | None = None, panel_letters: bool = False, mean: bool = False,
            sort: str | None = None, x_title: str | None = None, reference: Reference = None,
            highlight: Sequence[str] | str | None = None, key_title: str | None = None,
-           facet: str | None = None) -> HairlineFigure:
+           facet: str | None = None, summary: str | Sequence[str] | None = None) -> HairlineFigure:
     """Distributions per group compared on one axis, first group on top; `marks` adds a reference tick per group
     (a capacity, a target), `mark_label` names it in the numbers column; `axis_title` (e.g. the unit) goes under
     the axis numbers. On a figure too narrow for the numbers beside the plot, they sit on a line under each row.
@@ -258,13 +251,13 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
                             colors=colors, show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats,
                             color_by=color_by, dimension=dimension, discrete=discrete, section=section,
                             panel_letters=panel_letters, mean=mean, sort=sort, reference=reference,
-                            highlight=highlight)
+                            highlight=highlight, summary=summary)
     else:
         spec = spread_spec(data, group, value, order=order, marks=marks, mark_label=mark_label, stats=stats,
                            percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title, colors=colors,
                            show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats, color_by=color_by,
                            dimension=dimension, discrete=discrete, section=section, panel_letters=panel_letters,
-                           mean=mean, sort=sort, reference=reference, highlight=highlight)
+                           mean=mean, sort=sort, reference=reference, highlight=highlight, summary=summary)
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *spec["notes"]), size=size)
     result.draw(0, lambda box, measure, style: spread_drawing(spec, box, measure, style))

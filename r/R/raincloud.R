@@ -1,10 +1,12 @@
 # Raincloud, mirroring the Python raincloud(): per group a half density, the box (IQR and
 # median) and the points, with "n = …" under the group names and comparison brackets stacked without overlap.
 
-# Density and points of the values drawn; the box (interquartile range, median) of the values counted, held within
-# the drawn range.
-raincloud_group_layers <- function(values, position, colour, rules, counted = values) {
-  settings <- hl_settings()
+raincloud_default_summary <- c("median", "iqr")
+
+# Density and points of the values drawn; the summary marks of the values counted, quartiles held within the drawn
+# range.
+raincloud_group_layers <- function(values, position, colour, rules, counted = values,
+                                   marks = raincloud_default_summary) {
   layers <- list()
   curve <- density_curve(values)
   if (!is.null(curve)) {
@@ -14,33 +16,87 @@ raincloud_group_layers <- function(values, position, colour, rules, counted = va
     layers[[1]] <- ggplot2::geom_polygon(data = outline, ggplot2::aes(.data$x, .data$y), fill = colour,
                                          alpha = rules$density_opacity, colour = NA, inherit.aes = FALSE)
   }
-  limits <- pmin(pmax(density_quantiles(counted, c(0.25, 0.5, 0.75)), min(values)), max(values))
-  half <- rules$box_half
-  box <- data.frame(xmin = position - half, xmax = position + half, ymin = limits[1], ymax = limits[3])
-  median <- ggplot2::geom_segment(data = data.frame(x = position - half, xend = position + half, y = limits[2]),
-                                  ggplot2::aes(.data$x, .data$y, xend = .data$xend, yend = .data$y),
-                                  colour = settings$neutral$surface, lineend = "butt", inherit.aes = FALSE,
-                                  linewidth = pt_to_linewidth(hl_tokens()$lines$data * settings$base_size))
-  median$hairline_secondary <- TRUE
   points <- data.frame(x = position + rules$points_centre + jitter_offsets(length(values)) * rules$points_spread,
                        y = values)
-  c(layers, list(ggplot2::geom_rect(data = box, ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax,
-                                                             ymin = .data$ymin, ymax = .data$ymax),
-                                    fill = colour, colour = NA, inherit.aes = FALSE),
-                 median,
-                 static_layer(ggplot2::geom_point(data = points, ggplot2::aes(.data$x, .data$y), colour = colour,
-                                                  inherit.aes = FALSE))))
+  c(layers, raincloud_summary_layers(counted, range(values), position, colour, marks, rules),
+    list(static_layer(ggplot2::geom_point(data = points, ggplot2::aes(.data$x, .data$y), colour = colour,
+                                          inherit.aes = FALSE))))
+}
+
+# A vertical segment at the box's place, kept out of light slots, line thinning and tooltips.
+raincloud_segment <- function(x, y, x_end, y_end, colour, width) {
+  layer <- ggplot2::geom_segment(data = data.frame(x = x, y = y, xend = x_end, yend = y_end),
+                                 ggplot2::aes(.data$x, .data$y, xend = .data$xend, yend = .data$yend),
+                                 colour = colour, lineend = "butt", inherit.aes = FALSE,
+                                 linewidth = pt_to_linewidth(width))
+  layer$hairline_secondary <- TRUE
+  layer$hairline_fixed <- TRUE
+  layer
+}
+
+raincloud_bar <- function(position, half, ends, colour) {
+  ggplot2::geom_rect(data = data.frame(xmin = position - half, xmax = position + half, ymin = ends[1],
+                                       ymax = ends[2]),
+                     ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax, ymin = .data$ymin, ymax = .data$ymax),
+                     fill = colour, colour = NA, inherit.aes = FALSE)
+}
+
+# At the box's place: the range as a thin line, the IQR as the box or an SD or CI as a slim bar, the median as a
+# tick across it (in the surface colour on the box) and the mean as an open diamond. As Python's draw_summary().
+raincloud_summary_layers <- function(counted, drawn, position, colour, marks, rules) {
+  settings <- hl_settings()
+  tokens <- hl_tokens()
+  found <- summary_values(counted)
+  held <- function(value) min(max(value, drawn[1]), drawn[2])
+  half <- rules$box_half
+  width <- tokens$lines$data * settings$base_size
+  layers <- list()
+  if ("range" %in% marks) {
+    layers <- c(layers, list(raincloud_segment(position, held(found$low), position, held(found$high),
+                                               settings$neutral$faint, tokens$reference$width * settings$base_size)))
+  }
+  bar <- intersect(marks, summary_bars)
+  if (identical(bar, "iqr")) {
+    layers <- c(layers, list(raincloud_bar(position, half, c(held(found$q1), held(found$q3)), colour)))
+  } else if (length(bar) && is.finite(found$sd)) {
+    layers <- c(layers, list(raincloud_bar(position, half * tokens$summary$thin_bar, interval_of(found, bar), colour)))
+  }
+  if ("median" %in% marks) {
+    tick <- if (identical(bar, "iqr")) settings$neutral$surface else colour
+    layers <- c(layers, list(raincloud_segment(position - half, held(found$median), position + half,
+                                               held(found$median), tick, width)))
+  }
+  if ("mean" %in% marks) layers <- c(layers, list(mean_diamond(position, held(found$mean), colour)))
+  layers
+}
+
+# The mean as an open diamond on a ggplot panel: its half-diagonal `diamond_size` point radii, its outline
+# `open_edge` of the data line, as the Python marker "D" and spread's diamond. R draws pch 23 with a half-diagonal
+# of 0.375 * 1.25331 of its font size.
+mean_diamond <- function(x, y, colour) {
+  settings <- hl_settings()
+  lines <- hl_tokens()$lines
+  edge <- lines$data * settings$base_size * open_edge
+  stroke <- 2 * edge / 0.75 / ggplot2::.stroke
+  fontsize <- diamond_size * lines$point_radius * settings$base_size / (0.375 * 1.25331)
+  layer <- ggplot2::geom_point(data = data.frame(x = x, y = y), ggplot2::aes(.data$x, .data$y), shape = 23,
+                               fill = settings$neutral$surface, colour = colour, stroke = stroke,
+                               size = (fontsize - stroke * ggplot2::.stroke / 2) / ggplot2::.pt, inherit.aes = FALSE)
+  layer$hairline_secondary <- TRUE
+  layer$hairline_fixed <- TRUE
+  layer
 }
 
 # One panel's groups at their positions (a group without values here is left empty) and its comparisons, tested on
 # this panel's values: the layers and the bracket levels. As Python's draw_panel().
-raincloud_panel_layers <- function(drawn, counted, comparisons, names, palette) {
+raincloud_panel_layers <- function(drawn, counted, comparisons, names, palette,
+                                   marks = raincloud_default_summary) {
   rules <- hl_tokens()$raincloud
   layers <- list()
   for (index in seq_along(names)) {
     if (!length(drawn[[index]])) next
     layers <- c(layers, raincloud_group_layers(drawn[[index]], index - 1, palette[[names[index]]], rules,
-                                               counted[[index]]))
+                                               counted[[index]], marks))
   }
   present <- lengths(counted) > 0
   rows <- data.frame(group = rep(names[present], lengths(counted[present])),
@@ -126,6 +182,27 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
   })
 }
 
+# The measures written under the groups; n has its own row (show_n), and panels have no row under them.
+raincloud_check_stats <- function(stats, facet) {
+  stats <- as_names(stats, "raincloud", "stats", summary_names)
+  if (length(stats) && !is.null(facet)) {
+    stop(paste("hairline: raincloud: stats writes a row of numbers under the groups, which facet panels do not have;",
+               "use hl_spread(facet = ...), which lists the numbers beside each block's rows"), call. = FALSE)
+  }
+  stats
+}
+
+# One table row per measure, its label on the left, each group's number under the group.
+raincloud_stat_rows <- function(groups, stats, percent) {
+  if (!length(stats)) return(list())
+  numbers <- measure_numbers(unlist(groups, use.names = FALSE), percent, NULL)
+  found <- lapply(groups, stat_pairs, names = stats, numbers = numbers)
+  lapply(seq_along(stats), function(row) {
+    list(label = found[[1]][[row]][1], colour = NULL, x = seq_along(groups) - 1,
+         text = unname(vapply(found, function(pairs) pairs[[row]][2], character(1))))
+  })
+}
+
 #' Raincloud plot
 #'
 #' Per group a half density, the box (interquartile range and median) and
@@ -147,6 +224,11 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
 #'   named in the caption; "n = …" counts the values the statistics use.
 #' @param show_n Write "n = …" under each group.
 #' @param columns Panels per row with `facet` (two by default).
+#' @param summary The marks at the box's place: any of `"median"` (a tick), `"mean"` (an open diamond), `"iqr"`
+#'   (the box), `"range"` (a thin line), `"sd"` and `"ci"` (the mean's SD or 95% CI as a slim bar); one bar at
+#'   most. The default is `c("median", "iqr")`; a summary you give is named in the legend.
+#' @param stats The same measures as rows of numbers under the groups: any of `"median"`, `"mean"`, `"iqr"`,
+#'   `"range"`, `"sd"`, `"ci"`.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -159,13 +241,15 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
                          order = NULL, comparisons = list(), colors = NULL, min_n = NULL, clip = NULL,
                          clip_stats = FALSE, color_by = NULL, dimension = NULL, sort = NULL, percent = FALSE,
                          show_n = TRUE, x_title = NULL, reference = NULL, highlight = NULL, key_title = NULL,
-                         facet = NULL, columns = NULL) {
+                         facet = NULL, columns = NULL, summary = NULL, stats = character()) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
     group <- sides$right[1]
   }
   check_columns(data, c(group, value, color_by, facet))
+  marks <- if (is.null(summary)) raincloud_default_summary else check_summary(summary, "raincloud")
+  stats <- raincloud_check_stats(stats, facet)
   check_present(data, value, "raincloud")
   check_numeric(data, value, "raincloud")
   data <- data[!is.na(data[[value]]), , drop = FALSE]
@@ -188,7 +272,8 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     here <- if (is.null(facet)) rep(TRUE, nrow(data)) else as.character(data[[facet]]) == panel
     values <- lapply(names, function(name) data[[value]][here & as.character(data[[group]]) == name])
     shown <- lapply(values, within_limits, limits = limits)
-    built <- raincloud_panel_layers(shown, if (clip_stats) shown else values, comparisons, names, coloured$palette)
+    built <- raincloud_panel_layers(shown, if (clip_stats) shown else values, comparisons, names, coloured$palette,
+                                    marks)
     plot <- plot + if (is.null(facet)) built$layers else in_facet(built$layers, panel, panels)
     levels <- max(levels, built$levels)
     if (!is.null(facet)) {
@@ -204,14 +289,19 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
                                 expand = c(0, 0)) +
     ggplot2::labs(title = title, subtitle = subtitle, caption = with_caption(caption, notes), x = NULL,
                   y = y_title) + theme_hairline() +
-    hl_legend(if (is.null(color_by)) list() else coarse_legend(coloured))
+    hl_legend(c(if (!is.null(color_by)) coarse_legend(coloured),
+                if (!is.null(summary)) summary_legend(marks, "line", hl_settings()$neutral$ink)))
   if (!is.null(facet)) {
     plot <- plot + ggplot2::facet_wrap(ggplot2::vars(.data$.facet), ncol = columns %||% min(length(panels), 2))
   }
-  if (show_n && is.null(facet)) {
-    plot@meta$hairline_table <- list(heading = NULL, rows = list(list(label = "", colour = NULL,
-                                                                      x = seq_along(names) - 1, text = unname(counts))))
+  table <- if (show_n && is.null(facet)) {
+    # Where "n = 20" under each group would meet, the row reads "n" and then the bare counts.
+    list(list(label = "", colour = NULL, x = seq_along(names) - 1, text = unname(counts),
+              compact = list(label = "n", text = vapply(counted, function(values) hl_format_number(length(values), 0),
+                                                        character(1), USE.NAMES = FALSE))))
   }
+  table <- c(table, raincloud_stat_rows(counted, stats, percent))
+  if (length(table)) plot@meta$hairline_table <- list(heading = NULL, rows = table)
   if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
   # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
   plot@meta$hairline_min_plot <- bracket_plot_height(levels)

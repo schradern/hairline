@@ -77,22 +77,47 @@ def pair_texts(pairs: list[list[str]], lefts: list[float], baseline: float, meas
     return shapes
 
 
+def bar_shape(row: dict, centre: float, half: float, scale, rules: dict) -> dict:
+    """The interval bar: the IQR as the light band, an SD or CI as a slim solid bar (`summary.thin_bar` of it)."""
+    low, high, slim = row["bar"]
+    half *= load_tokens()["summary"]["thin_bar"] if slim else 1.0
+    points = [[scale(low), centre - half], [scale(high), centre - half], [scale(high), centre + half],
+              [scale(low), centre + half]]
+    return {"kind": "polygon", "points": points, "fill": row["color"], "alpha": 1.0 if slim else rules["band_opacity"],
+            "role": "band"}
+
+
+def row_centre(row: dict) -> float:
+    """Where a row's tooltip points: its median, else its mean, else the middle of its bar or range."""
+    if row["show_median"]:
+        return row["median"]
+    if row.get("mean") is not None:
+        return row["mean"]
+    low, high = row["bar"][:2] if row["bar"] else (row["low"], row["high"])
+    return (low + high) / 2
+
+
 def row_shapes(row: dict, centre: float, pitch: float, scale, style: dict, rules: dict) -> list[dict]:
+    """The marks of `summary` (range line, interval bar, median dot, mean diamond) and the group's mark; the first
+    of them carries the row's tooltip."""
     half = rules["band"] * pitch / 2
-    band = [[scale(row["q1"]), centre - half], [scale(row["q3"]), centre - half], [scale(row["q3"]), centre + half],
-            [scale(row["q1"]), centre + half]]
-    tip = f"{row['name']}: " + ", ".join(f"{label} {value}" for label, value in row["pairs"])
-    shapes = [{"kind": "line", "points": [[scale(row["low"]), centre], [scale(row["high"]), centre]],
-               "color": style["neutral"]["faint"], "width": style["leader_width"], "role": "range"},
-              {"kind": "polygon", "points": band, "fill": row["color"], "alpha": rules["band_opacity"],
-               "role": "band", "tip": tip, "tip_at": [scale(row["median"]), centre - half]},
-              marker(scale(row["median"]), centre, dot_size(style), "dot", row["color"])]
+    shapes = []
+    if row["range"]:
+        shapes.append({"kind": "line", "points": [[scale(row["low"]), centre], [scale(row["high"]), centre]],
+                       "color": style["neutral"]["faint"], "width": style["leader_width"], "role": "range"})
+    if row["bar"]:
+        shapes.append(bar_shape(row, centre, half, scale, rules))
+    if row["show_median"]:
+        shapes.append(marker(scale(row["median"]), centre, dot_size(style), "dot", row["color"]))
     if row.get("mean") is not None:
         shapes.append(open_diamond(scale(row["mean"]), centre, row["color"], style))
     if row["mark"] is not None:
         tick, x = rules["mark"] * half, scale(row["mark"])
         shapes.append({"kind": "line", "points": [[x, centre - tick], [x, centre + tick]],
                        "color": style["neutral"]["ink"], "width": style["leader_width"], "role": "mark"})
+    if shapes:
+        tip = f"{row['name']}: " + ", ".join(f"{label} {value}" for label, value in row["pairs"])
+        shapes[0] = {**shapes[0], "tip": tip, "tip_at": [scale(row_centre(row)), centre - half]}
     return [{**shape, "series": row["name"]} for shape in shapes]
 
 

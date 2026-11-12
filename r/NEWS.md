@@ -91,6 +91,22 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
 * Three gallery figures in both languages: `scatter_sites`, `spread_years` and `ridgeline_sites`; `dotplot_rates`
   draws a benchmark.
 
+## Summaries: the same measures on every chart
+
+* `summary =` chooses the marks on `hl_raincloud()`, `hl_spread()`, `hl_ridgeline()`, `hl_dotplot()` and
+  `hl_timeseries()` from one vocabulary: `"median"`, `"mean"` (an open diamond), `"iqr"` (a thick bar), `"range"`
+  (a thin line), and `"sd"` and `"ci"` (the mean's SD or 95% CI as a slim bar). A summary you give is named in the
+  legend; without one, each chart draws what it did before. See `docs/guide/summaries.md`.
+* `stats =` writes the same measures as numbers: rows under the groups (raincloud), a column beside the ridges
+  (ridgeline), the panel headers (timeseries, now also `"iqr"`, `"sd"`, `"ci"` and `"n"`) and the column of spread
+  (now also `"sd"` and `"ci"`). Their labels follow the locale ("Spannweite", "95 %-KI").
+* `hl_dotplot(summary = c("mean", "ci"))` takes one row per value and draws one row per label, with its n.
+  `hl_timeseries(summary = c("median", "iqr"))` draws each x's centre as a line over its interval as a band.
+* Legend kinds `"tick"`, `"bar"` and `"slim"` for the marks; the numbers column beside a panel holds several
+  measures per row, aligned.
+* Numbers under the x axis never meet: `n = 20` shortens to `20` after the label `n`, and a row that still cannot
+  stand apart stops the figure with what would fit.
+
 ## Nothing overlaps
 
 * `hl_check_layout()` lists what a reader would see collide in a figure: text over text, text off the figure, marks

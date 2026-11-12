@@ -90,7 +90,7 @@ fitted_size_mm <- function(plot, size_mm) {
   if (!inherits(frame, "hairline_frame")) return(size_mm)
   tryCatch({
     fitted <- fitted_frame_size_mm(plot, frame, size_mm)
-    plan_frame(frame$parts, fitted / 25.4 * 72)
+    check_table(frame$parts, plan_frame(frame$parts, fitted / 25.4 * 72))
     fitted
   }, error = function(error) stop(layout_error(conditionMessage(error))))
 }

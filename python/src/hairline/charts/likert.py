@@ -21,7 +21,8 @@ from hairline.charts.common import (
 )
 from hairline.charts.likert_geometry import likert_drawing
 from hairline.charts.options import FACET_BLOCK, FACET_KEY, facet_rows
-from hairline.charts.spread import level_number, spread_axis
+from hairline.charts.spread import spread_axis
+from hairline.charts.summaries import level_number
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_number, word

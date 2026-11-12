@@ -129,7 +129,9 @@ def estimated_plot_width(figure: HairlineFigure, y_labels: Sequence[str]) -> flo
     usable = figure.figure.get_size_inches()[0] * 72 - 2 * spacing["margin"] * base
     column = (usable - (figure.columns - 1) * spacing["panel_columns"] * base) / figure.columns
     labels = max((text_width(label, style["family"], style["size"]) for label in y_labels), default=0.0)
-    return column - (labels + spacing["y_labels_plot"] * base if labels else 0.0)
+    from hairline.layout.apply import side_widths
+    return column - (labels + spacing["y_labels_plot"] * base if labels else 0.0) - max(side_widths(figure),
+                                                                                         default=0.0)
 
 
 def labels_fit(breaks: list[float], labels: list[str], limits: tuple[float, float], width: float,

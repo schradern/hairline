@@ -123,10 +123,17 @@ class HairlineFigure:
         self.check_index(index)
         self.category_axes[(index, which)] = [str(label) for label in labels]
 
-    def table(self, rows: Sequence[tuple[str, str, Sequence[tuple[float, str]]]], heading: str | None = None) -> None:
-        """Rows (label, colour, [(x, text), ...]) under the x-axis, each text centred at its x (number at risk)."""
-        self.table_spec = {"heading": heading, "rows": [(str(label), color, [(float(x), str(text)) for x, text in
-                                                                             values]) for label, color, values in rows]}
+    def table(self, rows: Sequence[tuple[str, str, Sequence[tuple[float, str]]]], heading: str | None = None,
+              compact: Sequence[tuple[str, Sequence[tuple[float, str]]] | None] = ()) -> None:
+        """Rows (label, colour, [(x, text), ...]) under the x-axis, each text centred at its x (number at risk).
+        `compact` gives a row a shorter form, (label, [(x, text), ...]), drawn when its texts would not stand apart
+        ("n = 20" under each group becomes "20" after the label "n")."""
+        def texts(values: Sequence[tuple[float, str]]) -> list[tuple[float, str]]:
+            return [(float(x), str(text)) for x, text in values]
+        shorter = list(compact) + [None] * (len(rows) - len(compact))
+        self.table_spec = {"heading": heading,
+                           "rows": [(str(label), color, texts(values)) for label, color, values in rows],
+                           "compact": [None if item is None else (str(item[0]), texts(item[1])) for item in shorter]}
 
     def highlight(self, series: Sequence[str] | None = None, panels: Sequence[int | str] | None = None) -> None:
         """Keep these series (legend labels) or panels (index or name) in colour; draw the rest in context grey."""

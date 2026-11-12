@@ -171,6 +171,12 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 <tr><td width="50%" valign="top"><a href="gallery/python/ridgeline_sites.py"><img src="docs/images/gallery/ridgeline_sites.png" alt="Facets on a ridgeline"></a><br><sub>Facets on a ridgeline</sub></td></tr>
 </table>
 
+### Summaries
+
+<table>
+<tr><td width="50%" valign="top"><a href="gallery/python/raincloud_means.py"><img src="docs/images/gallery/raincloud_means.png" alt="Summary marks and numbers"></a><br><sub>Summary marks and numbers</sub></td><td width="50%" valign="top"><a href="gallery/python/dotplot_means.py"><img src="docs/images/gallery/dotplot_means.png" alt="Means with their 95% CI"></a><br><sub>Means with their 95% CI</sub></td></tr>
+</table>
+
 ### Survival and evidence
 
 <table>
@@ -291,6 +297,8 @@ cat(hl_brand_report())
 - [Options guide](docs/guide/options.md): the options every chart shares (order, highlight, reference, facet, ...)
   and which chart has which.
 - [Layout guide](docs/guide/layout.md): the rules that keep every chart free of overlaps, and `check_layout()`.
+- [Summaries guide](docs/guide/summaries.md): `summary=` and `stats=`, one vocabulary of measures on every
+  distribution chart.
 - In R, every function has a help page with examples (`?hl_bars`), and `?hairline_colours` covers colour; in
   Python, `help(hl.bars)` and `help(hairline.palettes)`.
 

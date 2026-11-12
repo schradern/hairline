@@ -24,7 +24,8 @@ hl_dotplot(
   x_title = NULL,
   highlight = NULL,
   facet = NULL,
-  show_n = TRUE
+  show_n = TRUE,
+  summary = NULL
 )
 }
 \arguments{
@@ -60,6 +61,11 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{facet}{Column whose values each get a block of rows under their name, each block sorted on its own.}
 
 \item{show_n}{\code{FALSE} leaves the n out of the labels (it still counts for \code{min_n}).}
+
+\item{summary}{Take the rows as values and draw one row per label (per block with \code{facet}): a centre, \code{"median"}
+or \code{"mean"}, with an interval that belongs to it, \code{"iqr"} or \code{"range"} with the median, \code{"sd"}, \code{"ci"} or
+\code{"range"} with the mean (\code{summary = c("mean", "ci")}). Each row's n is counted, written after its label and
+used by \code{min_n}; the heading names the measures and the axis takes the column's name.}
 }
 \value{
 A ggplot with the hairline frame.

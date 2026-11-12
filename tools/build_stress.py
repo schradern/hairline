@@ -140,9 +140,40 @@ def drawn_cases(rng) -> list[dict]:
     ]
 
 
+def summary_cases(rng) -> list[dict]:
+    """summary= marks and stats= numbers on every chart that draws them, close to the smallest size."""
+    four = skewed(rng, ["Band A", "Band B", "Band C", "Band D"], [40, 35, 30, 25], [9, 12, 16, 22])
+    eight = skewed(rng, [f"Band {letter}" for letter in "ABCDEFGH"], [20] * 8, list(np.linspace(8, 30, 8)))
+    units = labels(12)
+    days = [f"2025-03-{day:02d}" for day in range(1, 29)]
+    return [
+        {"name": "raincloud_summary", "chart": "raincloud", "size": "single", "data": four,
+         "args": {"group": "group", "value": "value", "summary": ["median", "mean", "iqr", "range"],
+                  "stats": ["median", "iqr", "mean", "range"]}},
+        {"name": "raincloud_stats_many", "chart": "raincloud", "size": "single", "data": eight,
+         "args": {"group": "group", "value": "value", "summary": ["mean", "ci"], "stats": ["mean", "ci"]}},
+        {"name": "spread_summary", "chart": "spread", "size": "single", "data": eight,
+         "args": {"group": "group", "value": "value", "summary": ["mean", "ci", "range"],
+                  "stats": ["mean", "sd", "ci", "n"]}},
+        {"name": "ridgeline_stats", "chart": "ridgeline", "size": "single", "data": eight,
+         "args": {"group": "group", "value": "value", "summary": ["median", "mean"], "stats": ["median", "iqr", "n"]}},
+        {"name": "dotplot_summary", "chart": "dotplot", "size": "single",
+         "data": {"unit": [name for name in units for _ in range(15)],
+                  "stay": rounded(rng.lognormal(1.6, 0.5, 180))},
+         "args": {"label": "unit", "estimate": "stay", "summary": ["mean", "ci"]}},
+        {"name": "timeseries_summary", "chart": "timeseries", "size": "single",
+         "data": {"day": [day for day in days for _ in range(10)],
+                  "ward": [f"Ward {index % 2 + 1} {LONG}" for index in range(280)],
+                  "score": rounded(rng.normal(50, 8, 280))},
+         "args": {"x": "day", "y": "score", "by": "ward", "summary": ["median", "iqr"],
+                  "stats": ["median", "iqr", "n"]}},
+    ]
+
+
 def main() -> None:
     rng = np.random.default_rng(20261111)
-    cases = distribution_cases(rng) + bar_cases(rng) + row_cases(rng) + time_cases(rng) + drawn_cases(rng)
+    cases = distribution_cases(rng) + bar_cases(rng) + row_cases(rng) + time_cases(rng) + drawn_cases(rng) + \
+        summary_cases(rng)
     OUT.write_text(json.dumps({"cases": cases}, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
