@@ -44,3 +44,33 @@ hl_timeseries(scores, "day", "score", "ward", summary = c("median", "iqr"), stat
 Numbers follow the [layout rules](layout.md). Numbers under the groups that would meet first shorten
 (`n = 20` becomes `20` after the label `n`). If they still cannot stand apart, the figure stops and names what
 would fit: fewer stats or groups, a wider size, or `spread()`, which lists the numbers in a column.
+
+## Comparisons
+
+`compare` writes each group's difference from one group (`compare="Unit A"`) or from the group before it
+(`"adjacent"`), with its 95 % CI and p, next to the other numbers, never over the data. Raincloud writes them in rows
+under the groups. Spread and ridgeline write them in the column beside the rows, comparing within each block or
+panel. The dot plot, with `summary`, writes them in two columns.
+
+The test follows the chart's centre, and the caption names it:
+
+| Centre | Δ | p |
+|---|---|---|
+| Median (the default) | Hodges–Lehmann shift, distribution-free 95 % CI | Wilcoxon rank-sum test |
+| Mean alone (`summary=("mean", ...)`) | Difference in means, Welch's 95 % CI | Welch's t-test |
+
+With more than one comparison, the caption adds that p values are not adjusted for multiple comparisons.
+`compare="all"` is refused because no row can hold a number for every pair. Raincloud's `comparisons=` brackets show
+all pairs.
+
+```python
+hl.spread(stays, "unit", "days", stats=("median", "n"), compare="Surgical")
+hl.dotplot(stays, "unit", "days", summary=("mean", "ci"), compare="adjacent")
+```
+
+## Where the numbers go
+
+Spread, the dot plot and the forest plot write their numbers beside the plot while it keeps its least width, and
+under each row on a narrower figure (`numbers="auto"`). `numbers="right"` keeps them beside the plot, which may then
+be narrower. If the plot would be narrower than `spacing.min_plot_beside`, the figure stops and says so.
+`numbers="below"` always writes them under each row.

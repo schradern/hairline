@@ -18,14 +18,15 @@ from hairline.charts.common import (
     ordered_names,
     with_caption,
 )
+from hairline.charts.comparisons import section_comparisons
 from hairline.charts.forest import forest_spec
 from hairline.charts.forest_geometry import forest_drawing
-from hairline.charts.options import Reference, checked_highlight, references
+from hairline.charts.options import Reference, check_numbers, checked_highlight, references
 from hairline.charts.summaries import LEGEND_WORDS, check_paired, check_summary, interval_of, summary_values
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import context_color, lone_color
-from hairline.numbers import auto_digits, is_whole, word
+from hairline.numbers import auto_digits, format_number, is_whole, word
 from hairline.settings import current_settings
 
 SUMMARY_LOW, SUMMARY_HIGH, SUMMARY_N = "_hairline_low", "_hairline_high", "_hairline_n"
@@ -37,7 +38,8 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
             size: str = "onehalf", n: str | None = None, percent: bool = False, order: Sequence[str] | None = None,
             min_n: int | None = None, x_title: str | None = None,
             highlight: Sequence[str] | str | None = None, facet: str | None = None,
-            show_n: bool = True, summary: str | Sequence[str] | None = None) -> HairlineFigure:
+            show_n: bool = True, summary: str | Sequence[str] | None = None,
+            compare: str | None = None, numbers: str = "auto") -> HairlineFigure:
     """One dot per row, largest at the top; with `low` and `high` an interval and its numbers on the right.
     `n` names the column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").
     `percent=True` draws shares (0.15) as percent (15), the heading naming the unit. `order` gives the rows'
@@ -51,13 +53,22 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     `summary` takes the rows as values and draws one row per label (per block with `facet`): a centre, "median"
     or "mean", with an interval that belongs to it, "iqr" or "range" with the median, "sd", "ci" or "range" with
     the mean (summary=("mean", "ci")). Each row's n is counted, written after its label and used by `min_n`; the
-    heading names the measures and the axis takes the column's name."""
+    heading names the measures and the axis takes the column's name. With `summary`, `compare` adds columns with
+    each row's difference against one label (compare="Medical") or the row above ("adjacent"), its 95 % CI and p,
+    within each block; the caption names the test (Welch's t-test with the mean, the Hodges–Lehmann shift and
+    Wilcoxon rank-sum test with the median).
+
+    `numbers` places the numbers: beside the intervals while they keep their least width, else under each row
+    ("auto"), always beside them ("right"), or always under each row ("below")."""
     check_columns(data, [label, estimate, low, high, n, facet])
     if (low is None) != (high is None):
         raise ValueError(f"hairline: dotplot: an interval needs both low and high; got only "
                          f"{'low' if low is not None else 'high'}={low if low is not None else high!r}")
     data = as_percent(data, [estimate, low, high]) if percent else data
-    heading = None
+    heading, raw = None, data
+    if compare is not None and summary is None:
+        raise ValueError("hairline: dotplot: compare needs summary=, so each row has the values it is compared on "
+                         "(summary=('mean', 'ci'))")
     if summary is not None:
         # Decimals as the other charts write a mean of these values: by magnitude, one more for whole numbers.
         values = pd.to_numeric(data[estimate], errors="coerce").dropna().to_numpy(dtype=float)
@@ -68,6 +79,8 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     data, small = rows_with_min_n(data, label, n, min_n)
     rows, blocks = faceted_rows(data, label, estimate, sort, order, facet)
     names = [str(name) for name in rows[label]]
+    rows, columns, compared = dot_comparisons(raw, rows, names, blocks, (label, estimate, facet), compare, summary,
+                                              digits)
     chosen = checked_highlight(highlight, names, "dotplot")
     if n is not None:
         check_numeric(rows, [n], "dotplot")
@@ -81,7 +94,9 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     heading = heading or (word("interval", name=name) if interval else name)
     spec = forest_spec(rows, label, estimate, low, high, ratio=ratio, color=lone_color(),
                        study_heading=humanise(label), effect_heading=heading, digits=digits, marker="dot",
+                       columns=columns, numbers=check_numbers(numbers, "dotplot"),
                        interval=interval, null=None, references=references(reference, "dotplot"), axis_title=x_title)
+    spec["chart"] = "dotplot"
     if chosen:
         grey = context_color(current_settings())
         for row, row_name in zip(spec["rows"], names, strict=True):
@@ -89,9 +104,34 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     if blocks:
         spec["rows"] = with_headings(spec["rows"], blocks)
     result = figure(title or f"{humanise(estimate)} by {str(label).replace('_', ' ')}", subtitle=subtitle,
-                    caption=with_caption(caption, small), size=size)
+                    caption=with_caption(caption, small, compared), size=size)
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))
     return fit_height(result)
+
+
+def dot_comparisons(raw: pd.DataFrame, rows: pd.DataFrame, names: list[str], blocks: list[str], columns: tuple,
+                    compare: str | None, summary: str | Sequence[str] | None, digits: int | None) -> tuple:
+    """With `compare`: each row's Δ and p within its block as two text columns, the columns for the forest layout and
+    the caption note naming the test; otherwise the rows as they are."""
+    if compare is None:
+        return rows, None, None
+    label, estimate, facet = columns
+    blocked = blocks or [""] * len(names)
+    keys = [f"{block}\x1f{name}" for block, name in zip(blocked, names, strict=True)]
+    labels = raw[label].astype(str)
+    within = raw[facet].astype(str) if facet else pd.Series("", index=raw.index)
+    values = {key: pd.to_numeric(raw[estimate][(within == block) & (labels == name)], errors="coerce").dropna()
+              .to_numpy(dtype=float) for key, block, name in zip(keys, blocked, names, strict=True)}
+    found = [{"name": key, "section": block, "pairs": []} for key, block in zip(keys, blocked, strict=True)]
+
+    def number(value: float) -> str:
+        return format_number(value, digits if digits is not None else 2)
+    note = section_comparisons(found, values, compare, check_summary(summary, "dotplot"), (number, number),
+                               "dotplot", {key: name for key, name in zip(keys, names, strict=True)})
+    texts = {"_hairline_difference": [row["pairs"][0][1] for row in found],
+             "_hairline_p": [row["pairs"][1][1] for row in found]}
+    headings = {word("interval", name=word("difference")): "_hairline_difference", "p": "_hairline_p"}
+    return rows.assign(**texts), headings, note
 
 
 def summarised(data: pd.DataFrame, label: str, estimate: str, given: tuple, facet: str | None,

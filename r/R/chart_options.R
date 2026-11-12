@@ -164,3 +164,31 @@ facet_rows <- function(data, group, facet, order, chart) {
   keys <- keys[keys %in% data[[facet_key]]]
   list(data = data, keys = keys, groups = stats::setNames(sub("^.*? \u00b7 ", "", keys, perl = TRUE), keys))
 }
+
+# Where row charts (spread, dot plot, forest) write their numbers: beside the plot while it keeps its least width,
+# else under each row ("auto"); always beside it ("right"), or always under each row ("below"). As Python's
+# check_numbers() and numbers_beside().
+number_places <- c("auto", "right", "below")
+
+check_numbers <- function(numbers, chart) {
+  if (!is.character(numbers) || length(numbers) != 1 || !numbers %in% number_places) {
+    stop(sprintf("hairline: %s: numbers '%s' must be one of 'auto', 'right', 'below'", chart,
+                 paste(format(numbers), collapse = ", ")), call. = FALSE)
+  }
+  numbers
+}
+
+# Whether a row chart's numbers sit beside a plot `plot` pt wide: by `place`, and with "right" only while the plot
+# keeps `spacing.min_plot_beside`; narrower, the figure stops and says what would fit.
+numbers_beside <- function(place, plot, least, base, chart) {
+  place <- place %||% "auto"
+  if (place == "below") return(FALSE)
+  if (place == "auto") return(plot >= least)
+  floor <- hl_tokens()$spacing$min_plot_beside * base
+  if (plot < floor) {
+    stop(layout_error(sprintf(paste("hairline: %s: the numbers beside the plot leave it %.0f pt, and it needs %.0f",
+                                    "pt; use a wider size, show fewer numbers, or numbers = \"auto\" (under each",
+                                    "row where the plot would be too narrow)"), chart, max(plot, 0), floor)))
+  }
+  TRUE
+}

@@ -170,10 +170,31 @@ def summary_cases(rng) -> list[dict]:
     ]
 
 
+def comparison_cases(rng) -> list[dict]:
+    """compare= on every chart that writes it, and numbers= beside the rows, close to the smallest size."""
+    six = skewed(rng, [f"Group {index + 1} {LONG}" if index % 2 else f"Group {index + 1}" for index in range(6)],
+                 [30, 25, 40, 18, 35, 22], [10, 11, 14, 9, 18, 12])
+    three = skewed(rng, ["Arm A", "Arm B", "Arm C"], [40, 38, 41], [10, 12, 15])
+    return [
+        {"name": "spread_compare", "chart": "spread", "size": "single", "data": six,
+         "args": {"group": "group", "value": "value", "compare": "Group 1", "stats": ["median", "n"]}},
+        {"name": "spread_numbers_right", "chart": "spread", "size": "double", "data": six,
+         "args": {"group": "group", "value": "value", "compare": "adjacent", "stats": ["median"],
+                  "numbers": "right"}},
+        {"name": "raincloud_compare", "chart": "raincloud", "size": "single", "data": three,
+         "args": {"group": "group", "value": "value", "compare": "adjacent"}},
+        {"name": "ridgeline_compare", "chart": "ridgeline", "size": "onehalf", "data": six,
+         "args": {"group": "group", "value": "value", "compare": "Group 1"}},
+        {"name": "dotplot_compare", "chart": "dotplot", "size": "single", "data": six,
+         "args": {"label": "group", "estimate": "value", "summary": ["mean", "ci"], "compare": "Group 1",
+                  "numbers": "below"}},
+    ]
+
+
 def main() -> None:
     rng = np.random.default_rng(20261111)
     cases = distribution_cases(rng) + bar_cases(rng) + row_cases(rng) + time_cases(rng) + drawn_cases(rng) + \
-        summary_cases(rng)
+        summary_cases(rng) + comparison_cases(rng)
     OUT.write_text(json.dumps({"cases": cases}, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 

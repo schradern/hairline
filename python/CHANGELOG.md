@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Comparisons
+
+* `compare=` on `raincloud`, `spread`, `ridgeline` and `dotplot` (with `summary=`): each group's difference from one
+  group or from the group before it (`"adjacent"`), with its 95 % CI and p, written beside the other numbers, never
+  over the data. The test follows the centre: the Hodges–Lehmann shift and Wilcoxon rank-sum test with the median,
+  the difference in means and Welch's t-test with the mean alone. The caption names it and, for several
+  comparisons, says that p values are not adjusted.
+* `numbers=` on `spread`, `dotplot` and `forest`: `"auto"` (beside the plot while it keeps its least width, else
+  under each row, as before), `"right"` (always beside it) or `"below"` (always under each row).
+* Messages that stop a figure name the chart that was called: a dot plot's says `dotplot`, not `forest`.
+
 ## 0.3.0
 
 What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and

@@ -94,7 +94,8 @@ forest_rows <- function(data, study, estimate, low, high, weight, columns, digit
 forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns = character(), pooled = NULL,
                         ratio = TRUE, favours = NULL, colour, study_heading = "Study",
                         effect_heading = NULL, weight_heading = "Weight", digits = NULL,
-                        marker = "square", interval = TRUE, null = "auto", references = list(), axis_title = NULL) {
+                        marker = "square", interval = TRUE, null = "auto", references = list(), axis_title = NULL,
+                        numbers = "auto") {
   check_columns(data, c(study, estimate, low, high, weight, unname(columns)))
   forest_check_rows(data, study, estimate, low, high, weight, ratio)
   if (!is.null(favours) && length(favours) != 2) {
@@ -120,6 +121,7 @@ forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns
                weight_heading = if (is.null(weight)) NULL else weight_heading)
   if (length(references)) spec$references <- references
   if (!is.null(axis_title)) spec$axis_title <- axis_title
+  spec$numbers <- check_numbers(numbers, "forest")
   spec
 }
 
@@ -179,7 +181,8 @@ forest_from_rma <- function(fit) {
 #' @param title,subtitle,caption Frame texts.
 #' @param exponentiate For fitted models: report exp(coefficient) (odds, rate or hazard ratios); `NULL` decides
 #'   from the model (logit and log links, Cox models).
-#' @param ... `study_heading`, `effect_heading`, `weight_heading`, `digits`.
+#' @param ... `study_heading`, `effect_heading`, `weight_heading`, `digits`, `numbers` (`"auto"`: the columns beside
+#'   the intervals while they keep their least width, else under each study; `"right"` or `"below"`).
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' trials <- data.frame(study = c("Trial A", "Trial B", "Trial C"), or = c(0.62, 0.81, 0.47),

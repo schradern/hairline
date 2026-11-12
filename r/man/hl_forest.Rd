@@ -46,7 +46,8 @@ object.}
 \item{exponentiate}{For fitted models: report exp(coefficient) (odds, rate or hazard ratios); \code{NULL} decides
 from the model (logit and log links, Cox models).}
 
-\item{...}{\code{study_heading}, \code{effect_heading}, \code{weight_heading}, \code{digits}.}
+\item{...}{\code{study_heading}, \code{effect_heading}, \code{weight_heading}, \code{digits}, \code{numbers} (\code{"auto"}: the columns beside
+the intervals while they keep their least width, else under each study; \code{"right"} or \code{"below"}).}
 }
 \value{
 A ggplot with the hairline frame.

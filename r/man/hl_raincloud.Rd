@@ -30,7 +30,8 @@ hl_raincloud(
   facet = NULL,
   columns = NULL,
   summary = NULL,
-  stats = character()
+  stats = character(),
+  compare = NULL
 )
 }
 \arguments{
@@ -79,6 +80,9 @@ most. The default is \code{c("median", "iqr")}; a summary you give is named in t
 
 \item{stats}{The same measures as rows of numbers under the groups: any of \code{"median"}, \code{"mean"}, \code{"iqr"},
 \code{"range"}, \code{"sd"}, \code{"ci"}.}
+
+\item{compare}{Rows with each group's difference against one group or the group to its left (\code{"adjacent"}),
+its 95\% CI and p; the caption names the test, which follows the centre as in \code{\link[=hl_spread]{hl_spread()}}.}
 }
 \value{
 A ggplot with the hairline frame.

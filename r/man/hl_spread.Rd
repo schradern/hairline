@@ -36,7 +36,9 @@ hl_spread(
   highlight = NULL,
   key_title = NULL,
   facet = NULL,
-  summary = NULL
+  summary = NULL,
+  compare = NULL,
+  numbers = "auto"
 )
 }
 \arguments{
@@ -105,6 +107,14 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{summary}{The marks per row: any of \code{"median"} (a dot), \code{"mean"} (an open diamond), \code{"iqr"} (the band),
 \code{"range"} (a thin line), \code{"sd"} and \code{"ci"} (the mean's SD or 95\% CI as a slim bar); one bar at most. The
 default is \code{c("median", "iqr", "range")}; a summary you give is named in the legend.}
+
+\item{compare}{Write each row's difference against one group (\code{compare = "Unit A"}) or the row above
+(\code{"adjacent"}), with its 95\% CI and p, beside the other numbers (within each block); the caption names the
+test, which follows the centre: the Hodges-Lehmann shift and Wilcoxon rank-sum test with the median, the
+difference in means and Welch's t-test with the mean alone.}
+
+\item{numbers}{Where the numbers go: beside the plot while it keeps its least width, else under each row
+(\code{"auto"}), always beside it (\code{"right"}), or always under each row (\code{"below"}).}
 }
 \value{
 A ggplot with the hairline frame.

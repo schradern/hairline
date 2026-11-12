@@ -22,6 +22,11 @@
 #'   or `"mean"`, with an interval that belongs to it, `"iqr"` or `"range"` with the median, `"sd"`, `"ci"` or
 #'   `"range"` with the mean (`summary = c("mean", "ci")`). Each row's n is counted, written after its label and
 #'   used by `min_n`; the heading names the measures and the axis takes the column's name.
+#' @param compare With `summary`: columns with each row's difference against one label (`compare = "Medical"`) or
+#'   the row above (`"adjacent"`), its 95% CI and p, within each block; the caption names the test (Welch's t-test
+#'   with the mean, the Hodges-Lehmann shift and Wilcoxon rank-sum test with the median).
+#' @param numbers Where the numbers go: beside the intervals while they keep their least width, else under each
+#'   row (`"auto"`), always beside them (`"right"`), or always under each row (`"below"`).
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -32,7 +37,7 @@
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
                        sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL, percent = FALSE,
                        order = NULL, min_n = NULL, x_title = NULL, highlight = NULL, facet = NULL, show_n = TRUE,
-                       summary = NULL) {
+                       summary = NULL, compare = NULL, numbers = "auto") {
   check_columns(data, c(label, estimate, low, high, n, facet))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
@@ -40,6 +45,11 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   }
   if (isTRUE(percent)) data <- dotplot_percent(data, c(estimate, low, high))
   heading <- NULL
+  raw <- data
+  if (!is.null(compare) && is.null(summary)) {
+    stop(paste("hairline: dotplot: compare needs summary =, so each row has the values it is compared on",
+               "(summary = c(\"mean\", \"ci\"))"), call. = FALSE)
+  }
   if (!is.null(summary)) {
     # Decimals as the other charts write a mean of these values: by magnitude, one more for whole numbers.
     values <- suppressWarnings(as.numeric(data[[estimate]]))
@@ -58,6 +68,9 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   arranged <- dotplot_faceted(kept$data, label, estimate, sort, order, facet)
   data <- arranged$data
   names <- as.character(data[[label]])
+  compared <- dotplot_comparisons(raw, data, names, arranged$blocks, c(label, estimate, facet), compare, summary,
+                                  digits)
+  data <- compared$data
   chosen <- checked_highlight(highlight, names, "dotplot")
   if (!is.null(n)) check_numeric(data, n, "dotplot")
   if (!is.null(n) && isTRUE(show_n)) {
@@ -74,7 +87,9 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   spec <- forest_spec(data, label, estimate, low, high, ratio = ratio, colour = lone_colour(),
                       study_heading = humanise(label), effect_heading = heading, digits = digits, marker = "dot",
                       interval = interval, null = NULL, references = option_references(reference, "dotplot"),
-                      axis_title = x_title)
+                      axis_title = x_title, columns = compared$columns,
+                      numbers = check_numbers(numbers, "dotplot"))
+  spec$chart <- "dotplot"
   if (length(chosen)) {
     for (index in seq_along(spec$rows)) {
       spec$rows[[index]]$color <- if (names[index] %in% chosen) spec$color else context_colour()
@@ -83,10 +98,37 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   if (length(arranged$blocks)) spec$rows <- dotplot_headings(spec$rows, arranged$blocks)
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(estimate), "by", gsub("_", " ", label)), subtitle = subtitle,
-                  caption = with_caption(caption, kept$note), x = NULL, y = NULL) + theme_hairline(axes = FALSE)
+                  caption = with_caption(caption, c(kept$note, compared$note)), x = NULL, y = NULL) +
+    theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot
+}
+
+# With `compare`: each row's delta and p within its block as two text columns, the columns for the forest layout and
+# the caption note naming the test; otherwise the rows as they are. As Python's dot_comparisons().
+dotplot_comparisons <- function(raw, data, names, blocks, columns, compare, summary, digits) {
+  if (is.null(compare)) return(list(data = data, columns = character(), note = NULL))
+  label <- columns[1]
+  estimate <- columns[2]
+  facet <- if (length(columns) > 2) columns[3]
+  blocked <- if (length(blocks)) blocks else rep("", length(names))
+  keys <- paste0(blocked, "\u001f", names)
+  within <- if (is.null(facet)) rep("", nrow(raw)) else as.character(raw[[facet]])
+  labels <- as.character(raw[[label]])
+  values <- stats::setNames(lapply(seq_along(keys), function(index) {
+    found <- suppressWarnings(as.numeric(raw[[estimate]][within == blocked[index] & labels == names[index]]))
+    found[!is.na(found)]
+  }), keys)
+  rows <- lapply(seq_along(keys), function(index) list(name = keys[index], section = blocked[index], pairs = list()))
+  number <- function(value) hl_format_number(value, digits %||% 2)
+  compared <- section_comparisons(rows, values, compare, check_summary(summary, "dotplot"), list(number, number),
+                                  "dotplot", stats::setNames(names, keys))
+  data$.hairline_difference <- vapply(compared$rows, function(row) row$pairs[[1]][2], character(1))
+  data$.hairline_p <- vapply(compared$rows, function(row) row$pairs[[2]][2], character(1))
+  headings <- stats::setNames(c(".hairline_difference", ".hairline_p"),
+                              c(word("interval", name = word("difference")), "p"))
+  list(data = data, columns = headings, note = compared$note)
 }
 
 # One row per label (per block and label with `facet`), in the order labels first appear: the centre as the

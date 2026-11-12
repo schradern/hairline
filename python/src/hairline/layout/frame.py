@@ -138,7 +138,7 @@ def check_panel_width(spec: FrameInput, width: float, spacing: dict) -> None:
             else ""
         raise HairlineLayoutError(f"hairline: figure too narrow: {spec.width_pt:.0f} pt wide leaves {width:.1f} pt "
                                   f"per panel for {spec.panel_columns} panel columns{labels}; shorten the labels, use "
-                                  f"fewer columns or a wider size")
+                                  f"fewer columns, or use a wider size")
 
 
 def place_panels(stack: Stack, spec: FrameInput, layout: FrameLayout, spacing: dict, heights: list[float]) -> None:

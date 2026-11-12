@@ -22,15 +22,12 @@ from hairline.charts.common import (
     with_caption,
 )
 from hairline.charts.options import Reference, apply_options, sorted_groups
+from hairline.charts.raincloud_numbers import check_raincloud_stats, compare_rows, stat_rows
 from hairline.charts.spread_geometry import DIAMOND, OPEN_EDGE
 from hairline.charts.summaries import (
     BARS,
-    SUMMARY_NAMES,
-    as_names,
     check_summary,
     interval_of,
-    measure_numbers,
-    stat_pairs,
     summary_legend,
     summary_values,
 )
@@ -192,26 +189,6 @@ def draw_panel(ax, drawn: list, counted: list, comparisons: str | Sequence[tuple
     return draw_brackets(ax, pairs, names, shown, rules)
 
 
-def check_raincloud_stats(stats: str | Sequence[str], facet: str | None) -> tuple[str, ...]:
-    """The measures written under the groups; n has its own row (show_n), and panels have no row under them."""
-    stats = as_names(stats, "raincloud", "stats", SUMMARY_NAMES)
-    if stats and facet:
-        raise ValueError("hairline: raincloud: stats writes a row of numbers under the groups, which facet panels do "
-                         "not have; use spread(facet=...), which lists the numbers beside each block's rows")
-    return stats
-
-
-def stat_rows(groups: Sequence[pd.Series], stats: Sequence[str], percent: bool, locale: str) -> list[tuple]:
-    """One table row per measure, its label on the left, each group's number under the group."""
-    if not stats:
-        return []
-    values = [values.to_numpy(dtype=float) for values in groups]
-    numbers = measure_numbers(np.concatenate(values), percent, None)
-    found = [stat_pairs(group, stats, numbers, locale=locale) for group in values]
-    return [(found[0][row][0], None, [(float(position), pairs[row][1]) for position, pairs in enumerate(found)])
-            for row in range(len(stats))]
-
-
 def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
               caption: str | None = None, y_title: str | None = None, order: Sequence[str] | None = None,
               comparisons: str | Sequence[tuple] = (), colors: Mapping[str, str] | None = None,
@@ -221,7 +198,7 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               percent: bool = False, show_n: bool = True, x_title: str | None = None, reference: Reference = None,
               highlight: Sequence[str] | str | None = None, key_title: str | None = None, facet: str | None = None,
               columns: int | None = None, summary: str | Sequence[str] | None = None,
-              stats: str | Sequence[str] = ()) -> HairlineFigure:
+              stats: str | Sequence[str] = (), compare: str | None = None) -> HairlineFigure:
     """Distributions per group. `comparisons`: "all" or "adjacent" pairs, (group, group) pairs, or
     (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p. Missing values are
     left out, and "n = …" counts the values the statistics use (`show_n=False` leaves it out). `min_n`, `clip`,
@@ -233,7 +210,9 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     `summary` chooses the marks at the box's place, from "median" (a tick), "mean" (an open diamond), "iqr" (the
     box), "range" (a thin line), "sd" and "ci" (the mean's SD or 95 % CI as a slim bar); one bar at most. The
     default is ("median", "iqr"); a summary you give is named in the legend. `stats` writes the same measures as
-    rows of numbers under the groups ("median", "mean", "iqr", "range", "sd", "ci")."""
+    rows of numbers under the groups ("median", "mean", "iqr", "range", "sd", "ci"). `compare` adds rows with each
+    group's difference against one group or the group to its left ("adjacent"), its 95 % CI and p; the caption
+    names the test, which follows the centre as in spread()."""
     check_columns(data, [group, value, color_by, facet])
     marks = DEFAULT_SUMMARY if summary is None else check_summary(summary, "raincloud")
     stats = check_raincloud_stats(stats, facet)
@@ -252,7 +231,9 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     counted = drawn if clip_stats else groups
     names = [name for name, _ in groups]
     title = title or f"{humanise(value)} by {str(group).replace('_', ' ')}"
-    notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None]
+    compared, note = compare_rows([(name, rows[value].to_numpy(dtype=float)) for name, rows in counted], compare,
+                                  facet, marks, percent, locale)
+    notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None, note]
     panels = groups_of(data, facet, None, "raincloud") if facet else [(None, data)]
     result = figure(title, subtitle=subtitle, caption=with_caption(caption, *notes), size=size, panels=len(panels),
                     layout="grid" if facet else "rows", columns=columns or (min(len(panels), 2) if facet else 1),
@@ -281,7 +262,7 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
                          enumerate(counts)])] if show_n and not facet else []
     # Where "n = 20" under each group would meet, the row reads "n" and then the bare counts.
     compact = [("n", list(enumerate(counts)))] if table else []
-    table += stat_rows([rows[value] for _, rows in counted], stats, percent, locale)
+    table += stat_rows([rows[value] for _, rows in counted], stats, percent, locale) + compared
     if table:
         result.table(table, compact=compact)
     legend = [("square", color, label) for label, color in

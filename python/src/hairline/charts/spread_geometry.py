@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
 from hairline.charts.forest_geometry import axis_shapes, dot_size, marker, x_scale
-from hairline.charts.options import reference_line_height, reference_shapes
+from hairline.charts.options import numbers_beside, reference_line_height, reference_shapes
 from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -59,7 +59,7 @@ def spread_layout(spec: dict, box: Box, measure: Measure, style: dict, rules: di
     left, right = box.x + names + gap, box.x + box.width
     if not widths:
         return {"plot": (left, right), "lefts": [], "under": False}
-    if right - block - gap - left >= least:
+    if numbers_beside(spec.get("numbers", "auto"), right - block - gap - left, least, base, "spread"):
         return {"plot": (left, right - block - gap), "lefts": stat_columns(widths, right - block, pair_gap),
                 "under": False}
     check_room(box.width, block, least, names, gap)

@@ -23,8 +23,9 @@ from hairline.charts.common import (
     with_caption,
     within,
 )
+from hairline.charts.comparisons import section_comparisons
 from hairline.charts.forest import decimals
-from hairline.charts.options import FACET_BLOCK, FACET_KEY, Reference, facet_rows, references
+from hairline.charts.options import FACET_BLOCK, FACET_KEY, Reference, check_numbers, facet_rows, references
 from hairline.charts.spread_geometry import spread_drawing
 from hairline.charts.summaries import (
     BARS,
@@ -161,7 +162,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
                 color_by: str | None = None, dimension: str | None = None, discrete: bool = False,
                 section: str | None = None, panel_letters: bool = False, mean: bool = False,
                 sort: str | None = None, reference: Reference = None,
-                highlight: Sequence[str] | str | None = None, summary: str | Sequence[str] | None = None) -> dict:
+                highlight: Sequence[str] | str | None = None, summary: str | Sequence[str] | None = None,
+                compare: str | None = None, group_names: Mapping[str, str] | None = None) -> dict:
     check_columns(data, [group, value, color_by, section])
     if sort not in SORTS:
         raise ValueError(f"hairline: spread: sort {sort!r} must be 'median' or None")
@@ -204,7 +206,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
         [end for row in rows if row["bar"] for end in row["bar"][:2]]
     lows, highs = [row["low"] for row in rows] + extra, [row["high"] for row in rows] + extra
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None,
-             word("levels_note", locale) if discrete else None]
+             word("levels_note", locale) if discrete else None,
+             section_comparisons(rows, dict(counted), compare, drawn_marks, numbers, "spread", group_names)]
     legend = [("square", color, label) for label, color in dict.fromkeys((coarse[name], palette[name])
                                                                            for name in names)] if color_by else []
     if summary is not None or mean:
@@ -226,7 +229,8 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
            discrete: bool = False, section: str | None = None, panel_letters: bool = False, mean: bool = False,
            sort: str | None = None, x_title: str | None = None, reference: Reference = None,
            highlight: Sequence[str] | str | None = None, key_title: str | None = None,
-           facet: str | None = None, summary: str | Sequence[str] | None = None) -> HairlineFigure:
+           facet: str | None = None, summary: str | Sequence[str] | None = None,
+           compare: str | None = None, numbers: str = "auto") -> HairlineFigure:
     """Distributions per group compared on one axis, first group on top; `marks` adds a reference tick per group
     (a capacity, a target), `mark_label` names it in the numbers column; `axis_title` (e.g. the unit) goes under
     the axis numbers. On a figure too narrow for the numbers beside the plot, they sit on a line under each row.
@@ -244,20 +248,28 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
 
     Shared with the other charts: `x_title` (the same as `axis_title`), `reference` (dashed lines across the rows,
     labelled above them), `highlight` (groups kept in colour), `key_title` and `facet` (a block of rows per value
-    of that column, under its name, on the one axis; a group keeps its colour in every block)."""
+    of that column, under its name, on the one axis; a group keeps its colour in every block).
+
+    `compare` writes each row's difference against one group (compare="Unit A") or the row above ("adjacent"),
+    with its 95 % CI and p, beside the other numbers (within each block); the caption names the test, which follows
+    the centre: the Hodges–Lehmann shift and Wilcoxon rank-sum test with the median, the difference in means and
+    Welch's t-test with the mean alone. `numbers` places the numbers: beside the plot while it keeps its least
+    width, else under each row ("auto"), always beside it ("right"), or always under each row ("below")."""
     if facet is not None:
         spec = faceted_spec(data, group, value, facet, order=order, marks=marks, mark_label=mark_label, stats=stats,
                             percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title,
                             colors=colors, show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats,
                             color_by=color_by, dimension=dimension, discrete=discrete, section=section,
                             panel_letters=panel_letters, mean=mean, sort=sort, reference=reference,
-                            highlight=highlight, summary=summary)
+                            highlight=highlight, summary=summary, compare=compare)
     else:
         spec = spread_spec(data, group, value, order=order, marks=marks, mark_label=mark_label, stats=stats,
                            percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title, colors=colors,
                            show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats, color_by=color_by,
                            dimension=dimension, discrete=discrete, section=section, panel_letters=panel_letters,
-                           mean=mean, sort=sort, reference=reference, highlight=highlight, summary=summary)
+                           mean=mean, sort=sort, reference=reference, highlight=highlight, summary=summary,
+                           compare=compare)
+    spec["numbers"] = check_numbers(numbers, "spread")
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *spec["notes"]), size=size)
     result.draw(0, lambda box, measure, style: spread_drawing(spec, box, measure, style))
@@ -277,7 +289,7 @@ def faceted_spec(data: pd.DataFrame, group: str, value: str, facet: str, **optio
     palette, coarse = series_colors(names, data, group, options.pop("color_by"), options.pop("colors"),
                                     options.pop("dimension"), "spread", options.pop("highlight"), named=True)
     marks = options.pop("marks") or {}
-    spec = spread_spec(keyed, FACET_KEY, value, order=keys, section=FACET_BLOCK,
+    spec = spread_spec(keyed, FACET_KEY, value, order=keys, section=FACET_BLOCK, group_names=groups,
                        colors={key: palette[groups[key]] for key in keys},
                        marks={key: marks[groups[key]] for key in keys if groups[key] in marks} or None, **options)
     for row in spec["rows"]:

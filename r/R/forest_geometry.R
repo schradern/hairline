@@ -57,12 +57,13 @@ forest_columns <- function(spec, box, measure, rules, base) {
   beside <- forest_right_edges(widths$extras, box[1] + widths$study + gap, gap)
   plot_left <- if (length(beside)) beside[length(beside)] + gap else box[1] + widths$study + gap
   effect_right <- right - if (weighted) widths$weight + gap else 0
-  if (effect_right - widths$effect - gap - plot_left >= least) {
+  if (numbers_beside(spec$numbers, effect_right - widths$effect - gap - plot_left, least, base,
+                     spec$chart %||% "forest")) {
     return(list(study = box[1], extras = beside, plot = c(plot_left, effect_right - widths$effect - gap),
                 effect = effect_right, weight = right, right = right, under = FALSE))
   }
   line <- c(widths$extras, widths$effect, if (weighted) widths$weight)
-  forest_check_room(box[3], sum(line) + gap * (length(line) - 1), least, widths$study, gap)
+  forest_check_room(box[3], sum(line) + gap * (length(line) - 1), least, widths$study, gap, spec$chart %||% "forest")
   under <- forest_right_edges(line, box[1], gap)
   count <- length(widths$extras)
   list(study = box[1], extras = under[seq_len(count)], plot = c(box[1] + widths$study + gap, right),
@@ -71,13 +72,13 @@ forest_columns <- function(spec, box, measure, rules, base) {
 }
 
 # Under the rows, a line of columns and a row of study label and intervals must each fit the width.
-forest_check_room <- function(width, block, least, study, gap) {
+forest_check_room <- function(width, block, least, study, gap, chart = "forest") {
   need <- max(block, study + gap + least)
   if (width >= need) return(invisible())
-  stop(sprintf(paste("hairline: forest: the figure leaves %.0f pt for the table, which needs at least %.0f pt: the",
+  stop(sprintf(paste("hairline: %s: the figure leaves %.0f pt for the table, which needs at least %.0f pt: the",
                      "columns take %.0f pt in one line under each study, the study labels %.0f pt beside intervals",
-                     "of %.0f pt. Shorten the longest study labels, drop a column, or use a wider size"), width, need,
-               block, study, least), call. = FALSE)
+                     "of %.0f pt. Shorten the longest study labels, drop a column, or use a wider size"), chart, width,
+               need, block, study, least), call. = FALSE)
 }
 
 forest_rule <- function(left, right, y, style) {
