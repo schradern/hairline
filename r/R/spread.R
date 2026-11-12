@@ -138,7 +138,7 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
                         axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
                         clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
                         panel_letters = FALSE, mean = FALSE, sort = NULL, reference = NULL, highlight = NULL,
-                        summary = NULL) {
+                        summary = NULL, compare = NULL, group_names = NULL) {
   check_columns(data, c(group, value, color_by, section))
   if (!is.null(sort) && !identical(sort, "median")) {
     stop(sprintf("hairline: spread: sort '%s' must be 'median' or NULL", sort), call. = FALSE)
@@ -171,10 +171,12 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
            pairs = spread_pairs(values, stats, numbers, mark, mark_label, discrete)))
   })
   rows <- arranged_rows(rows, sort)
+  compared <- section_comparisons(rows, counted, compare, drawn_marks, numbers, "spread", group_names)
+  rows <- compared$rows
   bar_ends <- unlist(lapply(rows, function(row) if (!is.null(row$bar)) c(row$bar$low, row$bar$high)))
   marked <- c(unlist(lapply(rows, `[[`, "mark")), vapply(lines, `[[`, numeric(1), "value"), bar_ends)
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats),
-             if (discrete) word("levels_note"))
+             if (discrete) word("levels_note"), compared$note)
   list(rows = rows, axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
                                        c(vapply(rows, `[[`, numeric(1), "high"), marked), percent, zero),
        axis_title = axis_title, notes = notes, letters = isTRUE(panel_letters),
@@ -200,6 +202,7 @@ faceted_spread_spec <- function(data, group, value, facet, order, options) {
   options$colors <- stats::setNames(unname(coloured$palette[keyed$groups]), keyed$keys)
   options$marks <- if (length(keyed_marks)) keyed_marks else NULL
   options$section <- facet_block
+  options$group_names <- keyed$groups
   spec <- do.call(spread_spec, c(list(keyed$data, facet_key, value, order = keyed$keys), options))
   for (index in seq_along(spec$rows)) spec$rows[[index]]$name <- unname(keyed$groups[spec$rows[[index]]$name])
   plain <- Filter(function(entry) !identical(entry$kind, "square"), spec$legend)
@@ -244,6 +247,12 @@ faceted_spread_spec <- function(data, group, value, facet, order, options) {
 #' @param summary The marks per row: any of `"median"` (a dot), `"mean"` (an open diamond), `"iqr"` (the band),
 #'   `"range"` (a thin line), `"sd"` and `"ci"` (the mean's SD or 95% CI as a slim bar); one bar at most. The
 #'   default is `c("median", "iqr", "range")`; a summary you give is named in the legend.
+#' @param compare Write each row's difference against one group (`compare = "Unit A"`) or the row above
+#'   (`"adjacent"`), with its 95% CI and p, beside the other numbers (within each block); the caption names the
+#'   test, which follows the centre: the Hodges-Lehmann shift and Wilcoxon rank-sum test with the median, the
+#'   difference in means and Welch's t-test with the mean alone.
+#' @param numbers Where the numbers go: beside the plot while it keeps its least width, else under each row
+#'   (`"auto"`), always beside it (`"right"`), or always under each row (`"below"`).
 #' @param sort `"median"` orders the rows of a section by median, highest first; `NULL` keeps their order.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
@@ -260,15 +269,17 @@ hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption
                       zero = FALSE, axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
                       clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
                       panel_letters = FALSE, mean = FALSE, sort = NULL, x_title = NULL, reference = NULL,
-                      highlight = NULL, key_title = NULL, facet = NULL, summary = NULL) {
-  options <- list(summary = summary, marks = marks, mark_label = mark_label, stats = stats, percent = percent,
-                  digits = digits,
+                      highlight = NULL, key_title = NULL, facet = NULL, summary = NULL, compare = NULL,
+                      numbers = "auto") {
+  options <- list(summary = summary, compare = compare, marks = marks, mark_label = mark_label, stats = stats,
+                  percent = percent, digits = digits,
                   zero = zero, axis_title = axis_title %||% x_title, colors = colors, show_n = show_n, min_n = min_n,
                   clip = clip, clip_stats = clip_stats, color_by = color_by, dimension = dimension,
                   discrete = discrete, section = section, panel_letters = panel_letters, mean = mean, sort = sort,
                   reference = reference, highlight = highlight)
   spec <- if (is.null(facet)) do.call(spread_spec, c(list(data, group, value, order = order), options)) else
     faceted_spread_spec(data, group, value, facet, order, options)
+  spec$numbers <- check_numbers(numbers, "spread")
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
                   caption = with_caption(caption, spec$notes), x = NULL, y = NULL) + theme_hairline(axes = FALSE)

@@ -29,7 +29,8 @@ hl_ridgeline(
   facet = NULL,
   columns = NULL,
   summary = NULL,
-  stats = character()
+  stats = character(),
+  compare = NULL
 )
 }
 \arguments{
@@ -75,6 +76,10 @@ legend. A ridge shows its own spread, so intervals belong to \code{\link[=hl_rai
 
 \item{stats}{Measures beside each ridge, in a column right of the plot: any of \code{"median"}, \code{"mean"}, \code{"iqr"},
 \code{"range"}, \code{"sd"}, \code{"ci"}, \code{"n"}.}
+
+\item{compare}{Add each ridge's difference against one group or the ridge above (\code{"adjacent"}), with its 95\% CI
+and p, to that column (within each panel); the caption names the test, which follows the centre as in
+\code{\link[=hl_spread]{hl_spread()}}.}
 }
 \value{
 A ggplot with the hairline frame.

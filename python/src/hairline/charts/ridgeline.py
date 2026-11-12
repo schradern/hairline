@@ -22,6 +22,7 @@ from hairline.charts.common import (
     with_caption,
     within,
 )
+from hairline.charts.comparisons import section_comparisons
 from hairline.charts.options import Reference, apply_options, references, sorted_groups
 from hairline.charts.spread_geometry import DIAMOND, OPEN_EDGE
 from hairline.charts.summaries import (
@@ -141,12 +142,22 @@ def frame_panel(result: HairlineFigure, index: int, panel: str | None, labels: l
         result.percent_axis(index, "x")
 
 
-def ridge_numbers(groups: list, stats: Sequence[str], every: np.ndarray, percent: bool,
-                  locale: str) -> list[tuple[float, str, str]]:
-    """Each ridge's measures beside it, at its baseline; a group without values here has none."""
+def ridge_numbers(panels: list[list], stats: Sequence[str], every: np.ndarray, percent: bool, compare: str | None,
+                  marks: Sequence[str], locale: str) -> tuple[list[list[tuple[float, str, str]]], str | None]:
+    """Each panel's numbers column: every ridge's measures and, with `compare`, its Δ and p against the reference
+    or the ridge above, at its baseline (a group without values in a panel has none); and the caption note naming
+    the test."""
     numbers = measure_numbers(every, percent, None)
-    return [(float(len(groups) - 1 - index), label, text) for index, (_, values) in enumerate(groups) if len(values)
-            for label, text in stat_pairs(values, stats, numbers, locale=locale)]
+    rows = [{"name": f"{index}\x1f{name}", "section": index, "count": len(groups), "position": position,
+             "pairs": stat_pairs(values, stats, numbers, locale=locale) if len(values) else []}
+            for index, groups in enumerate(panels) for position, (name, values) in enumerate(groups)]
+    values = {f"{index}\x1f{name}": data for index, groups in enumerate(panels) for name, data in groups}
+    note = section_comparisons(rows, values, compare, marks, numbers, "ridgeline",
+                               {key: key.split("\x1f", 1)[1] for key in values})
+    columns = [[(float(row["count"] - 1 - row["position"]), label, text) for row in rows
+                if row["section"] == index and len(values[row["name"]]) for label, text in row["pairs"]]
+               for index in range(len(panels))]
+    return columns, note
 
 
 def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
@@ -158,7 +169,7 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               x_title: str | None = None, reference: Reference = None,
               highlight: Sequence[str] | str | None = None, key_title: str | None = None, facet: str | None = None,
               columns: int | None = None, summary: str | Sequence[str] | None = None,
-              stats: str | Sequence[str] = ()) -> HairlineFigure:
+              stats: str | Sequence[str] = (), compare: str | None = None) -> HairlineFigure:
     """Distributions per group as overlapping ridges, the first group on top; all ridges share one height scale.
     `show_n` writes each group's n after its name; `min_n`, `clip`, `color_by` and `dimension` work as in
     `spread()`: groups too small are named in the caption, and so are the values clipped off. Shared with the
@@ -169,7 +180,9 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     `summary` chooses the marks on each ridge: "median" (a line up to the ridge) and "mean" (an open diamond on
     its outline); by default the median, or nothing with `medians=False`. A summary you give is named in the
     legend. A ridge shows its own spread, so intervals belong to raincloud() or spread(). `stats` writes measures
-    beside each ridge, in a column right of the plot: any of "median", "mean", "iqr", "range", "sd", "ci", "n"."""
+    beside each ridge, in a column right of the plot: any of "median", "mean", "iqr", "range", "sd", "ci", "n".
+    `compare` adds each ridge's difference against one group or the ridge above ("adjacent"), with its 95 % CI and
+    p, to that column (within each panel); the caption names the test, which follows the centre as in spread()."""
     check_columns(data, [group, value, color_by, facet])
     check_present(data, value, "ridgeline")
     check_numeric(data, [value], "ridgeline")
@@ -191,7 +204,9 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     curves = [[density(values) for _, values in here] for here in drawn]
     peak = max((max(curve[1]) for here in curves for curve in here if curve), default=1.0)
     scale = (1 + rules["overlap"]) / peak
-    notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None]
+    statistics = drawn if clip_stats else counted
+    numbers, compared = ridge_numbers(statistics, stats, every, percent, compare, marks, locale)
+    notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None, compared]
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *notes), size=size, panels=len(panels),
                     layout="grid" if facet else "rows", columns=columns or (min(len(panels), 2) if facet else 1))
@@ -200,11 +215,10 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     labels = labels_with_n(names, {name: len(values) for name, values in groups}, locale) \
         if show_n and not facet else names
     for index, panel in enumerate(panels):
-        statistics = drawn[index] if clip_stats else counted[index]
-        draw_ridges(result.axes[index], drawn[index], curves[index], scale, marks, palette, statistics)
-        frame_panel(result, index, panel, labels, statistics, show_n, percent, label_room(reference))
-        if stats:
-            result.numbers_column(index, ridge_numbers(statistics, stats, every, percent, locale))
+        draw_ridges(result.axes[index], drawn[index], curves[index], scale, marks, palette, statistics[index])
+        frame_panel(result, index, panel, labels, statistics[index], show_n, percent, label_room(reference))
+        if numbers[index]:
+            result.numbers_column(index, numbers[index])
     legend = [("square", color, label) for label, color in
               dict.fromkeys((coarse[name], palette[name]) for name in names)] if color_by else []
     legend += summary_legend(marks, "tick", current_settings().neutral["ink"], locale) if summary is not None else []

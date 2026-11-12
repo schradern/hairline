@@ -129,7 +129,7 @@ spread_layout <- function(spec, box, measure, style, rules) {
   left <- box[1] + names + gap
   right <- box[1] + box[3]
   if (!length(widths)) return(list(plot = c(left, right), lefts = numeric(), under = FALSE))
-  if (right - block - gap - left >= least) {
+  if (numbers_beside(spec$numbers, right - block - gap - left, least, style$base, "spread")) {
     return(list(plot = c(left, right - block - gap), lefts = spread_stat_columns(widths, right - block, pair_gap),
                 under = FALSE))
   }

@@ -56,6 +56,7 @@
     "min_panel_height": 2.0,
     "min_plot_height": 8,
     "min_panel_width": 2.0,
+    "min_plot_beside": 4,
     "legend_swatch_line": 1.35,
     "legend_swatch_square": 0.85,
     "qualifier_gap": 0.65,
@@ -384,7 +385,14 @@
         "sd": "SD",
         "sd_bar": "± 1 SD",
         "ci": "95% CI",
-        "summary_heading": "{centre} [{interval}]"
+        "summary_heading": "{centre} [{interval}]",
+        "difference": "Δ",
+        "reference_group": "Reference",
+        "compare_means": "Δ: difference in means {against}, with 95% CI; p from Welch's t-test.",
+        "compare_shift": "Δ: Hodges–Lehmann shift {against}, with 95% CI; p from the Wilcoxon rank-sum test.",
+        "against_group": "against {name}",
+        "against_previous": "against the group before it",
+        "unadjusted": "Not adjusted for multiple comparisons."
       }
     },
     "de": {
@@ -458,7 +466,14 @@
         "sd": "SD",
         "sd_bar": "± 1 SD",
         "ci": "95 %-KI",
-        "summary_heading": "{centre} [{interval}]"
+        "summary_heading": "{centre} [{interval}]",
+        "difference": "Δ",
+        "reference_group": "Referenz",
+        "compare_means": "Δ: Differenz der Mittelwerte {against}, mit 95 %-KI; p aus dem Welch-t-Test.",
+        "compare_shift": "Δ: Hodges-Lehmann-Verschiebung {against}, mit 95 %-KI; p aus dem Wilcoxon-Rangsummentest.",
+        "against_group": "gegenüber {name}",
+        "against_previous": "gegenüber der jeweils vorherigen Gruppe",
+        "unadjusted": "Nicht für multiples Testen adjustiert."
       }
     }
   },

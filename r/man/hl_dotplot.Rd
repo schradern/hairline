@@ -25,7 +25,9 @@ hl_dotplot(
   highlight = NULL,
   facet = NULL,
   show_n = TRUE,
-  summary = NULL
+  summary = NULL,
+  compare = NULL,
+  numbers = "auto"
 )
 }
 \arguments{
@@ -66,6 +68,13 @@ lines, e.g. \code{c(Target = 0.9)}.}
 or \code{"mean"}, with an interval that belongs to it, \code{"iqr"} or \code{"range"} with the median, \code{"sd"}, \code{"ci"} or
 \code{"range"} with the mean (\code{summary = c("mean", "ci")}). Each row's n is counted, written after its label and
 used by \code{min_n}; the heading names the measures and the axis takes the column's name.}
+
+\item{compare}{With \code{summary}: columns with each row's difference against one label (\code{compare = "Medical"}) or
+the row above (\code{"adjacent"}), its 95\% CI and p, within each block; the caption names the test (Welch's t-test
+with the mean, the Hodges-Lehmann shift and Wilcoxon rank-sum test with the median).}
+
+\item{numbers}{Where the numbers go: beside the intervals while they keep their least width, else under each
+row (\code{"auto"}), always beside them (\code{"right"}), or always under each row (\code{"below"}).}
 }
 \value{
 A ggplot with the hairline frame.

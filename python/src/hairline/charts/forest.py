@@ -12,6 +12,7 @@ import pandas as pd
 
 from hairline.charts.common import check_columns, humanise
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
+from hairline.charts.options import check_numbers
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
@@ -110,7 +111,8 @@ def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: s
                 favours: Sequence[str] | None = None, color: str, study_heading: str = "Study",
                 effect_heading: str | None = None, weight_heading: str = "Weight", digits: int | None = None,
                 marker: str = "square", interval: bool = True, null: float | None | str = "auto",
-                references: Sequence[tuple[float, str | None]] = (), axis_title: str | None = None) -> dict:
+                references: Sequence[tuple[float, str | None]] = (), axis_title: str | None = None,
+                numbers: str = "auto") -> dict:
     """Everything the geometry needs, with numbers already formatted for the active locale."""
     columns = dict(columns or {})
     check_columns(data, [study, estimate, low, high, weight, *columns.values()])
@@ -133,6 +135,7 @@ def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: s
                        ratio, locale, null)
     optional = {"references": [list(line) for line in references]} if references else {}
     optional.update({"axis_title": axis_title} if axis_title else {})
+    optional["numbers"] = check_numbers(numbers, "forest")
     return {**optional, "rows": rows, "columns": list(columns), "pooled": pooled_spec, "ratio": ratio, "null": null,
             "favours": list(favours) if favours else None, "axis": axis, "color": color, "study_heading": study_heading,
             "effect_heading": effect_heading, "weight_heading": weight_heading if weight else None, "marker": marker}
@@ -181,7 +184,8 @@ def forest(data, study: str = "study", estimate: str = "estimate", low: str = "l
     """Forest plot from a results table or a fitted model (its terms, without the intercept). For a model,
     `exponentiate` (default: on for logistic, Poisson and Cox models) turns log odds or log hazards into ratios.
     `options` as for forest_spec (study_heading, effect_heading, digits, marker, null). On a figure too narrow for
-    the columns beside the intervals (one column of a two-column page), they sit on a line under each study."""
+    the columns beside the intervals (one column of a two-column page), they sit on a line under each study;
+    `numbers="right"` keeps them beside the intervals, `numbers="below"` always under each study."""
     if hasattr(data, "params") and hasattr(data, "conf_int"):
         exponentiate = ratio_model(data) if exponentiate is None else exponentiate
         data, study, estimate, low, high = model_table(data, exponentiate), "term", "estimate", "low", "high"

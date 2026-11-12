@@ -175,6 +175,7 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 
 <table>
 <tr><td width="50%" valign="top"><a href="gallery/python/raincloud_means.py"><img src="docs/images/gallery/raincloud_means.png" alt="Summary marks and numbers"></a><br><sub>Summary marks and numbers</sub></td><td width="50%" valign="top"><a href="gallery/python/dotplot_means.py"><img src="docs/images/gallery/dotplot_means.png" alt="Means with their 95% CI"></a><br><sub>Means with their 95% CI</sub></td></tr>
+<tr><td width="50%" valign="top"><a href="gallery/python/spread_compare.py"><img src="docs/images/gallery/spread_compare.png" alt="Comparisons as numbers"></a><br><sub>Comparisons as numbers</sub></td></tr>
 </table>
 
 ### Survival and evidence

@@ -182,27 +182,6 @@ resolve_comparisons <- function(comparisons, data, group, value, names) {
   })
 }
 
-# The measures written under the groups; n has its own row (show_n), and panels have no row under them.
-raincloud_check_stats <- function(stats, facet) {
-  stats <- as_names(stats, "raincloud", "stats", summary_names)
-  if (length(stats) && !is.null(facet)) {
-    stop(paste("hairline: raincloud: stats writes a row of numbers under the groups, which facet panels do not have;",
-               "use hl_spread(facet = ...), which lists the numbers beside each block's rows"), call. = FALSE)
-  }
-  stats
-}
-
-# One table row per measure, its label on the left, each group's number under the group.
-raincloud_stat_rows <- function(groups, stats, percent) {
-  if (!length(stats)) return(list())
-  numbers <- measure_numbers(unlist(groups, use.names = FALSE), percent, NULL)
-  found <- lapply(groups, stat_pairs, names = stats, numbers = numbers)
-  lapply(seq_along(stats), function(row) {
-    list(label = found[[1]][[row]][1], colour = NULL, x = seq_along(groups) - 1,
-         text = unname(vapply(found, function(pairs) pairs[[row]][2], character(1))))
-  })
-}
-
 #' Raincloud plot
 #'
 #' Per group a half density, the box (interquartile range and median) and
@@ -229,6 +208,8 @@ raincloud_stat_rows <- function(groups, stats, percent) {
 #'   most. The default is `c("median", "iqr")`; a summary you give is named in the legend.
 #' @param stats The same measures as rows of numbers under the groups: any of `"median"`, `"mean"`, `"iqr"`,
 #'   `"range"`, `"sd"`, `"ci"`.
+#' @param compare Rows with each group's difference against one group or the group to its left (`"adjacent"`),
+#'   its 95% CI and p; the caption names the test, which follows the centre as in [hl_spread()].
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -241,7 +222,7 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
                          order = NULL, comparisons = list(), colors = NULL, min_n = NULL, clip = NULL,
                          clip_stats = FALSE, color_by = NULL, dimension = NULL, sort = NULL, percent = FALSE,
                          show_n = TRUE, x_title = NULL, reference = NULL, highlight = NULL, key_title = NULL,
-                         facet = NULL, columns = NULL, summary = NULL, stats = character()) {
+                         facet = NULL, columns = NULL, summary = NULL, stats = character(), compare = NULL) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
@@ -283,7 +264,8 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     }
   }
   counts <- vapply(counted, function(values) word("n_equals", n = hl_format_number(length(values), 0)), character(1))
-  notes <- c(dropped$note, if (!is.null(clip)) clip_caption(data[[value]], limits, clip_stats))
+  compared <- raincloud_compare_rows(counted, compare, facet, marks, percent)
+  notes <- c(dropped$note, if (!is.null(clip)) clip_caption(data[[value]], limits, clip_stats), compared$note)
   plot <- plot +
     ggplot2::scale_x_continuous(breaks = seq_along(names) - 1, labels = names, limits = c(-0.6, length(names) - 0.4),
                                 expand = c(0, 0)) +
@@ -300,7 +282,7 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
               compact = list(label = "n", text = vapply(counted, function(values) hl_format_number(length(values), 0),
                                                         character(1), USE.NAMES = FALSE))))
   }
-  table <- c(table, raincloud_stat_rows(counted, stats, percent))
+  table <- c(table, raincloud_stat_rows(counted, stats, percent), compared$rows)
   if (length(table)) plot@meta$hairline_table <- list(heading = NULL, rows = table)
   if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
   # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.

@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 
 Reference = float | tuple[float, str] | Sequence[float | tuple[float, str]] | Mapping[str, float] | None
 GROUP_SORTS = ("median", "mean", "n")
+# Where row charts (spread, dot plot) write their numbers: beside the plot while it keeps its least width, else under
+# each row ("auto"); always beside it ("right"), or always under each row ("below").
+NUMBER_PLACES = ("auto", "right", "below")
 
 
 def references(reference: Reference, chart: str) -> list[tuple[float, str | None]]:
@@ -75,6 +78,29 @@ def apply_options(result: HairlineFigure, chart: str, *, names: Sequence[str] = 
     if key_title:
         result.key_title(key_title)
     return result
+
+
+def check_numbers(numbers: str, chart: str) -> str:
+    if numbers not in NUMBER_PLACES:
+        raise ValueError(f"hairline: {chart}: numbers {numbers!r} must be one of {', '.join(map(repr, NUMBER_PLACES))}")
+    return numbers
+
+
+def numbers_beside(place: str, plot: float, least: float, base: float, chart: str) -> bool:
+    """Whether a row chart's numbers sit beside a plot `plot` pt wide: by `place`, and with "right" only while the
+    plot keeps `spacing.min_plot_beside`; narrower, the figure stops and says what would fit."""
+    from hairline.errors import HairlineLayoutError
+    from hairline.tokens import load_tokens
+    if place == "below":
+        return False
+    if place == "auto":
+        return plot >= least
+    floor = load_tokens()["spacing"]["min_plot_beside"] * base
+    if plot < floor:
+        raise HairlineLayoutError(f"hairline: {chart}: the numbers beside the plot leave it {max(plot, 0):.0f} pt, "
+                                  f"and it needs {floor:.0f} pt; use a wider size, show fewer numbers, or "
+                                  f"numbers='auto' (under each row where the plot would be too narrow)")
+    return True
 
 
 def check_sort(sort: str | None, allowed: Sequence[str], chart: str) -> None:

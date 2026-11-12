@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
+from hairline.charts.options import numbers_beside
 from hairline.charts.wrapping import fit_lines
 from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
@@ -73,21 +74,22 @@ def column_layout(spec: dict, box: Box, measure: Measure, rules: dict, base: flo
     beside = right_edges(extras, box.x + study + gap, gap)
     plot_left = beside[-1] + gap if beside else box.x + study + gap
     effect_right = right - (weight + gap if weighted else 0.0)
-    if effect_right - effect - gap - plot_left >= least:
+    if numbers_beside(spec.get("numbers", "auto"), effect_right - effect - gap - plot_left, least, base,
+                      spec.get("chart", "forest")):
         return {"study": box.x, "extras": beside, "plot": (plot_left, effect_right - effect - gap),
                 "effect": effect_right, "weight": right, "right": right, "under": False}
     widths = extras + [effect] + ([weight] if weighted else [])
-    check_room(box.width, sum(widths) + gap * (len(widths) - 1), least, study, gap)
+    check_room(box.width, sum(widths) + gap * (len(widths) - 1), least, study, gap, spec.get("chart", "forest"))
     under = right_edges(widths, box.x, gap)
     return {"study": box.x, "extras": under[:len(extras)], "plot": (box.x + study + gap, right),
             "effect": under[len(extras)], "weight": under[-1] if weighted else right, "right": right, "under": True}
 
 
-def check_room(width: float, block: float, least: float, study: float, gap: float) -> None:
+def check_room(width: float, block: float, least: float, study: float, gap: float, chart: str = "forest") -> None:
     """Under the rows, a line of columns and a row of study label and intervals must each fit the width."""
     need = max(block, study + gap + least)
     if width < need:
-        raise HairlineLayoutError(f"hairline: forest: the figure leaves {width:.0f} pt for the table, which needs at "
+        raise HairlineLayoutError(f"hairline: {chart}: the figure leaves {width:.0f} pt for the table, which needs at "
                                   f"least {need:.0f} pt: the columns take {block:.0f} pt in one line under each "
                                   f"study, the study labels {study:.0f} pt beside intervals of {least:.0f} pt. "
                                   "Shorten the longest study labels, drop a column, or use a wider size")

@@ -3,8 +3,9 @@
 What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and the
 staffing of a surgical unit over the day. The same options as the Python package, under the same names, and every
 gallery figure agrees with Python within 1 pt (`tools/parity.py`). Then two rules for every chart: nothing overlaps,
-and the same measures (`summary =`, `stats =`) on every distribution chart. Existing calls keep working; a figure
-whose texts or marks collided now lays out without the collision (see "Nothing overlaps" below).
+and the same measures (`summary =`, `stats =`) on every distribution chart, with differences between groups as
+numbers beside them (`compare =` and `numbers =`). Existing calls keep working; a figure whose texts or marks
+collided now lays out without the collision (see "Nothing overlaps" below).
 
 ## For reports
 
@@ -108,6 +109,17 @@ whose texts or marks collided now lays out without the collision (see "Nothing o
   measures per row, aligned.
 * Numbers under the x axis never meet: `n = 20` shortens to `20` after the label `n`, and a row that still cannot
   stand apart stops the figure with what would fit.
+
+## Comparisons
+
+* `compare =` on `hl_raincloud()`, `hl_spread()`, `hl_ridgeline()` and `hl_dotplot()` (with `summary =`): each
+  group's difference from one group or from the group before it (`"adjacent"`), with its 95% CI and p, written beside
+  the other numbers, never over the data. The test follows the centre: the Hodges-Lehmann shift and Wilcoxon
+  rank-sum test with the median, the difference in means and Welch's t-test with the mean alone. The caption names
+  it and, for several comparisons, says that p values are not adjusted.
+* `numbers =` on `hl_spread()`, `hl_dotplot()` and `hl_forest()`: `"auto"` (beside the plot while it keeps its
+  least width, else under each row, as before), `"right"` (always beside it) or `"below"` (always under each row).
+* Messages that stop a figure name the chart that was called: a dot plot's says `dotplot`, not `forest`.
 
 ## Nothing overlaps
 
