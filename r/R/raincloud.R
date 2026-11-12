@@ -271,7 +271,8 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
                          order = NULL, comparisons = list(), colors = NULL, min_n = NULL, clip = NULL,
                          clip_stats = FALSE, color_by = NULL, dimension = NULL, sort = NULL, percent = FALSE,
                          show_n = TRUE, x_title = NULL, reference = NULL, highlight = NULL, key_title = NULL,
-                         facet = NULL, columns = NULL, summary = NULL, stats = character(), compare = NULL) {
+                         facet = NULL, columns = NULL, summary = NULL, stats = character(), compare = NULL,
+                         reference_legend = FALSE) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
@@ -342,5 +343,6 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
   plot@meta$hairline_min_plot <- bracket_plot_height(levels)
   plot@meta$hairline_targets <- targets
-  chart_options(plot, "raincloud", names, x_title = x_title, reference = reference, key_title = key_title)
+  chart_options(plot, "raincloud", names, x_title = x_title, reference = reference,
+                reference_legend = reference_legend, key_title = key_title)
 }

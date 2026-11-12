@@ -216,7 +216,7 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
                          medians = TRUE, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL, clip_stats = FALSE,
                          color_by = NULL, dimension = NULL, sort = NULL, percent = FALSE, x_title = NULL,
                          reference = NULL, highlight = NULL, key_title = NULL, facet = NULL, columns = NULL,
-                         summary = NULL, stats = character(), compare = NULL) {
+                         summary = NULL, stats = character(), compare = NULL, reference_legend = FALSE) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
@@ -273,7 +273,9 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   }
   labels <- if (show_n && is.null(facet)) labels_with_n(names, lengths(groups)) else names
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats), numbers$note)
-  top <- (length(names) + rules$overlap + rules$headroom) / (1 - ridgeline_label_room(reference))
+  # Labels named in the legend row take no room above the ridges.
+  drawn_references <- legend_references(reference, reference_legend, "ridgeline")$reference
+  top <- (length(names) + rules$overlap + rules$headroom) / (1 - ridgeline_label_room(drawn_references))
   plot <- plot + ggplot2::scale_y_continuous(breaks = rev(seq_along(names) - 1), labels = labels, expand = c(0, 0),
                                              limits = c(0, top)) +
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
@@ -287,6 +289,7 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   if (any(lengths(numbers$columns) > 0)) plot@meta$hairline_side_numbers <- numbers$columns
   plot@meta$hairline_targets <- targets
   if (percent) plot <- plot + scale_x_hairline(percent = TRUE)
-  chart_options(plot, "ridgeline", names, x_title = x_title, reference = reference, reference_axis = "x",
+  chart_options(plot, "ridgeline", names, x_title = x_title, reference = reference,
+                reference_legend = reference_legend, reference_axis = "x",
                 key_title = key_title)
 }

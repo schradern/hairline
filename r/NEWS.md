@@ -15,6 +15,12 @@
 * Tooltips can hold several lines. A test runs every gallery figure and fails when one exports a series without a
   tooltip, or when a chart has no gallery figure.
 
+## Reference in the legend
+
+* `reference_legend = TRUE` on `hl_bars()`, `hl_spread()`, `hl_dotplot()`, `hl_raincloud()`, `hl_ridgeline()`,
+  `hl_scatter()`, `hl_timeseries()` and `hl_kaplan_meier()` names the labelled reference in the legend row, as a
+  dashed entry, instead of at its line. One labelled reference at most: two dashed entries look alike.
+
 ## Fixes
 
 * A reference's `legend_label` (`hl_reference()`) joins the legend row also when the chart sets its own legend

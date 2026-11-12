@@ -233,16 +233,18 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               clip: float | tuple[float | None, float | None] | None = None, clip_stats: bool = False,
               color_by: str | None = None, dimension: str | None = None, sort: str | None = None,
               percent: bool = False, show_n: bool = True, x_title: str | None = None, reference: Reference = None,
+              reference_legend: bool = False,
               highlight: Sequence[str] | str | None = None, key_title: str | None = None, facet: str | None = None,
               columns: int | None = None, summary: str | Sequence[str] | None = None,
               stats: str | Sequence[str] = (), compare: str | None = None) -> HairlineFigure:
     """Distributions per group. `comparisons`: "all" or "adjacent" pairs, (group, group) pairs, or
-    (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p. Missing values are
-    left out, and "n = …" counts the values the statistics use (`show_n=False` leaves it out). `min_n`, `clip`,
-    `color_by` and `dimension` work as in `spread()`: groups too small and values clipped off are named in the
-    caption. Shared with the other charts: `sort` ("median", "mean", "n"), `percent`, `x_title`, `reference`
-    (lines on the value axis), `highlight` (groups kept in colour), `key_title` and `facet` (one panel per value,
-    in `columns` columns, on a shared value axis; each panel's n in its header, its comparisons within it).
+    (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p. Missing values are left
+    out, and "n = …" counts the values the statistics use (`show_n=False` leaves it out). `min_n`, `clip`, `color_by`
+    and `dimension` work as in `spread()`: groups too small and values clipped off are named in the caption. Shared with
+    the other charts: `sort` ("median", "mean", "n"), `percent`, `x_title`, `reference` (lines on the value axis;
+    `reference_legend` names the label in the legend row), `highlight` (groups kept in colour), `key_title` and `facet`
+    (one panel per value, in `columns` columns, on a shared value axis; each panel's n in its header, its comparisons
+    within it).
 
     `summary` chooses the marks at the box's place, from "median" (a tick), "mean" (an open diamond), "iqr" (the
     box), "range" (a thin line), "sd" and "ci" (the mean's SD or 95 % CI as a slim bar); one bar at most. The
@@ -313,4 +315,4 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     if legend:
         result.legend(legend)
     return apply_options(result, "raincloud", names=names, x_title=x_title, y_title=y_title, reference=reference,
-                         key_title=key_title)
+                         reference_legend=reference_legend, key_title=key_title)

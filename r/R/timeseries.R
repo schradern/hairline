@@ -220,7 +220,8 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
                           key_panels = NULL, highlight = NULL, qualifiers = list(), bands = list(), events = list(),
                           order = NULL, raw_label = "Raw values", mean_label = NULL, colors = NULL, partial = NULL,
                           color_by = NULL, dimension = NULL, clip = NULL, clip_stats = FALSE, x_title = NULL,
-                          y_title = NULL, reference = NULL, key_title = NULL, summary = NULL) {
+                          y_title = NULL, reference = NULL, key_title = NULL, summary = NULL,
+                          reference_legend = FALSE) {
   check_columns(data, c(x, y, by, color_by))
   marks <- timeseries_summary(summary)
   if (length(partial) && is.null(names(partial))) {
@@ -265,5 +266,6 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   # Panels in rows across the page, as the Python package's default size.
   plot@meta$hairline_size <- "double"
   chart_options(plot, "timeseries", x_title = x_title, y_title = y_title, reference = reference,
+                reference_legend = reference_legend,
                 key_title = key_title)
 }

@@ -37,6 +37,28 @@ def references(reference: Reference, chart: str) -> list[tuple[float, str | None
     return found
 
 
+def legend_references(reference: Reference, legend: bool, chart: str) -> tuple[Reference, list[str]]:
+    """With `reference_legend`, the lines without their labels (no text at the line) and the labels for the legend
+    row, each a dashed entry. One labelled line at most: two dashed entries alike could not tell their lines apart."""
+    if not legend:
+        return reference, []
+    found = references(reference, chart)
+    labels = [label for _, label in found if label]
+    if len(labels) > 1:
+        raise ValueError(f"hairline: {chart}: reference_legend names one reference in the legend, but "
+                         f"{len(labels)} are labelled ({', '.join(labels)}); two dashed entries look alike, so label "
+                         "them at their lines (reference_legend=False)")
+    return [value for value, _ in found], labels
+
+
+def add_reference_legend(result: HairlineFigure, labels: Sequence[str]) -> None:
+    """The labels of `legend_references()` as dashed entries of the legend row."""
+    from hairline.layout.legend import LegendItem
+    from hairline.tokens import load_tokens
+    for label in labels:
+        result.extra_legend_items.append(LegendItem("dash", load_tokens()["reference"]["color"], label))
+
+
 def checked_highlight(highlight: Sequence[str] | str | None, names: Sequence[str], chart: str) -> list[str] | None:
     """The series to keep in colour, each one of the chart's groups."""
     if highlight is None:
@@ -63,15 +85,18 @@ def highlighted(palette: Mapping[str, str], highlight: Sequence[str] | str | Non
 
 def apply_options(result: HairlineFigure, chart: str, *, names: Sequence[str] = (), x_title: str | None = None,
                   y_title: str | None = None, reference: Reference = None, reference_axis: str = "y",
-                  highlight: Sequence[str] | str | None = None, key_title: str | None = None) -> HairlineFigure:
-    """Axis titles, reference lines on the value axis (`reference_axis`), highlighted groups and the legend title,
-    for a chart drawn on matplotlib axes."""
+                  reference_legend: bool = False, highlight: Sequence[str] | str | None = None,
+                  key_title: str | None = None) -> HairlineFigure:
+    """Axis titles, reference lines on the value axis (`reference_axis`, their labels in the legend row with
+    `reference_legend`), highlighted groups and the legend title, for a chart drawn on matplotlib axes."""
     if x_title:
         result.x_title(x_title)
     if y_title:
         result.y_title(y_title)
+    reference, labels = legend_references(reference, reference_legend, chart)
     for value, label in references(reference, chart):
         result.reference(**{reference_axis: value}, label=label)
+    add_reference_legend(result, labels)
     chosen = checked_highlight(highlight, names, chart)
     if chosen:
         result.highlight(series=chosen)

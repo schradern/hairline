@@ -14,7 +14,8 @@ chart_option_params(
   percent,
   show_n,
   sort,
-  facet
+  facet,
+  reference_legend
 )
 }
 \arguments{
@@ -38,6 +39,9 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{sort}{Order of the groups: \code{"median"}, \code{"mean"} or \code{"n"}, highest first; \code{NULL} keeps the given order.}
 
 \item{facet}{Column whose values each get a panel.}
+
+\item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
+line; one labelled reference at most.}
 }
 \value{
 \code{NULL}; documentation only.

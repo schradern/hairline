@@ -239,7 +239,9 @@ legend_row <- function(built) {
 }
 
 reference_legend_items <- function(built) {
-  items <- list()
+  items <- lapply(built@plot@meta$hairline_reference_legend %||% character(), function(label) {
+    list(kind = "dash", colour = hl_tokens()$reference$color, label = label)
+  })
   for (reference in built@plot@meta$hairline_references %||% list()) {
     if (is.null(reference$legend_label)) next
     items[[length(items) + 1]] <- list(kind = "dash", colour = hl_tokens()$reference$color,

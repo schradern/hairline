@@ -27,7 +27,8 @@ hl_dotplot(
   show_n = TRUE,
   summary = NULL,
   compare = NULL,
-  numbers = "auto"
+  numbers = "auto",
+  reference_legend = FALSE
 )
 }
 \arguments{
@@ -75,6 +76,9 @@ with the mean, the Hodges-Lehmann shift and Wilcoxon rank-sum test with the medi
 
 \item{numbers}{Where the numbers go: beside the intervals while they keep their least width, else under each
 row (\code{"auto"}), always beside them (\code{"right"}), or always under each row (\code{"below"}).}
+
+\item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
+line; one labelled reference at most.}
 }
 \value{
 A ggplot with the hairline frame.

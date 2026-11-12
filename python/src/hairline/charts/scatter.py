@@ -64,14 +64,15 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
             clip: float | tuple[float | None, float | None] | None = None, clip_stats: bool = False,
             color_by: str | None = None, dimension: str | None = None, min_n: int | None = None,
             percent: bool = False, x_title: str | None = None, y_title: str | None = None,
-            reference: Reference = None, highlight: Sequence[str] | str | None = None,
+            reference: Reference = None, reference_legend: bool = False, highlight: Sequence[str] | str | None = None,
             key_title: str | None = None, facet: str | None = None, columns: int | None = None) -> HairlineFigure:
     """Points per group (entity colours) and, with `fit="linear"`, a fit over all points drawn (the groups in
     `order`, when given) with n, r and slope. `clip` hides implausible y values (as in `spread()`) and says so in
     the caption; the fit still uses every point unless `clip_stats`. `color_by` colours the groups of `by` by a
     coarser column, which the legend lists; `dimension` keeps them off another dimension's slots. Shared with the
     other charts: `min_n` (groups of `by` with fewer points are left out and named), `percent` (the y axis),
-    `x_title`, `y_title`, `reference` (lines at y values), `highlight` (groups kept in colour), `key_title` and
+    `x_title`, `y_title`, `reference` (lines at y values; `reference_legend` names the label in the legend row),
+    `highlight` (groups kept in colour), `key_title` and
     `facet` (one panel per value, in `columns` columns, on shared axes, each with its own fit)."""
     check_columns(data, [x, y, by, color_by, facet])
     check_numeric(data, [y], "scatter")
@@ -113,7 +114,8 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
     if by:
         result.legend()
     return apply_options(result, "scatter", names=names, x_title=x_title or humanise(x),
-                         y_title=y_title or humanise(y), reference=reference, key_title=key_title)
+                         y_title=y_title or humanise(y), reference=reference, reference_legend=reference_legend,
+                         key_title=key_title)
 
 
 def draw_points(ax, rows: pd.DataFrame, x: str, y: str, by: str | None, names: list[str], palette: dict,

@@ -13,6 +13,8 @@ group_sorts <- c("median", "mean", "n")
 #' @param y_title Axis title above the plot, at the outer left edge.
 #' @param reference Reference lines on the value axis: a value, several, or a named vector whose names label the
 #'   lines, e.g. `c(Target = 0.9)`.
+#' @param reference_legend Name the labelled reference in the legend row, as a dashed entry, instead of at its
+#'   line; one labelled reference at most.
 #' @param highlight Groups to keep in colour; the others are drawn in the context grey.
 #' @param key_title Title at the start of the legend row, naming what the groups are.
 #' @param percent Draw shares (0 to 1) as percent.
@@ -22,7 +24,7 @@ group_sorts <- c("median", "mean", "n")
 #' @keywords internal
 #' @return `NULL`; documentation only.
 chart_option_params <- function(min_n, x_title, y_title, reference, highlight, key_title, percent, show_n, sort,
-                                facet) {
+                                facet, reference_legend) {
   NULL
 }
 
@@ -51,6 +53,21 @@ option_references <- function(reference, chart) {
   })
 }
 
+# With `reference_legend`, the references without their labels (no text at the line) and the labels for the legend
+# row, each a dashed entry. One labelled line at most: two dashed entries alike could not tell their lines apart. As
+# Python's legend_references().
+legend_references <- function(reference, legend, chart) {
+  if (!isTRUE(legend)) return(list(reference = reference, labels = character()))
+  found <- option_references(reference, chart)
+  labels <- unlist(lapply(found, `[[`, "label"))
+  if (length(labels) > 1) {
+    stop(sprintf(paste("hairline: %s: reference_legend names one reference in the legend, but %d are labelled (%s);",
+                       "two dashed entries look alike, so label them at their lines (reference_legend = FALSE)"),
+                 chart, length(labels), paste(labels, collapse = ", ")), call. = FALSE)
+  }
+  list(reference = vapply(found, `[[`, numeric(1), "value"), labels = as.character(labels))
+}
+
 # The series to keep in colour, each one of the chart's groups.
 checked_highlight <- function(highlight, names, chart) {
   if (is.null(highlight)) return(NULL)
@@ -74,10 +91,12 @@ highlighted_colours <- function(colours, highlight, names, chart) {
 # Axis titles, reference lines on the value axis (`reference_axis`), highlighted groups and the legend title, for a
 # chart drawn with ggplot2 layers. The axis titles are the frame's: `x_title` under the plot, `y_title` above it.
 chart_options <- function(plot, chart, names = character(), x_title = NULL, y_title = NULL, reference = NULL,
-                          reference_axis = "y", highlight = NULL, key_title = NULL) {
+                          reference_axis = "y", highlight = NULL, key_title = NULL, reference_legend = FALSE) {
   if (!is.null(x_title)) plot@meta$hairline_x_title <- x_title
   if (!is.null(y_title)) plot@meta$hairline_y_title <- y_title
-  for (line in option_references(reference, chart)) {
+  legend <- legend_references(reference, reference_legend, chart)
+  plot@meta$hairline_reference_legend <- legend$labels
+  for (line in option_references(legend$reference, chart)) {
     plot <- plot + if (reference_axis == "y") hl_reference(y = line$value, label = line$label) else
       hl_reference(x = line$value, label = line$label)
   }

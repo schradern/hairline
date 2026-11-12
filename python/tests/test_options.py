@@ -123,3 +123,34 @@ def test_ridgeline_keeps_room_for_reference_labels():
     plain = hl.ridgeline(data, "group", "lactate", reference=2).ax.get_ylim()[1]
     labelled = hl.ridgeline(data, "group", "lactate", reference={"Upper normal": 2}).ax.get_ylim()[1]
     assert labelled > plain
+
+
+LEGEND_DAYS = pd.DataFrame({"unit": np.repeat(["A", "B"], 10), "days": np.arange(20.0)})
+LEGEND_RATES = pd.DataFrame({"unit": ["A", "B", "C"], "rate": [3.0, 5.0, 4.0], "low": [2.0, 4.0, 3.0],
+                             "high": [4.0, 6.0, 5.0]})
+REFERENCE_CHARTS = {
+    "raincloud": lambda **options: hl.raincloud(LEGEND_DAYS, "unit", "days", **options),
+    "ridgeline": lambda **options: hl.ridgeline(LEGEND_DAYS, "unit", "days", **options),
+    "spread": lambda **options: hl.spread(LEGEND_DAYS, "unit", "days", **options),
+    "dotplot": lambda **options: hl.dotplot(LEGEND_RATES, "unit", "rate", "low", "high", **options),
+    "bars": lambda **options: hl.bars(LEGEND_RATES, "unit", "rate", **options),
+    "scatter": lambda **options: hl.scatter(LEGEND_RATES, "low", "high", fit=None, **options),
+    "timeseries": lambda **options: hl.timeseries(LEGEND_RATES.assign(day=[1, 2, 3]), "day", "rate", **options),
+}
+
+
+@pytest.mark.parametrize("chart", sorted(REFERENCE_CHARTS))
+def test_reference_legend_names_the_label_in_the_legend_row_instead_of_at_the_line(chart):
+    from hairline.layout.apply import legend_row
+    figure = REFERENCE_CHARTS[chart](reference={"Target": 4}, reference_legend=True)
+    figure.figure.canvas.draw()
+    assert [item.label for item in legend_row(figure)][-1:] == ["Target"]
+    assert "Target" not in [text.get_text() for ax in figure.axes for text in ax.texts]
+    assert "Target" not in [shape.get("text") for shape in figure.shapes]
+
+
+def test_reference_legend_takes_one_labelled_reference():
+    with pytest.raises(ValueError, match="2 are labelled \\(Target, Limit\\)"):
+        hl.raincloud(LEGEND_DAYS, "unit", "days", reference={"Target": 10, "Limit": 15}, reference_legend=True)
+    figure = hl.raincloud(LEGEND_DAYS, "unit", "days", reference=[10, (15, "Limit")], reference_legend=True)
+    assert [item.label for item in figure.extra_legend_items] == ["Limit"]

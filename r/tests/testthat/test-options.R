@@ -108,3 +108,26 @@ test_that("the ridgeline keeps room for reference labels", {
   }
   expect_gt(top(c(`Upper normal` = 2)), top(2))
 })
+
+test_that("reference_legend names the label in the legend row instead of at the line", {
+  hl_use(brand = FALSE)
+  days <- data.frame(unit = rep(c("A", "B"), each = 10), days = as.numeric(0:19))
+  rates <- data.frame(unit = c("A", "B", "C"), rate = c(3, 5, 4), low = c(2, 4, 3), high = c(4, 6, 5), day = 1:3)
+  charts <- list(
+    raincloud = function(...) hl_raincloud(days, "unit", "days", ...),
+    ridgeline = function(...) hl_ridgeline(days, "unit", "days", ...),
+    spread = function(...) hl_spread(days, "unit", "days", ...),
+    dotplot = function(...) hl_dotplot(rates, "unit", "rate", "low", "high", ...),
+    bars = function(...) hl_bars(rates, "unit", "rate", ...),
+    scatter = function(...) hl_scatter(rates, "low", "high", fit = NULL, ...),
+    timeseries = function(...) hl_timeseries(rates, "day", "rate", ...))
+  for (chart in names(charts)) {
+    plot <- charts[[chart]](reference = c(Target = 4), reference_legend = TRUE)
+    labels <- vapply(legend_row(ggplot2::ggplot_build(plot)), `[[`, character(1), "label")
+    expect_identical(utils::tail(labels, 1), "Target", label = chart)
+    at_lines <- unlist(lapply(plot@meta$hairline_references %||% list(), `[[`, "label"))
+    expect_false("Target" %in% at_lines, label = chart)
+  }
+  expect_error(hl_raincloud(days, "unit", "days", reference = c(Target = 10, Limit = 15), reference_legend = TRUE),
+               "2 are labelled \\(Target, Limit\\)")
+})

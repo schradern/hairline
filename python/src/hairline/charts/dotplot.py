@@ -21,7 +21,14 @@ from hairline.charts.common import (
 from hairline.charts.comparisons import section_comparisons
 from hairline.charts.forest import forest_spec
 from hairline.charts.forest_geometry import forest_drawing
-from hairline.charts.options import Reference, check_numbers, checked_highlight, references
+from hairline.charts.options import (
+    Reference,
+    add_reference_legend,
+    check_numbers,
+    checked_highlight,
+    legend_references,
+    references,
+)
 from hairline.charts.summaries import LEGEND_WORDS, check_paired, check_summary, interval_of, summary_values
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -34,7 +41,8 @@ SUMMARY_LOW, SUMMARY_HIGH, SUMMARY_N = "_hairline_low", "_hairline_high", "_hair
 
 def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = None, high: str | None = None, *,
             title: str | None = None, subtitle: str | None = None, caption: str | None = None, sort: bool = True,
-            ratio: bool = False, reference: Reference = None, digits: int | None = None,
+            ratio: bool = False, reference: Reference = None, reference_legend: bool = False,
+            digits: int | None = None,
             size: str = "onehalf", n: str | None = None, percent: bool = False, order: Sequence[str] | None = None,
             min_n: int | None = None, x_title: str | None = None,
             highlight: Sequence[str] | str | None = None, facet: str | None = None,
@@ -46,9 +54,9 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     order instead of sorting by value. `show_n=False` leaves the n out of the labels (it still counts for `min_n`).
 
     Shared with the other charts: `reference` draws dashed lines (a target, a null value: 0.1, (0.1, "Target") or
-    {"Target": 0.1}); `min_n` leaves out rows whose `n` is smaller and names them; `x_title` titles the axis;
-    `highlight` keeps these rows in colour; `facet` draws a block of rows per value of that column under its name,
-    on the one axis, each block sorted on its own.
+    {"Target": 0.1}; `reference_legend` names the label in the legend row); `min_n` leaves out rows whose `n` is smaller
+    and names them; `x_title` titles the axis; `highlight` keeps these rows in colour; `facet` draws a block of rows per
+    value of that column under its name, on the one axis, each block sorted on its own.
 
     `summary` takes the rows as values and draws one row per label (per block with `facet`): a centre, "median"
     or "mean", with an interval that belongs to it, "iqr" or "range" with the median, "sd", "ci" or "range" with
@@ -82,6 +90,7 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     rows, columns, compared = dot_comparisons(raw, rows, names, blocks, (label, estimate, facet), compare, summary,
                                               digits)
     chosen = checked_highlight(highlight, names, "dotplot")
+    drawn_references, legend_labels = legend_references(reference, reference_legend, "dotplot")
     if n is not None:
         check_numeric(rows, [n], "dotplot")
     if n is not None and show_n:
@@ -95,7 +104,8 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     spec = forest_spec(rows, label, estimate, low, high, ratio=ratio, color=lone_color(),
                        study_heading=humanise(label), effect_heading=heading, digits=digits, marker="dot",
                        columns=columns, numbers=check_numbers(numbers, "dotplot"),
-                       interval=interval, null=None, references=references(reference, "dotplot"), axis_title=x_title)
+                       interval=interval, null=None, references=references(drawn_references, "dotplot"),
+                       axis_title=x_title)
     spec["chart"] = "dotplot"
     if chosen:
         grey = context_color(current_settings())
@@ -106,6 +116,7 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     result = figure(title or f"{humanise(estimate)} by {str(label).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, small, compared), size=size)
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))
+    add_reference_legend(result, legend_labels)
     return fit_height(result)
 
 

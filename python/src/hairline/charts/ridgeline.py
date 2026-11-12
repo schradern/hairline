@@ -23,7 +23,7 @@ from hairline.charts.common import (
     within,
 )
 from hairline.charts.comparisons import section_comparisons
-from hairline.charts.options import Reference, apply_options, references, sorted_groups
+from hairline.charts.options import Reference, apply_options, legend_references, references, sorted_groups
 from hairline.charts.spread_geometry import DIAMOND, OPEN_EDGE
 from hairline.charts.summaries import (
     CENTRES,
@@ -210,16 +210,16 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               min_n: int | None = None, clip: float | tuple[float | None, float | None] | None = None,
               clip_stats: bool = False, color_by: str | None = None,
               dimension: str | None = None, sort: str | None = None, percent: bool = False,
-              x_title: str | None = None, reference: Reference = None,
+              x_title: str | None = None, reference: Reference = None, reference_legend: bool = False,
               highlight: Sequence[str] | str | None = None, key_title: str | None = None, facet: str | None = None,
               columns: int | None = None, summary: str | Sequence[str] | None = None,
               stats: str | Sequence[str] = (), compare: str | None = None) -> HairlineFigure:
     """Distributions per group as overlapping ridges, the first group on top; all ridges share one height scale.
-    `show_n` writes each group's n after its name; `min_n`, `clip`, `color_by` and `dimension` work as in
-    `spread()`: groups too small are named in the caption, and so are the values clipped off. Shared with the
-    other charts: `sort` ("median", "mean", "n"), `percent`, `x_title`, `reference` (lines on the value axis),
-    `highlight` (groups kept in colour), `key_title` and `facet` (one panel per value, in `columns` columns, on
-    shared axes and one height scale; with `show_n` each panel's n in its header).
+    `show_n` writes each group's n after its name; `min_n`, `clip`, `color_by` and `dimension` work as in `spread()`:
+    groups too small are named in the caption, and so are the values clipped off. Shared with the other charts: `sort`
+    ("median", "mean", "n"), `percent`, `x_title`, `reference` (lines on the value axis; `reference_legend` names the
+    label in the legend row), `highlight` (groups kept in colour), `key_title` and `facet` (one panel per value, in
+    `columns` columns, on shared axes and one height scale; with `show_n` each panel's n in its header).
 
     `summary` chooses the marks on each ridge: "median" (a line up to the ridge) and "mean" (an open diamond on
     its outline); by default the median, or nothing with `medians=False`. A summary you give is named in the
@@ -251,6 +251,8 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     statistics = drawn if clip_stats else counted
     numbers, compared = ridge_numbers(statistics, stats, every, percent, compare, marks, locale)
     tips = ridge_tips(statistics, stats, every, percent, compare, marks, locale)
+    # Labels named in the legend row take no room above the ridges.
+    drawn_references = legend_references(reference, reference_legend, "ridgeline")[0]
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None, compared]
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *notes), size=size, panels=len(panels),
@@ -265,7 +267,7 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
         for name, ridge in ridges.items():
             tip = [{"at": ridge["at"], "text": tips[index][name]}] if name in tips[index] else []
             result.target(index, name, palette[name], ridge["marks"], tip)
-        frame_panel(result, index, panel, labels, statistics[index], show_n, percent, label_room(reference))
+        frame_panel(result, index, panel, labels, statistics[index], show_n, percent, label_room(drawn_references))
         if numbers[index]:
             result.numbers_column(index, numbers[index])
     legend = [("square", color, label) for label, color in
@@ -274,4 +276,4 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     if legend:
         result.legend(legend)
     return apply_options(result, "ridgeline", names=names, x_title=x_title or humanise(value), reference=reference,
-                         reference_axis="x", key_title=key_title)
+                         reference_legend=reference_legend, reference_axis="x", key_title=key_title)

@@ -15,6 +15,7 @@ package (`charts/options.py`, `chart_options.R`), so a chart that offers it cann
 | `x_title` | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |
 | `y_title` | ● |  |  | ● |  | ● | ● |  |  |  |  |  |
 | `reference` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |
+| `reference_legend` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |
 | `percent` | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  |
 | `show_n` | ● | ● | ● | ● | ● |  |  |  | ● |  |  |  |
 | `min_n` | ● | ● | ● | ● | ● | ● |  |  | ● |  |  |  |
@@ -35,6 +36,7 @@ has one series and so no legend, and the dot plot takes its n from a column (`n=
 | `key_title` | A title at the start of the legend row, naming what the groups are. |
 | `x_title`, `y_title` | Axis titles: under the plot on the right, above the plot on the left. |
 | `reference` | Dashed lines on the value axis: a value, several, or labelled ones, `{"Target": 0.9}` (`c(Target = 0.9)` in R). Labels sit at the line's end, or above the rows on charts drawn as rows. |
+| `reference_legend` | The labelled reference's name in the legend row, as a dashed entry, instead of at its line: `reference={"Target": 0.9}, reference_legend=True`. One labelled reference at most, since two dashed entries look alike. |
 | `percent` | Shares (0 to 1) drawn and labelled as percent. |
 | `show_n` | Each group's n: after its name, under it on raincloud, among the key numbers on Likert, in the panel header with `facet`. Where it is on by default (raincloud, Likert, the dot plot's `n=` column), `show_n=False` leaves it out. |
 | `min_n` | Groups with fewer values (rows) are left out; the caption names them. |

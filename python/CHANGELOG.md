@@ -17,6 +17,12 @@
 * Tooltips can hold several lines. A test runs every gallery figure and fails when one exports a series without a
   tooltip, or when a chart has no gallery figure.
 
+### Reference in the legend
+
+* `reference_legend=True` on `bars`, `spread`, `dotplot`, `raincloud`, `ridgeline`, `scatter`, `timeseries` and
+  `kaplan_meier` names the labelled reference in the legend row, as a dashed entry, instead of at its line. One
+  labelled reference at most: two dashed entries look alike.
+
 ### Fixes
 
 * With a brand of fewer categorical slots than groups, explicit `colors=` (a mapping or a ramp) now draw: only

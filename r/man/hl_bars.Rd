@@ -39,7 +39,8 @@ hl_bars(
   y_title = NULL,
   reference = NULL,
   highlight = NULL,
-  key_title = NULL
+  key_title = NULL,
+  reference_legend = FALSE
 )
 }
 \arguments{
@@ -120,6 +121,9 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{highlight}{Groups to keep in colour; the others are drawn in the context grey.}
 
 \item{key_title}{Title at the start of the legend row, naming what the groups are.}
+
+\item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
+line; one labelled reference at most.}
 }
 \value{
 A ggplot with the hairline frame.

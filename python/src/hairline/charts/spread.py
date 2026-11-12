@@ -25,7 +25,16 @@ from hairline.charts.common import (
 )
 from hairline.charts.comparisons import section_comparisons
 from hairline.charts.forest import decimals
-from hairline.charts.options import FACET_BLOCK, FACET_KEY, Reference, check_numbers, facet_rows, references
+from hairline.charts.options import (
+    FACET_BLOCK,
+    FACET_KEY,
+    Reference,
+    add_reference_legend,
+    check_numbers,
+    facet_rows,
+    legend_references,
+    references,
+)
 from hairline.charts.spread_geometry import spread_drawing
 from hairline.charts.summaries import (
     BARS,
@@ -228,7 +237,7 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
            clip_stats: bool = False, color_by: str | None = None, dimension: str | None = None,
            discrete: bool = False, section: str | None = None, panel_letters: bool = False, mean: bool = False,
            sort: str | None = None, x_title: str | None = None, reference: Reference = None,
-           highlight: Sequence[str] | str | None = None, key_title: str | None = None,
+           reference_legend: bool = False, highlight: Sequence[str] | str | None = None, key_title: str | None = None,
            facet: str | None = None, summary: str | Sequence[str] | None = None,
            compare: str | None = None, numbers: str = "auto") -> HairlineFigure:
     """Distributions per group compared on one axis, first group on top; `marks` adds a reference tick per group
@@ -247,14 +256,16 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
     `mean` marks each row's mean as an open diamond, and the legend row names median and mean.
 
     Shared with the other charts: `x_title` (the same as `axis_title`), `reference` (dashed lines across the rows,
-    labelled above them), `highlight` (groups kept in colour), `key_title` and `facet` (a block of rows per value
-    of that column, under its name, on the one axis; a group keeps its colour in every block).
+    labelled above them or, with `reference_legend`, in the legend row), `highlight` (groups kept in colour),
+    `key_title` and `facet` (a block of rows per value of that column, under its name, on the one axis; a group keeps
+    its colour in every block).
 
     `compare` writes each row's difference against one group (compare="Unit A") or the row above ("adjacent"),
     with its 95 % CI and p, beside the other numbers (within each block); the caption names the test, which follows
     the centre: the Hodges–Lehmann shift and Wilcoxon rank-sum test with the median, the difference in means and
     Welch's t-test with the mean alone. `numbers` places the numbers: beside the plot while it keeps its least
     width, else under each row ("auto"), always beside it ("right"), or always under each row ("below")."""
+    reference, legend_labels = legend_references(reference, reference_legend, "spread")
     if facet is not None:
         spec = faceted_spec(data, group, value, facet, order=order, marks=marks, mark_label=mark_label, stats=stats,
                             percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title,
@@ -275,6 +286,7 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
     result.draw(0, lambda box, measure, style: spread_drawing(spec, box, measure, style))
     if spec["legend"]:
         result.legend(spec["legend"])
+    add_reference_legend(result, legend_labels)
     result.key_title(key_title)
     return fit_height(result)
 
