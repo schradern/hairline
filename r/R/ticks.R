@@ -43,7 +43,10 @@ key_less <- function(key, other) {
   FALSE
 }
 
-nice_breaks <- function(low, high, target = 5, whole = FALSE) {
+# Ticks an axis aims for on a panel of its own (fewer on a narrow plot or in a grid of panels).
+ticks_target <- 5
+
+nice_breaks <- function(low, high, target = ticks_target, whole = FALSE) {
   if (low > high) {
     stop(sprintf("hairline: nice_breaks got low %s is above high %s; pass the range in order",
                  format(low), format(high)), call. = FALSE)

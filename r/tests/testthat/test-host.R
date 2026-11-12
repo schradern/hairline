@@ -101,3 +101,49 @@ test_that("the host design sets accent and scheme", {
   expect_equal(hl_use(brand = FALSE, scheme = "light")$scheme, "light")
   hl_use(brand = FALSE)
 })
+
+test_that("version 2 takes the column or the page by size, falls back to width_mm, and names the span", {
+  folder <- withr::local_tempdir()
+  local_host_context(folder, version = 2, column_width_mm = 75.7, page_width_mm = 160, width_mm = NULL)
+  hl_use(brand = FALSE)
+  expect_equal(figure_size_mm("single", NULL, NULL)[1], 75.7)
+  expect_equal(figure_size_mm("onehalf", NULL, NULL)[1], 160)
+  expect_equal(figure_size_mm("double", NULL, NULL)[1], 160)
+  expect_equal(figure_size_mm("single", 60, NULL)[1], 60)
+  expect_identical(c(host_span("single"), host_span("onehalf"), host_span("double")), c("column", "page", "page"))
+  plot <- ggplot2::ggplot(data.frame(x = 1:3, y = c(1, 3, 2)), ggplot2::aes(x, y)) + ggplot2::geom_line() +
+    ggplot2::labs(title = "Sized by the document") + theme_hairline()
+  plot@meta$hairline_size <- "single"
+  path <- tempfile(fileext = ".png")
+  ragg::agg_png(path, width = 8, height = 6, units = "in", res = 72)
+  without_pdf_font_warning(print(plot))
+  grDevices::dev.off()
+  entries <- jsonlite::read_json(file.path(folder, "f", "hairline-figures.json"))
+  expect_identical(entries[[1]]$span, "column")
+  expect_equal(entries[[1]]$width_mm, 75.7)
+})
+
+test_that("version 2 without the span's width falls back to width_mm, then the preset; version 3 is refused", {
+  folder <- withr::local_tempdir()
+  local_host_context(folder, version = 2, column_width_mm = 75.7)
+  expect_equal(figure_size_mm("double", NULL, NULL)[1], 150)
+  hairline_state$host_path <- NULL
+  local_host_context(folder, version = 2, column_width_mm = 75.7, width_mm = NULL)
+  expect_equal(figure_size_mm("double", NULL, NULL)[1], 174)
+  hairline_state$host_path <- NULL
+  local_host_context(folder, version = 3)
+  expect_warning(expect_null(host_context()), "version 3 is not 1 or 2")
+})
+
+test_that("a dot plot in a narrow column grows for a long caption and thins its axis", {
+  folder <- withr::local_tempdir()
+  local_host_context(folder, version = 2, column_width_mm = 75.7, page_width_mm = 160, figure_dir = NULL)
+  hl_use(brand = FALSE)
+  rates <- data.frame(unit = c("A", "B", "C", "D"), effect = c(-0.42, 0.18, -0.12, 0.31),
+                      low = c(-0.6, -0.05, -0.33, 0.1), high = c(-0.2, 0.4, 0.1, 0.52))
+  caption <- paste(rep("A caption long enough to wrap to several lines in a narrow column.", 4), collapse = " ")
+  plot <- hl_dotplot(rates, "unit", "effect", "low", "high", caption = caption, numbers = "right",
+                     title = "A title over a narrow column", subtitle = "And a subtitle under it")
+  expect_length(hl_check_layout(plot, size = "single"), 0)
+  expect_equal(fitted_size_mm(plot, figure_size_mm("single", NULL, NULL))[1], 75.7)
+})

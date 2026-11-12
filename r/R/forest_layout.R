@@ -60,6 +60,8 @@ forest_drawing <- function(spec, box, measure, style) {
   line <- line_height(style, "label")
   columns <- forest_columns(spec, box, measure, rules, base)
   columns$lead <- if (columns$under) line else 0
+  # The axis thinned to the plot's width, before anything is placed on its scale.
+  spec$axis <- fitted_axis(spec$axis, isTRUE(spec$ratio), columns$plot, measure, style)
   scale <- forest_scale(spec$axis, isTRUE(spec$ratio), columns$plot[1], columns$plot[2])
   heading <- box[2] + style$cap_height * size
   top <- heading + line - style$cap_height * size + rules$rule_gap * base + columns$lead

@@ -30,7 +30,13 @@ def test_check_layout_finds_text_over_text_and_marks_outside():
 
 
 @pytest.mark.parametrize("case", CASES, ids=[case["name"] for case in CASES])
-def test_hard_cases_draw_without_collisions_or_are_refused_plainly(case):
+def test_hard_cases_draw_without_collisions_or_are_refused_plainly(case, tmp_path, monkeypatch):
+    if "host" in case:
+        from hairline import host
+        path = tmp_path / "context.json"
+        path.write_text(json.dumps(case["host"]))
+        monkeypatch.setenv(host.ENVIRONMENT, str(path))
+        monkeypatch.setattr(host, "_state", {**host._state, "path": None, "context": None})
     try:
         figure = getattr(hl, case["chart"])(pd.DataFrame(case["data"]), **case["args"], size=case["size"])
         found = hl.check_layout(figure)

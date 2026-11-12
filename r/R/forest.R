@@ -17,7 +17,12 @@ forest_decimals <- function(values) {
 # Two decimals, or more where the estimates and limits are small or close together (0.0004 [0.0003; 0.0005]).
 forest_default_digits <- function(data, columns) max(2, auto_digits(unlist(data[columns], use.names = FALSE)))
 
-forest_axis <- function(lows, highs, ratio, null) {
+# Breaks covering every interval and the null line; `target` caps the ticks (forest.max_ticks on a log scale,
+# ticks_target otherwise) and `rebuild` gives the axis again with fewer, for a plot too narrow for its labels (see
+# fitted_axis()). As Python's forest_axis().
+forest_axis <- function(lows, highs, ratio, null, target = NULL) {
+  target <- target %||% if (ratio) hl_tokens()$forest$max_ticks else ticks_target
+  given <- list(lows = lows, highs = highs)
   low <- min(c(lows, null))
   high <- max(c(highs, null))
   if (low == high) {
@@ -27,12 +32,13 @@ forest_axis <- function(lows, highs, ratio, null) {
     low <- limits[1]
     high <- limits[2]
   }
-  breaks <- if (ratio) log_breaks(low, high, hl_tokens()$forest$max_ticks) else nice_breaks(low, high)
+  breaks <- if (ratio) log_breaks(low, high, target) else nice_breaks(low, high, target)
   limits <- if (ratio) range(breaks) else axis_limits(low, high, breaks)
   shared <- forest_decimals(breaks)
   labels <- vapply(breaks, function(value) hl_format_number(value, if (ratio) forest_decimals(value) else shared),
                    character(1))
-  list(breaks = breaks, labels = labels, low = limits[1], high = limits[2])
+  list(breaks = breaks, labels = labels, low = limits[1], high = limits[2], target = target,
+       rebuild = function(fewer) forest_axis(given$lows, given$highs, ratio, null, fewer))
 }
 
 # Present, ordered limits around their estimate, above zero on a ratio scale.

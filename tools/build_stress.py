@@ -1,11 +1,13 @@
 """Write tokens/fixtures/stress.json: hard inputs for every chart, which both packages draw and check with
 check_layout() / hl_check_layout(). Each case names the chart, the size preset, the data (columns of values) and
-the arguments; the data is invented and fixed by a seed, so both languages draw the same figure.
+the arguments; the data is invented and fixed by a seed, so both languages draw the same figure. A case with `host`
+is drawn under that host context: the narrow cases put every chart in the narrowest column a host hands hairline.
 
 Run from python/: uv run python ../tools/build_stress.py, then ../tools/sync_tokens.py."""
 
 from __future__ import annotations
 
+import csv
 import json
 import string
 from pathlib import Path
@@ -13,6 +15,9 @@ from pathlib import Path
 import numpy as np
 
 OUT = Path(__file__).resolve().parents[1] / "tokens" / "fixtures" / "stress.json"
+GALLERY_DATA = Path(__file__).resolve().parents[1] / "gallery" / "data"
+# The journal PDF column of a document editor: the narrowest width a host hands hairline (version 2 context).
+NARROW_HOST = {"version": 2, "host": "stress", "output": "pdf", "column_width_mm": 75.7, "page_width_mm": 160}
 LETTERS = string.ascii_uppercase
 LONG = "with a longer descriptive name"
 
@@ -191,10 +196,56 @@ def comparison_cases(rng) -> list[dict]:
     ]
 
 
+def gallery_columns(name: str) -> dict:
+    """A gallery data set as columns, numbers as numbers."""
+    with (GALLERY_DATA / f"{name}.csv").open(encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
+
+    def column(values: list[str]) -> list:
+        try:
+            return [float(value) for value in values]
+        except ValueError:
+            return values
+    return {key: column([row[key] for row in rows]) for key in rows[0]}
+
+
+def narrow_cases(cases: list[dict]) -> list[dict]:
+    """Every single-column case again in the narrowest host column, and the charts that only a narrow column
+    strains: a dot plot whose caption wraps to many lines and one whose axis runs below zero, and the drawn charts
+    the other cases leave out."""
+    effects = {"group": ["Unit A", "Unit B", "Unit C", "Unit D"], "value": [-0.42, 0.18, -0.12, 0.31],
+               "low": [-0.6, -0.05, -0.33, 0.1], "high": [-0.2, 0.4, 0.1, 0.52]}
+    caption = " ".join(["A caption long enough to wrap to several lines in a narrow column."] * 4)
+    domains = ["Randomisation", "Deviations", "Missing data", "Measurement", "Reporting"]
+    extra = [
+        {"name": "dotplot_caption", "chart": "dotplot", "data": effects,
+         "args": {"label": "group", "estimate": "value", "low": "low", "high": "high", "caption": caption,
+                  "title": "A title over a narrow column", "subtitle": "And a subtitle under it"}},
+        {"name": "dotplot_negative", "chart": "dotplot", "data": effects,
+         "args": {"label": "group", "estimate": "value", "low": "low", "high": "high", "numbers": "right"}},
+        {"name": "forest_negative", "chart": "forest", "data": {**effects, "study": effects["group"]},
+         "args": {"study": "study", "estimate": "value", "low": "low", "high": "high", "ratio": False}},
+        {"name": "sankey", "chart": "sankey", "data": gallery_columns("budget"),
+         "args": {"columns": ["income", "account", "spending"], "value": "euros"}},
+        {"name": "venn", "chart": "venn", "data": gallery_columns("comorbidities"),
+         "args": {"columns": ["diabetes", "hypertension", "obesity"]}},
+        {"name": "partition", "chart": "partition", "data": gallery_columns("discharge"),
+         "args": {"levels": ["route", "detail"], "value": "patients"}},
+        {"name": "funnel", "chart": "funnel", "data": gallery_columns("funnel"),
+         "args": {"estimate": "odds_ratio", "se": "se"}},
+        {"name": "risk_of_bias", "chart": "risk_of_bias", "data": gallery_columns("bias"),
+         "args": {"study": "study", "domains": domains}},
+    ]
+    twins = [{**case, "name": f"{case['name']}_narrow"} for case in cases if case["size"] == "single"]
+    return [{**case, "size": "single", "host": NARROW_HOST} for case in twins + [
+        {**case, "name": f"{case['name']}_narrow"} for case in extra]]
+
+
 def main() -> None:
     rng = np.random.default_rng(20261111)
     cases = distribution_cases(rng) + bar_cases(rng) + row_cases(rng) + time_cases(rng) + drawn_cases(rng) + \
         summary_cases(rng) + comparison_cases(rng)
+    cases += narrow_cases(cases)
     OUT.write_text(json.dumps({"cases": cases}, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 

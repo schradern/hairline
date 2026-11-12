@@ -162,6 +162,8 @@ spread_drawing <- function(spec, box, measure, style) {
   left <- layout$plot[1]
   right <- layout$plot[2]
   lead <- line_height(style, "label")
+  # The axis thinned to the plot's width, before anything is placed on its scale.
+  spec$axis <- fitted_axis(spec$axis, FALSE, c(left, right), measure, style)
   scale <- forest_scale(spec$axis, FALSE, left, right)
   line <- rules$row_pitch * lead
   pitch <- line + if (layout$under) lead else 0

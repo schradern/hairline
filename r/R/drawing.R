@@ -100,12 +100,15 @@ fitted_frame_size_mm <- function(plot, frame, size_mm) {
   if (!isTRUE(plot@meta$hairline_fit_height)) {
     return(plan_frame(frame$parts, size_mm / 25.4 * 72, grow = TRUE)$size / 72 * 25.4)
   }
-  plan <- plan_frame(frame$parts, size_mm / 25.4 * 72)
+  plan <- plan_frame(frame$parts, size_mm / 25.4 * 72, floor = TRUE)
   box <- fitted_box(plan$layout$panels[[1]], frame$parts$aspect)
   slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(frame$parts$settings),
                                             measure_for(frame$parts$settings))
-  c(size_mm[1], size_mm[2] - slack / 72 * 25.4)
+  floored_size_mm(frame$parts, c(size_mm[1], (plan$size[2] - slack) / 72 * 25.4))
 }
+
+# A drawn figure's size, never so short that its frame leaves the panel less than the least panel height.
+floored_size_mm <- function(parts, size_mm) plan_frame(parts, size_mm / 25.4 * 72, floor = TRUE)$size / 72 * 25.4
 
 # Passes of a grow-only fit: a taller panel can move content (a larger donut moves its key), so it is fitted again.
 grow_passes <- 4
@@ -117,7 +120,8 @@ grow_slack <- 0.01
 # fit_height(shrink=False) does.
 grown_size_mm <- function(parts, size_mm) {
   for (pass in seq_len(grow_passes)) {
-    plan <- plan_frame(parts, size_mm / 25.4 * 72)
+    plan <- plan_frame(parts, size_mm / 25.4 * 72, floor = TRUE)
+    size_mm <- plan$size / 72 * 25.4
     box <- fitted_box(plan$layout$panels[[1]], parts$aspect)
     slack <- box[2] + box[4] - content_bottom(plan$shapes, drawing_style(parts$settings), measure_for(parts$settings))
     if (slack > -grow_slack) break

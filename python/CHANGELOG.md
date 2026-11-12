@@ -23,6 +23,26 @@
   `kaplan_meier` names the labelled reference in the legend row, as a dashed entry, instead of at its line. One
   labelled reference at most: two dashed entries look alike.
 
+### Host contract version 2
+
+* A host context of version 2 gives the document's `column_width_mm` and `page_width_mm`: a figure of size
+  `"single"` takes the column, every other size the page, instead of one host width overriding `size`. The manifest
+  names each figure's `"span"` (`"column"` or `"page"`). `width_mm` stays the fallback, so version-1 hosts work as
+  before. A column too narrow for a chart is refused by its layout errors; the text never shrinks.
+
+### Narrow columns
+
+* `dotplot`, `forest` and every chart drawn to its content grow for a caption, title or legend that wraps to many
+  lines in a narrow column, instead of stopping with "figure too small". A height you give is still kept, or
+  refused when too short.
+* The value axes of `dotplot`, `forest`, `spread` and `likert` thin their ticks to the plot's width, as the other
+  axes do: "−0.50" and "−0.25" no longer meet on a narrow plot.
+* `correlation` wraps the names to the width that leaves the largest cells when the usual wrap would push the matrix
+  past the figure's edge, and says so plainly when no wrap fits.
+* `ridgeline`: a mean diamond on a flat bottom ridge no longer reaches below the panel; the plot grows instead.
+* `check_layout()` measures censor ticks and diamonds by their drawn shape.
+* The hard cases include every chart in a 75.7 mm column (a journal PDF column), drawn through the host hand-off.
+
 ### Fixes
 
 * With a brand of fewer categorical slots than groups, explicit `colors=` (a mapping or a ramp) now draw: only

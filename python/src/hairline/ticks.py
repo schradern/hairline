@@ -48,7 +48,11 @@ def misfit(low: float, high: float, start: float, end: float, wants_zero: bool) 
     return round(max(empty, overshoot) / extent, 9)
 
 
-def nice_breaks(low: float, high: float, target: int = 5, whole: bool = False) -> list[float]:
+# Ticks an axis aims for on a panel of its own (fewer on a narrow plot or in a grid of panels).
+TARGET = 5
+
+
+def nice_breaks(low: float, high: float, target: int = TARGET, whole: bool = False) -> list[float]:
     """Return 3 to 6 round values; data may pass the first break by 10 % and the last by 20 % of the axis.
     `whole` (counts) keeps the steps to whole numbers; a range too short for three whole breaks gets each whole
     number in it (same rule in R)."""

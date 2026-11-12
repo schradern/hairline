@@ -18,7 +18,7 @@ from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
 from hairline.numbers import auto_digits, capped_places, format_interval, format_number, format_percent, word
 from hairline.settings import current_settings
-from hairline.ticks import axis_limits, nice_breaks
+from hairline.ticks import TARGET, axis_limits, nice_breaks
 from hairline.tokens import load_tokens
 
 EXACT = 1e-12
@@ -38,19 +38,23 @@ def default_digits(data: pd.DataFrame, columns: Sequence[str]) -> int:
     return max(2, auto_digits(data[list(columns)].to_numpy(dtype=float).ravel()))
 
 
-def forest_axis(lows: list[float], highs: list[float], ratio: bool, locale: str, null: float | None) -> dict:
+def forest_axis(lows: list[float], highs: list[float], ratio: bool, locale: str, null: float | None,
+                target: int | None = None) -> dict:
     """Breaks covering every interval and the null line: 1-2-5 on a log scale for ratios (each label with its own
-    decimals: 0.2, 0.5, 1, 2), nice breaks with shared decimals otherwise."""
+    decimals: 0.2, 0.5, 1, 2), nice breaks with shared decimals otherwise. `target` caps the ticks (`forest.max_ticks`
+    on a log scale, `TARGET` otherwise); `rebuild` gives the axis again with fewer, for a plot too narrow for its
+    labels (see fitted_axis())."""
+    target = target or (load_tokens()["forest"]["max_ticks"] if ratio else TARGET)
     anchors = [] if null is None else [null]
     low, high = min(lows + anchors), max(highs + anchors)
     if low == high:  # every value alike: an axis around it, a factor of two for ratios
         low, high = (low / 2, high * 2) if ratio else (low - (abs(low) or 1), high + (abs(high) or 1))
-    breaks = log_breaks(low, high, load_tokens()["forest"]["max_ticks"]) if ratio else nice_breaks(low, high)
+    breaks = log_breaks(low, high, target) if ratio else nice_breaks(low, high, target)
     limits = (breaks[0], breaks[-1]) if ratio else axis_limits(low, high, breaks)
     shared = decimals(breaks)
     labels = [format_number(value, decimals([value]) if ratio else shared, locale) for value in breaks]
-    return {"breaks": breaks, "labels": labels,
-            "low": limits[0], "high": limits[1]}
+    return {"breaks": breaks, "labels": labels, "low": limits[0], "high": limits[1], "target": target,
+            "rebuild": lambda fewer: forest_axis(lows, highs, ratio, locale, null, fewer)}
 
 
 def check_interval(name: str, estimate: float, low: float, high: float, ratio: bool) -> None:

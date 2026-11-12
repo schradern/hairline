@@ -58,7 +58,7 @@ from hairline.numbers import (
 )
 from hairline.settings import current_settings
 from hairline.stats.density import median_gap
-from hairline.ticks import axis_limits, nice_breaks
+from hairline.ticks import TARGET, axis_limits, nice_breaks
 from hairline.tokens import load_tokens
 
 STATS = ("median", "iqr", "mean", "n", "range", "levels", "sd", "ci")
@@ -125,16 +125,19 @@ def checked_marks(marks: Mapping[str, float] | None, groups: list[tuple[str, np.
     return marks
 
 
-def spread_axis(lows: list[float], highs: list[float], percent: bool, zero: bool) -> dict:
+def spread_axis(lows: list[float], highs: list[float], percent: bool, zero: bool, target: int = TARGET) -> dict:
+    """Breaks, labels and limits of a drawn value axis; `rebuild` gives it again with fewer ticks, for a plot too
+    narrow for its labels (see fitted_axis())."""
     low, high = min(lows + ([0.0] if zero else [])), max(highs + ([0.0] if zero else []))
-    breaks = nice_breaks(low, high)
+    breaks = nice_breaks(low, high, target)
     limits = axis_limits(low, high, breaks)
     shown = [value * (100 if percent else 1) for value in breaks]
     places = decimals([snap_noise(value) for value in shown])
     labels = [format_number(snap_noise(value), places) for value in shown]
     if percent:
         labels[-1] += locale_symbols(None)["percent_space"] + "%"
-    return {"breaks": breaks, "labels": labels, "low": limits[0], "high": limits[1]}
+    return {"breaks": breaks, "labels": labels, "low": limits[0], "high": limits[1], "target": target,
+            "rebuild": lambda fewer: spread_axis(lows, highs, percent, zero, fewer)}
 
 
 def warn_median_gaps(groups: list[tuple[str, np.ndarray]], numbers: tuple, chart: str = "spread") -> None:

@@ -295,10 +295,16 @@ def label_rows_height(figure: HairlineFigure) -> float:
 def kept_plot_room(figure: HairlineFigure, spec: FrameInput, metrics) -> FrameInput:
     """The frame for a figure grown, where needed, until its axes panels together keep the least plot height
     (`spacing.min_plot_height` x the base size, or the chart's own): a narrow figure whose title, legend, headers,
-    axis or table would squeeze the plot gets taller instead."""
-    if not keeps_plot_room(figure):
+    axis or table would squeeze the plot gets taller instead. While fit_height() measures a drawn panel, the panel
+    is grown only to the least panel height, so a frame that wraps to many lines (a narrow column) cannot squeeze it
+    out before its content is measured; a height given for a drawn panel is kept, or refused when too short."""
+    if keeps_plot_room(figure):
+        least = least_plot_height(figure)
+    elif figure.fitting:
+        least = 0.0
+    else:
         return spec
-    height = kept_height(spec, metrics, least_plot_height(figure))
+    height = kept_height(spec, metrics, least)
     if height <= spec.height_pt + HEIGHT_TOLERANCE_PT:
         return spec
     figure.figure.set_size_inches(spec.width_pt / 72, height / 72, forward=False)

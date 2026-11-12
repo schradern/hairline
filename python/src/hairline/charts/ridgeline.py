@@ -7,7 +7,6 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
-from matplotlib.patches import Polygon
 
 from hairline.charts.common import (
     check_columns,
@@ -24,7 +23,7 @@ from hairline.charts.common import (
 )
 from hairline.charts.comparisons import section_comparisons
 from hairline.charts.options import Reference, apply_options, legend_references, references, sorted_groups
-from hairline.charts.spread_geometry import DIAMOND, OPEN_EDGE
+from hairline.charts.ridgeline_drawing import draw_ridges, mean_floor, mean_plot_height
 from hairline.charts.summaries import (
     CENTRES,
     STAT_NAMES,
@@ -33,107 +32,17 @@ from hairline.charts.summaries import (
     measure_numbers,
     stat_pairs,
     summary_legend,
-    summary_values,
 )
 from hairline.charts.timeseries import groups_of
 from hairline.charts.tips import pairs_tip, tip_measures
 from hairline.figure import HairlineFigure, figure
 from hairline.layout.geometry import load_font_metrics
-from hairline.marks import STATIC_ID
 from hairline.numbers import format_number
 from hairline.settings import current_settings
 from hairline.stats.density import density
 from hairline.tokens import load_tokens
 
-RIDGE_ID, MEDIAN_ID = "hairline-ridge", "hairline-median"
 WHY = "A ridge shows its own spread; raincloud() and spread() draw intervals"
-
-
-def draw_ridge(ax, curve: tuple[list[float], list[float]], base: float, scale: float, color: str,
-               layer: float) -> list[dict]:
-    """A surface-coloured shape hiding the ridges behind, the light fill and the outline in the group colour;
-    returns the fill and outline in data units, for the ridge's tooltip targets."""
-    settings, rules = current_settings(), load_tokens()["ridgeline"]
-    grid, height = curve
-    outline = [(x, base + value * scale) for x, value in zip(grid, height, strict=True)]
-    corners = [(grid[0], base), *outline, (grid[-1], base)]
-    ax.add_patch(Polygon(corners, closed=True, facecolor=settings.neutral["surface"], edgecolor="none", linewidth=0,
-                         zorder=layer, gid="hairline-occluder"))
-    ax.add_patch(Polygon(corners, closed=True, facecolor=color, alpha=rules["fill_opacity"], edgecolor="none",
-                         linewidth=0, zorder=layer + 0.001, gid=RIDGE_ID))
-    xs, ys = zip(*outline, strict=True)
-    width = load_tokens()["lines"]["data"] * settings.base_size
-    ax.plot(xs, ys, color=color, linewidth=width, zorder=layer + 0.002, label="_nolegend_", gid=STATIC_ID)
-    return [{"polygon": corners, "alpha": rules["fill_opacity"]}, {"line": outline, "width": width}]
-
-
-def draw_centres(ax, values: np.ndarray, curve: tuple[list[float], list[float]], base: float, scale: float,
-                 layer: float, marks: Sequence[str], color: str) -> tuple[list[dict], tuple[float, float] | None]:
-    """The median as a line from the baseline up to the ridge, the mean as an open diamond on the ridge's outline;
-    both held within the ridge. Returns them in data units, for the tooltip targets, and the median's top."""
-    settings, tokens = current_settings(), load_tokens()
-    found, shapes, top = summary_values(values), [], None
-
-    def on_ridge(value: float) -> tuple[float, float]:
-        x = min(max(value, curve[0][0]), curve[0][-1])
-        return x, base + float(np.interp(x, curve[0], curve[1])) * scale
-    if "median" in marks:
-        top = on_ridge(found["median"])
-        line = tokens["reference"]["width"] * settings.base_size
-        ax.plot([top[0], top[0]], [base, top[1]], color=settings.neutral["ink"], zorder=layer + 0.003, linewidth=line,
-                gid=MEDIAN_ID, label="_nolegend_")
-        shapes.append({"line": [(top[0], base), top], "width": line, "color": settings.neutral["ink"]})
-    if "mean" in marks:
-        width = tokens["lines"]["data"] * settings.base_size
-        radius = DIAMOND * tokens["lines"]["point_radius"] * settings.base_size
-        centre = on_ridge(found["mean"])
-        ax.plot([centre[0]], [centre[1]], marker="D", markersize=radius * math.sqrt(2), linestyle="none",
-                markerfacecolor=settings.neutral["surface"], markeredgecolor=color, markeredgewidth=width * OPEN_EDGE,
-                zorder=layer + 0.004, gid=MEDIAN_ID, label="_nolegend_")
-        shapes.append({"diamond": centre, "r": radius, "color": settings.neutral["surface"], "edge": color,
-                       "edge_width": width * OPEN_EDGE})
-    return shapes, top
-
-
-def draw_spikes(ax, values: np.ndarray, base: float, color: str, layer: float) -> list[dict]:
-    """A group too small or too uniform for a density (one value, or all alike) shows each value as a spike, so
-    its row is never empty; returns the spikes in data units."""
-    width = load_tokens()["lines"]["data"] * current_settings().base_size
-    height, shapes = load_tokens()["ridgeline"]["spike"], []
-    for value in sorted(set(np.asarray(values, dtype=float))):
-        ax.plot([value, value], [base, base + height], color=color, zorder=layer + 0.002, label="_nolegend_",
-                linewidth=width, gid=STATIC_ID)
-        shapes.append({"line": [(value, base), (value, base + height)], "width": width})
-    return shapes
-
-
-def ridge_anchor(shapes: list[dict], top: tuple[float, float] | None) -> tuple[float, float]:
-    """Where a ridge's tooltip points: the top of its median line, else the highest point of its outline (or of
-    its spikes)."""
-    if top is not None:
-        return top
-    points = [point for shape in shapes if "line" in shape for point in shape["line"]]
-    return max(points, key=lambda point: point[1])
-
-
-def draw_ridges(ax, groups: list, curves: list, scale: float, marks: Sequence[str], palette: dict[str, str],
-                statistics: list) -> dict[str, dict]:
-    """Top row first, so each lower ridge is drawn in front of the one above. Returns each ridge drawn: its marks
-    in data units and where its tooltip points."""
-    drawn = {}
-    for index, ((name, values), curve, (_, counted)) in enumerate(zip(groups, curves, statistics, strict=True)):
-        base, layer = float(len(groups) - 1 - index), 1 + index * 0.01
-        top = None
-        if curve is None:
-            shapes = draw_spikes(ax, values, base, palette[name], layer)
-        else:
-            shapes = draw_ridge(ax, curve, base, scale, palette[name], layer)
-            if len(counted):
-                centres, top = draw_centres(ax, counted, curve, base, scale, layer, marks, palette[name])
-                shapes += centres
-        if shapes:
-            drawn[name] = {"marks": shapes, "at": ridge_anchor(shapes, top)}
-    return drawn
 
 
 def panel_groups(rows_of: dict, names: list[str], value: str, facet: str | None, panel: str | None) -> list:
@@ -261,15 +170,21 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
                                     named=True)
     labels = labels_with_n(names, {name: len(values) for name, values in groups}, locale) \
         if show_n and not facet else names
+    top = (len(labels) + rules["overlap"] + rules["headroom"]) / (1 - label_room(drawn_references))
+    lifts = []
     for index, panel in enumerate(panels):
         ridges = draw_ridges(result.axes[index], drawn[index], curves[index], scale, marks, palette,
-                             statistics[index])
+                             statistics[index], mean_floor(top))
+        bottom = ridges.get(drawn[index][-1][0], {"marks": []})["marks"]
+        lifts += [mark["diamond"][1] for mark in bottom if "diamond" in mark]
         for name, ridge in ridges.items():
             tip = [{"at": ridge["at"], "text": tips[index][name]}] if name in tips[index] else []
             result.target(index, name, palette[name], ridge["marks"], tip)
         frame_panel(result, index, panel, labels, statistics[index], show_n, percent, label_room(drawn_references))
         if numbers[index]:
             result.numbers_column(index, numbers[index])
+    # A mean diamond on a flat bottom ridge would reach below the panel on a short plot: the plot grows instead.
+    result.min_plot = mean_plot_height(lifts, top, math.ceil(len(panels) / result.columns))
     legend = [("square", color, label) for label, color in
               dict.fromkeys((coarse[name], palette[name]) for name in names)] if color_by else []
     legend += summary_legend(marks, "tick", current_settings().neutral["ink"], locale) if summary is not None else []

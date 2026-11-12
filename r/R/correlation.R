@@ -66,6 +66,52 @@ correlation_name_lines <- function(spec, box, measure, style, rules, values) {
   lapply(names, fit_lines, room = room, measure = measure, chart = "correlation", what = "the name")
 }
 
+# The cell side the width allows beside the names wrapped as `lines`, at most `max_cell` times the base size. As
+# Python's width_side().
+correlation_width_side <- function(spec, box, measure, style, rules, lines) {
+  widest <- max(vapply(lines, widest_line, numeric(1), measure = measure))
+  min(rules$max_cell * style$base, (box[3] - widest - rules$label_gap * style$base) / length(lines))
+}
+
+# Whether cells as tall as the names' lines still fit the width beside them. As Python's fits_width().
+correlation_fits_width <- function(spec, box, measure, style, rules, lines) {
+  max(lengths(lines)) * line_height(style, "label") <=
+    correlation_width_side(spec, box, measure, style, rules, lines) + wrap_tolerance
+}
+
+# Widths to wrap the names into: each run of words of a name that fits `room`, and holds every word. As Python's
+# wrap_widths().
+correlation_wrap_widths <- function(spec, measure, room) {
+  names <- strsplit(unlist(spec$names), "\\s+")
+  least <- max(vapply(unlist(names), measure, numeric(1), role = "label"))
+  found <- unique(unlist(lapply(names, function(words) {
+    unlist(lapply(seq_along(words), function(start) {
+      vapply(start:length(words), function(end) measure(paste(words[start:end], collapse = " "), "label"), 0)
+    }))
+  })))
+  sort(found[found >= least - wrap_tolerance & found <= room + wrap_tolerance])
+}
+
+# The names wrapped as correlation_name_lines() does, while cells as tall as their lines fit the width; in a column
+# too narrow for that, the wrap that leaves the largest cells, and an error saying so when none fits. As Python's
+# fitted_lines().
+correlation_fitted_lines <- function(spec, box, measure, style, rules, values) {
+  lines <- correlation_name_lines(spec, box, measure, style, rules, values)
+  if (correlation_fits_width(spec, box, measure, style, rules, lines)) return(lines)
+  room <- box[3] - rules$label_gap * style$base
+  choices <- lapply(correlation_wrap_widths(spec, measure, room), function(width) {
+    lapply(unlist(spec$names), fit_lines, room = width, measure = measure, chart = "correlation", what = "the name")
+  })
+  fitting <- Filter(function(choice) correlation_fits_width(spec, box, measure, style, rules, choice), choices)
+  if (!length(fitting)) {
+    stop(sprintf(paste("hairline: correlation: %d names leave no cells beside them that hold their lines in %.0f pt.",
+                       "Shorten the names, show fewer variables, or use a wider size"), length(spec$names), box[3]),
+         call. = FALSE)
+  }
+  sides <- vapply(fitting, function(choice) correlation_width_side(spec, box, measure, style, rules, choice), 0)
+  fitting[[which.max(sides)]]
+}
+
 # Square cells, as large as the box allows beside the names but at most `max_cell` times the base size, and never
 # lower than a name's lines. As Python's cell_side().
 correlation_side <- function(spec, box, measure, style, rules, lines) {
@@ -80,7 +126,7 @@ correlation_drawing <- function(spec, box, measure, style) {
   names <- unlist(spec$names)
   count <- length(names)
   shown <- correlation_shows_values(spec, box, measure, rules, style)
-  lines <- correlation_name_lines(spec, box, measure, style, rules, shown)
+  lines <- correlation_fitted_lines(spec, box, measure, style, rules, shown)
   side <- correlation_side(spec, box, measure, style, rules, lines)
   inset <- rules$gap_pt / 2
   pitch <- line_height(style, "label")

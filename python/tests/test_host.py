@@ -89,3 +89,50 @@ def test_host_design_sets_accent_and_scheme(context):
     settings = hl.use(brand=False)
     assert settings.scheme == "dark" and settings.accent == "#7a2e8c"
     assert hl.use(brand=False, scheme="light").scheme == "light"
+
+
+@pytest.mark.parametrize(("size", "span", "width"), [("single", "column", 75.7), ("onehalf", "page", 160),
+                                                     ("double", "page", 160)])
+def test_version_two_takes_the_column_or_the_page_by_size_and_names_the_span(context, tmp_path, size, span, width):
+    context(version=2, column_width_mm=75.7, page_width_mm=160, width_mm=None)
+    figure = hl.figure("Sized by the document", size=size)
+    figure.ax.plot([0, 1], [0, 1])
+    assert figure.figure.get_size_inches()[0] * 25.4 == pytest.approx(width)
+    figure.figure.savefig(io.BytesIO(), format="png")
+    (entry,) = json.loads((tmp_path / "f" / host.MANIFEST).read_text())
+    assert entry["span"] == span and entry["width_mm"] == pytest.approx(width)
+
+
+def test_version_two_falls_back_to_width_mm_and_the_preset(context):
+    context(version=2, column_width_mm=75.7, width_mm=150)
+    assert hl.figure("Page", size="double").figure.get_size_inches()[0] * 25.4 == pytest.approx(150)
+    context(version=2, column_width_mm=75.7, width_mm=None)
+    assert hl.figure("Preset", size="double").figure.get_size_inches()[0] * 25.4 == pytest.approx(174)
+    assert hl.figure("Explicit", size="single", width_mm=60).figure.get_size_inches()[0] * 25.4 == pytest.approx(60)
+
+
+def test_a_version_one_manifest_names_the_span_too(context, tmp_path):
+    context()
+    figure = hl.figure("Single", size="single")
+    figure.ax.plot([0, 1], [0, 1])
+    figure.figure.savefig(io.BytesIO(), format="png")
+    (entry,) = json.loads((tmp_path / "f" / host.MANIFEST).read_text())
+    assert entry["span"] == "column" and entry["width_mm"] == pytest.approx(150)
+
+
+def test_an_unknown_version_is_warned_about(context):
+    context(version=3)
+    with pytest.warns(UserWarning, match="version 3 is not 1 or 2"):
+        assert host.host_context() is None
+
+
+def test_a_dotplot_in_a_narrow_column_grows_for_a_long_caption_and_thins_its_axis(context):
+    context(version=2, column_width_mm=75.7, page_width_mm=160)
+    import pandas as pd
+    rates = pd.DataFrame({"unit": ["A", "B", "C", "D"], "effect": [-0.42, 0.18, -0.12, 0.31],
+                          "low": [-0.6, -0.05, -0.33, 0.1], "high": [-0.2, 0.4, 0.1, 0.52]})
+    caption = " ".join(["A caption long enough to wrap to several lines in a narrow column."] * 4)
+    figure = hl.dotplot(rates, "unit", "effect", "low", "high", size="single", caption=caption,
+                        title="A title over a narrow column", subtitle="And a subtitle under it", numbers="right")
+    assert hl.check_layout(figure) == []
+    assert figure.figure.get_size_inches()[0] * 25.4 == pytest.approx(75.7)

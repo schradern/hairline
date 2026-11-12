@@ -176,7 +176,9 @@ label_rows_height <- function(parts) {
 # `grow`: a plot with axes gets a taller figure, where needed, until its panels together keep the least plot height,
 # so a narrow figure whose title, legend, headers, axis or table would squeeze the plot grows instead. hl_save()
 # plans with it to choose the device size; a plot drawn on a device of fixed size keeps that size.
-plan_frame <- function(parts, size, grow = FALSE) {
+# `grow` keeps an axes plot its least height; `floor` keeps a drawn panel the least panel height, for the passes that
+# fit a drawn figure to its content (as Python's kept_plot_room()).
+plan_frame <- function(parts, size, grow = FALSE, floor = FALSE) {
   settings <- parts$settings
   spacing <- hl_tokens()$spacing
   margin <- spacing$margin * settings$base_size
@@ -196,6 +198,7 @@ plan_frame <- function(parts, size, grow = FALSE) {
   composed <- compose_all_headers(parts, compute_frame(spec, metrics))
   spec <- frame_spec(parts, texts, size, legend_rows, header_rows(parts, composed))
   if (grow && !parts$bare) spec$height_pt <- kept_frame_height(spec, metrics, least_plot_height(parts))
+  if (floor && parts$bare) spec$height_pt <- kept_frame_height(spec, metrics, 0)
   layout <- compute_frame(spec, metrics)
   list(layout = layout, texts = texts, placed = placed, composed = compose_all_headers(parts, layout),
        size = c(spec$width_pt, spec$height_pt), shapes = drawing_shapes(parts, layout))

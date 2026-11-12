@@ -7,6 +7,7 @@ from hairline.charts.donut_geometry import Measure, baseline_for, line_height, t
 from hairline.charts.tips import tagged
 from hairline.charts.wrapping import TOLERANCE, fit_lines, widest_line
 from hairline.color.vision import contrast
+from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -36,6 +37,46 @@ def name_lines(spec: dict, box: Box, measure: Measure, style: dict, rules: dict,
     return [fit_lines(name, room, measure, "correlation", "the name") for name in spec["names"]]
 
 
+def width_side(spec: dict, box: Box, measure: Measure, style: dict, rules: dict, lines: list[list[str]]) -> float:
+    """The cell side the width allows beside the names wrapped as `lines`, at most `max_cell` times the base size."""
+    widest = max(widest_line(name, measure) for name in lines)
+    return min(rules["max_cell"] * style["base"],
+               (box.width - widest - rules["label_gap"] * style["base"]) / len(spec["names"]))
+
+
+def fits_width(spec: dict, box: Box, measure: Measure, style: dict, rules: dict, lines: list[list[str]]) -> bool:
+    """Whether cells as tall as the names' lines still fit the width beside them."""
+    tallest = max(len(name) for name in lines) * line_height(style, "label")
+    return tallest <= width_side(spec, box, measure, style, rules, lines) + TOLERANCE
+
+
+def wrap_widths(spec: dict, measure: Measure, room: float) -> list[float]:
+    """Widths to wrap the names into: each run of words of a name that fits `room`, and holds every word."""
+    words = [word for name in spec["names"] for word in name.split()]
+    least = max(measure(word, "label") for word in words)
+    found = {measure(" ".join(name.split()[start:end]), "label") for name in spec["names"]
+             for start in range(len(name.split())) for end in range(start + 1, len(name.split()) + 1)}
+    return sorted(width for width in found if least - TOLERANCE <= width <= room + TOLERANCE)
+
+
+def fitted_lines(spec: dict, box: Box, measure: Measure, style: dict, rules: dict, values: bool) -> list[list[str]]:
+    """The names wrapped as name_lines() does, while cells as tall as their lines fit the width; in a column too
+    narrow for that (names wrapped to many lines would push the cells past the figure's edge), the wrap that leaves
+    the largest cells, and an error saying so when none fits."""
+    lines = name_lines(spec, box, measure, style, rules, values)
+    if fits_width(spec, box, measure, style, rules, lines):
+        return lines
+    room = box.width - rules["label_gap"] * style["base"]
+    choices = [[fit_lines(name, width, measure, "correlation", "the name") for name in spec["names"]]
+               for width in wrap_widths(spec, measure, room)]
+    fitting = [choice for choice in choices if fits_width(spec, box, measure, style, rules, choice)]
+    if not fitting:
+        raise HairlineLayoutError(f"hairline: correlation: {len(spec['names'])} names leave no cells beside them "
+                                  f"that hold their lines in {box.width:.0f} pt. Shorten the names, show fewer "
+                                  "variables, or use a wider size")
+    return max(fitting, key=lambda choice: width_side(spec, box, measure, style, rules, choice))
+
+
 def cell_side(spec: dict, box: Box, measure: Measure, style: dict, rules: dict, lines: list[list[str]]) -> float:
     """Square cells, as large as the box allows beside the names but at most `max_cell` times the base size, and
     never lower than a name's lines."""
@@ -56,7 +97,7 @@ def text_color(fill: str, style: dict) -> str:
 def correlation_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[dict]:
     rules = load_tokens()["correlation"]
     values_shown = shows_values(spec, box, measure, style, rules)
-    lines = name_lines(spec, box, measure, style, rules, values_shown)
+    lines = fitted_lines(spec, box, measure, style, rules, values_shown)
     side, inset = cell_side(spec, box, measure, style, rules, lines), rules["gap_pt"] / 2
     cells, values, names = [], [], []
     for row, name in enumerate(spec["names"]):

@@ -82,6 +82,8 @@ class HairlineFigure:
     inside_labels: list[tuple] = field(default_factory=list)
     side_numbers: dict[int, list[tuple[float, str, str]]] = field(default_factory=dict)
     legend_heading: str | None = None
+    size: str = "onehalf"
+    fitting: bool = False
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)
@@ -351,9 +353,9 @@ def size_settings(size: str, width_mm: float | None, height_mm: float | None) ->
         if value is not None:
             check_positive(value, name)
     preset, settings = presets[size], current_settings()
-    from hairline.host import host_context
+    from hairline.host import host_context, host_width
     context = host_context()
-    width = width_mm or (context.width_mm if context else None) or preset["width_mm"]
+    width = width_mm or (host_width(context, size) if context else None) or preset["width_mm"]
     height = height_mm or preset.get("height_mm") or width * preset["aspect"]
     if not settings.base_size_explicit:
         settings = replace(settings, base_size=float(preset["base_size"]))
@@ -416,6 +418,7 @@ def figure(title: str, subtitle: str | None = None, caption: str | None = None, 
     axes = create_axes(fig, panels, sharex, sharey)
     hairline_figure = HairlineFigure(fig, axes, settings, title, subtitle, caption, columns, sharex, sharey,
                                      panel_letters, row_heights=row_weights(heights, panels, columns))
+    hairline_figure.size = size
     fig.hairline_figure = hairline_figure
     fig.set_layout_engine(HairlineLayout(hairline_figure))
     return hairline_figure

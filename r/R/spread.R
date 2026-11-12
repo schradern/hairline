@@ -42,15 +42,18 @@ spread_summary_row <- function(values, shown, names, discrete) {
        show_median = "median" %in% names, mean = if ("mean" %in% names) held(found$mean))
 }
 
-spread_axis <- function(lows, highs, percent, zero) {
+# Breaks, labels and limits of a drawn value axis; `rebuild` gives it again with fewer ticks, for a plot too narrow
+# for its labels (see fitted_axis()). As Python's spread_axis().
+spread_axis <- function(lows, highs, percent, zero, target = ticks_target) {
   low <- min(c(lows, if (zero) 0))
   high <- max(c(highs, if (zero) 0))
-  breaks <- nice_breaks(low, high)
+  breaks <- nice_breaks(low, high, target)
   limits <- axis_limits(low, high, breaks)
   shown <- snap_noise(breaks * if (percent) 100 else 1)
   labels <- vapply(shown, hl_format_number, character(1), digits = forest_decimals(shown))
   if (percent) labels[length(labels)] <- paste0(labels[length(labels)], locale_symbols(NULL)$percent_space, "%")
-  list(breaks = breaks, labels = labels, low = limits[1], high = limits[2])
+  list(breaks = breaks, labels = labels, low = limits[1], high = limits[2], target = target,
+       rebuild = function(fewer) spread_axis(lows, highs, percent, zero, fewer))
 }
 
 # The statistics to show, each once, and decimals as a whole number.

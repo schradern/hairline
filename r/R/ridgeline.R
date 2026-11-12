@@ -1,115 +1,12 @@
 # Ridgeline plot, mirroring the Python ridgeline(): one density ridge per group on a shared x-axis, the first
 # group on top, overlapping the row above, medians marked.
 
-# The layers and what they draw, for the ridge's tooltip targets: its fill and outline in data units, its centres
-# and the median's top.
-ridge_layers <- function(curve, values, base, scale, colour, marks, counted = values) {
-  settings <- hl_settings()
-  rules <- hl_tokens()$ridgeline
-  outline <- data.frame(x = curve$grid, y = base + curve$height * scale)
-  corners <- rbind(data.frame(x = curve$grid[1], y = base), outline,
-                   data.frame(x = curve$grid[length(curve$grid)], y = base))
-  width <- hl_tokens()$lines$data * settings$base_size
-  layers <- list(ggplot2::geom_polygon(data = corners, ggplot2::aes(.data$x, .data$y), fill = settings$neutral$surface,
-                                       colour = NA, inherit.aes = FALSE),
-                 ggplot2::geom_polygon(data = corners, ggplot2::aes(.data$x, .data$y), fill = colour,
-                                       alpha = rules$fill_opacity, colour = NA, inherit.aes = FALSE),
-                 static_layer(ggplot2::geom_path(data = outline, ggplot2::aes(.data$x, .data$y), colour = colour,
-                                                 linewidth = pt_to_linewidth(width), inherit.aes = FALSE)))
-  marks_drawn <- list(list(polygon = as.matrix(corners), alpha = rules$fill_opacity),
-                      list(line = as.matrix(outline), width = width))
-  if (!length(counted)) return(list(layers = layers, marks = marks_drawn, top = NULL))
-  centres <- ridge_centre_layers(counted, curve, base, scale, marks, colour)
-  list(layers = c(layers, centres$layers), marks = c(marks_drawn, centres$marks), top = centres$top)
-}
-
-# The median as a line from the baseline up to the ridge, the mean as an open diamond on the ridge's outline; both
-# held within the ridge; with them in data units and the median's top. As Python's draw_centres().
-ridge_centre_layers <- function(counted, curve, base, scale, marks, colour) {
-  settings <- hl_settings()
-  found <- summary_values(counted)
-  on_ridge <- function(value) {
-    x <- min(max(value, curve$grid[1]), curve$grid[length(curve$grid)])
-    c(x, base + stats::approx(curve$grid, curve$height, x)$y * scale)
-  }
-  layers <- list()
-  shapes <- list()
-  top <- NULL
-  if ("median" %in% marks) {
-    top <- on_ridge(found$median)
-    line <- hl_tokens()$reference$width * settings$base_size
-    median <- ggplot2::geom_segment(data = data.frame(x = top[1], y = base, yend = top[2]),
-                                    ggplot2::aes(.data$x, .data$y, xend = .data$x, yend = .data$yend),
-                                    colour = settings$neutral$ink, inherit.aes = FALSE,
-                                    linewidth = pt_to_linewidth(line))
-    median$hairline_secondary <- TRUE
-    layers <- c(layers, list(median))
-    shapes <- c(shapes, list(list(line = rbind(c(top[1], base), top), width = line, color = settings$neutral$ink)))
-  }
-  if ("mean" %in% marks) {
-    centre <- on_ridge(found$mean)
-    width <- hl_tokens()$lines$data * settings$base_size
-    layers <- c(layers, list(mean_diamond(centre[1], centre[2], colour)))
-    shapes <- c(shapes, list(list(diamond = centre,
-                                  r = diamond_size * hl_tokens()$lines$point_radius * settings$base_size,
-                                  color = settings$neutral$surface, edge = colour, edge_width = width * open_edge)))
-  }
-  list(layers = layers, marks = shapes, top = top)
-}
-
-# A group too small or too uniform for a density (one value, or all alike) shows each value as a spike, so its row is
-# never empty.
-ridge_spikes <- function(values, base, colour, rules) {
-  shown <- sort(unique(as.numeric(values)))
-  if (!length(shown)) return(list(layers = list(), marks = list(), top = NULL))
-  width <- hl_tokens()$lines$data * hl_settings()$base_size
-  spikes <- data.frame(x = shown, y = base, yend = base + rules$spike)
-  list(layers = list(static_layer(ggplot2::geom_segment(data = spikes, ggplot2::aes(.data$x, .data$y, xend = .data$x,
-                                                                                    yend = .data$yend),
-                                                        colour = colour, linewidth = pt_to_linewidth(width),
-                                                        inherit.aes = FALSE))),
-       marks = lapply(shown, function(value) {
-         list(line = rbind(c(value, base), c(value, base + rules$spike)), width = width)
-       }),
-       top = NULL)
-}
-
-# Where a ridge's tooltip points: the top of its median line, else the highest point of its outline (or of its
-# spikes). As Python's ridge_anchor().
-ridge_anchor <- function(marks, top) {
-  if (!is.null(top)) return(top)
-  points <- do.call(rbind, lapply(Filter(function(mark) !is.null(mark$line), marks), `[[`, "line"))
-  points[which.max(points[, 2]), ]
-}
-
 # Each group's values among the rows `here` (all rows without a facet); a group absent there has none. As Python's
 # panel_groups().
 ridgeline_groups <- function(data, group, value, names, here) {
   stats::setNames(lapply(names, function(name) {
     as.numeric(stats::na.omit(data[[value]][here & as.character(data[[group]]) == name]))
   }), names)
-}
-
-# One panel's ridges, top row first, each lower ridge in front of the one above; a group without a density shows its
-# values as spikes. Returns the layers and each ridge drawn: its marks in data units and where its tooltip points.
-ridgeline_panel_layers <- function(drawn, curves, counted, scale, marks, palette) {
-  rules <- hl_tokens()$ridgeline
-  names <- names(drawn)
-  layers <- list()
-  ridges <- list()
-  for (index in seq_along(names)) {
-    base <- length(names) - index
-    ridge <- if (is.null(curves[[index]])) {
-      ridge_spikes(drawn[[index]], base, palette[[names[index]]], rules)
-    } else {
-      ridge_layers(curves[[index]], drawn[[index]], base, scale, palette[[names[index]]], marks, counted[[index]])
-    }
-    layers <- c(layers, ridge$layers)
-    if (length(ridge$marks)) {
-      ridges[[names[index]]] <- list(marks = ridge$marks, at = ridge_anchor(ridge$marks, ridge$top))
-    }
-  }
-  list(layers = layers, ridges = ridges)
 }
 
 # The share of the plot height a reference label hangs into from the top (its gap, cap height and gap at the caption
@@ -122,9 +19,6 @@ ridgeline_label_room <- function(reference) {
   label / tokens$spacing$min_plot_height
 }
 
-# Each panel's numbers column: every ridge's measures and, with `compare`, its delta and p against the reference or
-# the ridge above, at its baseline (a group without values in a panel has none); and the caption note naming the
-# test. As Python's ridge_numbers().
 # Every ridge's measures as key-number pairs and, with `compare`, its delta and p against the reference or the ridge
 # above, within its panel; the values by row key; and the caption note naming the test. As Python's ridge_rows().
 ridge_rows <- function(panels, measures, every, percent, compare, marks) {
@@ -149,6 +43,9 @@ ridge_rows <- function(panels, measures, every, percent, compare, marks) {
   list(rows = compared$rows, values = values, note = compared$note)
 }
 
+# Each panel's numbers column: every ridge's measures and, with `compare`, its delta and p against the reference or
+# the ridge above, at its baseline (a group without values in a panel has none); and the caption note naming the
+# test. As Python's ridge_numbers().
 ridge_numbers <- function(panels, stats, every, percent, compare, marks) {
   compared <- ridge_rows(panels, stats, every, percent, compare, marks)
   values <- compared$values
@@ -255,9 +152,18 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   numbers <- ridge_numbers(if (clip_stats) drawn else counted, stats, every, percent, compare, marks)
   tips <- ridge_tips(if (clip_stats) drawn else counted, stats, every, percent, compare, marks)
   targets <- list()
+  # Labels named in the legend row take no room above the ridges.
+  drawn_references <- legend_references(reference, reference_legend, "ridgeline")$reference
+  top <- (length(names) + rules$overlap + rules$headroom) / (1 - ridgeline_label_room(drawn_references))
+  lifts <- numeric()
   for (index in seq_along(panels)) {
     statistics <- if (clip_stats) drawn[[index]] else counted[[index]]
-    built <- ridgeline_panel_layers(drawn[[index]], curves[[index]], statistics, scale, marks, palette$palette)
+    built <- ridgeline_panel_layers(drawn[[index]], curves[[index]], statistics, scale, marks, palette$palette,
+                                    ridge_mean_floor(top))
+    bottom <- built$ridges[[names[length(names)]]]$marks
+    lifts <- c(lifts, unlist(lapply(Filter(function(mark) !is.null(mark$diamond), bottom), function(mark) {
+      mark$diamond[2]
+    })))
     layers <- built$layers
     for (name in names(built$ridges)) {
       ridge <- built$ridges[[name]]
@@ -273,9 +179,6 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   }
   labels <- if (show_n && is.null(facet)) labels_with_n(names, lengths(groups)) else names
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats), numbers$note)
-  # Labels named in the legend row take no room above the ridges.
-  drawn_references <- legend_references(reference, reference_legend, "ridgeline")$reference
-  top <- (length(names) + rules$overlap + rules$headroom) / (1 - ridgeline_label_room(drawn_references))
   plot <- plot + ggplot2::scale_y_continuous(breaks = rev(seq_along(names) - 1), labels = labels, expand = c(0, 0),
                                              limits = c(0, top)) +
     ggplot2::labs(title = title %||% paste(humanise(value), "by", gsub("_", " ", group)), subtitle = subtitle,
@@ -287,6 +190,9 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
               if (!is.null(summary)) summary_legend(marks, "tick", hl_settings()$neutral$ink))
   if (length(legend)) plot <- plot + hl_legend(legend)
   if (any(lengths(numbers$columns) > 0)) plot@meta$hairline_side_numbers <- numbers$columns
+  # A mean diamond on a flat bottom ridge would reach below the panel on a short plot: the plot grows instead.
+  panel_columns <- if (is.null(facet)) 1 else columns %||% min(length(panels), 2)
+  plot@meta$hairline_min_plot <- ridge_mean_plot_height(lifts, top, ceiling(length(panels) / panel_columns))
   plot@meta$hairline_targets <- targets
   if (percent) plot <- plot + scale_x_hairline(percent = TRUE)
   chart_options(plot, "ridgeline", names, x_title = x_title, reference = reference,
