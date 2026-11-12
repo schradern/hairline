@@ -4,6 +4,8 @@
 check_panel_width <- function(spec, width, spacing) {
   if (width >= spacing$min_panel_width * spec$base_size) return(invisible())
   labels <- if (isTRUE(spec$y_labels)) sprintf("; the y labels take %.0f pt", spec$y_label_width_pt) else ""
+  sides <- max(c(0, spec$side_widths))
+  if (sides > 0) labels <- paste0(labels, sprintf("; the numbers beside the plot take %.0f pt", sides))
   stop(sprintf(paste0("hairline: figure too narrow: %.0f pt wide leaves %.1f pt per panel for %d panel columns%s; ",
                       "shorten the labels, use fewer columns or a wider size"), spec$width_pt, width,
                as.integer(spec$panel_columns), labels), call. = FALSE)

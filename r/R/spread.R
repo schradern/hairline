@@ -2,41 +2,44 @@
 # in the group's colour, the median as a dot, an optional reference tick, and the key numbers on the right (or, on
 # a figure too narrow for both, on a line under each row).
 
-spread_stats <- c("median", "iqr", "mean", "n", "range", "levels")
+spread_stats <- c("median", "iqr", "mean", "n", "range", "levels", "sd", "ci")
+spread_default_summary <- c("median", "iqr", "range")
 
-spread_formatter <- function(values, percent, digits, extra = 0) {
-  scale <- if (percent) 100 else 1
-  places <- (digits %||% auto_digits(values * scale)) + extra
-  suffix <- if (percent) paste0(locale_symbols(NULL)$percent_space, "%") else ""
-  function(value) paste0(hl_format_number(snap_noise(value * scale), places), suffix)
-}
-
-# The most frequent values with their shares: "25 (48%) · 50 (41%)".
-spread_levels_text <- function(values, number) {
-  shown <- top_levels(values, hl_tokens()$spread$levels_shown)
-  paste(paste0(vapply(shown$level, number, character(1)), " (",
-               vapply(shown$share, hl_format_percent, character(1), digits = 0), ")"), collapse = " \u00b7 ")
-}
-
-# A level as given: 12.5 mg stays 12.5 and 50 stays 50 (up to three decimals). On discrete data a rounded level would
-# read as a dose nobody gave.
-spread_level_number <- function(value) {
-  value <- snap_noise(value)
-  hl_format_number(value, min(3, exact_places(value)))
-}
-
-# Key numbers as (label, value) pairs, drawn like a panel header's key numbers.
+# Key numbers as (label, value) pairs, drawn like a panel header's key numbers, the group's mark last.
 spread_pairs <- function(values, stats, numbers, mark, mark_label, discrete = FALSE) {
-  limits <- (if (discrete) level_quantiles else density_quantiles)(values, c(0, 0.25, 0.5, 0.75, 1))
-  number <- numbers[[1]]
-  parts <- list(median = c("Median", number(limits[3])),
-                iqr = c("IQR", paste0(number(limits[2]), "\u2013", number(limits[4]))),
-                mean = c("Mean", numbers[[2]](mean(values))), n = c("n", hl_format_number(length(values), 0)),
-                range = c("Range", paste0(number(limits[1]), "\u2013", number(limits[5]))),
-                levels = if ("levels" %in% stats) c(word("levels"), spread_levels_text(values, number)))
-  pairs <- unname(parts[stats])
-  if (!is.null(mark) && !is.null(mark_label)) pairs[[length(pairs) + 1]] <- c(mark_label, number(mark))
+  pairs <- stat_pairs(values, stats, numbers, discrete)
+  if (!is.null(mark) && !is.null(mark_label)) pairs[[length(pairs) + 1]] <- c(mark_label, numbers[[1]](mark))
   pairs
+}
+
+# mean = TRUE alone names the two centres, as it always has; a summary names every mark it draws.
+spread_summary_legend <- function(summary, mean, drawn_marks) {
+  if (is.null(summary) && !mean) return(list())
+  summary_legend(if (is.null(summary)) c("median", "mean") else drawn_marks, "dot", hl_settings()$neutral$ink)
+}
+
+# The marks drawn: the default (median dot, IQR band, range line) or `summary`, with the mean when `mean`.
+spread_summary <- function(summary, mean) {
+  names <- if (is.null(summary)) spread_default_summary else check_summary(summary, "spread")
+  if (mean && !"mean" %in% names) c(names, "mean") else names
+}
+
+# A row's marks: the range of the values drawn, the quartiles and mean held within it, and the interval bar (an SD or
+# CI may reach past the values drawn; the axis widens for it).
+spread_summary_row <- function(values, shown, names, discrete) {
+  found <- summary_values(values, discrete)
+  low <- min(shown)
+  high <- max(shown)
+  held <- function(value) min(max(value, low), high)
+  bar <- intersect(names, summary_bars)
+  ends <- if (identical(bar, "iqr")) {
+    list(low = held(found$q1), high = held(found$q3), slim = FALSE)
+  } else if (length(bar) && is.finite(found$sd)) {
+    found_ends <- interval_of(found, bar)
+    list(low = found_ends[1], high = found_ends[2], slim = TRUE)
+  }
+  list(low = low, high = high, range = "range" %in% names, bar = ends, median = held(found$median),
+       show_median = "median" %in% names, mean = if ("mean" %in% names) held(found$mean))
 }
 
 spread_axis <- function(lows, highs, percent, zero) {
@@ -122,16 +125,6 @@ clipped_samples <- function(samples, limits, chart) {
   drawn
 }
 
-spread_numbers <- function(every, percent, digits, discrete) {
-  whole <- is_whole(every) && !percent
-  plain <- spread_formatter(every, percent, digits)
-  mean_number <- spread_formatter(every, percent, digits, if (whole) 1 else 0)
-  whole <- whole && is.null(digits) && !discrete
-  if (discrete && is.null(digits) && !percent) return(list(spread_level_number, mean_number))
-  # Of whole numbers, a quantile between two of them keeps one decimal (a median of 2.5, not 3).
-  list(function(value) if (quantile_places(value, 0, whole) > 0) mean_number(value) else plain(value), mean_number)
-}
-
 # Rows by section (in the order sections first appear), then by median, highest first, when sorted.
 arranged_rows <- function(rows, sort) {
   sections <- vapply(rows, function(row) row$section %||% "", character(1))
@@ -144,7 +137,8 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
                         stats = c("median", "iqr", "mean"), percent = FALSE, digits = NULL, zero = FALSE,
                         axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
                         clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
-                        panel_letters = FALSE, mean = FALSE, sort = NULL, reference = NULL, highlight = NULL) {
+                        panel_letters = FALSE, mean = FALSE, sort = NULL, reference = NULL, highlight = NULL,
+                        summary = NULL) {
   check_columns(data, c(group, value, color_by, section))
   if (!is.null(sort) && !identical(sort, "median")) {
     stop(sprintf("hairline: spread: sort '%s' must be 'median' or NULL", sort), call. = FALSE)
@@ -159,7 +153,8 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   limits <- clip_limits(every, clip, "spread")
   drawn <- clipped_samples(samples, limits, "spread")
   counted <- if (clip_stats) drawn else samples
-  numbers <- spread_numbers(every, percent, digits, discrete)
+  numbers <- measure_numbers(every, percent, digits, discrete)
+  drawn_marks <- spread_summary(summary, mean)
   if (!discrete) warn_median_gaps(counted, numbers)
   names <- names(samples)
   spread_check_marks(marks, names)
@@ -169,207 +164,24 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   sections <- if (!is.null(section)) coarse_groups(data, group, section, "spread")
   rows <- lapply(names, function(name) {
     values <- counted[[name]]
-    middle <- (if (discrete) level_quantiles else density_quantiles)(values, c(0.25, 0.5, 0.75))
-    low <- min(drawn[[name]])
-    high <- max(drawn[[name]])
-    middle <- pmin(pmax(middle, low), high)
     mark <- if (name %in% names(marks)) as.numeric(marks[[name]]) else NULL
-    list(name = name, color = coloured$palette[[name]], low = low, q1 = middle[1], median = middle[2],
-         q3 = middle[3], high = high, mark = mark, mean = if (mean) min(max(base::mean(values), low), high),
-         section = if (!is.null(section)) unname(sections[[name]]),
-         pairs = spread_pairs(values, stats, numbers, mark, mark_label, discrete))
+    c(spread_summary_row(values, drawn[[name]], drawn_marks, discrete),
+      list(name = name, color = coloured$palette[[name]], mark = mark,
+           section = if (!is.null(section)) unname(sections[[name]]),
+           pairs = spread_pairs(values, stats, numbers, mark, mark_label, discrete)))
   })
   rows <- arranged_rows(rows, sort)
-  marked <- c(unlist(lapply(rows, `[[`, "mark")), vapply(lines, `[[`, numeric(1), "value"))
+  bar_ends <- unlist(lapply(rows, function(row) if (!is.null(row$bar)) c(row$bar$low, row$bar$high)))
+  marked <- c(unlist(lapply(rows, `[[`, "mark")), vapply(lines, `[[`, numeric(1), "value"), bar_ends)
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats),
              if (discrete) word("levels_note"))
   list(rows = rows, axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
                                        c(vapply(rows, `[[`, numeric(1), "high"), marked), percent, zero),
        axis_title = axis_title, notes = notes, letters = isTRUE(panel_letters),
-       legend = c(if (!is.null(color_by)) coarse_legend(coloured), if (mean) spread_mean_legend()),
+       legend = c(if (!is.null(color_by)) coarse_legend(coloured), spread_summary_legend(summary, mean, drawn_marks)),
        references = lines)
 }
 
-# The legend row's names for the median dot and the mean's open diamond.
-spread_mean_legend <- function() {
-  ink <- hl_settings()$neutral$ink
-  list(list(kind = "dot", colour = ink, label = word("median")),
-       list(kind = "diamond", colour = ink, label = word("mean")))
-}
-
-# The mean's open diamond: its half-diagonal against a dot's radius.
-diamond_size <- 1.3
-
-# The mean: an open diamond in the row's colour, filled with the surface so the band shows round it.
-open_diamond <- function(x, centre, colour, style) {
-  half <- diamond_size * dot_size(style) / 2
-  list(kind = "polygon", points = rbind(c(x - half, centre), c(x, centre - half), c(x + half, centre),
-                                        c(x, centre + half)),
-       fill = style$neutral$surface, edge = colour, edge_width = style$data_width * open_edge, role = "mean")
-}
-
-spread_letters <- letters
-
-# A section's name over its rows, at the key weight, after its letter (a, b, c) when the sections are lettered.
-heading_shapes <- function(name, index, lettered, x, baseline, measure, style) {
-  weight <- hl_tokens()$type$key_weight
-  ink <- style$neutral$ink
-  shapes <- list()
-  if (lettered) {
-    letter <- spread_letters[(index %% length(spread_letters)) + 1]
-    shapes[[1]] <- c(shape_text(x, baseline, letter, "label", ink, "left", weight), part = "letter")
-    x <- x + measure(letter, "label", weight) + hl_tokens()$spacing$panel_letter_gap * style$base
-  }
-  c(shapes, list(c(shape_text(x, baseline, name, "label", ink, "left", weight), part = "heading")))
-}
-
-# The lines top to bottom: a heading where a section starts, then its rows.
-section_lines <- function(rows) {
-  lines <- list()
-  current <- NULL
-  for (row in rows) {
-    if (!is.null(row$section) && !identical(row$section, current)) {
-      lines[[length(lines) + 1]] <- list(kind = "heading", entry = row$section)
-    }
-    current <- row$section
-    lines[[length(lines) + 1]] <- list(kind = "row", entry = row)
-  }
-  lines
-}
-
-spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
-  half <- rules$band * pitch / 2
-  band <- rbind(c(scale(row$q1), centre - half), c(scale(row$q3), centre - half), c(scale(row$q3), centre + half),
-                c(scale(row$q1), centre + half))
-  shapes <- list(list(kind = "line", points = rbind(c(scale(row$low), centre), c(scale(row$high), centre)),
-                      color = style$neutral$faint, width = style$leader_width, role = "range"),
-                 list(kind = "polygon", points = band, fill = row$color, alpha = rules$band_opacity, role = "band",
-                      tip = paste0(row$name, ": ", paste(vapply(row$pairs, paste, character(1), collapse = " "),
-                                                         collapse = ", ")),
-                      tip_at = c(scale(row$median), centre - half)),
-                 forest_marker(scale(row$median), centre, dot_size(style), "dot", row$color))
-  if (!is.null(row$mean)) shapes[[length(shapes) + 1]] <- open_diamond(scale(row$mean), centre, row$color, style)
-  if (!is.null(row$mark)) {
-    tick <- rules$mark * half
-    x <- scale(row$mark)
-    shapes[[length(shapes) + 1]] <- list(kind = "line", points = rbind(c(x, centre - tick), c(x, centre + tick)),
-                                         color = style$neutral$ink, width = style$leader_width, role = "mark")
-  }
-  lapply(shapes, function(shape) c(shape, series = row$name))
-}
-
-spread_pair_width <- function(pair, measure) {
-  measure(paste0(pair[1], " "), "label") + measure(pair[2], "label", hl_tokens()$type$value_weight)
-}
-
-# Width of each key-number column: one column per statistic, so labels line up from row to row.
-spread_stat_widths <- function(spec, measure) {
-  count <- max(vapply(spec$rows, function(row) length(row$pairs), integer(1)))
-  vapply(seq_len(count), function(index) {
-    max(c(0, unlist(lapply(spec$rows, function(row) {
-      if (index <= length(row$pairs)) spread_pair_width(row$pairs[[index]], measure)
-    }))))
-  }, numeric(1))
-}
-
-# Left edges of the key-number columns from `start`, separated like a panel header's key numbers.
-spread_stat_columns <- function(widths, start, gap) {
-  start + c(0, cumsum(widths + gap))[seq_along(widths)]
-}
-
-# Under the rows, a line of key numbers and a row of name and plot must each fit the width.
-spread_check_room <- function(width, block, least, names, gap) {
-  need <- max(block, names + gap + least)
-  if (width >= need) return(invisible())
-  stop(sprintf(paste("hairline: spread: the figure leaves %.0f pt for the rows, which need at least %.0f pt: the key",
-                     "numbers take %.0f pt in one line, the group names %.0f pt beside a plot of %.0f pt. Shorten",
-                     "the group names, show fewer stats, or use a wider size"), width, need, block, names, least),
-       call. = FALSE)
-}
-
-# The plot span and the key-number columns. The numbers sit right-aligned beside the plot while it keeps at least
-# `min_plot`; on a narrower figure they move to a line under each row, from the row's left edge, and the plot spans
-# the width the names leave. No statistic is dropped.
-spread_layout <- function(spec, box, measure, style, rules) {
-  pair_gap <- hl_tokens()$spacing$stats_pair * style$base
-  gap <- rules$column_gap * style$base
-  least <- rules$min_plot * style$base
-  widths <- spread_stat_widths(spec, measure)
-  block <- if (length(widths)) sum(widths) + pair_gap * (length(widths) - 1) else 0
-  names <- max(vapply(spec$rows, function(row) measure(row$name, "label"), numeric(1)))
-  left <- box[1] + names + gap
-  right <- box[1] + box[3]
-  if (!length(widths)) return(list(plot = c(left, right), lefts = numeric(), under = FALSE))
-  if (right - block - gap - left >= least) {
-    return(list(plot = c(left, right - block - gap), lefts = spread_stat_columns(widths, right - block, pair_gap),
-                under = FALSE))
-  }
-  spread_check_room(box[3], block, least, names, gap)
-  list(plot = c(left, right), lefts = spread_stat_columns(widths, box[1], pair_gap), under = TRUE)
-}
-
-# Label in faint, value in muted at the value weight: the panel header's key-number style.
-spread_pair_texts <- function(pairs, lefts, baseline, measure, style) {
-  weight <- hl_tokens()$type$value_weight
-  unlist(lapply(seq_along(pairs), function(index) {
-    label <- paste0(pairs[[index]][1], " ")
-    list(shape_text(lefts[index], baseline, label, "label", style$neutral$faint),
-         shape_text(lefts[index] + measure(label, "label"), baseline, pairs[[index]][2], "label",
-                    style$neutral$muted, "left", weight))
-  }), recursive = FALSE)
-}
-
-spread_title_shape <- function(spec, right, axis_y, style, rules) {
-  if (is.null(spec$axis_title)) return(list())
-  size <- style$sizes$label
-  ticks <- axis_y + rules$axis_gap * style$base + style$cap_height * size
-  baseline <- ticks + style$descender * size + hl_tokens()$spacing$x_title * style$base + style$cap_height * size
-  list(c(shape_text(right, baseline, spec$axis_title, "label", style$neutral$muted, "right"), part = "title"))
-}
-
-# Rows keep their pitch (the figure's height follows them); a row whose numbers sit under it is a line taller.
-spread_drawing <- function(spec, box, measure, style) {
-  rules <- hl_tokens()$spread
-  layout <- spread_layout(spec, box, measure, style, rules)
-  left <- layout$plot[1]
-  right <- layout$plot[2]
-  lead <- line_height(style, "label")
-  scale <- forest_scale(spec$axis, FALSE, left, right)
-  line <- rules$row_pitch * lead
-  pitch <- line + if (layout$under) lead else 0
-  lines <- section_lines(spec$rows)
-  heights <- vapply(lines, function(entry) if (entry$kind == "heading") line else pitch, numeric(1))
-  above <- drawn_reference_height(spec, style)
-  bottom <- box[2] + above + sum(heights)
-  shapes <- lapply(spec$axis$breaks, function(value) {
-    list(kind = "line", points = rbind(c(scale(value), box[2] + above), c(scale(value), bottom)),
-         color = style$neutral$grid, width = style$grid, role = "grid")
-  })
-  shapes <- c(shapes, drawn_reference_shapes(spec, scale, box[2], bottom, style))
-  top <- box[2] + above
-  headings <- 0
-  for (index in seq_along(lines)) {
-    entry <- lines[[index]]$entry
-    centre <- top + line / 2
-    baseline <- baseline_for(centre, style, "label")
-    top <- top + heights[index]
-    if (lines[[index]]$kind == "heading") {
-      shapes <- c(shapes, heading_shapes(entry, headings, isTRUE(spec$letters), box[1], baseline, measure, style))
-      headings <- headings + 1
-      next
-    }
-    shapes <- c(shapes, spread_row_shapes(entry, centre, line, scale, style, rules),
-                list(shape_text(box[1], baseline, entry$name, "label", style$neutral$ink)),
-                spread_pair_texts(entry$pairs, layout$lefts, baseline + if (layout$under) lead else 0, measure, style))
-  }
-  axis <- list(axis = spec$axis, favours = NULL, null = NULL)
-  c(shapes, forest_axis_shapes(axis, scale, c(left, right), bottom, style, rules),
-    spread_title_shape(spec, right, bottom, style, rules))
-}
-
-# spread_spec() with a block of rows per value of `facet`: every row keyed by facet and group, the blocks drawn as
-# sections, each group in its own colour in every block (as `colors`), names shown without the facet. As Python's
-# faceted_spec().
 faceted_spread_spec <- function(data, group, value, facet, order, options) {
   if (!is.null(options$section)) {
     stop("hairline: spread: facet and section both draw blocks of rows; give one of them", call. = FALSE)
@@ -408,8 +220,9 @@ faceted_spread_spec <- function(data, group, value, facet, order, options) {
 #' @param order Group order, top to bottom.
 #' @param marks Named reference values per group, e.g. `c("Unit A" = 20)` (a capacity, a target).
 #' @param mark_label Name of the reference in the numbers column, e.g. `"beds"`.
-#' @param stats Numbers to show: any of `"median"`, `"iqr"`, `"mean"`, `"n"`, `"range"`, `"levels"` (the most
-#'   frequent values with their shares). A median that falls between two large levels is warned about.
+#' @param stats Numbers to show: any of `"median"`, `"iqr"`, `"mean"`, `"n"`, `"range"`, `"sd"`, `"ci"` (the
+#'   mean's 95% confidence interval), `"levels"` (the most frequent values with their shares). A median that
+#'   falls between two large levels is warned about.
 #' @param percent Values are shares (0-1), shown as percentages.
 #' @param digits Decimals; default by magnitude (none for whole numbers).
 #' @param zero Include zero on the axis.
@@ -428,6 +241,9 @@ faceted_spread_spec <- function(data, group, value, facet, order, options) {
 #' @param section Column whose values draw the rows in blocks, each under its name, on one shared axis.
 #' @param panel_letters Letter the sections a, b, c.
 #' @param mean Mark each row's mean as an open diamond; the legend row names median and mean.
+#' @param summary The marks per row: any of `"median"` (a dot), `"mean"` (an open diamond), `"iqr"` (the band),
+#'   `"range"` (a thin line), `"sd"` and `"ci"` (the mean's SD or 95% CI as a slim bar); one bar at most. The
+#'   default is `c("median", "iqr", "range")`; a summary you give is named in the legend.
 #' @param sort `"median"` orders the rows of a section by median, highest first; `NULL` keeps their order.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
@@ -444,8 +260,9 @@ hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption
                       zero = FALSE, axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
                       clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
                       panel_letters = FALSE, mean = FALSE, sort = NULL, x_title = NULL, reference = NULL,
-                      highlight = NULL, key_title = NULL, facet = NULL) {
-  options <- list(marks = marks, mark_label = mark_label, stats = stats, percent = percent, digits = digits,
+                      highlight = NULL, key_title = NULL, facet = NULL, summary = NULL) {
+  options <- list(summary = summary, marks = marks, mark_label = mark_label, stats = stats, percent = percent,
+                  digits = digits,
                   zero = zero, axis_title = axis_title %||% x_title, colors = colors, show_n = show_n, min_n = min_n,
                   clip = clip, clip_stats = clip_stats, color_by = color_by, dimension = dimension,
                   discrete = discrete, section = section, panel_letters = panel_letters, mean = mean, sort = sort,

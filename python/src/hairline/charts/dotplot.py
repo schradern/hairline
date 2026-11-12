@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 import numpy as np
@@ -9,6 +10,7 @@ import pandas as pd
 
 from hairline.charts.common import (
     check_columns,
+    check_labels,
     check_numeric,
     drop_small,
     humanise,
@@ -19,11 +21,14 @@ from hairline.charts.common import (
 from hairline.charts.forest import forest_spec
 from hairline.charts.forest_geometry import forest_drawing
 from hairline.charts.options import Reference, checked_highlight, references
+from hairline.charts.summaries import LEGEND_WORDS, check_paired, check_summary, interval_of, summary_values
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import context_color, lone_color
-from hairline.numbers import word
+from hairline.numbers import auto_digits, is_whole, word
 from hairline.settings import current_settings
+
+SUMMARY_LOW, SUMMARY_HIGH, SUMMARY_N = "_hairline_low", "_hairline_high", "_hairline_n"
 
 
 def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = None, high: str | None = None, *,
@@ -32,7 +37,7 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
             size: str = "onehalf", n: str | None = None, percent: bool = False, order: Sequence[str] | None = None,
             min_n: int | None = None, x_title: str | None = None,
             highlight: Sequence[str] | str | None = None, facet: str | None = None,
-            show_n: bool = True) -> HairlineFigure:
+            show_n: bool = True, summary: str | Sequence[str] | None = None) -> HairlineFigure:
     """One dot per row, largest at the top; with `low` and `high` an interval and its numbers on the right.
     `n` names the column holding each row's n, written after its label in the locale ("Medical (n = 1,010)").
     `percent=True` draws shares (0.15) as percent (15), the heading naming the unit. `order` gives the rows'
@@ -41,13 +46,25 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
     Shared with the other charts: `reference` draws dashed lines (a target, a null value: 0.1, (0.1, "Target") or
     {"Target": 0.1}); `min_n` leaves out rows whose `n` is smaller and names them; `x_title` titles the axis;
     `highlight` keeps these rows in colour; `facet` draws a block of rows per value of that column under its name,
-    on the one axis, each block sorted on its own."""
+    on the one axis, each block sorted on its own.
+
+    `summary` takes the rows as values and draws one row per label (per block with `facet`): a centre, "median"
+    or "mean", with an interval that belongs to it, "iqr" or "range" with the median, "sd", "ci" or "range" with
+    the mean (summary=("mean", "ci")). Each row's n is counted, written after its label and used by `min_n`; the
+    heading names the measures and the axis takes the column's name."""
     check_columns(data, [label, estimate, low, high, n, facet])
     if (low is None) != (high is None):
         raise ValueError(f"hairline: dotplot: an interval needs both low and high; got only "
                          f"{'low' if low is not None else 'high'}={low if low is not None else high!r}")
-    interval = low is not None and high is not None
     data = as_percent(data, [estimate, low, high]) if percent else data
+    heading = None
+    if summary is not None:
+        # Decimals as the other charts write a mean of these values: by magnitude, one more for whole numbers.
+        values = pd.to_numeric(data[estimate], errors="coerce").dropna().to_numpy(dtype=float)
+        digits = digits if digits is not None else auto_digits(values) + (1 if is_whole(values) else 0)
+        data, low, high, n, heading = summarised(data, label, estimate, (low, high, n), facet, summary)
+        x_title = x_title or (f"{humanise(estimate)} (%)" if percent else humanise(estimate))
+    interval = low is not None and high is not None
     data, small = rows_with_min_n(data, label, n, min_n)
     rows, blocks = faceted_rows(data, label, estimate, sort, order, facet)
     names = [str(name) for name in rows[label]]
@@ -61,7 +78,7 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
         rows = rows.assign(_low=rows[estimate], _high=rows[estimate])
         low, high = "_low", "_high"
     name = f"{humanise(estimate)} (%)" if percent else humanise(estimate)
-    heading = word("interval", name=name) if interval else name
+    heading = heading or (word("interval", name=name) if interval else name)
     spec = forest_spec(rows, label, estimate, low, high, ratio=ratio, color=lone_color(),
                        study_heading=humanise(label), effect_heading=heading, digits=digits, marker="dot",
                        interval=interval, null=None, references=references(reference, "dotplot"), axis_title=x_title)
@@ -75,6 +92,38 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
                     caption=with_caption(caption, small), size=size)
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))
     return fit_height(result)
+
+
+def summarised(data: pd.DataFrame, label: str, estimate: str, given: tuple, facet: str | None,
+               summary: str | Sequence[str]) -> tuple:
+    """One row per label (per block and label with `facet`), in the order labels first appear: the centre as the
+    estimate, the interval's ends and n; with the columns to read them from and the heading naming them."""
+    centre, interval = check_paired(check_summary(summary, "dotplot"), "dotplot")
+    if any(column is not None for column in given):
+        raise ValueError("hairline: dotplot: summary computes each row's centre, interval and n from the values; "
+                         "leave out low, high and n")
+    check_labels(data, [label, *([facet] if facet else [])], "dotplot")
+    check_numeric(data, [estimate], "dotplot")
+    keys = [facet, label] if facet else [label]
+    rows = []
+    for key, part in data.groupby(keys, sort=False, observed=True):
+        values = part[estimate].dropna().to_numpy(dtype=float)
+        if not len(values):
+            continue
+        found = summary_values(values)
+        name = str(key[-1] if isinstance(key, tuple) else key)
+        if interval in ("sd", "ci") and not math.isfinite(found["sd"]):
+            raise ValueError(f"hairline: dotplot: '{name}' has one value, and an {interval.upper()} needs two or "
+                             f"more; min_n=2 leaves such rows out")
+        ends = interval_of(found, interval) if interval else (found[centre], found[centre])
+        rows.append({**({facet: key[0]} if facet else {}), label: name, estimate: found[centre],
+                     SUMMARY_LOW: ends[0], SUMMARY_HIGH: ends[1], SUMMARY_N: found["n"]})
+    locale = current_settings().locale
+    heading = word("summary_heading", locale, centre=word(centre, locale),
+                   interval=word(LEGEND_WORDS[interval], locale)) if interval else word(centre, locale)
+    found = pd.DataFrame(rows, columns=[*([facet] if facet else []), label, estimate, SUMMARY_LOW, SUMMARY_HIGH,
+                                        SUMMARY_N])
+    return found, (SUMMARY_LOW if interval else None), (SUMMARY_HIGH if interval else None), SUMMARY_N, heading
 
 
 def rows_with_min_n(data: pd.DataFrame, label: str, n: str | None, min_n: int | None) -> tuple[pd.DataFrame,

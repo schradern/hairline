@@ -1,7 +1,7 @@
 # Ridgeline plot, mirroring the Python ridgeline(): one density ridge per group on a shared x-axis, the first
 # group on top, overlapping the row above, medians marked.
 
-ridge_layers <- function(curve, values, base, scale, colour, medians, counted = values) {
+ridge_layers <- function(curve, values, base, scale, colour, marks, counted = values) {
   settings <- hl_settings()
   rules <- hl_tokens()$ridgeline
   outline <- data.frame(x = curve$grid, y = base + curve$height * scale)
@@ -15,16 +15,32 @@ ridge_layers <- function(curve, values, base, scale, colour, medians, counted = 
                                                  linewidth = pt_to_linewidth(hl_tokens()$lines$data *
                                                                                settings$base_size),
                                                  inherit.aes = FALSE)))
-  if (medians) {
-    # The median of the values counted, held within the drawn ridge.
-    middle <- min(max(density_quantiles(counted, 0.5), curve$grid[1]), curve$grid[length(curve$grid)])
-    top <- base + stats::approx(curve$grid, curve$height, middle)$y * scale
-    median <- ggplot2::geom_segment(data = data.frame(x = middle, y = base, yend = top),
+  if (length(counted)) layers <- c(layers, ridge_centre_layers(counted, curve, base, scale, marks, colour))
+  layers
+}
+
+# The median as a line from the baseline up to the ridge, the mean as an open diamond on the ridge's outline; both
+# held within the ridge. As Python's draw_centres().
+ridge_centre_layers <- function(counted, curve, base, scale, marks, colour) {
+  settings <- hl_settings()
+  found <- summary_values(counted)
+  on_ridge <- function(value) {
+    x <- min(max(value, curve$grid[1]), curve$grid[length(curve$grid)])
+    c(x, base + stats::approx(curve$grid, curve$height, x)$y * scale)
+  }
+  layers <- list()
+  if ("median" %in% marks) {
+    middle <- on_ridge(found$median)
+    median <- ggplot2::geom_segment(data = data.frame(x = middle[1], y = base, yend = middle[2]),
                                     ggplot2::aes(.data$x, .data$y, xend = .data$x, yend = .data$yend),
                                     colour = settings$neutral$ink, inherit.aes = FALSE,
                                     linewidth = pt_to_linewidth(hl_tokens()$reference$width * settings$base_size))
     median$hairline_secondary <- TRUE
-    layers[[4]] <- median
+    layers <- c(layers, list(median))
+  }
+  if ("mean" %in% marks) {
+    centre <- on_ridge(found$mean)
+    layers <- c(layers, list(mean_diamond(centre[1], centre[2], colour)))
   }
   layers
 }
@@ -51,7 +67,7 @@ ridgeline_groups <- function(data, group, value, names, here) {
 
 # One panel's ridges, top row first, each lower ridge in front of the one above; a group without a density shows its
 # values as spikes.
-ridgeline_panel_layers <- function(drawn, curves, counted, scale, medians, palette) {
+ridgeline_panel_layers <- function(drawn, curves, counted, scale, marks, palette) {
   rules <- hl_tokens()$ridgeline
   names <- names(drawn)
   layers <- list()
@@ -60,7 +76,7 @@ ridgeline_panel_layers <- function(drawn, curves, counted, scale, medians, palet
     layers <- c(layers, if (is.null(curves[[index]])) {
       ridge_spikes(drawn[[index]], base, palette[[names[index]]], rules)
     } else {
-      ridge_layers(curves[[index]], drawn[[index]], base, scale, palette[[names[index]]], medians, counted[[index]])
+      ridge_layers(curves[[index]], drawn[[index]], base, scale, palette[[names[index]]], marks, counted[[index]])
     })
   }
   layers
@@ -75,6 +91,20 @@ ridgeline_label_room <- function(reference) {
   label <- tokens$type$roles$caption$factor * (2 * tokens$reference$label_gap + font_metrics()$cap_height)
   label / tokens$spacing$min_plot_height
 }
+
+# Each ridge's measures beside it, at its baseline; a group without values here has none. As Python's ridge_numbers().
+ridge_numbers <- function(groups, stats, every, percent) {
+  numbers <- measure_numbers(every, percent, NULL)
+  count <- length(groups)
+  unlist(lapply(seq_len(count), function(index) {
+    if (!length(groups[[index]])) return(list())
+    lapply(stat_pairs(groups[[index]], stats, numbers), function(pair) {
+      list(position = count - index, label = pair[1], value = pair[2])
+    })
+  }), recursive = FALSE)
+}
+
+ridgeline_why <- "A ridge shows its own spread; hl_raincloud() and hl_spread() draw intervals"
 
 #' Ridgeline plot
 #'
@@ -94,6 +124,11 @@ ridgeline_label_room <- function(reference) {
 #' @param min_n,clip,clip_stats,color_by,dimension As in [hl_spread()]: groups too small and values clipped off are
 #'   named in the caption.
 #' @param columns Panels per row with `facet` (two by default).
+#' @param summary The marks on each ridge: `"median"` (a line up to the ridge) and `"mean"` (an open diamond on its
+#'   outline); by default the median, or nothing with `medians = FALSE`. A summary you give is named in the
+#'   legend. A ridge shows its own spread, so intervals belong to [hl_raincloud()] or [hl_spread()].
+#' @param stats Measures beside each ridge, in a column right of the plot: any of `"median"`, `"mean"`, `"iqr"`,
+#'   `"range"`, `"sd"`, `"ci"`, `"n"`.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -106,7 +141,8 @@ ridgeline_label_room <- function(reference) {
 hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NULL, caption = NULL, order = NULL,
                          medians = TRUE, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL, clip_stats = FALSE,
                          color_by = NULL, dimension = NULL, sort = NULL, percent = FALSE, x_title = NULL,
-                         reference = NULL, highlight = NULL, key_title = NULL, facet = NULL, columns = NULL) {
+                         reference = NULL, highlight = NULL, key_title = NULL, facet = NULL, columns = NULL,
+                         summary = NULL, stats = character()) {
   if (inherits(group, "formula")) {
     sides <- formula_sides(group)
     value <- deparse(sides$left)
@@ -115,6 +151,12 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   check_columns(data, c(group, value, color_by, facet))
   check_present(data, value, "ridgeline")
   check_numeric(data, value, "ridgeline")
+  marks <- if (is.null(summary)) {
+    if (medians) "median" else character()
+  } else {
+    check_summary(summary, "ridgeline", summary_centres, ridgeline_why)
+  }
+  stats <- as_names(stats, "ridgeline", "stats", stat_names)
   rules <- hl_tokens()$ridgeline
   names <- chart_groups(data, group, order, "ridgeline")
   groups <- ridgeline_groups(data, group, value, names, rep(TRUE, nrow(data)))
@@ -136,10 +178,12 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   palette <- series_colours(names, data, group, color_by, colors, dimension, "ridgeline", highlight,
                             named = TRUE)
   plot <- ggplot2::ggplot()
+  numbers <- list()
   for (index in seq_along(panels)) {
     statistics <- if (clip_stats) drawn[[index]] else counted[[index]]
-    layers <- ridgeline_panel_layers(drawn[[index]], curves[[index]], statistics, scale, medians, palette$palette)
+    layers <- ridgeline_panel_layers(drawn[[index]], curves[[index]], statistics, scale, marks, palette$palette)
     plot <- plot + if (is.null(facet)) layers else in_facet(layers, panels[index], panels)
+    if (length(stats)) numbers[[index]] <- ridge_numbers(statistics, stats, every, percent)
     if (!is.null(facet)) {
       total <- sum(lengths(statistics))
       plot <- plot + hl_panel_header(panel = panels[index], name = panels[index],
@@ -156,7 +200,10 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   if (!is.null(facet)) {
     plot <- plot + ggplot2::facet_wrap(ggplot2::vars(.data$.facet), ncol = columns %||% min(length(panels), 2))
   }
-  if (!is.null(color_by)) plot <- plot + hl_legend(coarse_legend(palette))
+  legend <- c(if (!is.null(color_by)) coarse_legend(palette),
+              if (!is.null(summary)) summary_legend(marks, "tick", hl_settings()$neutral$ink))
+  if (length(legend)) plot <- plot + hl_legend(legend)
+  if (length(numbers)) plot@meta$hairline_side_numbers <- numbers
   if (percent) plot <- plot + scale_x_hairline(percent = TRUE)
   chart_options(plot, "ridgeline", names, x_title = x_title, reference = reference, reference_axis = "x",
                 key_title = key_title)

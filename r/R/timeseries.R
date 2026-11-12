@@ -21,29 +21,6 @@ value_formatter <- function(percent) {
     function(value, digits = 1) hl_format_number(value, digits)
 }
 
-panel_stats <- function(values, stats, percent, threshold, share_label) {
-  show <- value_formatter(percent)
-  values <- as.numeric(values[!is.na(values)])
-  digits <- auto_digits(values * if (percent) 100 else 1)
-  extra <- if (is_whole(values) && !percent) 1 else 0
-  result <- character()
-  for (stat in stats) {
-    if (stat == "share_above") {
-      if (is.null(threshold)) stop("hairline: stats 'share_above' needs threshold =", call. = FALSE)
-      result[[share_label]] <- hl_format_percent(mean(values >= threshold), 0)
-    } else if (stat == "range") {
-      result[["Range"]] <- paste0(show(min(values), digits), "\u2013", show(max(values), digits))
-    } else if (stat %in% c("mean", "median")) {
-      value <- if (stat == "mean") mean(values) else stats::median(values)
-      places <- if (stat == "mean") digits + extra else quantile_places(value, digits, extra > 0)
-      result[[if (stat == "mean") "Mean" else "Median"]] <- show(value, places)
-    } else {
-      stop(sprintf("hairline: unknown stat '%s'; use mean, median, range or share_above", stat), call. = FALSE)
-    }
-  }
-  result
-}
-
 # ISO date text on x (2025-01-31, 2025-01-31T10:00) becomes dates, so the axis is a time axis, as hl_over_time()
 # reads it; other text stays as it is.
 with_iso_dates <- function(values) {
@@ -132,10 +109,11 @@ period_mean_layer <- function(data, y) {
                       linewidth = pt_to_linewidth(hl_tokens()$reference$width * hl_settings()$base_size))
 }
 
-timeseries_legend <- function(raw, period_mean, bands, raw_label, mean_label, threshold_legend) {
+timeseries_legend <- function(raw, period_mean, bands, raw_label, mean_label, threshold_legend, marks = NULL) {
   neutral <- hl_settings()$neutral
   items <- if (raw) list(list(kind = "thin", colour = neutral$ink, label = raw_label)) else list()
-  items[[length(items) + 1]] <- list(kind = "line", colour = neutral$ink, label = mean_label)
+  centre <- if (is.null(marks)) list(list(kind = "line", colour = neutral$ink, label = mean_label))
+  items <- c(items, centre %||% summary_series_legend(marks))
   if (period_mean) items[[length(items) + 1]] <- list(kind = "dash", colour = neutral$muted, label = "Period mean")
   if (!is.null(threshold_legend)) {
     items[[length(items) + 1]] <- list(kind = "dash", colour = hl_tokens()$reference$color, label = threshold_legend)
@@ -147,7 +125,7 @@ timeseries_legend <- function(raw, period_mean, bands, raw_label, mean_label, th
 }
 
 headers_for <- function(plot, data, y, stats, percent, threshold, share_label, key, key_panels, qualifiers) {
-  labels <- c(share_above = share_label, mean = "Mean", median = "Median", range = "Range")
+  labels <- c(share_above = share_label, stats::setNames(vapply(stat_names, stat_label, character(1)), stat_names))
   for (name in levels(data$.group)) {
     emphasise <- !is.null(key) && (is.null(key_panels) || name %in% key_panels)
     values <- data[[y]][data$.group == name]
@@ -202,7 +180,11 @@ partial_layer <- function(partial, values) {
 #' @param period_mean Draw each panel's mean as a dashed line.
 #' @param percent Values are shares; label axis and key numbers as percentages.
 #' @param threshold,threshold_label,threshold_legend Reference line, its label and legend entry.
-#' @param stats Key numbers: any of `"mean"`, `"median"`, `"range"`, `"share_above"`.
+#' @param stats Key numbers: any of `"mean"`, `"median"`, `"iqr"`, `"range"`, `"sd"`, `"ci"`, `"n"` and
+#'   `"share_above"` (with `threshold`).
+#' @param summary Summarise the values at each x instead of drawing them under a rolling mean: the centre as the
+#'   line, its interval as a band in the series' colour (`c("median", "iqr")`, `c("mean", "ci")`,
+#'   `c("mean", "sd")`; `"range"` with either), both named in the legend.
 #' @param share_label Label of the `"share_above"` key number.
 #' @param key,key_panels The key number to emphasise and the panels to emphasise it in.
 #' @param highlight Panels to keep in colour; the others become context grey.
@@ -238,8 +220,9 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
                           key_panels = NULL, highlight = NULL, qualifiers = list(), bands = list(), events = list(),
                           order = NULL, raw_label = "Raw values", mean_label = NULL, colors = NULL, partial = NULL,
                           color_by = NULL, dimension = NULL, clip = NULL, clip_stats = FALSE, x_title = NULL,
-                          y_title = NULL, reference = NULL, key_title = NULL) {
+                          y_title = NULL, reference = NULL, key_title = NULL, summary = NULL) {
   check_columns(data, c(x, y, by, color_by))
+  marks <- timeseries_summary(summary)
   if (length(partial) && is.null(names(partial))) {
     stop("hairline: timeseries: partial needs names, such as c(\"2021\" = \"2 months\")", call. = FALSE)
   }
@@ -265,11 +248,12 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   share_label <- share_label %||% paste("\u2265", threshold_text)
   plot <- ggplot2::ggplot(data) + mark_layers(bands, events, data[[x]], levels(data$.group))
   if (period_mean) plot <- plot + period_mean_layer(data, y)
-  plot <- plot + series_layers(data, x, y, raw, colours) + partial_layer(partial, data[[x]]) +
+  shown <- if (is.null(marks)) series_layers(data, x, y, raw, colours) else summary_series_layers(data, marks, colours)
+  plot <- plot + shown + partial_layer(partial, data[[x]]) +
     ggplot2::facet_wrap(~.group, ncol = 1) +
     ggplot2::labs(title = title, subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline() +
-    timeseries_legend(raw, period_mean, bands, raw_label, mean_label %||% sprintf("Rolling mean (%d)", window),
-                      threshold_legend)
+    timeseries_legend(raw && is.null(marks), period_mean, bands, raw_label,
+                      mean_label %||% sprintf("Rolling mean (%d)", window), threshold_legend, marks)
   if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
   if (!is.null(threshold)) plot <- plot + hl_reference(y = threshold, label = threshold_label)
   if (!is.null(highlight)) plot <- plot + hl_highlight(panels = highlight)

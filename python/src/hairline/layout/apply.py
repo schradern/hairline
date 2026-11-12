@@ -98,30 +98,57 @@ def side_pair_width(figure: HairlineFigure, label: str, value: str) -> float:
         text_width(value, strong["family"], strong["size"], strong["weight"])
 
 
+def side_rows(entries: list[tuple[float, str, str]]) -> dict[float, list[tuple[str, str]]]:
+    """A numbers column's rows: the pairs at each position, in the order given (several measures per row)."""
+    rows: dict[float, list[tuple[str, str]]] = {}
+    for position, label, value in entries:
+        rows.setdefault(position, []).append((label, value))
+    return rows
+
+
+def side_pair_widths(figure: HairlineFigure, entries: list[tuple[float, str, str]]) -> list[float]:
+    """The width of each column of pairs, so the measures line up from row to row, as spread's numbers do."""
+    rows = list(side_rows(entries).values())
+    count = max((len(pairs) for pairs in rows), default=0)
+    return [max((side_pair_width(figure, *pairs[index]) for pairs in rows if index < len(pairs)), default=0.0)
+            for index in range(count)]
+
+
+def side_block_width(figure: HairlineFigure, entries: list[tuple[float, str, str]]) -> float:
+    widths = side_pair_widths(figure, entries)
+    pair_gap = load_tokens()["spacing"]["stats_pair"] * figure.settings.base_size
+    return sum(widths) + pair_gap * max(len(widths) - 1, 0)
+
+
 def side_widths(figure: HairlineFigure) -> tuple[float, ...]:
     """Room right of each column's panels for their numbers column and the gap before it."""
     widths = [0.0] * figure.columns
     gap = load_tokens()["spacing"]["y_labels_plot"] * figure.settings.base_size
     for index, entries in figure.side_numbers.items():
         column = grid_position(figure, index)[1]
-        widest = max((side_pair_width(figure, label, value) for _, label, value in entries), default=0.0)
-        widths[column] = max(widths[column], widest + gap if entries else 0.0)
+        widths[column] = max(widths[column], side_block_width(figure, entries) + gap if entries else 0.0)
     return tuple(widths)
 
 
 def side_number_texts(figure: HairlineFigure) -> list:
-    """Each numbers column beside its panel, the label faint and the value muted, as spread's key numbers."""
+    """Each numbers column beside its panel, the label faint and the value muted, as spread's key numbers; several
+    measures on a row in aligned columns."""
     artists, cap = [], load_font_metrics().cap_height
-    neutral, gap = figure.settings.neutral, load_tokens()["spacing"]["y_labels_plot"] * figure.settings.base_size
+    neutral, base = figure.settings.neutral, figure.settings.base_size
+    gap, pair_gap = load_tokens()["spacing"]["y_labels_plot"] * base, load_tokens()["spacing"]["stats_pair"] * base
+    plain = role_style(figure.settings, "label", None, neutral["faint"])
+    strong = role_style(figure.settings, "label", load_tokens()["type"]["value_weight"], neutral["muted"])
     for index, entries in sorted(figure.side_numbers.items()):
         box, (low, high) = figure.plot_boxes[index], figure.axes[index].get_ylim()
-        for position, label, value in entries:
-            plain = role_style(figure.settings, "label", None, neutral["faint"])
-            strong = role_style(figure.settings, "label", load_tokens()["type"]["value_weight"], neutral["muted"])
+        widths = side_pair_widths(figure, entries)
+        for position, pairs in side_rows(entries).items():
             baseline = box.y + (high - position) / (high - low) * box.height + plain["size"] * cap / 2
             x = box.x + box.width + gap
-            artists.append(add_text(figure.figure, x, baseline, f"{label} ", plain))
-            artists.append(add_text(figure.figure, x + side_pair_width(figure, label, ""), baseline, value, strong))
+            for (label, value), width in zip(pairs, widths, strict=False):
+                artists.append(add_text(figure.figure, x, baseline, f"{label} ", plain))
+                artists.append(add_text(figure.figure, x + side_pair_width(figure, label, ""), baseline, value,
+                                        strong))
+                x += width + pair_gap
     return artists
 
 

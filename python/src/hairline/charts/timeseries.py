@@ -22,15 +22,20 @@ from hairline.charts.common import (
     with_caption,
 )
 from hairline.charts.options import Reference, apply_options
+from hairline.charts.summaries import STAT_NAMES, stat_label
+from hairline.charts.timeseries_summary import (
+    checked_summary,
+    draw_summary_series,
+    panel_stats,
+    summary_legend_items,
+)
 from hairline.figure import HairlineFigure, figure
 from hairline.focus import REFERENCE_ID
 from hairline.fonts import families
 from hairline.marks import SECONDARY_ID, lone_color
-from hairline.numbers import auto_digits, format_number, format_percent, is_whole, quantile_places
+from hairline.numbers import format_number, format_percent
 from hairline.settings import current_settings, role_size
 from hairline.tokens import load_tokens
-
-STAT_LABELS = {"mean": "Mean", "median": "Median", "range": "Range"}
 
 
 def groups_of(data: pd.DataFrame, by: str | None, order: Sequence[str] | None,
@@ -48,28 +53,6 @@ def groups_of(data: pd.DataFrame, by: str | None, order: Sequence[str] | None,
 def formatter(percent: bool):
     return (lambda value, digits=1: format_percent(value, digits)) if percent else (
         lambda value, digits=1: format_number(value, digits))
-
-
-def panel_stats(values: pd.Series, stats: Sequence[str], percent: bool, threshold: float | None,
-                share_label: str) -> list[tuple[str, str]]:
-    show, clean = formatter(percent), values.dropna().astype(float)
-    digits = auto_digits(clean * (100 if percent else 1))
-    extra = 1 if is_whole(clean) and not percent else 0
-    pairs = []
-    for stat in stats:
-        if stat == "share_above":
-            if threshold is None:
-                raise ValueError("hairline: stats 'share_above' needs threshold=")
-            pairs.append((share_label, format_percent(float((clean >= threshold).mean()), 0)))
-        elif stat == "range":
-            pairs.append(("Range", f"{show(clean.min(), digits)}–{show(clean.max(), digits)}"))
-        elif stat in STAT_LABELS:
-            value = getattr(clean, stat)()
-            places = digits + extra if stat == "mean" else quantile_places(value, digits, bool(extra))
-            pairs.append((STAT_LABELS[stat], show(value, places)))
-        else:
-            raise ValueError(f"hairline: unknown stat {stat!r}; use mean, median, range or share_above")
-    return pairs
 
 
 def with_iso_dates(data: pd.DataFrame, x: str) -> pd.DataFrame:
@@ -179,10 +162,11 @@ def draw_partial(ax, partial: Mapping[str, str], is_date: bool) -> None:
                    zorder=2.5, linewidth=0, label="_nolegend_")
 
 
-def legend_items(raw: bool, period_mean: bool, bands: Sequence[Mapping], labels: Mapping[str, str | None]) -> list:
+def legend_items(raw: bool, period_mean: bool, bands: Sequence[Mapping], labels: Mapping[str, str | None],
+                 marks: tuple[str, str | None] | None = None) -> list:
     neutral = current_settings().neutral
     items = [("thin", neutral["ink"], labels["raw"])] if raw else []
-    items.append(("line", neutral["ink"], labels["mean"]))
+    items += summary_legend_items(marks) if marks else [("line", neutral["ink"], labels["mean"])]
     if period_mean:
         items.append(("dash", neutral["muted"], "Period mean"))
     if labels["threshold"]:
@@ -203,19 +187,26 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
                size: str = "double", partial: Mapping[str, str] | None = None, color_by: str | None = None,
                dimension: str | None = None, clip: float | tuple[float | None, float | None] | None = None,
                clip_stats: bool = False, x_title: str | None = None, y_title: str | None = None,
-               reference: Reference = None, key_title: str | None = None) -> HairlineFigure:
+               reference: Reference = None, key_title: str | None = None,
+               summary: str | Sequence[str] | None = None) -> HairlineFigure:
     """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers.
     `partial` names incomplete periods ({"2021": "2 months"}: a year, a date, or an x value) and what they hold:
     they are drawn lighter and the caption says so. `color_by` colours the panels by a coarser column;
     `dimension` keeps their colours off another dimension's slots. Shared with the other charts: `clip` and
     `clip_stats` (as in `spread()`), `x_title`, `y_title`, `reference` (lines at y values, beside `threshold`) and
-    `key_title`."""
+    `key_title`.
+
+    `stats` names the key numbers in the panel headers: any of "mean", "median", "iqr", "range", "sd", "ci", "n"
+    and "share_above" (with `threshold`). `summary` summarises the values at each x instead of drawing them under
+    a rolling mean: the centre as the line, its interval as a band in the series' colour (("median", "iqr"),
+    ("mean", "ci"), ("mean", "sd"); "range" with either), both named in the legend."""
     from hairline.charts.common import series_colors
     check_columns(data, [x, y, by, color_by])
     check_window(window)
     check_present(data, y, "timeseries")
     check_numeric(data, [y], "timeseries")
     check_marks(bands, events)
+    marks = checked_summary(summary)
     data = with_iso_dates(data, x)
     title = title or (f"{humanise(y)} by {str(by).replace('_', ' ')}" if by else f"{humanise(y)} over time")
     groups = groups_of(data, by, order, "timeseries")
@@ -226,13 +217,16 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     result = figure(title, subtitle=subtitle, caption=caption, size=size, panels=len(groups), layout="rows")
     is_date = pd.api.types.is_datetime64_any_dtype(data[x])
     share_label = share_label or f"≥ {formatter(percent)(threshold, 0) if threshold is not None else ''}"
-    labels = {"share_above": share_label, **STAT_LABELS}
+    labels = {"share_above": share_label, **{name: stat_label(name) for name in STAT_NAMES}}
     palette = series_colors([name for name, _ in groups], data, by, color_by, colors, dimension,
                             "timeseries")[0] if by else {}
     for index, (name, rows) in enumerate(groups):
         ax = result.axes[index]
         drawn = rows.assign(**{y: rows[y].where(rows[y].between(*limits))})
-        draw_series(ax, drawn, x, y, palette.get(name, lone_color()), window, raw)
+        if marks:
+            draw_summary_series(ax, drawn, x, y, palette.get(name, lone_color()), marks)
+        else:
+            draw_series(ax, drawn, x, y, palette.get(name, lone_color()), window, raw)
         if period_mean:
             ax.axhline(rows[y].mean(), **{**reference_style(), "color": current_settings().neutral["muted"],
                                           "linestyle": (0, (3, 2.5))})
@@ -248,7 +242,7 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
         result.reference(y=threshold, label=threshold_label)
     if highlight:
         result.highlight(panels=list(highlight))
-    result.legend(legend_items(raw, period_mean, list(bands), {"raw": raw_label, "threshold": threshold_legend,
-                                                                "mean": mean_label or f"Rolling mean ({window})"}))
+    labels = {"raw": raw_label, "threshold": threshold_legend, "mean": mean_label or f"Rolling mean ({window})"}
+    result.legend(legend_items(raw and not marks, period_mean, list(bands), labels, marks))
     return apply_options(result, "timeseries", x_title=x_title, y_title=y_title, reference=reference,
                          key_title=key_title)

@@ -379,7 +379,12 @@
         "iqr": "IQR",
         "interval": "{name} [95% CI]",
         "effect": "Effect",
-        "estimate": "Estimate"
+        "estimate": "Estimate",
+        "range": "Range",
+        "sd": "SD",
+        "sd_bar": "± 1 SD",
+        "ci": "95% CI",
+        "summary_heading": "{centre} [{interval}]"
       }
     },
     "de": {
@@ -448,7 +453,12 @@
         "iqr": "IQR",
         "interval": "{name} [95 %-KI]",
         "effect": "Effekt",
-        "estimate": "Schätzer"
+        "estimate": "Schätzer",
+        "range": "Spannweite",
+        "sd": "SD",
+        "sd_bar": "± 1 SD",
+        "ci": "95 %-KI",
+        "summary_heading": "{centre} [{interval}]"
       }
     }
   },
@@ -803,6 +813,10 @@
     "discrete_share": 0.2,
     "discrete_min_n": 10,
     "levels_shown": 2
+  },
+  "summary": {
+    "thin_bar": 0.4,
+    "key_bar": 0.45
   },
   "interactive": {
     "veil": 0.75,

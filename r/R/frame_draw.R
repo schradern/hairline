@@ -125,18 +125,26 @@ side_number_grobs <- function(parts, plan) {
   settings <- parts$settings
   cap <- font_metrics()$cap_height
   gap <- hl_tokens()$spacing$y_labels_plot * settings$base_size
+  pair_gap <- hl_tokens()$spacing$stats_pair * settings$base_size
   plain <- role_style(settings, "label", NULL, settings$neutral$faint)
   strong <- role_style(settings, "label", hl_tokens()$type$value_weight, settings$neutral$muted)
   grobs <- list()
   for (index in seq_along(parts$panels)) {
     box <- plan$layout$panels[[index]]
     range <- parts$y_ranges[[index]]
-    for (entry in parts$panels[[index]]$side_numbers) {
-      baseline <- box[2] + (range[2] - entry$position) / diff(range) * box[4] + plain$size * cap / 2
+    entries <- parts$panels[[index]]$side_numbers
+    if (!length(entries)) next
+    widths <- side_pair_widths(settings, entries)
+    for (pairs in side_rows(entries)) {
+      baseline <- box[2] + (range[2] - as.numeric(pairs[[1]]$position)) / diff(range) * box[4] + plain$size * cap / 2
       x <- box[1] + box[3] + gap
-      grobs[[length(grobs) + 1]] <- text_grob_pt(paste0(entry$label, " "), x, baseline, plain, plan$size[2])
-      grobs[[length(grobs) + 1]] <- text_grob_pt(entry$value, x + side_pair_width(settings, entry$label, ""),
-                                                 baseline, strong, plan$size[2])
+      for (column in seq_along(pairs)) {
+        entry <- pairs[[column]]
+        grobs[[length(grobs) + 1]] <- text_grob_pt(paste0(entry$label, " "), x, baseline, plain, plan$size[2])
+        grobs[[length(grobs) + 1]] <- text_grob_pt(entry$value, x + side_pair_width(settings, entry$label, ""),
+                                                   baseline, strong, plan$size[2])
+        x <- x + widths[column] + pair_gap
+      }
     }
   }
   grobs

@@ -26,16 +26,35 @@ side_pair_width <- function(settings, label, value) {
     text_width_pt(value, role_style(settings, "label", hl_tokens()$type$value_weight))
 }
 
+# A numbers column's rows: the pairs at each position, in the order given (several measures per row).
+side_rows <- function(entries) {
+  positions <- vapply(entries, function(entry) as.numeric(entry$position), numeric(1))
+  lapply(split(entries, factor(positions, levels = unique(positions))), unname)
+}
+
+# The width of each column of pairs, so the measures line up from row to row, as spread's numbers do.
+side_pair_widths <- function(settings, entries) {
+  rows <- side_rows(entries)
+  count <- max(c(0, lengths(rows)))
+  vapply(seq_len(count), function(index) {
+    max(c(0, unlist(lapply(rows, function(pairs) {
+      if (index <= length(pairs)) side_pair_width(settings, pairs[[index]]$label, pairs[[index]]$value)
+    }))))
+  }, numeric(1))
+}
+
+side_block_width <- function(settings, entries) {
+  widths <- side_pair_widths(settings, entries)
+  sum(widths) + hl_tokens()$spacing$stats_pair * settings$base_size * max(length(widths) - 1, 0)
+}
+
 # Room right of each column's panels for their numbers column and the gap before it.
 side_widths <- function(parts) {
   widths <- numeric(parts$columns)
   gap <- hl_tokens()$spacing$y_labels_plot * parts$settings$base_size
   for (panel in parts$panels) {
     if (!length(panel$side_numbers)) next
-    widest <- max(vapply(panel$side_numbers, function(entry) {
-      side_pair_width(parts$settings, entry$label, entry$value)
-    }, numeric(1)))
-    widths[panel$col] <- max(widths[panel$col], widest + gap)
+    widths[panel$col] <- max(widths[panel$col], side_block_width(parts$settings, panel$side_numbers) + gap)
   }
   widths
 }

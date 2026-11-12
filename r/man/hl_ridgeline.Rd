@@ -27,7 +27,9 @@ hl_ridgeline(
   highlight = NULL,
   key_title = NULL,
   facet = NULL,
-  columns = NULL
+  columns = NULL,
+  summary = NULL,
+  stats = character()
 )
 }
 \arguments{
@@ -66,6 +68,13 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{facet}{Column whose values each get a panel.}
 
 \item{columns}{Panels per row with \code{facet} (two by default).}
+
+\item{summary}{The marks on each ridge: \code{"median"} (a line up to the ridge) and \code{"mean"} (an open diamond on its
+outline); by default the median, or nothing with \code{medians = FALSE}. A summary you give is named in the
+legend. A ridge shows its own spread, so intervals belong to \code{\link[=hl_raincloud]{hl_raincloud()}} or \code{\link[=hl_spread]{hl_spread()}}.}
+
+\item{stats}{Measures beside each ridge, in a column right of the plot: any of \code{"median"}, \code{"mean"}, \code{"iqr"},
+\code{"range"}, \code{"sd"}, \code{"ci"}, \code{"n"}.}
 }
 \value{
 A ggplot with the hairline frame.

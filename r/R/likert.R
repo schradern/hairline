@@ -12,8 +12,8 @@ scale_levels <- function(values, levels) {
   scale <- sort(as.numeric(levels))
   off <- setdiff(found, scale)
   if (length(off)) {
-    stop(sprintf("hairline: likert: rating %s is not a level of the scale (%s to %s)", spread_level_number(off[1]),
-                 spread_level_number(scale[1]), spread_level_number(scale[length(scale)])), call. = FALSE)
+    stop(sprintf("hairline: likert: rating %s is not a level of the scale (%s to %s)", level_number(off[1]),
+                 level_number(scale[1]), level_number(scale[length(scale)])), call. = FALSE)
   }
   scale
 }
@@ -27,15 +27,15 @@ scale_sides <- function(levels, split) {
   }
   sides <- list(left = levels[levels < split], middle = levels[levels == split], right = levels[levels > split])
   if (!length(sides$left) || !length(sides$right)) {
-    stop(sprintf("hairline: likert: split %s must leave levels on both sides", spread_level_number(split)),
+    stop(sprintf("hairline: likert: split %s must leave levels on both sides", level_number(split)),
          call. = FALSE)
   }
   sides
 }
 
 bin_label <- function(levels) {
-  first <- spread_level_number(levels[1])
-  if (length(levels) == 1) first else paste0(first, "\u2013", spread_level_number(levels[length(levels)]))
+  first <- level_number(levels[1])
+  if (length(levels) == 1) first else paste0(first, "\u2013", level_number(levels[length(levels)]))
 }
 
 # A side's bins: each level its own up to `likert.levels_per_side`, else two, the outer one holding the extreme half
@@ -61,7 +61,7 @@ given_bins <- function(bins, sides) {
   used <- unlist(lapply(found, `[[`, "levels"))
   missing <- every[vapply(every, function(level) sum(used == level) != 1, logical(1))]
   if (length(missing)) {
-    stop(sprintf("hairline: likert: bins must hold every level once; %s is not", spread_level_number(missing[1])),
+    stop(sprintf("hairline: likert: bins must hold every level once; %s is not", level_number(missing[1])),
          call. = FALSE)
   }
   found[order(vapply(found, function(entry) entry$levels[1], numeric(1)))]
@@ -93,8 +93,8 @@ scale_bins <- function(levels, split, bins, ramp_name = NULL) {
 # Median, IQR and n on the data's levels, in spread's key-number style.
 likert_pairs <- function(values, stats) {
   limits <- level_quantiles(values, c(0.25, 0.5, 0.75))
-  parts <- list(median = c(word("median"), spread_level_number(limits[2])),
-                iqr = c(word("iqr"), paste0(spread_level_number(limits[1]), "\u2013", spread_level_number(limits[3]))),
+  parts <- list(median = c(word("median"), level_number(limits[2])),
+                iqr = c(word("iqr"), paste0(level_number(limits[1]), "\u2013", level_number(limits[3]))),
                 n = c("n", hl_format_number(length(values), 0)))
   unname(parts[stats])
 }

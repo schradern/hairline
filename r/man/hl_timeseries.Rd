@@ -39,7 +39,8 @@ hl_timeseries(
   x_title = NULL,
   y_title = NULL,
   reference = NULL,
-  key_title = NULL
+  key_title = NULL,
+  summary = NULL
 )
 }
 \arguments{
@@ -59,7 +60,8 @@ hl_timeseries(
 
 \item{threshold, threshold_label, threshold_legend}{Reference line, its label and legend entry.}
 
-\item{stats}{Key numbers: any of \code{"mean"}, \code{"median"}, \code{"range"}, \code{"share_above"}.}
+\item{stats}{Key numbers: any of \code{"mean"}, \code{"median"}, \code{"iqr"}, \code{"range"}, \code{"sd"}, \code{"ci"}, \code{"n"} and
+\code{"share_above"} (with \code{threshold}).}
 
 \item{share_label}{Label of the \code{"share_above"} key number.}
 
@@ -99,6 +101,10 @@ key numbers use every value unless \code{clip_stats}.}
 lines, e.g. \code{c(Target = 0.9)}.}
 
 \item{key_title}{Title at the start of the legend row, naming what the groups are.}
+
+\item{summary}{Summarise the values at each x instead of drawing them under a rolling mean: the centre as the
+line, its interval as a band in the series' colour (\code{c("median", "iqr")}, \code{c("mean", "ci")},
+\code{c("mean", "sd")}; \code{"range"} with either), both named in the legend.}
 }
 \value{
 A ggplot with the hairline frame; \code{\link[=hl_save]{hl_save()}} writes it at the \code{"double"} size (174 mm) unless told

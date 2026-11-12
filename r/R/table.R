@@ -24,6 +24,7 @@ table_label_width <- function(parts) {
   if (is.null(parts$table)) return(0)
   style <- role_style(parts$settings, "label")
   rows <- parts$table$rows
+  # A compact row's label ("n") takes the room its full row leaves, so existing figures keep their frame.
   widest <- max(vapply(rows, function(row) text_width_pt(row$label, style), numeric(1)))
   values <- max(c(0, unlist(lapply(rows, function(row) vapply(row$text, text_width_pt, numeric(1), style = style)))))
   table_label_offset(parts) + widest + values / 2
@@ -34,6 +35,53 @@ table_value_xs <- function(parts, plan) {
   box <- fitted_box(plan$layout$panels[[1]], parts$aspect)
   range <- parts$x_ranges[[1]]
   unlist(lapply(parts$table$rows, function(row) box[1] + (as.numeric(row$x) - range[1]) / diff(range) * box[3]))
+}
+
+# Where neighbouring texts of a row come closer than the gap of x-axis labels (`ticks.label_rows_gap`): the figure's
+# message saying what would fit; NULL when they stand apart. As Python's table_collision().
+table_collision <- function(row, xs, range, style) {
+  gap <- hl_tokens()$ticks$label_rows_gap * style$size
+  widths <- vapply(row$text, text_width_pt, numeric(1), style = style)
+  starts <- xs - widths * edge_hjust((as.numeric(row$x) - range[1]) / diff(range))
+  ordered <- order(xs)
+  for (index in seq_len(length(ordered) - 1)) {
+    first <- ordered[index]
+    second <- ordered[index + 1]
+    room <- starts[second] - (starts[first] + widths[first])
+    if (room < gap) {
+      return(sprintf(paste("hairline: the numbers under the x axis do not fit side by side: '%s' and '%s' leave %.1f",
+                           "pt between them, and need %.1f pt. Show fewer stats or groups, use a wider size, or a",
+                           "chart that lists the numbers in a column, such as hl_spread()"),
+                     row$text[first], row$text[second], room, gap))
+    }
+  }
+  NULL
+}
+
+# Each row as drawn: in full, or in its compact form (list(label, text) at the same x) when the full texts would
+# meet; a row that fits in neither stops the figure. As Python's fitted_rows().
+fitted_table_rows <- function(rows, xs, range, style) {
+  lapply(seq_along(rows), function(index) {
+    row <- rows[[index]]
+    problem <- table_collision(row, xs[[index]], range, style)
+    if (!is.null(problem) && !is.null(row$compact)) {
+      row$label <- row$compact$label
+      row$text <- row$compact$text
+      problem <- table_collision(row, xs[[index]], range, style)
+    }
+    if (!is.null(problem)) stop(layout_error(problem))
+    row
+  })
+}
+
+# The table's rows fit, in full or compact, before anything is drawn (a device left mid-drawing stays locked).
+check_table <- function(parts, plan) {
+  table <- parts$table
+  if (is.null(table)) return(invisible())
+  ink <- role_style(parts$settings, "label", colour = parts$settings$neutral$ink)
+  xs <- split(table_value_xs(parts, plan), rep(seq_along(table$rows), lengths(lapply(table$rows, `[[`, "x"))))
+  fitted_table_rows(table$rows, xs, parts$x_ranges[[1]], ink)
+  invisible()
 }
 
 table_grobs <- function(parts, plan) {
@@ -57,8 +105,9 @@ table_grobs <- function(parts, plan) {
   xs <- split(table_value_xs(parts, plan), rep(seq_along(table$rows), vapply(table$rows, function(row) {
     length(row$x)
   }, integer(1))))
-  for (index in seq_along(table$rows)) {
-    row <- table$rows[[index]]
+  rows <- fitted_table_rows(table$rows, xs, range, ink)
+  for (index in seq_along(rows)) {
+    row <- rows[[index]]
     if (!is.null(row$colour)) {
       key <- list(x = left, kind = keys[index], colour = row$colour)
       grobs[[length(grobs) + 1]] <- swatch_grob(key, baselines[index] - cap / 2, height, settings$base_size,
