@@ -63,9 +63,14 @@ series_named <- function(colour, parts, index) {
   header$name %||% parts$title %||% ""
 }
 
-panel_position <- function(built) {
+# The panels in reading order (row by row), as the frame lays them out.
+panel_order <- function(built) {
   layout <- built@layout$layout
-  ordered <- as.character(layout$PANEL[order(layout$ROW, layout$COL)])
+  as.character(layout$PANEL[order(layout$ROW, layout$COL)])
+}
+
+panel_position <- function(built) {
+  ordered <- panel_order(built)
   function(panel) match(as.character(panel), ordered)
 }
 
@@ -193,10 +198,13 @@ drawn_targets <- function(shapes) {
     if (is.null(shape$series)) next
     entry <- found[[shape$series]] %||% list(name = shape$series, color = shape$fill %||% shape$color,
                                              marks = list(), tips = list())
+    # A shape that is only hovered (a PRISMA box under its text) is not drawn over the veil.
+    hit <- if (isTRUE(shape$hover_only)) list(hit = TRUE) else list()
     if (shape$kind == "polygon") {
-      entry$marks[[length(entry$marks) + 1]] <- list(polygon = shape_points(shape), alpha = shape$alpha %||% 1)
+      entry$marks[[length(entry$marks) + 1]] <- c(list(polygon = shape_points(shape), alpha = shape$alpha %||% 1),
+                                                  hit)
     } else if (shape$kind == "line") {
-      entry$marks[[length(entry$marks) + 1]] <- list(line = shape_points(shape), width = shape$width)
+      entry$marks[[length(entry$marks) + 1]] <- c(list(line = shape_points(shape), width = shape$width), hit)
     }
     if (!is.null(shape$tip)) entry$tips[[length(entry$tips) + 1]] <- list(at = shape$tip_at, text = shape$tip)
     found[[shape$series]] <- entry
@@ -219,6 +227,56 @@ hover_targets <- function(parts, plan) {
     rect <- c(min(xs), min(ys), abs(diff(xs)), abs(diff(ys)))
     list(name = row$name, color = colour_hex(row$colour), marks = list(list(rect = rect)),
          tips = list(list(at = c(rect[1] + rect[3] / 2, rect[2]), text = row$text)))
+  })
+}
+
+registered_style <- c("alpha", "width", "r", "color", "edge", "edge_width", "hit")
+
+# A mark registered in plot@meta$hairline_targets, from the panel's data to pt; sizes and colours as given. As
+# Python's registered_mark().
+registered_mark <- function(mark, to_pt) {
+  found <- mark[intersect(names(mark), registered_style)]
+  if (!is.null(mark$rect)) {
+    corners <- to_pt(mark$rect[c(1, 3)], mark$rect[c(4, 2)])
+    found$rect <- c(min(corners[, 1]), min(corners[, 2]), abs(diff(corners[, 1])), abs(diff(corners[, 2])))
+  }
+  for (kind in c("polygon", "line")) {
+    if (!is.null(mark[[kind]])) found[[kind]] <- to_pt(mark[[kind]][, 1], mark[[kind]][, 2])
+  }
+  for (kind in c("dot", "diamond")) {
+    if (!is.null(mark[[kind]])) found[[kind]] <- as.vector(to_pt(mark[[kind]][1], mark[[kind]][2]))
+  }
+  found
+}
+
+# Tips as given, and values written as their scale labels them, after the series name ("Group: 12.3"); the values of
+# one target share their digits, as Python's registered_tips().
+registered_tips <- function(target, context) {
+  texts <- vapply(target$tips, function(tip) tip$text %||% "", character(1))
+  for (axis in c("x", "y")) {
+    valued <- which(vapply(target$tips, function(tip) !is.null(tip$value) && identical(tip$axis %||% "y", axis),
+                           logical(1)))
+    if (!length(valued)) next
+    scale <- if (axis == "x") context$x_scale else context$y_scale
+    values <- vapply(target$tips[valued], `[[`, numeric(1), "value")
+    texts[valued] <- tip_text(target$name, scale_numbers(scale, values))
+  }
+  lapply(seq_along(target$tips), function(index) {
+    at <- target$tips[[index]]$at
+    list(at = as.vector(context$to_pt(at[1], at[2])), text = texts[index])
+  })
+}
+
+# The series charts registered in plot@meta$hairline_targets (raincloud groups, ridges, study overview rows), each
+# on its panel in reading order; as Python's registered_targets().
+registered_targets <- function(parts, plan) {
+  if (!length(parts$targets)) return(list())
+  ordered <- panel_order(parts$built)
+  lapply(parts$targets, function(target) {
+    context <- panel_context(parts, plan, ordered[target$panel])
+    list(name = target$name, color = colour_hex(target$colour),
+         marks = lapply(target$marks, registered_mark, to_pt = context$to_pt),
+         tips = registered_tips(target, context))
   })
 }
 
@@ -254,7 +312,7 @@ series_targets <- function(parts, plan) {
     }), recursive = FALSE))
   }
   c(unlist(lapply(seq_along(parts$built@data), function(index) layer_targets(parts, plan, index)), recursive = FALSE),
-    hover_targets(parts, plan))
+    hover_targets(parts, plan), registered_targets(parts, plan))
 }
 
 plot_targets <- function(parts, plan) {

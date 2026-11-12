@@ -78,6 +78,7 @@ class HairlineFigure:
     integer_axes: set[tuple[int, str]] = field(default_factory=set)
     whole_axes: set[tuple[int, str]] = field(default_factory=set)
     hover_marks: list[dict] = field(default_factory=list)
+    targets: list[dict] = field(default_factory=list)
     inside_labels: list[tuple] = field(default_factory=list)
     side_numbers: dict[int, list[tuple[float, str, str]]] = field(default_factory=dict)
     legend_heading: str | None = None
@@ -237,6 +238,17 @@ class HairlineFigure:
         """A tooltip target for interactive HTML: a box (x0, y0, x1, y1 in panel `index`'s data) of series
         `name`, which a reader hovers to read `text`."""
         self.hover_marks.append({"index": index, "name": str(name), "color": color, "box": box, "text": text})
+
+    def target(self, index: int, name: str, color: str, marks: Sequence[dict], tips: Sequence[dict]) -> None:
+        """Tooltip targets of series `name` on panel `index` for interactive HTML, in that panel's data: `marks` its
+        shapes, which a reader hovers and which stay in colour while the others fade ({"polygon": [(x, y), ...],
+        "alpha": a}, {"line": [(x, y), ...], "width": pt}, {"rect": (x0, y0, x1, y1)}, {"dot": (x, y), "r": pt},
+        {"diamond": (x, y), "r": pt}; any of them with "color", "edge" and "edge_width"), and `tips`, each
+        {"at": (x, y), "text": text} or {"at": (x, y), "value": v, "axis": "y"}: a value written as that axis
+        labels it, after the series name."""
+        self.check_index(index)
+        self.targets.append({"index": index, "name": str(name), "color": color, "marks": list(marks),
+                             "tips": list(tips)})
 
     def percent_axis(self, index: int, which: str = "y", digits: int | None = None) -> None:
         """Treat panel `index`'s values on axis `which` ("y" or "x") as shares and label them as percentages.

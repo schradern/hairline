@@ -158,6 +158,36 @@ hl_describe <- function(study, stats = "median_iqr") {
                text, found)
 }
 
+# Each overview row's tooltip target: its range line, band and median dot, and a tip with the median, IQR and range it
+# draws and its n, in the variable's digits; a group without values has none. As Python's overview_row() and
+# overview_tip().
+study_overview_targets <- function(study, numeric, shown, colours) {
+  settings <- hl_settings()
+  tokens <- hl_tokens()
+  half <- tokens$spread$band / 2
+  radius <- tokens$lines$point_radius * settings$base_size
+  targets <- list()
+  for (panel in seq_along(numeric)) {
+    every <- study_numbers(study$data[[numeric[panel]]])
+    numbers <- measure_numbers(every, FALSE, NULL)
+    for (position in seq_along(shown)) {
+      name <- shown[[position]]$name
+      values <- study_numbers(shown[[position]]$rows[[numeric[panel]]])
+      if (!length(values)) next
+      limits <- density_quantiles(values, c(0, 0.25, 0.5, 0.75, 1))
+      y <- length(shown) - position
+      marks <- list(list(line = rbind(c(limits[1], y), c(limits[5], y)),
+                         width = tokens$reference$width * settings$base_size, color = settings$neutral$faint),
+                    list(rect = c(limits[2], y - half, limits[4], y + half), alpha = tokens$spread$band_opacity),
+                    list(dot = c(limits[3], y), r = radius))
+      tip <- pairs_tip(name, stat_pairs(values, c("median", "iqr", "range", "n"), numbers))
+      targets[[length(targets) + 1]] <- chart_target(panel, name, colours[[name]], marks,
+                                                     list(list(at = c(limits[3], y + half), text = tip)))
+    }
+  }
+  targets
+}
+
 study_overview <- function(study, parts) {
   numeric <- study$variables[study$types[study$variables] == "numeric"]
   if (!length(numeric)) return(NULL)
@@ -203,6 +233,7 @@ study_overview <- function(study, parts) {
   for (name in numeric) {
     plot <- plot + hl_panel_header(panel = study_label(study, name), x_title = study_measure(study, name))
   }
+  plot@meta$hairline_targets <- study_overview_targets(study, numeric, shown, colours)
   plot@meta$hairline_height_mm <- rules$overview_frame_mm +
     panel_rows * (rules$overview_panel_mm + length(shown) * rules$overview_row_mm)
   # The strip is sized from its rows, not the 8 x base an axes chart keeps: each group row keeps its own least.

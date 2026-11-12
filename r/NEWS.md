@@ -1,3 +1,25 @@
+# hairline (development version)
+
+## Tooltips on every chart
+
+* `hl_raincloud()`: each group's box reads its n, every measure of `summary =` and `stats =`, and with `compare =`
+  its difference [95% CI] and p, as the numbers under the groups; each point reads its value ("Surgical: 12.3").
+  Hovering a group keeps its density, marks and points in colour, in every `facet` panel; values cut by `clip` and
+  groups below `min_n` have no tooltip.
+* `hl_ridgeline()`: each ridge reads its n, its centres and the `stats =` and `compare =` numbers beside it, at its
+  median line (or its peak); hovering it keeps it in colour, in every panel.
+* `hl_describe()`: each overview row reads its median, IQR, range and n. The other study figures were already covered
+  by the charts they draw.
+* `hl_prisma()`: each box reads its label and count, the exclusion box its reasons one under another; the box text
+  stays in view.
+* Tooltips can hold several lines. A test runs every gallery figure and fails when one exports a series without a
+  tooltip, or when a chart has no gallery figure.
+
+## Fixes
+
+* A reference's `legend_label` (`hl_reference()`) joins the legend row also when the chart sets its own legend
+  (`hl_raincloud(summary = ...)`) or shows none.
+
 # hairline 0.3.0
 
 What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and the

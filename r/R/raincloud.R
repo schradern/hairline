@@ -4,10 +4,12 @@
 raincloud_default_summary <- c("median", "iqr")
 
 # Density and points of the values drawn; the summary marks of the values counted, quartiles held within the drawn
-# range.
+# range. Returns the layers and what they draw, for the group's tooltip targets: the marks in data units, where the
+# summary tip points and the points. As Python's draw_group().
 raincloud_group_layers <- function(values, position, colour, rules, counted = values,
                                    marks = raincloud_default_summary) {
   layers <- list()
+  shapes <- list()
   curve <- density_curve(values)
   if (!is.null(curve)) {
     start <- position + rules$density_offset
@@ -15,12 +17,17 @@ raincloud_group_layers <- function(values, position, colour, rules, counted = va
                           y = c(curve$grid[1], curve$grid, curve$grid[length(curve$grid)]))
     layers[[1]] <- ggplot2::geom_polygon(data = outline, ggplot2::aes(.data$x, .data$y), fill = colour,
                                          alpha = rules$density_opacity, colour = NA, inherit.aes = FALSE)
+    shapes[[1]] <- list(polygon = as.matrix(outline), alpha = rules$density_opacity)
   }
   points <- data.frame(x = position + rules$points_centre + jitter_offsets(length(values)) * rules$points_spread,
                        y = values)
-  c(layers, raincloud_summary_layers(counted, range(values), position, colour, marks, rules),
-    list(static_layer(ggplot2::geom_point(data = points, ggplot2::aes(.data$x, .data$y), colour = colour,
-                                          inherit.aes = FALSE))))
+  summary <- raincloud_summary_layers(counted, range(values), position, colour, marks, rules)
+  radius <- hl_tokens()$lines$point_radius * hl_settings()$base_size
+  dots <- lapply(seq_len(nrow(points)), function(index) list(dot = c(points$x[index], points$y[index]), r = radius))
+  list(layers = c(layers, summary$layers,
+                  list(static_layer(ggplot2::geom_point(data = points, ggplot2::aes(.data$x, .data$y), colour = colour,
+                                                        inherit.aes = FALSE)))),
+       marks = c(shapes, summary$marks, dots), at = c(position, summary$top), points = points)
 }
 
 # A vertical segment at the box's place, kept out of light slots, line thinning and tooltips.
@@ -43,6 +50,8 @@ raincloud_bar <- function(position, half, ends, colour) {
 
 # At the box's place: the range as a thin line, the IQR as the box or an SD or CI as a slim bar, the median as a
 # tick across it (in the surface colour on the box) and the mean as an open diamond. As Python's draw_summary().
+# Also returns those marks in data units, for the tooltip targets, and where the summary tip points: the top of the
+# bar, else the centre mark, else the top of the range; so hovering the box reads the summary, not a point beside it.
 raincloud_summary_layers <- function(counted, drawn, position, colour, marks, rules) {
   settings <- hl_settings()
   tokens <- hl_tokens()
@@ -51,23 +60,47 @@ raincloud_summary_layers <- function(counted, drawn, position, colour, marks, ru
   half <- rules$box_half
   width <- tokens$lines$data * settings$base_size
   layers <- list()
+  shapes <- list()
+  anchors <- list()
   if ("range" %in% marks) {
-    layers <- c(layers, list(raincloud_segment(position, held(found$low), position, held(found$high),
-                                               settings$neutral$faint, tokens$reference$width * settings$base_size)))
+    line <- tokens$reference$width * settings$base_size
+    ends <- c(held(found$low), held(found$high))
+    layers <- c(layers, list(raincloud_segment(position, ends[1], position, ends[2], settings$neutral$faint, line)))
+    shapes <- c(shapes, list(list(line = cbind(position, ends), width = line, color = settings$neutral$faint)))
+    anchors$range <- ends[2]
   }
   bar <- intersect(marks, summary_bars)
+  box <- NULL
   if (identical(bar, "iqr")) {
-    layers <- c(layers, list(raincloud_bar(position, half, c(held(found$q1), held(found$q3)), colour)))
+    box <- c(position - half, held(found$q1), position + half, held(found$q3))
   } else if (length(bar) && is.finite(found$sd)) {
-    layers <- c(layers, list(raincloud_bar(position, half * tokens$summary$thin_bar, interval_of(found, bar), colour)))
+    slim <- half * tokens$summary$thin_bar
+    ends <- interval_of(found, bar)
+    box <- c(position - slim, ends[1], position + slim, ends[2])
+  }
+  if (!is.null(box)) {
+    layers <- c(layers, list(raincloud_bar(position, (box[3] - box[1]) / 2, box[c(2, 4)], colour)))
+    shapes <- c(shapes, list(list(rect = box)))
+    anchors$bar <- box[4]
   }
   if ("median" %in% marks) {
     tick <- if (identical(bar, "iqr")) settings$neutral$surface else colour
-    layers <- c(layers, list(raincloud_segment(position - half, held(found$median), position + half,
-                                               held(found$median), tick, width)))
+    middle <- held(found$median)
+    layers <- c(layers, list(raincloud_segment(position - half, middle, position + half, middle, tick, width)))
+    shapes <- c(shapes, list(list(line = cbind(c(position - half, position + half), middle), width = width,
+                                  color = tick)))
+    anchors$median <- middle
   }
-  if ("mean" %in% marks) layers <- c(layers, list(mean_diamond(position, held(found$mean), colour)))
-  layers
+  if ("mean" %in% marks) {
+    centre <- held(found$mean)
+    layers <- c(layers, list(mean_diamond(position, centre, colour)))
+    shapes <- c(shapes, list(list(diamond = c(position, centre),
+                                  r = diamond_size * tokens$lines$point_radius * settings$base_size,
+                                  color = settings$neutral$surface, edge = colour, edge_width = width * open_edge)))
+    anchors$mean <- centre
+  }
+  first <- intersect(c("bar", "median", "mean", "range"), names(anchors))
+  list(layers = layers, marks = shapes, top = if (length(first)) anchors[[first[1]]] else drawn[2])
 }
 
 # The mean as an open diamond on a ggplot panel: its half-diagonal `diamond_size` point radii, its outline
@@ -93,10 +126,13 @@ raincloud_panel_layers <- function(drawn, counted, comparisons, names, palette,
                                    marks = raincloud_default_summary) {
   rules <- hl_tokens()$raincloud
   layers <- list()
+  groups <- list()
   for (index in seq_along(names)) {
     if (!length(drawn[[index]])) next
-    layers <- c(layers, raincloud_group_layers(drawn[[index]], index - 1, palette[[names[index]]], rules,
-                                               counted[[index]], marks))
+    group <- raincloud_group_layers(drawn[[index]], index - 1, palette[[names[index]]], rules, counted[[index]],
+                                    marks)
+    layers <- c(layers, group$layers)
+    groups[[names[index]]] <- group
   }
   present <- lengths(counted) > 0
   rows <- data.frame(group = rep(names[present], lengths(counted[present])),
@@ -110,7 +146,20 @@ raincloud_panel_layers <- function(drawn, counted, comparisons, names, palette,
   }
   spans <- lapply(pairs, function(pair) match(pair[1:2], names) - 1)
   list(layers = c(layers, raincloud_bracket_layers(pairs, names, unlist(drawn, use.names = FALSE), rules)),
-       levels = if (length(spans)) max(bracket_levels(spans)) + 1 else 0)
+       levels = if (length(spans)) max(bracket_levels(spans)) + 1 else 0, groups = groups)
+}
+
+# Each group's tooltip targets on panel `panel`: its summary tip first (the one a keyboard focus shows), then a value
+# per point; its density, summary marks and points stay in colour while it is hovered. As Python's group_targets().
+raincloud_targets <- function(panel, groups, tips, palette) {
+  lapply(names(groups), function(name) {
+    group <- groups[[name]]
+    summary <- if (!is.null(tips[[name]])) list(list(at = group$at, text = tips[[name]])) else list()
+    points <- lapply(seq_len(nrow(group$points)), function(index) {
+      list(at = c(group$points$x[index], group$points$y[index]), value = group$points$y[index])
+    })
+    chart_target(panel, name, palette[[name]], group$marks, c(summary, points))
+  })
 }
 
 bracket_headroom <- 0.6 # bracket steps above the highest bracket, for its label
@@ -249,6 +298,9 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   panels <- if (is.null(facet)) "" else chart_groups(data, facet, NULL, "raincloud")
   plot <- ggplot2::ggplot()
   levels <- 0
+  compared <- raincloud_compare_rows(counted, compare, facet, marks, percent)
+  every_counted <- unlist(counted, use.names = FALSE)
+  targets <- list()
   for (panel in panels) {
     here <- if (is.null(facet)) rep(TRUE, nrow(data)) else as.character(data[[facet]]) == panel
     values <- lapply(names, function(name) data[[value]][here & as.character(data[[group]]) == name])
@@ -257,6 +309,9 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
                                     marks)
     plot <- plot + if (is.null(facet)) built$layers else in_facet(built$layers, panel, panels)
     levels <- max(levels, built$levels)
+    tips <- raincloud_group_tips(stats::setNames(if (clip_stats) shown else values, names), every_counted, marks,
+                                 stats, compared$pairs, percent)
+    targets <- c(targets, raincloud_targets(match(panel, panels), built$groups, tips, coloured$palette))
     if (!is.null(facet)) {
       total <- sum(lengths(if (clip_stats) shown else values))
       plot <- plot + hl_panel_header(panel = panel, name = panel,
@@ -264,7 +319,6 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
     }
   }
   counts <- vapply(counted, function(values) word("n_equals", n = hl_format_number(length(values), 0)), character(1))
-  compared <- raincloud_compare_rows(counted, compare, facet, marks, percent)
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(data[[value]], limits, clip_stats), compared$note)
   plot <- plot +
     ggplot2::scale_x_continuous(breaks = seq_along(names) - 1, labels = names, limits = c(-0.6, length(names) - 0.4),
@@ -287,5 +341,6 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
   # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
   plot@meta$hairline_min_plot <- bracket_plot_height(levels)
+  plot@meta$hairline_targets <- targets
   chart_options(plot, "raincloud", names, x_title = x_title, reference = reference, key_title = key_title)
 }

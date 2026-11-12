@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+### Tooltips on every chart
+
+* `raincloud`: each group's box reads its n, every measure of `summary=` and `stats=`, and with `compare=` its Δ
+  [95 % CI] and p, as the numbers under the groups; each point reads its value ("Surgical: 12.3"). Hovering a group
+  keeps its density, marks and points in colour, in every `facet` panel; values cut by `clip` and groups below
+  `min_n` have no tooltip.
+* `ridgeline`: each ridge reads its n, its centres and the `stats=` and `compare=` numbers beside it, at its median
+  line (or its peak); hovering it keeps it in colour, in every panel.
+* `study().describe()`: each overview row reads its median, IQR, range and n. The other study figures were already
+  covered by the charts they draw.
+* `prisma`: each box reads its label and count, the exclusion box its reasons one under another; the box text stays
+  in view.
+* Tooltips can hold several lines. A test runs every gallery figure and fails when one exports a series without a
+  tooltip, or when a chart has no gallery figure.
+
+### Fixes
+
+* With a brand of fewer categorical slots than groups, explicit `colors=` (a mapping or a ramp) now draw: only
+  series that would repeat a colour are refused.
+* A reference's `legend_label` joins the legend row also when the chart sets its own legend (`raincloud(summary=...)`)
+  or shows none.
+
 ## 0.3.0
 
 What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and the

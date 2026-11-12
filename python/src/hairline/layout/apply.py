@@ -57,6 +57,15 @@ def shows_y_labels(figure: HairlineFigure, index: int) -> bool:
     return not figure.sharey or grid_position(figure, index)[1] == 0
 
 
+def legend_row(figure: HairlineFigure) -> list[LegendItem]:
+    """The chart's own items (given, or collected from the axes), then the reference lines and spans it does not
+    already name: those join the row whether or not the chart sets one."""
+    own = figure.legend_items if figure.legend_items is not None else (
+        focus_legend_items(figure, items_from_axes(figure.axes)) if figure.collect_legend else [])
+    named = {item.label for item in own}
+    return [*own, *(item for item in figure.extra_legend_items if item.label not in named)]
+
+
 def measure_texts(figure: HairlineFigure, width_pt: float, y_labels: list[list[str]]) -> Measured:
     settings, margin = figure.settings, load_tokens()["spacing"]["margin"] * figure.settings.base_size
     usable = width_pt - 2 * margin
@@ -64,9 +73,7 @@ def measure_texts(figure: HairlineFigure, width_pt: float, y_labels: list[list[s
     def wrapped(text: str | None, role: str) -> list[str]:
         style = role_style(settings, role)
         return wrap(text, style["family"], style["size"], style["weight"], usable) if text else []
-    legend = figure.legend_items if figure.legend_items is not None else (
-        focus_legend_items(figure, items_from_axes(figure.axes)) + figure.extra_legend_items
-        if figure.collect_legend else [])
+    legend = legend_row(figure)
     if figure.legend_heading and legend:
         legend = [LegendItem(TITLE, "#000000", figure.legend_heading), *legend]
     figure.table_keys = table_keys(figure.table_spec, legend)
@@ -429,9 +436,11 @@ def round_report(value):
 
 
 def check_categories(figure: HairlineFigure) -> None:
-    """Refuse more labelled series than palette slots instead of letting matplotlib repeat colours."""
-    count, slots = len(items_from_axes(figure.axes)), len(figure.settings.palette)
-    if count > slots:
+    """Refuse more labelled series than palette slots instead of letting matplotlib repeat colours. Series that
+    each have a colour of their own (`colors=`, a ramp) repeat none, whatever the palette holds."""
+    items, slots = items_from_axes(figure.axes), len(figure.settings.palette)
+    count = len(items)
+    if count > slots and len({item.color.lower() for item in items}) < count:
         raise HairlineLayoutError(f"hairline: {figure.settings.palette_label} has {slots} slots but {count} categories "
                                   "were given; fold small categories into 'Other' or split the figure into panels")
 

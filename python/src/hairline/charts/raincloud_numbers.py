@@ -10,6 +10,7 @@ import pandas as pd
 
 from hairline.charts.comparisons import check_compare, compare_caption, compare_method, comparison_pairs
 from hairline.charts.summaries import SUMMARY_NAMES, as_names, measure_numbers, stat_pairs
+from hairline.charts.tips import pairs_tip, tip_measures
 
 
 def check_raincloud_stats(stats: str | Sequence[str], facet: str | None) -> tuple[str, ...]:
@@ -33,12 +34,12 @@ def stat_rows(groups: Sequence[pd.Series], stats: Sequence[str], percent: bool, 
 
 
 def compare_rows(groups: list[tuple[str, np.ndarray]], compare: str | None, facet: str | None,
-                 marks: Sequence[str], percent: bool, locale: str) -> tuple[list[tuple], str | None]:
-    """The Δ and p rows under the groups, each against the reference or the group to its left, and the caption
-    note naming the test; none without compare."""
+                 marks: Sequence[str], percent: bool, locale: str) -> tuple[list[tuple], str | None, dict]:
+    """The Δ and p rows under the groups, each against the reference or the group to its left, the caption note
+    naming the test, and each group's Δ and p pairs (for its tooltip); none without compare."""
     compare = check_compare(compare, [name for name, _ in groups], "raincloud")
     if compare is None:
-        return [], None
+        return [], None, {}
     if facet:
         raise ValueError("hairline: raincloud: compare writes rows of numbers under the groups, which facet panels "
                          "do not have; use spread(facet=..., compare=...), which compares within each block")
@@ -47,4 +48,14 @@ def compare_rows(groups: list[tuple[str, np.ndarray]], compare: str | None, face
     found = comparison_pairs(groups, compare, method, numbers, locale)
     rows = [(found[groups[0][0]][row][0], None, [(float(position), found[name][row][1]) for position, (name, _) in
                                                   enumerate(groups)]) for row in range(2)]
-    return rows, compare_caption(compare, method, len(groups) - 1, locale)
+    return rows, compare_caption(compare, method, len(groups) - 1, locale), found
+
+
+def group_tips(groups: Sequence[tuple[str, np.ndarray]], every: np.ndarray, marks: Sequence[str],
+               stats: Sequence[str], compared: dict, percent: bool, locale: str) -> dict[str, str]:
+    """Each group's summary tooltip: the measures it draws and writes, its n, and its Δ and p with compare, in the
+    numbers' own digits (the measures of all groups set them, as for the rows under the groups)."""
+    numbers = measure_numbers(every, percent, None)
+    measures = tip_measures(marks, stats)
+    return {name: pairs_tip(name, stat_pairs(values, measures, numbers, locale=locale) + compared.get(name, []))
+            for name, values in groups if len(values)}

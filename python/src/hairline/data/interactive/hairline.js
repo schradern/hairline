@@ -17,22 +17,35 @@
 
   function points(list) { return list.map(function (point) { return point[0] + "," + point[1]; }).join(" "); }
 
+  // A mark is drawn in its series colour unless it gives its own; "edge" outlines it, "hit" only takes the pointer.
   function draw(series, parent, hit) {
     var reach = data.style.hit;
     series.marks.forEach(function (mark) {
-      var paint = hit ? "transparent" : series.color;
+      if (mark.hit && !hit) { return; }
+      var paint = hit ? "transparent" : (mark.color || series.color);
+      var node;
       if (mark.line) {
-        element("polyline", { points: points(mark.line), fill: "none", stroke: paint,
+        node = element("polyline", { points: points(mark.line), fill: "none", stroke: paint,
           "stroke-width": hit ? Math.max(reach, mark.width) : mark.width, "stroke-linejoin": "round" }, parent);
       } else if (mark.dot) {
-        element("circle", { cx: mark.dot[0], cy: mark.dot[1], r: hit ? Math.max(reach / 2, mark.r) : mark.r,
+        node = element("circle", { cx: mark.dot[0], cy: mark.dot[1], r: hit ? Math.max(reach / 2, mark.r) : mark.r,
           fill: paint }, parent);
+      } else if (mark.diamond) {
+        var x = mark.diamond[0], y = mark.diamond[1], r = hit ? Math.max(reach / 2, mark.r) : mark.r;
+        node = element("polygon", { points: points([[x - r, y], [x, y - r], [x + r, y], [x, y + r]]), fill: paint },
+          parent);
       } else if (mark.rect) {
-        element("rect", { x: mark.rect[0], y: mark.rect[1], width: mark.rect[2], height: mark.rect[3],
-          fill: paint }, parent);
+        node = element("rect", { x: mark.rect[0], y: mark.rect[1], width: mark.rect[2],
+          height: Math.max(mark.rect[3], hit ? reach : 0), fill: paint,
+          "fill-opacity": hit || mark.alpha === undefined ? 1 : mark.alpha }, parent);
+        if (hit && mark.rect[3] < reach) { node.setAttribute("y", mark.rect[1] + mark.rect[3] / 2 - reach / 2); }
       } else if (mark.polygon) {
-        element("polygon", { points: points(mark.polygon), fill: paint,
+        node = element("polygon", { points: points(mark.polygon), fill: paint,
           "fill-opacity": hit ? 1 : (mark.alpha === undefined ? 1 : mark.alpha) }, parent);
+      }
+      if (node && mark.edge && !hit) {
+        node.setAttribute("stroke", mark.edge);
+        node.setAttribute("stroke-width", mark.edge_width || 1);
       }
     });
   }
@@ -57,7 +70,9 @@
   function show(series, at, text) {
     while (focus.firstChild) { focus.removeChild(focus.firstChild); }
     draw(series, focus, false);
-    veil.style.display = "block";
+    // A series hovered only (a box under its own text) shows its tip without fading the others.
+    var drawn = series.marks.some(function (mark) { return !mark.hit; });
+    veil.style.display = drawn ? "block" : "none";
     focus.style.display = "block";
     if (text) { place(at, text); } else { tip.style.display = "none"; }
   }

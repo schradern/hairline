@@ -230,6 +230,14 @@ add_hairline_legend <- function(object, plot, ...) {
   plot
 }
 
+# The chart's own items (given with hl_legend(), or collected from the layers), then the reference lines it does not
+# already name: those join the row whether or not the chart sets one. As Python's legend_row().
+legend_row <- function(built) {
+  own <- built@plot@meta$hairline_legend %||% legend_items(built)
+  named <- vapply(own, `[[`, character(1), "label")
+  c(own, Filter(function(item) !item$label %in% named, reference_legend_items(built)))
+}
+
 reference_legend_items <- function(built) {
   items <- list()
   for (reference in built@plot@meta$hairline_references %||% list()) {

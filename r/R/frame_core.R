@@ -90,7 +90,8 @@ frame_parts <- function(table, built) {
   panels <- with_panel_extras(extract_panels(table, built), meta)
   flipped <- inherits(built@layout$coord, "CoordFlip")
   list(settings = settings, panels = panels, ramp_key = meta$hairline_ramp_key, row_weights = meta$hairline_heights,
-       hover = meta$hairline_hover, inside = meta$hairline_inside, bare = isTRUE(built@plot@meta$hairline_bare),
+       hover = meta$hairline_hover, targets = meta$hairline_targets, inside = meta$hairline_inside,
+       bare = isTRUE(built@plot@meta$hairline_bare),
        built = built,
        drawing = built@plot@meta$hairline_drawing, table = built@plot@meta$hairline_table,
        min_plot = built@plot@meta$hairline_min_plot,
@@ -99,9 +100,7 @@ frame_parts <- function(table, built) {
        subtitle = plot_label(built, "subtitle"), caption = plot_label(built, "caption"),
        y_title = built@plot@meta$hairline_y_title %||% plot_label(built, if (flipped) "x" else "y"),
        x_title = built@plot@meta$hairline_x_title %||% plot_label(built, if (flipped) "y" else "x"),
-       legend = titled_legend(built@plot@meta$hairline_legend %||%
-                                c(legend_items(built), reference_legend_items(built)),
-                              built@plot@meta$hairline_key_title),
+       legend = titled_legend(legend_row(built), built@plot@meta$hairline_key_title),
        notes = built@plot@meta$hairline_notes %||% list(),
        x_ranges = lapply(built@layout$panel_params, function(params) params$x$continuous_range),
        headers = built@plot@meta$hairline_headers %||% list(),

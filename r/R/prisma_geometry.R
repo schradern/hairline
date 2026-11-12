@@ -66,6 +66,16 @@ prisma_phase_shapes <- function(spec, places, left, style, rules) {
   shapes
 }
 
+# A box as a tooltip target: named by its first line, its tip its lines one under another ("Reports excluded:",
+# "Wrong population (n = 12)", ...), pointing at its top edge. It is hovered only, so its text is never covered. As
+# Python's box_target().
+flow_box_target <- function(shape, paragraphs) {
+  name <- sub(":$", "", paragraphs[1])
+  tip <- paste(paragraphs, collapse = "\n")
+  points <- shape_points(shape)
+  c(shape, list(series = name, tip = tip, tip_at = c(mean(points[1:2, 1]), points[1, 2]), hover_only = TRUE))
+}
+
 prisma_drawing <- function(spec, box, measure, style) {
   rules <- hl_tokens()$prisma
   base <- style$base
@@ -84,13 +94,15 @@ prisma_drawing <- function(spec, box, measure, style) {
     main <- wrap_lines(row$main, main_width - 2 * pad, measure)
     side <- if (length(row$exclusion)) wrap_lines(row$exclusion, side_width - 2 * pad, measure) else character()
     height <- max(length(main), length(side)) * line + 2 * pad
-    shapes <- c(shapes, list(list(kind = "polygon", points = flow_rectangle(main_left, top, main_width, height),
-                                  fill = style$neutral$surface, edge = style$neutral$axis,
-                                  edge_width = style$axis_width, role = "main")),
+    shapes <- c(shapes, list(flow_box_target(list(kind = "polygon",
+                                                  points = flow_rectangle(main_left, top, main_width, height),
+                                                  fill = style$neutral$surface, edge = style$neutral$axis,
+                                                  edge_width = style$axis_width, role = "main"), row$main)),
                 flow_box_texts(main, main_left, top, style, pad))
     if (length(side)) {
-      shapes <- c(shapes, list(list(kind = "polygon", points = flow_rectangle(side_left, top, side_width, height),
-                                    fill = style$neutral$band, role = "exclusion")),
+      shapes <- c(shapes, list(flow_box_target(list(kind = "polygon",
+                                                    points = flow_rectangle(side_left, top, side_width, height),
+                                                    fill = style$neutral$band, role = "exclusion"), row$exclusion)),
                   flow_box_texts(side, side_left, top, style, pad),
                   flow_arrow(c(main_left + main_width, top + height / 2), c(side_left, top + height / 2), style, rules))
     }

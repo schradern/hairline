@@ -6,10 +6,13 @@ import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 from matplotlib.patches import Rectangle
 
 from hairline import entities
+from hairline.charts.summaries import measure_numbers, stat_pairs
+from hairline.charts.tips import pairs_tip
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import FIXED_ID, STATIC_ID, lone_color
 from hairline.numbers import format_number, format_percent, is_whole
@@ -148,18 +151,29 @@ def missing_text(study: Study, found: dict) -> str:
     return f" Left out where missing: {listed(parts)}." if parts else ""
 
 
-def overview_row(ax, values, y: float, color: str, style: dict) -> None:
+def overview_row(ax, values, y: float, color: str, style: dict) -> tuple[list[dict], tuple[float, float]] | None:
     """One spread row on axes: range line, interquartile band, median dot (as the spread chart draws them); a group
-    without values keeps its row empty, as its table cell shows a dash."""
+    without values keeps its row empty, as its table cell shows a dash. Returns the marks in data units and where
+    the row's tooltip points (its median), for the interactive targets."""
     if not len(values):
-        return
+        return None
     rules = load_tokens()["spread"]
     low, q1, middle, q3, high = quantiles(values, [0, 0.25, 0.5, 0.75, 1])
     ax.plot([low, high], [y, y], color=style["faint"], linewidth=style["leader"], gid=FIXED_ID,
             solid_capstyle="butt", label="_nolegend_")
     ax.add_patch(Rectangle((q1, y - rules["band"] / 2), q3 - q1, rules["band"], facecolor=color, edgecolor="none",
                            alpha=rules["band_opacity"], linewidth=0))
-    ax.scatter([middle], [y], color=color, zorder=3, gid=STATIC_ID)
+    dot = ax.scatter([middle], [y], color=color, zorder=3, gid=STATIC_ID)
+    marks = [{"line": [(low, y), (high, y)], "width": style["leader"], "color": style["faint"]},
+             {"rect": (q1, y - rules["band"] / 2, q3, y + rules["band"] / 2), "alpha": rules["band_opacity"]},
+             {"dot": (middle, y), "r": float(np.sqrt(dot.get_sizes()[0]) / 2)}]
+    return marks, (middle, y + rules["band"] / 2)
+
+
+def overview_tip(name: str, values, every, locale: str) -> str:
+    """A row's tooltip: the median, IQR and range it draws and its n, in the variable's digits."""
+    numbers = measure_numbers(every, False, None)
+    return pairs_tip(name, stat_pairs(values, ("median", "iqr", "range", "n"), numbers, locale=locale))
 
 
 def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:
@@ -184,8 +198,13 @@ def overview(study: Study, parts: list, size: str) -> HairlineFigure | None:
         colors = entities.colors_for(names, None) if study.group else {names[0]: lone_color(result.settings)}
         for index, name in enumerate(numeric):
             ax = result.axes[index]
+            every = numbers(study.data[name])
             for position, (label, subset) in enumerate(shown):
-                overview_row(ax, numbers(subset[name]), len(shown) - 1 - position, colors[label], style)
+                values = numbers(subset[name])
+                drawn = overview_row(ax, values, len(shown) - 1 - position, colors[label], style)
+                if drawn is not None:
+                    tip = overview_tip(label, values, every, result.settings.locale)
+                    result.target(index, label, colors[label], drawn[0], [{"at": drawn[1], "text": tip}])
             result.categories(index, list(reversed(names)), "y")
             result.panel_header(index, study.label(name), x_title=study.measure(name))
             ax.set_ylim(-0.6, len(shown) - 0.4)

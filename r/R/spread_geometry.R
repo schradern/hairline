@@ -80,8 +80,7 @@ spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
                                          color = style$neutral$ink, width = style$leader_width, role = "mark")
   }
   if (length(shapes)) {
-    shapes[[1]]$tip <- paste0(row$name, ": ", paste(vapply(row$pairs, paste, character(1), collapse = " "),
-                                                    collapse = ", "))
+    shapes[[1]]$tip <- pairs_tip(row$name, row$pairs)
     shapes[[1]]$tip_at <- c(scale(spread_row_centre(row)), centre - half)
   }
   lapply(shapes, function(shape) c(shape, series = row$name))

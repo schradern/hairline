@@ -4,7 +4,7 @@
 .hairline-figure .hairline-hit { cursor: default; outline: none; }
 .hairline-figure .hairline-veil { pointer-events: none; display: none; }
 .hairline-figure .hairline-tip {
-  position: absolute; display: none; pointer-events: none; white-space: nowrap;
+  position: absolute; display: none; pointer-events: none; white-space: pre;
   transform: translate(-50%, calc(-100% - 0.6em)); padding: 0.25em 0.5em;
   background: var(--hl-surface); color: var(--hl-ink); border: 1px solid var(--hl-axis);
   font-family: var(--hl-font), sans-serif; line-height: 1.25;

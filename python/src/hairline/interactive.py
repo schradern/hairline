@@ -96,6 +96,49 @@ def hover_targets(figure: HairlineFigure, to_pt) -> list[dict]:
     return found
 
 
+MARK_STYLE = ("alpha", "width", "r", "color", "edge", "edge_width", "hit")
+
+
+def registered_mark(mark: dict, ax, to_pt) -> dict:
+    """A mark registered with HairlineFigure.target(), from the panel's data to pt; sizes and colours as given."""
+    found = {key: mark[key] for key in MARK_STYLE if key in mark}
+    if "rect" in mark:
+        x0, y0, x1, y1 = mark["rect"]
+        corner, opposite = to_pt(ax, (x0, y1)), to_pt(ax, (x1, y0))
+        found["rect"] = [min(corner[0], opposite[0]), min(corner[1], opposite[1]), abs(opposite[0] - corner[0]),
+                         abs(opposite[1] - corner[1])]
+    for kind in ("polygon", "line"):
+        if kind in mark:
+            found[kind] = [to_pt(ax, point) for point in mark[kind]]
+    for kind in ("dot", "diamond"):
+        if kind in mark:
+            found[kind] = to_pt(ax, mark[kind])
+    return found
+
+
+def registered_tips(figure: HairlineFigure, mark: dict, ax, to_pt) -> list[dict]:
+    """Tips as given, and values written as their axis labels them, after the series name ("Group: 12.3")."""
+    tips = mark["tips"]
+    texts: dict[int, str] = {}
+    for axis in ("x", "y"):
+        valued = [index for index, tip in enumerate(tips) if "value" in tip and tip.get("axis", "y") == axis]
+        written = axis_number_texts(figure, mark["index"], axis, [tips[index]["value"] for index in valued])
+        texts.update({index: tip_text(mark["name"], value) for index, value in zip(valued, written, strict=True)})
+    return [{"at": to_pt(ax, tip["at"]), "text": texts.get(index, tip.get("text", ""))}
+            for index, tip in enumerate(tips)]
+
+
+def registered_targets(figure: HairlineFigure, to_pt) -> list[dict]:
+    """The series charts registered with HairlineFigure.target(): raincloud groups, ridges, study overview rows."""
+    found = []
+    for mark in figure.targets:
+        ax = figure.axes[mark["index"]]
+        found.append({"name": mark["name"], "color": mark["color"],
+                      "marks": [registered_mark(item, ax, to_pt) for item in mark["marks"]],
+                      "tips": registered_tips(figure, mark, ax, to_pt)})
+    return found
+
+
 def tip_text(name: str, values: str) -> str:
     """'Series: x, y', or the values alone for a figure without a series name or title."""
     return f"{name}: {values}" if name else values
@@ -212,10 +255,12 @@ def drawn_targets(figure: HairlineFigure) -> list[dict]:
             continue
         entry = found.setdefault(shape["series"], {"name": shape["series"], "color": shape.get("fill") or
                                                    shape.get("color"), "marks": [], "tips": []})
+        # A shape that is only hovered (a PRISMA box under its text) is not drawn over the veil.
+        hit = {"hit": True} if shape.get("hover_only") else {}
         if shape["kind"] == "polygon":
-            entry["marks"].append({"polygon": shape["points"], "alpha": shape.get("alpha", 1.0)})
+            entry["marks"].append({"polygon": shape["points"], "alpha": shape.get("alpha", 1.0), **hit})
         elif shape["kind"] == "line":
-            entry["marks"].append({"line": shape["points"], "width": shape["width"]})
+            entry["marks"].append({"line": shape["points"], "width": shape["width"], **hit})
         if "tip" in shape:
             entry["tips"].append({"at": shape["tip_at"], "text": shape["tip"]})
     return list(found.values())
@@ -265,7 +310,7 @@ def figure_targets(figure: HairlineFigure) -> dict:
         if index not in figure.drawings:
             series += line_targets(figure, index, ax, to_pt) + point_targets(figure, index, ax, to_pt)
             series += bar_targets(figure, index, ax, to_pt)
-    series += drawn_targets(figure) + hover_targets(figure, to_pt)
+    series += drawn_targets(figure) + hover_targets(figure, to_pt) + registered_targets(figure, to_pt)
     neutral, rules = figure.settings.neutral, load_tokens()["interactive"]
     style = {"ink": neutral["ink"], "surface": neutral["surface"], "axis": neutral["axis"],
              "font": figure.settings.font, "size": role_size(figure.settings, "label"), "veil": rules["veil"],
