@@ -21,9 +21,10 @@ from hairline.charts.common import (
     with_caption,
     within,
 )
-from hairline.charts.options import Reference, apply_options, sorted_groups
+from hairline.charts.options import Reference, apply_options, references, sorted_groups
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
+from hairline.layout.geometry import load_font_metrics
 from hairline.marks import STATIC_ID
 from hairline.numbers import format_number
 from hairline.settings import current_settings
@@ -88,12 +89,24 @@ def panel_groups(rows_of: dict, names: list[str], value: str, facet: str | None,
     return [(name, values_in(rows_of[name])) for name in names]
 
 
+def label_room(reference: Reference) -> float:
+    """The share of the plot height a reference label hangs into from the top (its gap, cap height and gap at the
+    caption size), on the least plot height, so the top ridge stays clear of it; 0 without labels."""
+    if not any(label for _, label in references(reference, "ridgeline")):
+        return 0.0
+    tokens = load_tokens()
+    label = tokens["type"]["roles"]["caption"]["factor"] * (2 * tokens["reference"]["label_gap"]
+                                                            + load_font_metrics().cap_height)
+    return label / tokens["spacing"]["min_plot_height"]
+
+
 def frame_panel(result: HairlineFigure, index: int, panel: str | None, labels: list[str], statistics: list,
-                show_n: bool, percent: bool) -> None:
-    """A panel's group rows, its header with the n of the values counted (a facet's panel) and its value axis."""
+                show_n: bool, percent: bool, room: float) -> None:
+    """A panel's group rows, its header with the n of the values counted (a facet's panel) and its value axis, with
+    `room` (a share of it) above the top ridge for reference labels."""
     rules = load_tokens()["ridgeline"]
     result.categories(index, list(reversed(labels)), "y")
-    result.axes[index].set_ylim(0, len(labels) + rules["overlap"] + rules["headroom"])
+    result.axes[index].set_ylim(0, (len(labels) + rules["overlap"] + rules["headroom"]) / (1 - room))
     if panel is not None:
         total = sum(len(values) for _, values in statistics)
         stats = [("n", format_number(total, 0, current_settings().locale))] if show_n else ()
@@ -146,7 +159,7 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     for index, panel in enumerate(panels):
         statistics = drawn[index] if clip_stats else counted[index]
         draw_ridges(result.axes[index], drawn[index], curves[index], scale, medians, palette, statistics)
-        frame_panel(result, index, panel, labels, statistics, show_n, percent)
+        frame_panel(result, index, panel, labels, statistics, show_n, percent, label_room(reference))
     if color_by:
         result.legend([("square", color, label) for label, color in
                        dict.fromkeys((coarse[name], palette[name]) for name in names)])

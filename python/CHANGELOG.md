@@ -93,7 +93,9 @@ positions and tooltips are unchanged.
   ridges on one height scale) and on
   `spread`, `dotplot` and `likert` (a block of rows per value under its name, on one axis; a group keeps its colour
   in every block).
-* Two gallery figures in both languages: `scatter_sites` and `spread_years`; `dotplot_rates` draws a benchmark.
+* `ridgeline` keeps room above the top ridge for the labels of reference lines.
+* Three gallery figures in both languages: `scatter_sites`, `spread_years` and `ridgeline_sites`; `dotplot_rates`
+  draws a benchmark.
 
 The R package mirrors all of this under the same names (`hl_bars(facet = ...)`, `hl_lanes()`, ...); a composed
 figure there is `hl_rows()`.

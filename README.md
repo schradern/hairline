@@ -168,6 +168,7 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 
 <table>
 <tr><td width="50%" valign="top"><a href="gallery/python/scatter_sites.py"><img src="docs/images/gallery/scatter_sites.png" alt="Facets on a scatter"></a><br><sub>Facets on a scatter</sub></td><td width="50%" valign="top"><a href="gallery/python/spread_years.py"><img src="docs/images/gallery/spread_years.png" alt="Facets as blocks of rows"></a><br><sub>Facets as blocks of rows</sub></td></tr>
+<tr><td width="50%" valign="top"><a href="gallery/python/ridgeline_sites.py"><img src="docs/images/gallery/ridgeline_sites.png" alt="Facets on a ridgeline"></a><br><sub>Facets on a ridgeline</sub></td></tr>
 </table>
 
 ### Survival and evidence

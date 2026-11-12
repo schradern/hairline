@@ -87,7 +87,9 @@ gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing call
 * `facet =` on `hl_scatter()`, `hl_raincloud()` and `hl_ridgeline()` (panels on shared axes, each with its own fit or
   comparisons; ridges on one height scale) and on `hl_spread()`, `hl_dotplot()` and `hl_likert()` (a block of rows per value under its name, on one axis; a group
   keeps its colour in every block).
-* Two gallery figures in both languages: `scatter_sites` and `spread_years`; `dotplot_rates` draws a benchmark.
+* `hl_ridgeline()` keeps room above the top ridge for the labels of reference lines.
+* Three gallery figures in both languages: `scatter_sites`, `spread_years` and `ridgeline_sites`; `dotplot_rates`
+  draws a benchmark.
 
 ## Fixes
 

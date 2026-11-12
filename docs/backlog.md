@@ -31,8 +31,9 @@ form differs from the proposal:
 
 Where the shipped form differs from the proposal:
 
-* Item 1: `facet` is on `bars`; the location figure is `bars(facet=..., top=6)`. `spread` and `dotplot` have no
-  `facet`.
+* Item 1: `facet` is on `bars`; the location figure is `bars(facet=..., top=6)`. Since then `facet` is shared by
+  every chart with groups (see `docs/guide/options.md`): panels on scatter, raincloud and ridgeline, blocks of rows
+  on spread, dot plot and Likert.
 * Item 3: `dotplot` takes the n from a column (`n="patients"`), as its rows are already aggregated; `raincloud`
   already writes n under each group.
 * Item 5: `clip` applies to the value axis (y on `scatter`).
