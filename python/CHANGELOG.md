@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and
-the staffing of a surgical unit over the day. Existing calls keep their output: every gallery figure's frame
-positions and tooltips are unchanged.
+the staffing of a surgical unit over the day. Then two rules for every chart: nothing overlaps, and the same
+measures (`summary=`, `stats=`) on every distribution chart. Existing calls keep working; a figure whose texts or
+marks collided now lays out without the collision (see "Nothing overlaps" below).
 
 ### For reports
 

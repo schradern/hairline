@@ -90,7 +90,7 @@ __all__ = [
     "partition", "prisma", "raincloud", "ramp", "report", "ridgeline", "risk_of_bias", "sankey", "save", "scatter",
     "scope", "spread", "study", "swatches", "swimlanes", "table", "timeseries", "use", "venn",
 ]
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 
 def _apply_host_context() -> None:

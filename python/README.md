@@ -202,7 +202,7 @@ and `hl.citation("bibtex")` this entry:
   title = {hairline: Clean, Predictable Figures for Medical and Data Science},
   author = {Nikolas Schrader},
   year = {2026},
-  note = {Python package version 0.2.1},
+  note = {Python package version 0.3.0},
   doi = {10.5281/zenodo.23456211},
 }
 ```

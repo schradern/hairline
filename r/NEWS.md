@@ -1,8 +1,10 @@
-# hairline (development version)
+# hairline 0.3.0
 
 What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and the
 staffing of a surgical unit over the day. The same options as the Python package, under the same names, and every
-gallery figure agrees with Python within 1 pt (`tools/parity.py`). Existing calls keep their output.
+gallery figure agrees with Python within 1 pt (`tools/parity.py`). Then two rules for every chart: nothing overlaps,
+and the same measures (`summary =`, `stats =`) on every distribution chart. Existing calls keep working; a figure
+whose texts or marks collided now lays out without the collision (see "Nothing overlaps" below).
 
 ## For reports
 

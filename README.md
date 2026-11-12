@@ -312,7 +312,7 @@ reads [`CITATION.cff`](CITATION.cff); each package prints its reference:
 ```python
 import hairline as hl
 
-print(hl.citation())             # Schrader N (2026). hairline: ... Python package version 0.2.1.
+print(hl.citation())             # Schrader N (2026). hairline: ... Python package version 0.3.0.
 print(hl.citation("bibtex"))
 ```
 
@@ -325,12 +325,12 @@ citation("hairline")
   title = {hairline: Clean, Predictable Figures for Medical and Data Science},
   author = {Nikolas Schrader},
   year = {2026},
-  note = {Python package version 0.2.1},
+  note = {Python package version 0.3.0},
   doi = {10.5281/zenodo.23456211},
 }
 ```
 
-Cite the package you used: in R, the note reads "R package version 0.2.1".
+Cite the package you used: in R, the note reads "R package version 0.3.0".
 
 ## Author
 
