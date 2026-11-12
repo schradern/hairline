@@ -163,7 +163,8 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   if (!discrete) warn_median_gaps(counted, numbers)
   names <- names(samples)
   spread_check_marks(marks, names)
-  coloured <- series_colours(names, data, group, color_by, colors, dimension, "spread", highlight)
+  coloured <- series_colours(names, data, group, color_by, colors, dimension, "spread", highlight,
+                             named = TRUE)
   lines <- option_references(reference, "spread")
   sections <- if (!is.null(section)) coarse_groups(data, group, section, "spread")
   rows <- lapply(names, function(name) {
@@ -376,7 +377,7 @@ faceted_spread_spec <- function(data, group, value, facet, order, options) {
   keyed <- facet_rows(data, group, facet, order, "spread")
   names <- unique(unname(keyed$groups))
   coloured <- series_colours(names, data, group, options$color_by, options$colors, options$dimension, "spread",
-                             options$highlight)
+                             options$highlight, named = TRUE)
   coarse_shown <- !is.null(options$color_by)
   marks <- options$marks
   keyed_marks <- if (length(marks)) {

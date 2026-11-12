@@ -48,8 +48,10 @@ def misfit(low: float, high: float, start: float, end: float, wants_zero: bool) 
     return round(max(empty, overshoot) / extent, 9)
 
 
-def nice_breaks(low: float, high: float, target: int = 5) -> list[float]:
-    """Return 3 to 6 round values; data may pass the first break by 10 % and the last by 20 % of the axis."""
+def nice_breaks(low: float, high: float, target: int = 5, whole: bool = False) -> list[float]:
+    """Return 3 to 6 round values; data may pass the first break by 10 % and the last by 20 % of the axis.
+    `whole` (counts) keeps the steps to whole numbers; a range too short for three whole breaks gets each whole
+    number in it (same rule in R)."""
     if low > high:
         raise ValueError(f"hairline: nice_breaks got low {low:g} is above high {high:g}; pass the range in order")
     rules = load_tokens()["ticks"]
@@ -60,6 +62,8 @@ def nice_breaks(low: float, high: float, target: int = 5) -> list[float]:
     for exponent in range(magnitude - 1, magnitude + 2):
         for multiplier in rules["multipliers"]:
             step = multiplier * 10.0 ** exponent
+            if whole and (step < 1 or step != round(step)):
+                continue
             for start, end in variants(low, high, step, rules, wants_zero):
                 count = round((end - start) / step) + 1
                 if not rules["min"] <= count <= rules["max"]:
@@ -69,15 +73,20 @@ def nice_breaks(low: float, high: float, target: int = 5) -> list[float]:
                        -step)
                 if best is None or key < best[0]:
                     best = (key, start, step, count)
+    if best is None and whole:
+        return [float(value) for value in range(math.floor(low), math.ceil(high) + 1)]
     if best is None:
         raise ValueError(f"hairline: no tick spacing found for range {low:g} to {high:g}")
     _, start, step, count = best
     return [float(f"{start + index * step:.10g}") for index in range(count)]
 
 
-def axis_limits(low: float, high: float, breaks: list[float]) -> tuple[float, float]:
-    """Axis range: the breaks, widened to any data that passes them."""
-    return min(low, breaks[0]), max(high, breaks[-1])
+def axis_limits(low: float, high: float, breaks: list[float], margin: float = 0.0) -> tuple[float, float]:
+    """Axis range: the breaks, widened to any data that passes them. `margin` (a share of the break range) keeps
+    marks with a size, such as points, whole: data within it of an outer break widens the axis by it (same rule
+    in R)."""
+    pad = margin * (breaks[-1] - breaks[0])
+    return min(low - pad, breaks[0]), max(high + pad, breaks[-1])
 
 
 def month_starts(low: dt.date, high: dt.date, step: int) -> list[dt.date]:

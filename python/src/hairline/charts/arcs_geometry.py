@@ -7,7 +7,6 @@ import math
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
 from hairline.charts.tips import tagged
-from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
 
@@ -70,14 +69,13 @@ def arcs_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[di
     rules, base = load_tokens()["arcs"], style["base"]
     names, largest = spec["nodes"], max(link["value"] for link in spec["links"])
     xs = node_positions(names, box, measure)
-    labels, label_height = label_shapes(names, xs, box.y + box.height, measure, style, rules)
-    ground = box.y + box.height - label_height - rules["label_gap"] * base
+    _, label_height = label_shapes(names, xs, box.y + box.height, measure, style, rules)
     ceiling = box.y + line_height(style, "label") + rules["key_gap"] * base
+    # The arcs keep `min_room`; labels too tall for the panel then sit lower, and the figure grows to hold them.
+    ground = max(box.y + box.height - label_height - rules["label_gap"] * base, ceiling + rules["min_room"] * base)
+    labels, _ = label_shapes(names, xs, ground + rules["label_gap"] * base + label_height, measure, style, rules)
     position = dict(zip(names, xs, strict=True))
     widest = max(abs(position[link["target"]] - position[link["source"]]) / 2 for link in spec["links"])
-    if ground <= ceiling:
-        raise HairlineLayoutError(f"hairline: arcs: the node labels take {label_height:.0f} pt and leave no room "
-                                  f"for the arcs; shorten the longest labels or give the figure more height")
     squeeze = min(1.0, (ground - ceiling) / widest)
     shapes = []
     for link in sorted(spec["links"], key=lambda item: -item["value"]):

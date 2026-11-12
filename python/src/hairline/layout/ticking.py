@@ -6,10 +6,22 @@ import math
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
+import numpy as np
+from matplotlib.collections import PathCollection
 from matplotlib.ticker import FixedFormatter, FixedLocator, FuncFormatter
 
-from hairline.layout.axes_style import configure_ticks, data_interval
+from hairline.errors import HairlineLayoutError
+from hairline.layout.axes_style import (
+    configure_ticks,
+    data_interval,
+    edge_alignment,
+    is_numeric_axis,
+    tick_formatter,
+)
+from hairline.layout.measure import text_width, wrap
+from hairline.layout.styles import role_style
 from hairline.numbers import format_number
+from hairline.ticks import axis_limits, nice_breaks
 from hairline.tokens import load_tokens
 
 if TYPE_CHECKING:
@@ -88,6 +100,84 @@ def configure_time_ticks(figure: HairlineFigure, index: int) -> list[str]:
     return [hour_label(value) for value in breaks]
 
 
+def wrapped_names(figure: HairlineFigure, ax, names: list[str], y_labels: Sequence[str]) -> list[str]:
+    """Names on an x axis, each wrapped to its slot (the plot's estimated width over the axis range, less the label
+    gap), so neighbours never meet. A word wider than its slot cannot be placed: the figure is refused with what
+    would fit (same rule in R)."""
+    style = role_style(figure.settings, "label")
+    low, high = sorted(ax.get_xlim())
+    if not names or high <= low:
+        return names
+    gap = load_tokens()["ticks"]["label_rows_gap"] * style["size"]
+    slot = estimated_plot_width(figure, y_labels) / (high - low) - gap
+    lines = [wrap(name.replace("\n", " "), style["family"], style["size"], style["weight"], slot) for name in names]
+    widest = max(text_width(line, style["family"], style["size"], style["weight"]) for wrapped in lines
+                 for line in wrapped)
+    if widest > slot + 1e-6:
+        raise HairlineLayoutError(
+            f"hairline: the {len(names)} names on the x axis do not fit side by side: a word needs {widest:.0f} pt "
+            f"and each name has {max(slot, 0):.0f} pt; use a wider size, fewer groups, or a chart that lists the "
+            f"groups as rows (bars, spread, ridgeline, dotplot)")
+    return ["\n".join(wrapped) for wrapped in lines]
+
+
+def estimated_plot_width(figure: HairlineFigure, y_labels: Sequence[str]) -> float:
+    """A panel's plot width before the layout: the figure's width less its margins, the gaps between columns and the
+    y labels with their gap (same estimate in R)."""
+    spacing, base = load_tokens()["spacing"], figure.settings.base_size
+    style = role_style(figure.settings, "label")
+    usable = figure.figure.get_size_inches()[0] * 72 - 2 * spacing["margin"] * base
+    column = (usable - (figure.columns - 1) * spacing["panel_columns"] * base) / figure.columns
+    labels = max((text_width(label, style["family"], style["size"]) for label in y_labels), default=0.0)
+    return column - (labels + spacing["y_labels_plot"] * base if labels else 0.0)
+
+
+def labels_fit(breaks: list[float], labels: list[str], limits: tuple[float, float], width: float,
+               figure: HairlineFigure) -> bool:
+    """Whether neighbouring x labels keep `ticks.label_rows_gap` between them: each centred on its break, or
+    aligned inward at the plot's edges, as they are drawn."""
+    style = role_style(figure.settings, "label")
+    gap = load_tokens()["ticks"]["label_rows_gap"] * style["size"]
+    low, high = limits
+    spans = []
+    for value, label in zip(breaks, labels, strict=True):
+        offset, size = (value - low) / (high - low), text_width(label, style["family"], style["size"])
+        start = offset * width - size * {"left": 0.0, "right": 1.0}.get(edge_alignment(offset), 0.5)
+        spans.append((start, start + size))
+    return all(second[0] - first[1] >= gap for first, second in zip(spans, spans[1:], strict=False))
+
+
+def fitting_target(figure: HairlineFigure, interval: tuple[float, float], percent: bool, whole: bool,
+                   margin: float, target: int, y_labels: Sequence[str]) -> int:
+    """The largest tick target, from the panel grid's down to three, whose x labels stand apart on the plot's
+    estimated width (same rule in R)."""
+    width = estimated_plot_width(figure, y_labels)
+    for candidate in range(target, 2, -1):
+        breaks = nice_breaks(*interval, target=candidate, whole=whole)
+        formatter = tick_formatter(breaks, percent, figure.settings.locale)
+        if labels_fit(breaks, [formatter(value) for value in breaks], axis_limits(*interval, breaks, margin), width,
+                      figure):
+            return candidate
+    return 3
+
+
+def mark_half_size(ax) -> float:
+    """Half the size, in pt, of the largest mark with a size of its own: a scatter dot or a line's marker (a
+    censor tick); 0 without such marks."""
+    dots = [float(np.sqrt(item.get_sizes().max())) / 2 for item in ax.collections
+            if isinstance(item, PathCollection) and len(item.get_offsets()) and len(item.get_sizes())]
+    markers = [line.get_markersize() / 2 for line in ax.lines if line.get_marker() not in (None, "", "None", "none")]
+    return max(dots + markers, default=0.0)
+
+
+def mark_margin(figure: HairlineFigure, axes) -> float:
+    """The share of an axis the largest mark's half-size takes on the least plot height: data that close to an
+    outer break widens the axis by it, so no mark is cut by the plot's edge (same rule in R)."""
+    half = max((mark_half_size(ax) for ax in axes), default=0.0)
+    least = load_tokens()["spacing"]["min_plot_height"] * figure.settings.base_size
+    return half / least
+
+
 def integer_breaks(low: float, high: float) -> list[float]:
     """Whole-number ticks from the lowest to the highest whole number in range, at most six of them."""
     first, last = math.ceil(low - 1e-9), math.floor(high + 1e-9)
@@ -117,6 +207,9 @@ def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
                                    for value in integer_breaks(low, high)])
                 continue
             if (index, which) in figure.category_axes:
+                if which == "x":
+                    figure.category_axes[(index, which)] = wrapped_names(figure, ax, figure.category_axes[
+                        (index, which)], labels[-1] if labels else [])
                 result = set_categories(ax, which, figure.category_axes[(index, which)])
                 if names_axis(result):
                     ax.tick_params(axis=which, labelcolor=figure.settings.neutral["ink"])
@@ -124,8 +217,13 @@ def configure_all_ticks(figure: HairlineFigure) -> list[list[str]]:
                     labels.append(result)
                 continue
             percent = (index, which) in figure.percent_axes
-            result = configure_ticks(ax, which, tick_interval(figure, index, which), percent,
-                                     figure.settings.locale, tick_target(figure, which))
+            shared = figure.sharey if which == "y" else figure.sharex
+            interval, whole = tick_interval(figure, index, which), (index, which) in figure.whole_axes
+            margin = mark_margin(figure, figure.axes if shared else [ax])
+            target = tick_target(figure, which)
+            if which == "x" and interval is not None and is_numeric_axis(ax.xaxis):
+                target = fitting_target(figure, interval, percent, whole, margin, target, labels[-1])
+            result = configure_ticks(ax, which, interval, percent, figure.settings.locale, target, margin, whole)
             figure.applied_limits[(index, which)] = current_limits(ax, which)
             if which == "y":
                 labels.append(result)

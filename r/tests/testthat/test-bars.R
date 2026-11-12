@@ -48,7 +48,7 @@ test_that("stacked segments carry their values, bars their totals, segments are 
   hl_use(brand = FALSE)
   plot <- hl_bars(outcomes(), "unit", by = "outcome", stacked = TRUE, sort = "given")
   built <- ggplot2::ggplot_build(plot)
-  texts <- unlist(lapply(built@data[-1], `[[`, "label"))
+  texts <- c(unlist(lapply(built@data[-1], `[[`, "label")), vapply(plot@meta$hairline_inside, `[[`, "", "text"))
   expect_equal(sum(texts == "5"), 1)
   expect_equal(sum(texts == "3"), 2)
   expect_true(all(built@data[[1]]$colour == hl_settings()$neutral$surface))
@@ -57,9 +57,8 @@ test_that("stacked segments carry their values, bars their totals, segments are 
 test_that("stacked shares label percentages on a horizontal percent axis", {
   hl_use(brand = FALSE)
   plot <- hl_bars(outcomes(), "unit", by = "outcome", stacked = TRUE, percent = TRUE, horizontal = TRUE)
-  texts <- unlist(lapply(ggplot2::ggplot_build(plot)@data[-1], `[[`, "label"))
-  expect_true("60%" %in% texts)
-  expect_length(ggplot2::ggplot_build(plot)@data, 2)
+  expect_true("60%" %in% vapply(plot@meta$hairline_inside, `[[`, "", "text"))
+  expect_length(ggplot2::ggplot_build(plot)@data, 1)
 })
 
 test_that("grouped bars name both columns in the default title", {

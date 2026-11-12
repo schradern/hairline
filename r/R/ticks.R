@@ -43,7 +43,7 @@ key_less <- function(key, other) {
   FALSE
 }
 
-nice_breaks <- function(low, high, target = 5) {
+nice_breaks <- function(low, high, target = 5, whole = FALSE) {
   if (low > high) {
     stop(sprintf("hairline: nice_breaks got low %s is above high %s; pass the range in order",
                  format(low), format(high)), call. = FALSE)
@@ -56,6 +56,7 @@ nice_breaks <- function(low, high, target = 5) {
   for (exponent in (magnitude - 1):(magnitude + 1)) {
     for (multiplier in rules$multipliers) {
       step <- multiplier * 10^exponent
+      if (whole && (step < 1 || step != round(step))) next
       for (option in break_variants(range[1], range[2], step, rules, wants_zero)) {
         count <- round((option[2] - option[1]) / step) + 1
         if (count < rules$min || count > rules$max) next
@@ -67,10 +68,16 @@ nice_breaks <- function(low, high, target = 5) {
       }
     }
   }
+  if (is.null(best) && whole) return(seq(floor(range[1]), ceiling(range[2])))
   signif(best$start + (seq_len(best$count) - 1) * best$step, 10)
 }
 
-axis_limits <- function(low, high, breaks) c(min(low, breaks[1]), max(high, breaks[length(breaks)]))
+# The breaks, widened to any data that passes them. `margin` (a share of the break range) keeps marks with a size,
+# such as points, whole: data within it of an outer break widens the axis by it. As Python's axis_limits().
+axis_limits <- function(low, high, breaks, margin = 0) {
+  pad <- margin * (breaks[length(breaks)] - breaks[1])
+  c(min(low - pad, breaks[1]), max(high + pad, breaks[length(breaks)]))
+}
 
 month_starts <- function(low, high, step) {
   first <- as.Date(format(low, "%Y-%m-01"))

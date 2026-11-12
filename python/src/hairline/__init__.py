@@ -12,6 +12,7 @@ from hairline.entities import color, colors
 from hairline.errors import HairlineLayoutError
 from hairline.export import save
 from hairline.figure import HairlineFigure, figure, frame
+from hairline.layout.audit import check_layout
 from hairline.numbers import format_interval, format_number, format_percent
 from hairline.palettes import colormap, palette, palettes, ramp
 from hairline.settings import Settings, current_settings, use
@@ -83,7 +84,7 @@ sys.modules[__name__].__class__ = HairlineModule
 
 __all__ = [
     "HairlineFigure", "HairlineLayoutError", "PaletteReport", "Report", "Result", "Settings", "Study", "arcs", "bars",
-    "brand_report", "check_palette", "chord", "citation", "color", "colormap", "colors", "correlation",
+    "brand_report", "check_layout", "check_palette", "chord", "citation", "color", "colormap", "colors", "correlation",
     "current_settings", "donut", "dotplot", "figure", "forest", "format_interval", "format_number", "format_percent",
     "frame", "funnel", "kaplan_meier", "lanes", "levels", "likert", "load_brand", "load_tokens", "palette", "palettes",
     "partition", "prisma", "raincloud", "ramp", "report", "ridgeline", "risk_of_bias", "sankey", "save", "scatter",

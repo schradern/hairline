@@ -153,7 +153,8 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *notes), size=size, panels=len(panels),
                     layout="grid" if facet else "rows", columns=columns or (min(len(panels), 2) if facet else 1))
-    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "ridgeline", highlight)
+    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "ridgeline", highlight,
+                                    named=True)
     labels = labels_with_n(names, {name: len(values) for name, values in groups}, locale) \
         if show_n and not facet else names
     for index, panel in enumerate(panels):

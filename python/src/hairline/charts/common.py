@@ -271,12 +271,19 @@ def within(values: np.ndarray, limits: tuple[float, float]) -> np.ndarray:
 
 def series_colors(names: Sequence[str], data: pd.DataFrame, group: str | None, color_by: str | None,
                   colors: Mapping[str, str] | str | None, dimension: str | None, chart: str,
-                  highlight: Sequence[str] | str | None = None) -> tuple[dict[str, str], dict[str, str]]:
+                  highlight: Sequence[str] | str | None = None,
+                  named: bool = False) -> tuple[dict[str, str], dict[str, str]]:
     """Each group's colour and the legend label it stands for: its own name, or with `color_by` the coarser
     column's value (12 rows of procedure x age coloured by the 4 procedures; the palette counts the 4). Groups not
-    in `highlight` take the context grey."""
+    in `highlight` take the context grey. `named`: the groups are named on an axis, so more groups than the
+    palette has colours are all drawn in one colour (same rule in R)."""
     from hairline import entities
     from hairline.charts.options import highlighted
+    from hairline.marks import lone_color
+    from hairline.palettes import palette as current_palette
+    if named and colors is None and color_by is None and len(set(names)) > len(current_palette()):
+        return highlighted({name: lone_color() for name in names}, highlight, list(names), chart), \
+            {name: name for name in names}
     coarse = coarse_groups(data, group, color_by, chart) if color_by else {name: name for name in names}
     palette = entities.colors_for(list(dict.fromkeys(coarse[name] for name in names)), colors, dimension)
     colours = {name: palette[coarse[name]] for name in names}

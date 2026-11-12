@@ -77,7 +77,20 @@ frame_spec <- function(parts, texts, size, legend_rows, header_lines) {
        y_label_width_pt = if (parts$bare) 0 else texts$column_widths[1],
        column_label_widths = if (parts$bare) numeric(parts$columns) else texts$column_widths,
        x_tick_rows = if (parts$bare) logical(parts$rows) else x_tick_rows(parts), x_title_rows = x_title_rows(parts),
-       row_weights = parts$row_weights %||% numeric(), side_widths = side_widths(parts))
+       row_weights = parts$row_weights %||% numeric(), side_widths = side_widths(parts),
+       x_tick_extra_pt = if (parts$bare) 0 else x_tick_extra(parts, sizes$label))
+}
+
+# The height x labels of more than one line add under the plot: one line pitch (cap height, descender and the line
+# gap) per line after the first. As Python's x_tick_extra().
+x_tick_extra <- function(parts, size) {
+  labels <- unlist(lapply(parts$built@layout$panel_params, function(params) {
+    tryCatch(as.character(params$x$get_labels()), error = function(error) character())
+  }))
+  labels <- labels[!is.na(labels)]
+  lines <- if (length(labels)) max(lengths(strsplit(labels, "\n", fixed = TRUE)), 1) else 1
+  metrics <- font_metrics()
+  (lines - 1) * size * (metrics$cap_height + metrics$descender + hl_tokens()$type$line_gap)
 }
 
 compose_all_headers <- function(parts, layout) {
@@ -106,9 +119,39 @@ header_rows <- function(parts, composed, provisional = FALSE) {
 }
 
 # The least height in pt the axes panels keep together: the chart's own (plot@meta$hairline_min_plot, x the base
-# size) or `spacing.min_plot_height`.
+# size) or `spacing.min_plot_height`, and never less than the y labels need to stand apart.
 least_plot_height <- function(parts) {
-  (parts$min_plot %||% hl_tokens()$spacing$min_plot_height) * parts$settings$base_size
+  own <- (parts$min_plot %||% hl_tokens()$spacing$min_plot_height) * parts$settings$base_size
+  max(own, label_rows_height(parts))
+}
+
+# The plot height at which no two y labels of a panel meet: each label's lines (cap height and descender, with the
+# line gap between lines) and `ticks.label_rows_gap` between labels, at the closest pair of labels, for every row of
+# panels. As Python's label_rows_height().
+label_rows_height <- function(parts) {
+  if (isTRUE(parts$bare) || is.null(parts$built)) return(0)
+  tokens <- hl_tokens()
+  metrics <- font_metrics()
+  size <- role_style(parts$settings, "label")$size
+  need <- 0
+  for (params in parts$built@layout$panel_params) {
+    scale <- params$y
+    if (is.null(scale) || is.null(scale$breaks)) next
+    labels <- tryCatch(as.character(scale$get_labels()), error = function(error) character())
+    places <- if (is.numeric(scale$breaks)) as.numeric(scale$breaks) else attr(scale$breaks, "pos") %||%
+      seq_along(scale$breaks)
+    shown <- !is.na(places) & nzchar(trimws(labels[seq_along(places)]))
+    places <- sort(places[shown])
+    steps <- diff(places)
+    steps <- steps[steps > 0]
+    span <- diff(range(scale$continuous_range))
+    if (!length(steps) || span <= 0) next
+    lines <- max(lengths(strsplit(labels[shown], "\n")))
+    pitch <- size * (lines * (metrics$cap_height + metrics$descender) + (lines - 1) * tokens$type$line_gap +
+                       tokens$ticks$label_rows_gap)
+    need <- max(need, pitch * span / min(steps))
+  }
+  need * parts$rows
 }
 
 # `grow`: a plot with axes gets a taller figure, where needed, until its panels together keep the least plot height,

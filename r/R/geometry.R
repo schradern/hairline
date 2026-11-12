@@ -41,7 +41,7 @@ stack_rows <- function(state, size, count, gap) {
 inner_tick_band <- function(spec, row, spacing) {
   rows <- unlist(spec$x_tick_rows)
   shows <- row <= length(rows) && isTRUE(rows[row]) && row < spec$panel_rows
-  if (shows) spacing$x_tick_labels * spec$sizes$label else 0
+  if (shows) spacing$x_tick_labels * spec$sizes$label + (spec$x_tick_extra_pt %||% 0) else 0
 }
 
 # Whether the panels of `row` carry their own axis titles (units under their tick numbers).
@@ -108,7 +108,8 @@ fixed_row_height <- function(spec, row, spacing, metrics, line_gap) {
 
 fixed_bottom_height <- function(spec, spacing, metrics, line_gap) {
   base <- spec$base_size
-  height <- if (isTRUE(spec$x_tick_labels)) spacing$x_tick_labels * spec$sizes$label else 0
+  band <- spacing$x_tick_labels * spec$sizes$label + (spec$x_tick_extra_pt %||% 0)
+  height <- if (isTRUE(spec$x_tick_labels)) band else 0
   if (bottom_title(spec)) height <- height + spacing$x_title * base + text_block(spec$sizes$label, 1, metrics, 0)
   if (spec$table_lines > 0) {
     height <- height + spacing$table_gap * base + text_block(spec$sizes$label, spec$table_lines, metrics, line_gap)

@@ -38,6 +38,7 @@ class FrameInput:
     y_title: bool = False
     x_title: bool = False
     x_tick_labels: bool = True
+    x_tick_extra_pt: float = 0.0
     y_label_width_pt: float = 0.0
     y_labels: bool = True
     table_lines: int = 0

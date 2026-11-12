@@ -163,7 +163,17 @@ def frame_input(figure: HairlineFigure, measured: Measured, size: tuple[float, f
                       column_label_widths=measured.column_label_widths, x_tick_rows=measured.x_tick_rows,
                       x_title_rows=tuple(any(grid_position(figure, index)[0] == row and header.x_title
                                              for index, header in figure.headers.items()) for row in range(rows)),
-                      row_weights=tuple(figure.row_heights), side_widths=side_widths(figure))
+                      row_weights=tuple(figure.row_heights), side_widths=side_widths(figure),
+                      x_tick_extra_pt=x_tick_extra(figure, sizes["label"]))
+
+
+def x_tick_extra(figure: HairlineFigure, size: float) -> float:
+    """The height x labels of more than one line add under the plot: one line pitch (cap height, descender and
+    the line gap) per line after the first (same rule in R)."""
+    lines = max((label.count("\n") + 1 for (_, which), labels in figure.category_axes.items() if which == "x"
+                 for label in labels), default=1)
+    metrics, line_gap = load_font_metrics(), load_tokens()["type"]["line_gap"]
+    return (lines - 1) * size * (metrics.cap_height + metrics.descender + line_gap)
 
 
 def header_bounds(layout: FrameLayout, figure: HairlineFigure, index: int) -> tuple[float, float]:
@@ -219,8 +229,33 @@ def keeps_plot_room(figure: HairlineFigure) -> bool:
 
 
 def least_plot_height(figure: HairlineFigure) -> float:
-    """The least height in pt the axes panels keep together: the chart's own or `spacing.min_plot_height`."""
-    return (figure.min_plot or load_tokens()["spacing"]["min_plot_height"]) * figure.settings.base_size
+    """The least height in pt the axes panels keep together: the chart's own or `spacing.min_plot_height`, and
+    never less than the y labels need to stand apart."""
+    own = (figure.min_plot or load_tokens()["spacing"]["min_plot_height"]) * figure.settings.base_size
+    return max(own, label_rows_height(figure))
+
+
+def label_rows_height(figure: HairlineFigure) -> float:
+    """The plot height at which no two y labels of a panel meet: each label's lines (cap height and descender,
+    with the line gap between lines) and `ticks.label_rows_gap` between labels, at the closest pair of labels,
+    for every row of panels (same rule in R)."""
+    tokens, metrics = load_tokens(), load_font_metrics()
+    gap, line_gap = tokens["ticks"]["label_rows_gap"], tokens["type"]["line_gap"]
+    need = 0.0
+    for index, ax in enumerate(figure.axes):
+        shown = [label for label in ax.yaxis.get_ticklabels() if label.get_visible() and label.get_text().strip()]
+        low, high = sorted(ax.get_ylim())
+        places = sorted(float(label.get_position()[1]) for label in shown
+                        if low - 1e-9 <= float(label.get_position()[1]) <= high + 1e-9)
+        steps = [second - first for first, second in zip(places, places[1:], strict=False) if second > first]
+        if index in figure.bare_panels or not steps or high <= low:
+            continue
+        lines = max(label.get_text().count("\n") + 1 for label in shown)
+        size = shown[0].get_fontsize()
+        pitch = size * (lines * (metrics.cap_height + metrics.descender) + (lines - 1) * line_gap + gap)
+        need = max(need, pitch * (high - low) / min(steps))
+    rows = math.ceil(len(figure.axes) / figure.columns)
+    return need * rows
 
 
 def kept_plot_room(figure: HairlineFigure, spec: FrameInput, metrics) -> FrameInput:
@@ -304,13 +339,23 @@ def block_texts(figure: HairlineFigure, layout: FrameLayout, measured: Measured)
 
 
 def fit_inside_labels(figure: HairlineFigure) -> None:
-    """Labels inside bars (swimlanes) show only where their bar is wide enough for them."""
-    for index, artist, start, end in figure.inside_labels:
-        box, (low, high) = figure.plot_boxes[index], figure.axes[index].get_xlim()
-        room = (end - start) / (high - low) * box.width - 2 * load_tokens()["swimlanes"]["label_pad"] * \
-            figure.settings.base_size
-        style = role_style(figure.settings, "label")
-        artist.set_visible(text_width(artist.get_text(), style["family"], style["size"]) <= room)
+    """Labels inside bars (swimlanes, stacked segments) show only where their bar holds them: along the bar (its
+    length, less a pad either side) and across it (its thickness, when given). Same rule in R."""
+    pad = 2 * load_tokens()["swimlanes"]["label_pad"] * figure.settings.base_size
+    style, metrics = role_style(figure.settings, "label"), load_font_metrics()
+    tall = style["size"] * (metrics.cap_height + metrics.descender)
+    for index, artist, start, end, *across in figure.inside_labels:
+        vertical, thickness = across if across else (False, None)
+        box, ax = figure.plot_boxes[index], figure.axes[index]
+        (low, high), (cross_low, cross_high) = (ax.get_ylim(), ax.get_xlim()) if vertical else \
+            (ax.get_xlim(), ax.get_ylim())
+        length, extent = (box.height, box.width) if vertical else (box.width, box.height)
+        wide = text_width(artist.get_text(), style["family"], style["size"])
+        along, size = (end - start) / abs(high - low) * length - pad, (tall if vertical else wide)
+        fits = size <= along
+        if thickness is not None:
+            fits = fits and (wide if vertical else tall) <= thickness / abs(cross_high - cross_low) * extent
+        artist.set_visible(fits)
 
 
 def draw_frame(figure: HairlineFigure, layout: FrameLayout, measured: Measured, placed, composed) -> None:

@@ -290,6 +290,7 @@ cat(hl_brand_report())
 - [Colour guide](docs/guide/colours.md): the colour sets, choosing one, colours that follow names, brands.
 - [Options guide](docs/guide/options.md): the options every chart shares (order, highlight, reference, facet, ...)
   and which chart has which.
+- [Layout guide](docs/guide/layout.md): the rules that keep every chart free of overlaps, and `check_layout()`.
 - In R, every function has a help page with examples (`?hl_bars`), and `?hairline_colours` covers colour; in
   Python, `help(hl.bars)` and `help(hairline.palettes)`.
 

@@ -188,7 +188,8 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     result = figure(title, subtitle=subtitle, caption=with_caption(caption, *notes), size=size, panels=len(panels),
                     layout="grid" if facet else "rows", columns=columns or (min(len(panels), 2) if facet else 1),
                     sharey=bool(facet))
-    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "raincloud", highlight)
+    palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "raincloud", highlight,
+                                    named=True)
     levels = 0
     for index, (panel, _) in enumerate(panels):
         def in_panel(rows: pd.DataFrame, panel: str | None = panel) -> pd.DataFrame:

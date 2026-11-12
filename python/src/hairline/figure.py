@@ -76,6 +76,7 @@ class HairlineFigure:
     table_data: dict | None = None
     blocks: dict[int, list[tuple[str, str, int]]] = field(default_factory=dict)
     integer_axes: set[tuple[int, str]] = field(default_factory=set)
+    whole_axes: set[tuple[int, str]] = field(default_factory=set)
     hover_marks: list[dict] = field(default_factory=list)
     inside_labels: list[tuple] = field(default_factory=list)
     side_numbers: dict[int, list[tuple[float, str, str]]] = field(default_factory=dict)

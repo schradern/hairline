@@ -179,7 +179,8 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   drawn <- lapply(groups, within_limits, limits = limits)
   counted <- if (clip_stats) drawn else groups
   title <- title %||% paste(humanise(value), "by", gsub("_", " ", group))
-  coloured <- series_colours(names, data, group, color_by, colors, dimension, "raincloud", highlight)
+  coloured <- series_colours(names, data, group, color_by, colors, dimension, "raincloud", highlight,
+                             named = TRUE)
   panels <- if (is.null(facet)) "" else chart_groups(data, facet, NULL, "raincloud")
   plot <- ggplot2::ggplot()
   levels <- 0
