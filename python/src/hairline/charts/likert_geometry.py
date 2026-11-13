@@ -5,7 +5,7 @@ Pure: the same spec gives the same shapes in both languages."""
 from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
-from hairline.charts.forest_geometry import axis_shapes, x_scale
+from hairline.charts.forest_geometry import axis_shapes, fitted_axis, x_scale
 from hairline.charts.spread_geometry import axis_title_shape, heading_shapes, pair_texts, section_lines, spread_layout
 from hairline.layout.geometry import Box
 from hairline.numbers import format_percent
@@ -52,6 +52,8 @@ def likert_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     rules = load_tokens()["spread"]
     layout = spread_layout(spec, box, measure, style, rules)
     (left, right), lead = layout["plot"], line_height(style, "label")
+    # The axis thinned to the plot's width, before anything is placed on its scale.
+    spec = {**spec, "axis": fitted_axis(spec["axis"], False, (left, right), measure, style)}
     scale = x_scale(spec["axis"], False, left, right)
     line = rules["row_pitch"] * lead
     pitch = line + (lead if layout["under"] else 0.0)

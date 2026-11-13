@@ -1,5 +1,55 @@
 # Changelog
 
+## Unreleased
+
+### Tooltips on every chart
+
+* `raincloud`: each group's box reads its n, every measure of `summary=` and `stats=`, and with `compare=` its Δ
+  [95 % CI] and p, as the numbers under the groups; each point reads its value ("Surgical: 12.3"). Hovering a group
+  keeps its density, marks and points in colour, in every `facet` panel; values cut by `clip` and groups below
+  `min_n` have no tooltip.
+* `ridgeline`: each ridge reads its n, its centres and the `stats=` and `compare=` numbers beside it, at its median
+  line (or its peak); hovering it keeps it in colour, in every panel.
+* `study().describe()`: each overview row reads its median, IQR, range and n. The other study figures were already
+  covered by the charts they draw.
+* `prisma`: each box reads its label and count, the exclusion box its reasons one under another; the box text stays
+  in view.
+* Tooltips can hold several lines. A test runs every gallery figure and fails when one exports a series without a
+  tooltip, or when a chart has no gallery figure.
+
+### Reference in the legend
+
+* `reference_legend=True` on `bars`, `spread`, `dotplot`, `raincloud`, `ridgeline`, `scatter`, `timeseries` and
+  `kaplan_meier` names the labelled reference in the legend row, as a dashed entry, instead of at its line. One
+  labelled reference at most: two dashed entries look alike.
+
+### Host contract version 2
+
+* A host context of version 2 gives the document's `column_width_mm` and `page_width_mm`: a figure of size
+  `"single"` takes the column, every other size the page, instead of one host width overriding `size`. The manifest
+  names each figure's `"span"` (`"column"` or `"page"`). `width_mm` stays the fallback, so version-1 hosts work as
+  before. A column too narrow for a chart is refused by its layout errors; the text never shrinks.
+
+### Narrow columns
+
+* `dotplot`, `forest` and every chart drawn to its content grow for a caption, title or legend that wraps to many
+  lines in a narrow column, instead of stopping with "figure too small". A height you give is still kept, or
+  refused when too short.
+* The value axes of `dotplot`, `forest`, `spread` and `likert` thin their ticks to the plot's width, as the other
+  axes do: "−0.50" and "−0.25" no longer meet on a narrow plot.
+* `correlation` wraps the names to the width that leaves the largest cells when the usual wrap would push the matrix
+  past the figure's edge, and says so plainly when no wrap fits.
+* `ridgeline`: a mean diamond on a flat bottom ridge no longer reaches below the panel; the plot grows instead.
+* `check_layout()` measures censor ticks and diamonds by their drawn shape.
+* The hard cases include every chart in a 75.7 mm column (a journal PDF column), drawn through the host hand-off.
+
+### Fixes
+
+* With a brand of fewer categorical slots than groups, explicit `colors=` (a mapping or a ramp) now draw: only
+  series that would repeat a colour are refused.
+* A reference's `legend_label` joins the legend row also when the chart sets its own legend (`raincloud(summary=...)`)
+  or shows none.
+
 ## 0.3.0
 
 What two real reports needed beyond 0.2.1 (see `docs/backlog.md`): a quality report on a perioperative drug and the

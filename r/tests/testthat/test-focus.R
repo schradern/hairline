@@ -66,3 +66,13 @@ test_that("a reference label stays above its line unless it would reach the pane
   expect_false(reference_label_below(0.9, c(0, 1), panel_height = 50, label_size = 7.2, base_size = 9))
   expect_true(reference_label_below(1.0, c(0, 1), panel_height = 50, label_size = 7.2, base_size = 9))
 })
+
+test_that("reference legend entries join a legend the chart sets or leaves out", {
+  hl_use(brand = FALSE)
+  data <- data.frame(unit = rep(c("A", "B"), each = 10), days = as.numeric(0:19))
+  for (summary in list(NULL, c("median", "iqr"))) {
+    plot <- hl_raincloud(data, "unit", "days", summary = summary) + hl_reference(y = 10, legend_label = "Target")
+    labels <- vapply(legend_row(ggplot2::ggplot_build(plot)), `[[`, character(1), "label")
+    expect_identical(labels, if (is.null(summary)) "Target" else c("Median", "IQR", "Target"))
+  }
+})

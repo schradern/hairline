@@ -376,7 +376,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
          dimension: str | None = None, context: Sequence[str] | None = None, header: str = "total",
          inside: str | None = None, respondents: str | None = None, min_n: int | None = None,
          x_title: str | None = None, y_title: str | None = None, reference: Reference = None,
-         highlight: Sequence[str] | str | None = None, key_title: str | None = None) -> HairlineFigure:
+         reference_legend: bool = False, highlight: Sequence[str] | str | None = None,
+         key_title: str | None = None) -> HairlineFigure:
     """Bars per category; without `value` rows are counted. Long or many labels, or labels too wide for upright
     bars at the figure's width, turn the bars horizontal; single series are sorted by value unless `order` or
     `sort="given"` says otherwise.
@@ -398,7 +399,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
 
     Shared with the other charts: `min_n` leaves out categories with fewer rows and names them in the caption;
     `x_title` and `y_title` title the axes; `reference` draws lines on the value axis (0.9, (0.9, "Target") or
-    {"Target": 0.9}); `highlight` keeps these groups of `by` in colour; `key_title` titles the legend row."""
+    {"Target": 0.9}), and `reference_legend` names its label in the legend row instead of at the line; `highlight`
+    keeps these groups of `by` in colour; `key_title` titles the legend row."""
     value_given = value is not None
     context = [str(name) for name in (context or ())]
     respondent_n: dict[str, int] = {}
@@ -473,8 +475,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     elif by:
         result.legend()
     return apply_options(result, "bars", names=list(dict.fromkeys(series.values())) if by else [], x_title=x_title,
-                         y_title=y_title, reference=reference, reference_axis="x" if horizontal else "y",
-                         highlight=highlight, key_title=key_title)
+                         y_title=y_title, reference=reference, reference_legend=reference_legend,
+                         reference_axis="x" if horizontal else "y", highlight=highlight, key_title=key_title)
 
 
 def draw_panel(result: HairlineFigure, index: int, panel: dict, groups: list[str], options: dict, facet: str | None,

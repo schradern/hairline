@@ -108,3 +108,16 @@ def test_legend_shows_the_highlighted_colour():
     drawn(figure)
     swatches = [child for child in figure.frame_artist.get_children() if not hasattr(child, "get_text")]
     assert mcolors.to_hex(swatches[0].get_color()) == hl.palette()[0]
+
+
+@pytest.mark.parametrize("summary", [None, ("median", "iqr")])
+def test_reference_legend_entries_join_a_legend_the_chart_sets_or_leaves_out(summary):
+    import numpy as np
+    import pandas as pd
+
+    from hairline.layout.apply import legend_row
+    data = pd.DataFrame({"unit": np.repeat(["A", "B"], 10), "days": np.arange(20.0)})
+    figure = hl.raincloud(data, "unit", "days", summary=summary)
+    figure.reference(y=10, legend_label="Target")
+    labels = [item.label for item in legend_row(figure)]
+    assert labels == (["Target"] if summary is None else ["Median", "IQR", "Target"])

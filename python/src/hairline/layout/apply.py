@@ -57,6 +57,15 @@ def shows_y_labels(figure: HairlineFigure, index: int) -> bool:
     return not figure.sharey or grid_position(figure, index)[1] == 0
 
 
+def legend_row(figure: HairlineFigure) -> list[LegendItem]:
+    """The chart's own items (given, or collected from the axes), then the reference lines and spans it does not
+    already name: those join the row whether or not the chart sets one."""
+    own = figure.legend_items if figure.legend_items is not None else (
+        focus_legend_items(figure, items_from_axes(figure.axes)) if figure.collect_legend else [])
+    named = {item.label for item in own}
+    return [*own, *(item for item in figure.extra_legend_items if item.label not in named)]
+
+
 def measure_texts(figure: HairlineFigure, width_pt: float, y_labels: list[list[str]]) -> Measured:
     settings, margin = figure.settings, load_tokens()["spacing"]["margin"] * figure.settings.base_size
     usable = width_pt - 2 * margin
@@ -64,9 +73,7 @@ def measure_texts(figure: HairlineFigure, width_pt: float, y_labels: list[list[s
     def wrapped(text: str | None, role: str) -> list[str]:
         style = role_style(settings, role)
         return wrap(text, style["family"], style["size"], style["weight"], usable) if text else []
-    legend = figure.legend_items if figure.legend_items is not None else (
-        focus_legend_items(figure, items_from_axes(figure.axes)) + figure.extra_legend_items
-        if figure.collect_legend else [])
+    legend = legend_row(figure)
     if figure.legend_heading and legend:
         legend = [LegendItem(TITLE, "#000000", figure.legend_heading), *legend]
     figure.table_keys = table_keys(figure.table_spec, legend)
@@ -288,10 +295,16 @@ def label_rows_height(figure: HairlineFigure) -> float:
 def kept_plot_room(figure: HairlineFigure, spec: FrameInput, metrics) -> FrameInput:
     """The frame for a figure grown, where needed, until its axes panels together keep the least plot height
     (`spacing.min_plot_height` x the base size, or the chart's own): a narrow figure whose title, legend, headers,
-    axis or table would squeeze the plot gets taller instead."""
-    if not keeps_plot_room(figure):
+    axis or table would squeeze the plot gets taller instead. While fit_height() measures a drawn panel, the panel
+    is grown only to the least panel height, so a frame that wraps to many lines (a narrow column) cannot squeeze it
+    out before its content is measured; a height given for a drawn panel is kept, or refused when too short."""
+    if keeps_plot_room(figure):
+        least = least_plot_height(figure)
+    elif figure.fitting:
+        least = 0.0
+    else:
         return spec
-    height = kept_height(spec, metrics, least_plot_height(figure))
+    height = kept_height(spec, metrics, least)
     if height <= spec.height_pt + HEIGHT_TOLERANCE_PT:
         return spec
     figure.figure.set_size_inches(spec.width_pt / 72, height / 72, forward=False)
@@ -429,9 +442,11 @@ def round_report(value):
 
 
 def check_categories(figure: HairlineFigure) -> None:
-    """Refuse more labelled series than palette slots instead of letting matplotlib repeat colours."""
-    count, slots = len(items_from_axes(figure.axes)), len(figure.settings.palette)
-    if count > slots:
+    """Refuse more labelled series than palette slots instead of letting matplotlib repeat colours. Series that
+    each have a colour of their own (`colors=`, a ramp) repeat none, whatever the palette holds."""
+    items, slots = items_from_axes(figure.axes), len(figure.settings.palette)
+    count = len(items)
+    if count > slots and len({item.color.lower() for item in items}) < count:
         raise HairlineLayoutError(f"hairline: {figure.settings.palette_label} has {slots} slots but {count} categories "
                                   "were given; fold small categories into 'Other' or split the figure into panels")
 

@@ -23,10 +23,11 @@ raincloud_stat_rows <- function(groups, stats, percent) {
 }
 
 # The delta and p rows under the groups, each against the reference or the group to its left, and the caption note
-# naming the test; none without compare. As Python's compare_rows().
+# naming the test, and each group's delta and p pairs (for its tooltip); none without compare. As Python's
+# compare_rows().
 raincloud_compare_rows <- function(groups, compare, facet, marks, percent) {
   compare <- check_compare(compare, names(groups), "raincloud")
-  if (is.null(compare)) return(list(rows = list(), note = NULL))
+  if (is.null(compare)) return(list(rows = list(), note = NULL, pairs = list()))
   if (!is.null(facet)) {
     stop(paste("hairline: raincloud: compare writes rows of numbers under the groups, which facet panels do not",
                "have; use hl_spread(facet = ..., compare = ...), which compares within each block"), call. = FALSE)
@@ -38,5 +39,17 @@ raincloud_compare_rows <- function(groups, compare, facet, marks, percent) {
     list(label = found[[1]][[row]][1], colour = NULL, x = seq_along(groups) - 1,
          text = unname(vapply(found, function(pairs) pairs[[row]][2], character(1))))
   })
-  list(rows = rows, note = compare_caption(compare, method, length(groups) - 1))
+  list(rows = rows, note = compare_caption(compare, method, length(groups) - 1), pairs = found)
+}
+
+# Each group's summary tooltip: the measures it draws and writes, its n, and its delta and p with compare, in the
+# numbers' own digits (the measures of all groups set them, as for the rows under the groups). As Python's
+# group_tips().
+raincloud_group_tips <- function(groups, every, marks, stats, compared, percent) {
+  numbers <- measure_numbers(every, percent, NULL)
+  measures <- tip_measures(marks, stats)
+  groups <- groups[lengths(groups) > 0]
+  stats::setNames(lapply(names(groups), function(name) {
+    pairs_tip(name, c(stat_pairs(groups[[name]], measures, numbers), compared[[name]]))
+  }), names(groups))
 }

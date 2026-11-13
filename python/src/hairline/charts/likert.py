@@ -28,6 +28,7 @@ from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_number, word
 from hairline.palettes import default_ramp, interpolate, ramp
 from hairline.stats.density import level_quantiles
+from hairline.ticks import TARGET
 from hairline.tokens import load_tokens
 
 STATS = ("median", "iqr", "n")
@@ -155,16 +156,18 @@ def ordered_rows(rows: list[dict], bins: list[dict], sort: str | None) -> list[d
     return sorted(rows, key=lambda row: sections.index(row["section"]))
 
 
-def reach_axis(rows: list[dict], bins: list[dict]) -> dict:
-    """One axis in percent either side of the split, as far as the longer side reaches, labelled outward from 0."""
+def reach_axis(rows: list[dict], bins: list[dict], target: int = TARGET) -> dict:
+    """One axis in percent either side of the split, as far as the longer side reaches, labelled outward from 0;
+    `rebuild` gives it again with fewer ticks (see fitted_axis())."""
     def side(row: dict, name: str) -> float:
         return sum(share * (0.5 if entry["side"] == "middle" else 1.0)
                    for share, entry in zip(row["shares"], bins, strict=True) if entry["side"] in (name, "middle"))
     reach = max(max(side(row, "left"), side(row, "right")) for row in rows)
-    half = spread_axis([0.0], [reach], False, True)
+    half = spread_axis([0.0], [reach], False, True, target)
     breaks = [-value for value in reversed(half["breaks"][1:])] + half["breaks"]
     labels = list(reversed(half["labels"][1:])) + half["labels"]
-    return {"breaks": breaks, "labels": labels, "low": -half["high"], "high": half["high"]}
+    return {"breaks": breaks, "labels": labels, "low": -half["high"], "high": half["high"], "target": target,
+            "rebuild": lambda fewer: reach_axis(rows, bins, fewer)}
 
 
 def check_options(stats: Sequence[str], sort: str | None, reverse: Sequence[str], names: list[str]) -> None:

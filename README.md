@@ -135,7 +135,9 @@ the figure grows until its panels keep 8 × the base size.
 ![Hovering a Kaplan–Meier curve in the HTML export: the other arm fades and a tooltip shows the value](docs/images/interactive.png)
 
 - **Hover** a line, point, bar or segment: everything else fades and a tooltip shows its values, written in the
-  figure's number format.
+  figure's number format. A group's summary marks (a raincloud's box, a ridge, a spread row) read the numbers
+  written beside them, and a flow diagram's boxes their counts. Every chart has tooltips; only a table, exported
+  as a real `<table>`, has none.
 - **Legend:** hovering an entry brings its series forward. **Keyboard:** Tab moves through the series.
 - **One file:** the figure as SVG with its font, script and styles inside. It works offline, opens in any
   browser, and its `<figure>` element can be placed in another HTML page or report as it is. The figure's title

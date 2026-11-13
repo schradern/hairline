@@ -187,14 +187,14 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
                size: str = "double", partial: Mapping[str, str] | None = None, color_by: str | None = None,
                dimension: str | None = None, clip: float | tuple[float | None, float | None] | None = None,
                clip_stats: bool = False, x_title: str | None = None, y_title: str | None = None,
-               reference: Reference = None, key_title: str | None = None,
+               reference: Reference = None, reference_legend: bool = False, key_title: str | None = None,
                summary: str | Sequence[str] | None = None) -> HairlineFigure:
     """One panel per group: raw values thin under a trailing rolling mean, with key numbers in the panel headers.
     `partial` names incomplete periods ({"2021": "2 months"}: a year, a date, or an x value) and what they hold:
     they are drawn lighter and the caption says so. `color_by` colours the panels by a coarser column;
     `dimension` keeps their colours off another dimension's slots. Shared with the other charts: `clip` and
-    `clip_stats` (as in `spread()`), `x_title`, `y_title`, `reference` (lines at y values, beside `threshold`) and
-    `key_title`.
+    `clip_stats` (as in `spread()`), `x_title`, `y_title`, `reference` (lines at y values, beside `threshold`;
+    `reference_legend` names the label in the legend row) and `key_title`.
 
     `stats` names the key numbers in the panel headers: any of "mean", "median", "iqr", "range", "sd", "ci", "n"
     and "share_above" (with `threshold`). `summary` summarises the values at each x instead of drawing them under
@@ -245,4 +245,4 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     labels = {"raw": raw_label, "threshold": threshold_legend, "mean": mean_label or f"Rolling mean ({window})"}
     result.legend(legend_items(raw and not marks, period_mean, list(bands), labels, marks))
     return apply_options(result, "timeseries", x_title=x_title, y_title=y_title, reference=reference,
-                         key_title=key_title)
+                         reference_legend=reference_legend, key_title=key_title)

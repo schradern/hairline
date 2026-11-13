@@ -40,7 +40,8 @@ hl_timeseries(
   y_title = NULL,
   reference = NULL,
   key_title = NULL,
-  summary = NULL
+  summary = NULL,
+  reference_legend = FALSE
 )
 }
 \arguments{
@@ -105,6 +106,9 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{summary}{Summarise the values at each x instead of drawing them under a rolling mean: the centre as the
 line, its interval as a band in the series' colour (\code{c("median", "iqr")}, \code{c("mean", "ci")},
 \code{c("mean", "sd")}; \code{"range"} with either), both named in the legend.}
+
+\item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
+line; one labelled reference at most.}
 }
 \value{
 A ggplot with the hairline frame; \code{\link[=hl_save]{hl_save()}} writes it at the \code{"double"} size (174 mm) unless told

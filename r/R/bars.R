@@ -389,7 +389,7 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
                     other = NULL, partial = NULL, show_n = FALSE, normalize = FALSE, color_by = NULL,
                     dimension = NULL, context = NULL, header = "total", inside = NULL, respondents = NULL,
                     min_n = NULL, x_title = NULL, y_title = NULL, reference = NULL, highlight = NULL,
-                    key_title = NULL) {
+                    key_title = NULL, reference_legend = FALSE) {
   if (!is.null(size)) check_size_preset(size)
   kept <- without_small_categories(data, category, min_n, "bars")
   data <- kept$data
@@ -465,6 +465,7 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
   plot@meta$hairline_size <- size
   series <- if (is.null(by)) character() else unique(unname(drawn$coloured$series %||% groups))
   chart_options(plot, "bars", series, x_title = x_title, y_title = y_title, reference = reference,
+                reference_legend = reference_legend,
                 reference_axis = if (horizontal) "x" else "y", highlight = highlight, key_title = key_title)
 }
 

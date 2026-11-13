@@ -22,7 +22,7 @@ from hairline.charts.common import (
     with_caption,
 )
 from hairline.charts.options import Reference, apply_options, sorted_groups
-from hairline.charts.raincloud_numbers import check_raincloud_stats, compare_rows, stat_rows
+from hairline.charts.raincloud_numbers import check_raincloud_stats, compare_rows, group_tips, stat_rows
 from hairline.charts.spread_geometry import DIAMOND, OPEN_EDGE
 from hairline.charts.summaries import (
     BARS,
@@ -80,55 +80,81 @@ def bracket_plot_height(levels: int) -> float | None:
 
 
 def draw_group(ax, values: pd.Series, position: int, color: str, rules: dict, counted: pd.Series | None = None,
-               marks: Sequence[str] = DEFAULT_SUMMARY) -> None:
+               marks: Sequence[str] = DEFAULT_SUMMARY) -> dict:
     """Density and points of the values drawn; the summary marks of the values counted, quartiles held within the
-    drawn range."""
+    drawn range. Returns what was drawn, for the group's tooltip targets: the marks in data units, where the summary
+    tip points and the points drawn."""
     counted = values if counted is None else counted
-    curve = density(values)
+    curve, shapes = density(values), []
     if curve is not None:
         grid, height = curve
         peak, start = max(height), position + rules["density_offset"]
         outline = [(start + value / peak * rules["density_width"], level) for level, value in zip(grid, height,
                                                                                                     strict=True)]
-        ax.add_patch(Polygon([(start, grid[0])] + outline + [(start, grid[-1])], closed=True, facecolor=color,
-                             alpha=rules["density_opacity"], edgecolor="none", linewidth=0, gid=DENSITY_ID))
-    draw_summary(ax, counted, (float(values.min()), float(values.max())), position, color, marks, rules)
+        corners = [(start, grid[0])] + outline + [(start, grid[-1])]
+        ax.add_patch(Polygon(corners, closed=True, facecolor=color, alpha=rules["density_opacity"], edgecolor="none",
+                             linewidth=0, gid=DENSITY_ID))
+        shapes.append({"polygon": corners, "alpha": rules["density_opacity"]})
+    summary, top = draw_summary(ax, counted, (float(values.min()), float(values.max())), position, color, marks,
+                                rules)
     xs = [position + rules["points_centre"] + offset * rules["points_spread"] for offset in jitter_offsets(len(values))]
-    ax.scatter(xs, values, color=color, label="_nolegend_", gid=STATIC_ID)
+    dots = ax.scatter(xs, values, color=color, label="_nolegend_", gid=STATIC_ID)
+    radius = float(np.sqrt(dots.get_sizes()[0]) / 2) if len(dots.get_sizes()) else load_tokens()["lines"][
+        "point_radius"] * current_settings().base_size
+    points = list(zip(xs, values.to_numpy(dtype=float), strict=True))
+    return {"marks": shapes + summary + [{"dot": point, "r": radius} for point in points],
+            "at": (float(position), top), "points": points}
 
 
 def draw_summary(ax, counted: pd.Series, drawn: tuple[float, float], position: int, color: str,
-                 marks: Sequence[str], rules: dict) -> None:
+                 marks: Sequence[str], rules: dict) -> tuple[list[dict], float]:
     """At the box's place: the range as a thin line, the IQR as the box or an SD or CI as a slim bar, the median as
-    a tick across it (in the surface colour on the box) and the mean as an open diamond."""
+    a tick across it (in the surface colour on the box) and the mean as an open diamond. Returns those marks in
+    data units, for the tooltip targets, and where the summary tip points: the top of the bar, else the centre
+    mark, else the top of the range; so hovering the box reads the summary, not a point beside it."""
     settings, tokens = current_settings(), load_tokens()
     found, (low, high) = summary_values(counted), drawn
     width, half = tokens["lines"]["data"] * settings.base_size, rules["box_half"]
+    shapes, anchors = [], {}
 
     def held(value: float) -> float:
         return min(max(value, low), high)
     if "range" in marks:
-        ax.plot([position, position], [held(found["low"]), held(found["high"])], color=settings.neutral["faint"],
-                linewidth=tokens["reference"]["width"] * settings.base_size, solid_capstyle="butt",
+        line = tokens["reference"]["width"] * settings.base_size
+        ends = [(position, held(found["low"])), (position, held(found["high"]))]
+        ax.plot(*zip(*ends, strict=True), color=settings.neutral["faint"], linewidth=line, solid_capstyle="butt",
                 label="_nolegend_", gid=FIXED_ID, zorder=RANGE_LAYER)
+        shapes.append({"line": ends, "width": line, "color": settings.neutral["faint"]})
+        anchors["range"] = ends[1][1]
     bar = next((name for name in marks if name in BARS), None)
+    box = None
     if bar == "iqr":
-        ax.add_patch(Rectangle((position - half, held(found["q1"])), 2 * half, held(found["q3"]) - held(found["q1"]),
-                               facecolor=color, edgecolor="none", linewidth=0))
+        box = (position - half, held(found["q1"]), position + half, held(found["q3"]))
     elif bar and math.isfinite(found["sd"]):
         bottom, top = interval_of(found, bar)
         slim = half * tokens["summary"]["thin_bar"]
-        ax.add_patch(Rectangle((position - slim, bottom), 2 * slim, top - bottom, facecolor=color, edgecolor="none",
+        box = (position - slim, bottom, position + slim, top)
+    if box is not None:
+        ax.add_patch(Rectangle(box[:2], box[2] - box[0], box[3] - box[1], facecolor=color, edgecolor="none",
                                linewidth=0))
+        shapes.append({"rect": box})
+        anchors["bar"] = box[3]
     if "median" in marks:
-        ax.plot([position - half, position + half], [held(found["median"])] * 2, linewidth=width,
-                color=settings.neutral["surface"] if bar == "iqr" else color, solid_capstyle="butt",
-                label="_nolegend_", gid=FIXED_ID)
+        tick = settings.neutral["surface"] if bar == "iqr" else color
+        ends = [(position - half, held(found["median"])), (position + half, held(found["median"]))]
+        ax.plot(*zip(*ends, strict=True), linewidth=width, color=tick, solid_capstyle="butt", label="_nolegend_",
+                gid=FIXED_ID)
+        shapes.append({"line": ends, "width": width, "color": tick})
+        anchors["median"] = ends[0][1]
     if "mean" in marks:
-        size = DIAMOND * tokens["lines"]["point_radius"] * settings.base_size * math.sqrt(2)
-        ax.plot([position], [held(found["mean"])], marker="D", markersize=size, linestyle="none",
+        radius = DIAMOND * tokens["lines"]["point_radius"] * settings.base_size
+        ax.plot([position], [held(found["mean"])], marker="D", markersize=radius * math.sqrt(2), linestyle="none",
                 markerfacecolor=settings.neutral["surface"], markeredgecolor=color, markeredgewidth=width * OPEN_EDGE,
                 label="_nolegend_", gid=FIXED_ID)
+        shapes.append({"diamond": (position, held(found["mean"])), "r": radius, "color": settings.neutral["surface"],
+                       "edge": color, "edge_width": width * OPEN_EDGE})
+        anchors["mean"] = held(found["mean"])
+    return shapes, next((anchors[name] for name in ("bar", "median", "mean", "range") if name in anchors), high)
 
 
 def draw_brackets(ax, comparisons: Sequence[tuple[str, str, str]], names: list[str], values: pd.Series,
@@ -175,18 +201,29 @@ def check_comparisons(comparisons: Sequence[tuple[str, str, str]], names: list[s
 
 
 def draw_panel(ax, drawn: list, counted: list, comparisons: str | Sequence[tuple], value: str,
-               palette: dict, marks: Sequence[str] = DEFAULT_SUMMARY) -> int:
+               palette: dict, marks: Sequence[str] = DEFAULT_SUMMARY) -> tuple[int, dict[str, dict]]:
     """One panel's groups at their positions (a group without values here is left empty) and its comparisons,
-    tested on this panel's values; returns the bracket levels."""
+    tested on this panel's values; returns the bracket levels and what each group drew (see draw_group)."""
     rules, names = load_tokens()["raincloud"], [name for name, _ in drawn]
     present = [(name, rows) for name, rows in counted if len(rows)]
+    groups = {}
     for position, ((name, rows), (_, all_rows)) in enumerate(zip(drawn, counted, strict=True)):
         if len(rows):
-            draw_group(ax, rows[value], position, palette[name], rules, all_rows[value], marks)
+            groups[name] = draw_group(ax, rows[value], position, palette[name], rules, all_rows[value], marks)
     pairs = resolve_comparisons(comparisons, present, value)
     check_comparisons(pairs, [name for name, _ in present])
     shown = pd.concat([rows[value] for _, rows in drawn if len(rows)])
-    return draw_brackets(ax, pairs, names, shown, rules)
+    return draw_brackets(ax, pairs, names, shown, rules), groups
+
+
+def group_targets(result: HairlineFigure, index: int, groups: dict[str, dict], tips: dict[str, str],
+                  palette: dict) -> None:
+    """Each group's tooltip targets: its summary tip first (the one a keyboard focus shows), then a value per
+    point; its density, summary marks and points stay in colour while it is hovered."""
+    for name, drawn in groups.items():
+        summary = [{"at": drawn["at"], "text": tips[name]}] if name in tips else []
+        result.target(index, name, palette[name], drawn["marks"],
+                      summary + [{"at": point, "value": point[1]} for point in drawn["points"]])
 
 
 def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
@@ -196,16 +233,18 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               clip: float | tuple[float | None, float | None] | None = None, clip_stats: bool = False,
               color_by: str | None = None, dimension: str | None = None, sort: str | None = None,
               percent: bool = False, show_n: bool = True, x_title: str | None = None, reference: Reference = None,
+              reference_legend: bool = False,
               highlight: Sequence[str] | str | None = None, key_title: str | None = None, facet: str | None = None,
               columns: int | None = None, summary: str | Sequence[str] | None = None,
               stats: str | Sequence[str] = (), compare: str | None = None) -> HairlineFigure:
     """Distributions per group. `comparisons`: "all" or "adjacent" pairs, (group, group) pairs, or
-    (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p. Missing values are
-    left out, and "n = …" counts the values the statistics use (`show_n=False` leaves it out). `min_n`, `clip`,
-    `color_by` and `dimension` work as in `spread()`: groups too small and values clipped off are named in the
-    caption. Shared with the other charts: `sort` ("median", "mean", "n"), `percent`, `x_title`, `reference`
-    (lines on the value axis), `highlight` (groups kept in colour), `key_title` and `facet` (one panel per value,
-    in `columns` columns, on a shared value axis; each panel's n in its header, its comparisons within it).
+    (group, group, text) with your own result; pairs without a text get a Wilcoxon rank-sum p. Missing values are left
+    out, and "n = …" counts the values the statistics use (`show_n=False` leaves it out). `min_n`, `clip`, `color_by`
+    and `dimension` work as in `spread()`: groups too small and values clipped off are named in the caption. Shared with
+    the other charts: `sort` ("median", "mean", "n"), `percent`, `x_title`, `reference` (lines on the value axis;
+    `reference_legend` names the label in the legend row), `highlight` (groups kept in colour), `key_title` and `facet`
+    (one panel per value, in `columns` columns, on a shared value axis; each panel's n in its header, its comparisons
+    within it).
 
     `summary` chooses the marks at the box's place, from "median" (a tick), "mean" (an open diamond), "iqr" (the
     box), "range" (a thin line), "sd" and "ci" (the mean's SD or 95 % CI as a slim bar); one bar at most. The
@@ -231,8 +270,9 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     counted = drawn if clip_stats else groups
     names = [name for name, _ in groups]
     title = title or f"{humanise(value)} by {str(group).replace('_', ' ')}"
-    compared, note = compare_rows([(name, rows[value].to_numpy(dtype=float)) for name, rows in counted], compare,
-                                  facet, marks, percent, locale)
+    compared, note, differences = compare_rows([(name, rows[value].to_numpy(dtype=float)) for name, rows in counted],
+                                               compare, facet, marks, percent, locale)
+    every_counted = np.concatenate([rows[value].to_numpy(dtype=float) for _, rows in counted])
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None, note]
     panels = groups_of(data, facet, None, "raincloud") if facet else [(None, data)]
     result = figure(title, subtitle=subtitle, caption=with_caption(caption, *notes), size=size, panels=len(panels),
@@ -246,8 +286,12 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
             return rows if panel is None else rows[rows[facet].astype(str) == panel]
         drawn_here = [(name, in_panel(rows)) for name, rows in drawn]
         counted_here = [(name, in_panel(rows)) for name, rows in counted]
-        levels = max(levels, draw_panel(result.axes[index], drawn_here, counted_here, comparisons, value, palette,
-                                        marks))
+        found, groups_here = draw_panel(result.axes[index], drawn_here, counted_here, comparisons, value, palette,
+                                        marks)
+        levels = max(levels, found)
+        tips = group_tips([(name, rows[value].to_numpy(dtype=float)) for name, rows in counted_here], every_counted,
+                          marks, stats, differences, percent, locale)
+        group_targets(result, index, groups_here, tips, palette)
         result.categories(index, names)
         result.axes[index].set_xlim(-0.6, len(names) - 0.4)
         if panel is not None:
@@ -271,4 +315,4 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     if legend:
         result.legend(legend)
     return apply_options(result, "raincloud", names=names, x_title=x_title, y_title=y_title, reference=reference,
-                         key_title=key_title)
+                         reference_legend=reference_legend, key_title=key_title)

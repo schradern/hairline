@@ -183,3 +183,19 @@ def test_an_export_override_is_named_with_its_layer(tmp_path):
                        encoding="utf-8")
     report = hl.brand_report(load_brand([base, project], output="docx"))
     assert [line for line in report.splitlines() if line.startswith("entity Unit A:")][0].endswith("(layer 2, docx)")
+
+
+ONE_SLOT = {"meta": {"name": "One slot"}, "color": {"palette": {"ink": "#1a1a1a", "accent": "#0a6ddd"},
+                                                     "primary": "accent", "foreground": "ink"},
+            "defaults": {"hairline": {"adapt": "readable"}}}
+
+
+@pytest.mark.parametrize("colors", [{"x": "#0a6ddd", "y": "#c0392b"}, "blues"])
+def test_explicit_colors_draw_more_groups_than_the_brand_has_slots(tmp_path, colors):
+    (tmp_path / "_brand.yml").write_text(yaml.safe_dump(ONE_SLOT))
+    hl.use(brand=tmp_path / "_brand.yml")
+    import pandas as pd
+    data = pd.DataFrame({"ward": ["A", "A", "B", "B"], "arm": ["x", "y", "x", "y"], "n": [3, 4, 5, 6]})
+    assert hl.save(hl.bars(data, "ward", "n", by="arm", colors=colors), tmp_path / "bars", formats=["png"])
+    with pytest.raises(ValueError, match="1 slots but 2 categories"):
+        hl.bars(data, "ward", "n", by="arm")

@@ -40,6 +40,25 @@ def x_scale(axis: dict, ratio: bool, left: float, right: float):
     return lambda value: left + (transform(value) - low) / (high - low) * (right - left)
 
 
+def fitted_axis(axis: dict, ratio: bool, plot: tuple[float, float], measure: Measure, style: dict) -> dict:
+    """The axis with the most ticks, from its own target down to `ticks.min`, whose labels (each centred on its
+    break) keep `ticks.label_rows_gap` apart on the plot's width, as the axes charts thin theirs; the fewest when
+    none does. An axis without `rebuild` is kept."""
+    if "rebuild" not in axis:
+        return axis
+    rules = load_tokens()["ticks"]
+    gap = rules["label_rows_gap"] * style["sizes"]["label"]
+    candidate = axis
+    for target in range(axis["target"], rules["min"] - 1, -1):
+        candidate = axis if target == axis["target"] else axis["rebuild"](target)
+        scale = x_scale(candidate, ratio, *plot)
+        spans = [(scale(value) - measure(label, "label") / 2, scale(value) + measure(label, "label") / 2)
+                 for value, label in zip(candidate["breaks"], candidate["labels"], strict=True)]
+        if all(second[0] - first[1] >= gap for first, second in zip(spans, spans[1:], strict=False)):
+            return candidate
+    return candidate
+
+
 def column_widths(spec: dict, measure: Measure) -> tuple[float, list[float], float, float]:
     """Widths of the study column, the extra columns, the effect column and the weight column (0 without)."""
     def widest(texts: list[str], weight: int | None = None) -> float:
@@ -220,6 +239,8 @@ def forest_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     line = line_height(style, "label")
     columns = column_layout(spec, box, measure, rules, base)
     columns["lead"] = line if columns["under"] else 0.0
+    # The axis thinned to the plot's width, before anything is placed on its scale.
+    spec = {**spec, "axis": fitted_axis(spec["axis"], spec["ratio"], columns["plot"], measure, style)}
     scale = x_scale(spec["axis"], spec["ratio"], *columns["plot"])
     heading = box.y + style["cap_height"] * size
     top = heading + line - style["cap_height"] * size + rules["rule_gap"] * base + columns["lead"]

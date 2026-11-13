@@ -38,7 +38,8 @@ hl_spread(
   facet = NULL,
   summary = NULL,
   compare = NULL,
-  numbers = "auto"
+  numbers = "auto",
+  reference_legend = FALSE
 )
 }
 \arguments{
@@ -115,6 +116,9 @@ difference in means and Welch's t-test with the mean alone.}
 
 \item{numbers}{Where the numbers go: beside the plot while it keeps its least width, else under each row
 (\code{"auto"}), always beside it (\code{"right"}), or always under each row (\code{"below"}).}
+
+\item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
+line; one labelled reference at most.}
 }
 \value{
 A ggplot with the hairline frame.

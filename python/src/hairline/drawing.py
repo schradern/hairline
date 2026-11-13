@@ -107,15 +107,21 @@ def fit_height(figure: HairlineFigure, shrink: bool = True) -> HairlineFigure:
     With `shrink` False the figure only grows, for charts that fill their panel unless their labels need more.
     Only the frame is laid out, in pt: a full draw would rasterise the provisional figure, whose pixels grow with
     the square of its width."""
-    for _ in range(1 if shrink else GROW_PASSES):
+    figure.fitting = True
+    try:
+        for _ in range(1 if shrink else GROW_PASSES):
+            figure.figure.get_layout_engine().execute(figure.figure)
+            box = figure.plot_boxes[0]
+            slack = box.y + box.height - content_bottom(figure.shapes, drawing_style(figure.settings),
+                                                        measure_for(figure.settings))
+            if not shrink and slack > -GROW_SLACK:
+                break
+            width, height = figure.figure.get_size_inches()
+            figure.figure.set_size_inches(width, height - slack / 72)
+        # Content shorter than the least panel height keeps that height, as R's floored_size_mm() does.
         figure.figure.get_layout_engine().execute(figure.figure)
-        box = figure.plot_boxes[0]
-        slack = box.y + box.height - content_bottom(figure.shapes, drawing_style(figure.settings),
-                                                    measure_for(figure.settings))
-        if not shrink and slack > -GROW_SLACK:
-            break
-        width, height = figure.figure.get_size_inches()
-        figure.figure.set_size_inches(width, height - slack / 72)
+    finally:
+        figure.fitting = False
     figure.fitted_height = "fit" if shrink else "grow"
     return figure
 

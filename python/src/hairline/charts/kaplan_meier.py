@@ -140,13 +140,14 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
                  x_title: str = "Time", endpoint: str = "Survival", median_line: bool = True,
                  stats: Sequence[tuple[str, str]] = (), at_risk: bool = True, times: Sequence[float] | None = None,
                  order: Sequence[str] | None = None, test: bool = True, colors: Mapping[str, str] | None = None,
-                 size: str = "onehalf", reference: Reference = None, highlight: Sequence[str] | str | None = None,
-                 key_title: str | None = None) -> HairlineFigure:
+                 size: str = "onehalf", reference: Reference = None, reference_legend: bool = False,
+                 highlight: Sequence[str] | str | None = None, key_title: str | None = None) -> HairlineFigure:
     """Survival curves per group from time and event (1 = event, 0 = censored) columns, or from fitted
-    Kaplan–Meier objects (one lifelines KaplanMeierFitter, or a mapping of group to one); with groups in raw data
-    and `test`, the log-rank p joins the key numbers. A figure whose frame would leave the curves less than 8 x the
-    base size high (a narrow figure with a number-at-risk table) grows taller. Shared with the other charts:
-    `reference` (lines at survival values), `highlight` (groups kept in colour) and `key_title`."""
+    Kaplan–Meier objects (one lifelines KaplanMeierFitter, or a mapping of group to one); with groups in raw data and
+    `test`, the log-rank p joins the key numbers. A figure whose frame would leave the curves less than 8 x the base
+    size high (a narrow figure with a number-at-risk table) grows taller. Shared with the other charts: `reference`
+    (lines at survival values; `reference_legend` names the label in the legend row), `highlight` (groups kept in
+    colour) and `key_title`."""
     check_options(stats, times)
     estimates = estimates_from(data, time, event, by, order)
     if not estimates:
@@ -173,7 +174,8 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
                     median_line, grouped)
     if at_risk:
         result.table(rows, heading="Number at risk")
-    return apply_options(result, "kaplan_meier", names=names, reference=reference, key_title=key_title)
+    return apply_options(result, "kaplan_meier", names=names, reference=reference, reference_legend=reference_legend,
+                         key_title=key_title)
 
 
 def finish_survival(result: HairlineFigure, estimates: list, stats, endpoint: str, x_title: str, median_line: bool,

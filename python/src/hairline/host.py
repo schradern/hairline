@@ -1,6 +1,11 @@
 """Host integration: an editor that runs code inside documents hands hairline
 the document's context through a JSON file named by HAIRLINE_HOST_CONTEXT; hairline answers with figure files and
-a manifest. Nothing here is specific to one host."""
+a manifest. Nothing here is specific to one host.
+
+Version 2 of the context gives the document's `column_width_mm` and `page_width_mm`: a figure of size "single" takes
+the column, every other size the page, and the manifest says which (`span`). `width_mm`, the one width of version 1,
+is the fallback for a span the context leaves out. A width too narrow for a chart is refused by its layout errors,
+never met by shrinking the text."""
 
 from __future__ import annotations
 
@@ -15,7 +20,9 @@ from pathlib import Path
 from hairline.tokens import load_tokens
 
 ENVIRONMENT = "HAIRLINE_HOST_CONTEXT"
-VERSION = 1
+VERSIONS = (1, 2)
+# The size presets that take the document's column; every other preset takes the page.
+COLUMN_SIZES = ("single",)
 MANIFEST = "hairline-figures.json"
 OUTPUTS = ("screen", "pdf", "html", "docx")
 FORMATS = {"screen": ("png",), "pdf": ("pdf", "png"), "docx": ("pdf", "png"), "html": ("svg", "png")}
@@ -30,6 +37,8 @@ class HostContext:
     brand: str | list[str] | None = None
     interactive: bool = False
     width_mm: float | None = None
+    column_width_mm: float | None = None
+    page_width_mm: float | None = None
     locale: str | None = None
     base_size: float | None = None
     figure_dir: Path | None = None
@@ -68,7 +77,7 @@ def host_locale(path: str, value: object) -> str | None:
 
 
 def read_context(path: str) -> dict | None:
-    """The file's content when it is a version-1 context with a known output, else None (warned once)."""
+    """The file's content when it is a context of a known version with a known output, else None (warned once)."""
     try:
         content = json.loads(Path(path).read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -77,8 +86,9 @@ def read_context(path: str) -> dict | None:
     except json.JSONDecodeError as error:
         warn_once(path, f"not valid JSON ({error.msg}, line {error.lineno})")
         return None
-    if not isinstance(content, dict) or content.get("version") != VERSION:
-        warn_once(path, f"version {content.get('version') if isinstance(content, dict) else None!r} is not {VERSION}")
+    if not isinstance(content, dict) or content.get("version") not in VERSIONS:
+        warn_once(path, f"version {content.get('version') if isinstance(content, dict) else None!r} is not "
+                        f"{' or '.join(str(version) for version in VERSIONS)}")
         return None
     if content.get("output", "screen") not in OUTPUTS:
         warn_once(path, f"output {content['output']!r} must be one of {', '.join(OUTPUTS)}")
@@ -96,9 +106,11 @@ def parse_context(path: str) -> HostContext | None:
         folder = warn_once(path, f"figure_dir {folder!r} must be a folder path")
     if design is not None and not isinstance(design, dict):
         design = warn_once(path, f"design {design!r} must be a mapping")
-    width, base, dpi = (positive_number(path, content.get(key), key) for key in ("width_mm", "base_size", "dpi"))
+    width, column, page, base, dpi = (positive_number(path, content.get(key), key) for key in
+                                      ("width_mm", "column_width_mm", "page_width_mm", "base_size", "dpi"))
     return HostContext(host=str(content.get("host", "host")), output=output, brand=content.get("brand"),
                        interactive=content.get("interactive") is True and output == "html", width_mm=width,
+                       column_width_mm=column, page_width_mm=page,
                        locale=host_locale(path, content.get("locale")), base_size=base,
                        figure_dir=Path(folder) if folder else None, design=dict(design or {}), dpi=dpi)
 
@@ -121,6 +133,18 @@ def host_context() -> HostContext | None:
     return _state["context"]
 
 
+def span_of(size: str) -> str:
+    """The part of the page a figure of this size preset spans: "column" or "page"."""
+    return "column" if size in COLUMN_SIZES else "page"
+
+
+def host_width(context: HostContext, size: str) -> float | None:
+    """The host's width for a figure of this size preset: the column or the page (version 2), else the one width
+    of version 1; None when the context gives neither, so the preset's own width applies."""
+    spanned = context.column_width_mm if span_of(size) == "column" else context.page_width_mm
+    return spanned or context.width_mm
+
+
 def read_manifest(path: Path) -> list:
     """The figures already listed; a manifest that is not a list of figures is replaced, with a warning, so one
     damaged file does not stop every later figure."""
@@ -139,8 +163,9 @@ def read_manifest(path: Path) -> list:
 
 def hand_off(figure) -> None:
     """Write a displayed figure to the host's folder in the formats its output needs, and list it in the
-    manifest (id, files, size, alt text). Runs once per figure and figure folder, after the host's own save: a
-    host that empties the folder between runs (the manifest is gone) gets a figure shown again handed off again."""
+    manifest (id, files, size, the span it takes, alt text). Runs once per figure and figure folder, after the
+    host's own save: a host that empties the folder between runs (the manifest is gone) gets a figure shown again
+    handed off again."""
     context = host_context()
     if context is None or context.figure_dir is None or _state["handing_off"]:
         return
@@ -158,7 +183,8 @@ def hand_off(figure) -> None:
         paths = save(figure, context.figure_dir / figure_id, formats=formats, dpi=dpi)
         width, height = (value * 25.4 for value in figure.figure.get_size_inches())
         entries.append({"id": figure_id, "files": {path.suffix[1:]: str(path) for path in paths},
-                        "width_mm": round(width, 2), "height_mm": round(height, 2), "alt": figure_alt(figure)})
+                        "width_mm": round(width, 2), "height_mm": round(height, 2), "span": span_of(figure.size),
+                        "alt": figure_alt(figure)})
         manifest_path.write_text(json.dumps(entries, indent=1), encoding="utf-8")
         figure.handed_off = True
     finally:

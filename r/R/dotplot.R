@@ -37,7 +37,7 @@
 hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = NULL, subtitle = NULL, caption = NULL,
                        sort = TRUE, ratio = FALSE, reference = NULL, digits = NULL, n = NULL, percent = FALSE,
                        order = NULL, min_n = NULL, x_title = NULL, highlight = NULL, facet = NULL, show_n = TRUE,
-                       summary = NULL, compare = NULL, numbers = "auto") {
+                       summary = NULL, compare = NULL, numbers = "auto", reference_legend = FALSE) {
   check_columns(data, c(label, estimate, low, high, n, facet))
   if (is.null(low) != is.null(high)) {
     stop(sprintf("hairline: dotplot: an interval needs both low and high; got only %s = '%s'",
@@ -72,6 +72,7 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
                                   digits)
   data <- compared$data
   chosen <- checked_highlight(highlight, names, "dotplot")
+  references <- legend_references(reference, reference_legend, "dotplot")
   if (!is.null(n)) check_numeric(data, n, "dotplot")
   if (!is.null(n) && isTRUE(show_n)) {
     data[[label]] <- labels_with_n(names, stats::setNames(as.list(data[[n]]), names))
@@ -86,7 +87,7 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
   heading <- heading %||% if (interval) word("interval", name = name) else name
   spec <- forest_spec(data, label, estimate, low, high, ratio = ratio, colour = lone_colour(),
                       study_heading = humanise(label), effect_heading = heading, digits = digits, marker = "dot",
-                      interval = interval, null = NULL, references = option_references(reference, "dotplot"),
+                      interval = interval, null = NULL, references = option_references(references$reference, "dotplot"),
                       axis_title = x_title, columns = compared$columns,
                       numbers = check_numbers(numbers, "dotplot"))
   spec$chart <- "dotplot"
@@ -102,6 +103,7 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
     theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
+  plot@meta$hairline_reference_legend <- references$labels
   plot
 }
 

@@ -130,9 +130,47 @@ def point_boxes(fig: Figure, collection: PathCollection) -> list[Box]:
     return boxes
 
 
+# Tick markers, thin across: matplotlib pads a line's extent by half the marker size every way, but "|" is only its
+# edge wide and "_" only its edge tall; a diamond "D" reaches half its diagonal, more than half its size.
+TICK_MARKERS = ("|", "_")
+DIAMOND_MARKER = "D"
+
+
+def tick_boxes(fig: Figure, line: Line2D) -> list[Box]:
+    """A line of tick markers (censor ticks) as each tick's own box, and its path's when it draws one."""
+    points = line.get_transform().transform(line.get_xydata())
+    points = points[np.isfinite(points).all(axis=1)]
+    scale, height = POINTS_PER_INCH / fig.dpi, fig.bbox.height
+    long, thin = line.get_markersize() / 2, line.get_markeredgewidth() / 2
+    across, along = (thin, long) if line.get_marker() == "|" else (long, thin)
+    boxes = [Box(x * scale - across, (height - y) * scale - along, x * scale + across, (height - y) * scale + along)
+             for x, y in points]
+    if len(points) and line.get_linestyle() not in ("None", "none", "", " "):
+        half = line.get_linewidth() / 2
+        xs, ys = points[:, 0] * scale, (height - points[:, 1]) * scale
+        boxes.append(Box(xs.min() - half, ys.min() - half, xs.max() + half, ys.max() + half))
+    return boxes
+
+
+def diamond_boxes(fig: Figure, line: Line2D) -> list[Box]:
+    """Each diamond marker's own box: half its diagonal (its size is a side of the square turned 45 degrees) and
+    half its edge, every way."""
+    points = line.get_transform().transform(line.get_xydata())
+    points = points[np.isfinite(points).all(axis=1)]
+    scale, height = POINTS_PER_INCH / fig.dpi, fig.bbox.height
+    reach = line.get_markersize() * np.sqrt(2) / 2 + line.get_markeredgewidth() / 2
+    return [Box(x * scale - reach, (height - y) * scale - reach, x * scale + reach, (height - y) * scale + reach)
+            for x, y in points]
+
+
 def mark_boxes(fig: Figure, artist, renderer) -> list[Box]:
     if isinstance(artist, PathCollection) and len(artist.get_offsets()):
         return point_boxes(fig, artist)
+    if isinstance(artist, Line2D) and artist.get_marker() in TICK_MARKERS:
+        return tick_boxes(fig, artist)
+    if isinstance(artist, Line2D) and artist.get_marker() == DIAMOND_MARKER and \
+            artist.get_linestyle() in ("None", "none", "", " "):
+        return diamond_boxes(fig, artist)
     if isinstance(artist, Line2D | Patch | Collection):
         extent = artist.get_window_extent(renderer)
         if extent.width >= 0 and extent.height >= 0 and np.isfinite([extent.x0, extent.y0, extent.x1, extent.y1]).all():

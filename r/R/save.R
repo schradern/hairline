@@ -54,7 +54,7 @@ figure_size_mm <- function(size, width_mm, height_mm) {
   check_positive(height_mm, "height_mm")
   check_size_preset(size)
   preset <- hl_tokens()$sizes[[size]]
-  width <- width_mm %||% host_context()$width_mm %||% preset$width_mm
+  width <- width_mm %||% host_width(host_context(), size) %||% preset$width_mm
   c(width, height_mm %||% preset$height_mm %||% (width * preset$aspect))
 }
 

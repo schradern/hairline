@@ -27,7 +27,8 @@ hl_scatter(
   highlight = NULL,
   key_title = NULL,
   facet = NULL,
-  columns = NULL
+  columns = NULL,
+  reference_legend = FALSE
 )
 }
 \arguments{
@@ -72,6 +73,9 @@ lines, e.g. \code{c(Target = 0.9)}.}
 \item{facet}{Column whose values each get a panel.}
 
 \item{columns}{Panels per row with \code{facet} (two by default).}
+
+\item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
+line; one labelled reference at most.}
 }
 \value{
 A ggplot with the hairline frame.

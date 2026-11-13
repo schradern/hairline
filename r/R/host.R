@@ -3,6 +3,9 @@
 
 host_environment <- "HAIRLINE_HOST_CONTEXT"
 host_manifest <- "hairline-figures.json"
+host_versions <- c(1L, 2L)
+# The size presets that take the document's column; every other preset takes the page.
+host_column_sizes <- "single"
 host_formats <- list(screen = "png", pdf = c("pdf", "png"), docx = c("pdf", "png"), html = c("svg", "png"))
 
 # Warns once per file and problem; returns NULL, so a caller can return it as "no context" or "no value".
@@ -49,8 +52,9 @@ read_host_context <- function(path) {
   })
   if (is.null(content)) return(NULL)
   version <- if (is.list(content)) content$version
-  if (!identical(as.integer(version), 1L)) {
-    return(host_warn_once(path, sprintf("version %s is not 1", format(version %||% "NULL"))))
+  if (length(version) != 1 || !as.integer(version) %in% host_versions) {
+    return(host_warn_once(path, sprintf("version %s is not %s", format(version %||% "NULL"),
+                                        paste(host_versions, collapse = " or "))))
   }
   output <- content$output %||% "screen"
   if (!output %in% names(host_formats)) {
@@ -75,6 +79,8 @@ parse_host_context <- function(path) {
   }
   list(host = content$host %||% "host", output = output, brand = content$brand,
        width_mm = host_positive(path, content$width_mm, "width_mm"),
+       column_width_mm = host_positive(path, content$column_width_mm, "column_width_mm"),
+       page_width_mm = host_positive(path, content$page_width_mm, "page_width_mm"),
        interactive = isTRUE(content$interactive) && output == "html", locale = host_locale(path, content$locale),
        base_size = host_positive(path, content$base_size, "base_size"), figure_dir = folder,
        design = design %||% list(), dpi = host_positive(path, content$dpi, "dpi"))
@@ -96,6 +102,17 @@ host_context <- function() {
     }
   }
   hairline_state$host_context
+}
+
+# The part of the page a plot of this size preset spans: "column" or "page". As Python's span_of().
+host_span <- function(size) if (size %in% host_column_sizes) "column" else "page"
+
+# The host's width for a plot of this size preset: the column or the page (version 2), else the one width of version
+# 1; NULL when the context gives neither, so the preset's own width applies. As Python's host_width().
+host_width <- function(context, size) {
+  if (is.null(context)) return(NULL)
+  spanned <- if (host_span(size) == "column") context$column_width_mm else context$page_width_mm
+  spanned %||% context$width_mm
 }
 
 # Identifies a plot across builds (a built plot carries fresh environments, so it cannot be hashed whole).
@@ -141,7 +158,8 @@ host_hand_off <- function(plot) {
   size <- fitted_size_mm(plot, figure_size_mm(plot_size(plot), NULL, plot@meta$hairline_height_mm))
   files <- stats::setNames(as.list(paths), tools::file_ext(paths))
   entries[[length(entries) + 1]] <- list(id = figure_id, files = files, width_mm = round(size[1], 2),
-                                         height_mm = round(size[2], 2), alt = figure_alt(plot))
+                                         height_mm = round(size[2], 2), span = host_span(plot_size(plot)),
+                                         alt = figure_alt(plot))
   jsonlite::write_json(entries, manifest_path, auto_unbox = TRUE, pretty = TRUE)
   hairline_state$handed_off <- c(hairline_state$handed_off, key)
   invisible(paths)

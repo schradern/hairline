@@ -42,15 +42,18 @@ spread_summary_row <- function(values, shown, names, discrete) {
        show_median = "median" %in% names, mean = if ("mean" %in% names) held(found$mean))
 }
 
-spread_axis <- function(lows, highs, percent, zero) {
+# Breaks, labels and limits of a drawn value axis; `rebuild` gives it again with fewer ticks, for a plot too narrow
+# for its labels (see fitted_axis()). As Python's spread_axis().
+spread_axis <- function(lows, highs, percent, zero, target = ticks_target) {
   low <- min(c(lows, if (zero) 0))
   high <- max(c(highs, if (zero) 0))
-  breaks <- nice_breaks(low, high)
+  breaks <- nice_breaks(low, high, target)
   limits <- axis_limits(low, high, breaks)
   shown <- snap_noise(breaks * if (percent) 100 else 1)
   labels <- vapply(shown, hl_format_number, character(1), digits = forest_decimals(shown))
   if (percent) labels[length(labels)] <- paste0(labels[length(labels)], locale_symbols(NULL)$percent_space, "%")
-  list(breaks = breaks, labels = labels, low = limits[1], high = limits[2])
+  list(breaks = breaks, labels = labels, low = limits[1], high = limits[2], target = target,
+       rebuild = function(fewer) spread_axis(lows, highs, percent, zero, fewer))
 }
 
 # The statistics to show, each once, and decimals as a whole number.
@@ -270,13 +273,14 @@ hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption
                       clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
                       panel_letters = FALSE, mean = FALSE, sort = NULL, x_title = NULL, reference = NULL,
                       highlight = NULL, key_title = NULL, facet = NULL, summary = NULL, compare = NULL,
-                      numbers = "auto") {
+                      numbers = "auto", reference_legend = FALSE) {
   options <- list(summary = summary, compare = compare, marks = marks, mark_label = mark_label, stats = stats,
                   percent = percent, digits = digits,
                   zero = zero, axis_title = axis_title %||% x_title, colors = colors, show_n = show_n, min_n = min_n,
                   clip = clip, clip_stats = clip_stats, color_by = color_by, dimension = dimension,
                   discrete = discrete, section = section, panel_letters = panel_letters, mean = mean, sort = sort,
-                  reference = reference, highlight = highlight)
+                  reference = legend_references(reference, reference_legend, "spread")$reference,
+                  highlight = highlight)
   spec <- if (is.null(facet)) do.call(spread_spec, c(list(data, group, value, order = order), options)) else
     faceted_spread_spec(data, group, value, facet, order, options)
   spec$numbers <- check_numbers(numbers, "spread")
@@ -287,5 +291,6 @@ hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption
   plot@meta$hairline_drawing <- function(box, measure, style) spread_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot@meta$hairline_key_title <- key_title
+  plot@meta$hairline_reference_legend <- legend_references(reference, reference_legend, "spread")$labels
   plot
 }

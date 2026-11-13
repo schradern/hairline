@@ -24,6 +24,26 @@ forest_scale <- function(axis, ratio, left, right) {
   function(value) left + (transform(value) - low) / (high - low) * (right - left)
 }
 
+# The axis with the most ticks, from its own target down to ticks.min, whose labels (each centred on its break) keep
+# ticks.label_rows_gap apart on the plot's width, as the axes charts thin theirs; the fewest when none does. An axis
+# without `rebuild` is kept. As Python's fitted_axis().
+fitted_axis <- function(axis, ratio, plot, measure, style) {
+  if (is.null(axis$rebuild)) return(axis)
+  rules <- hl_tokens()$ticks
+  gap <- rules$label_rows_gap * style$sizes$label
+  candidate <- axis
+  for (target in seq(axis$target, rules$min)) {
+    candidate <- if (target == axis$target) axis else axis$rebuild(target)
+    scale <- forest_scale(candidate, ratio, plot[1], plot[2])
+    centres <- vapply(candidate$breaks, scale, numeric(1))
+    halves <- vapply(candidate$labels, measure, numeric(1), role = "label") / 2
+    ends <- utils::head(centres + halves, -1)
+    starts <- centres[-1] - halves[-1]
+    if (all(starts - ends >= gap)) return(candidate)
+  }
+  candidate
+}
+
 forest_widest <- function(texts, measure, weight = NULL) {
   max(vapply(texts, measure, numeric(1), role = "label", weight = weight))
 }

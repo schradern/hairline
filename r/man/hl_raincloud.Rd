@@ -31,7 +31,8 @@ hl_raincloud(
   columns = NULL,
   summary = NULL,
   stats = character(),
-  compare = NULL
+  compare = NULL,
+  reference_legend = FALSE
 )
 }
 \arguments{
@@ -83,6 +84,9 @@ most. The default is \code{c("median", "iqr")}; a summary you give is named in t
 
 \item{compare}{Rows with each group's difference against one group or the group to its left (\code{"adjacent"}),
 its 95\% CI and p; the caption names the test, which follows the centre as in \code{\link[=hl_spread]{hl_spread()}}.}
+
+\item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
+line; one labelled reference at most.}
 }
 \value{
 A ggplot with the hairline frame.

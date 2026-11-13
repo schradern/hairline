@@ -40,6 +40,15 @@ def arrow(start: list[float], end: list[float], style: dict, rules: dict) -> lis
             {"kind": "polygon", "points": head, "fill": color, "role": "arrow_head"}]
 
 
+def box_target(shape: dict, paragraphs: list[str]) -> dict:
+    """A box as a tooltip target: named by its first line, its tip its lines one under another ('Reports excluded:',
+    'Wrong population (n = 12)', …), pointing at its top edge. It is hovered only, so its text is never covered."""
+    name, tip = paragraphs[0].rstrip(":"), "\n".join(paragraphs)
+    points = shape["points"]
+    return {**shape, "series": name, "tip": tip, "tip_at": [(points[0][0] + points[1][0]) / 2, points[0][1]],
+            "hover_only": True}
+
+
 def box_texts(lines: list[str], left: float, top: float, style: dict, pad: float) -> list[dict]:
     size, line = style["sizes"]["label"], line_height(style, "label")
     return [{**text(left + pad, top + pad + style["cap_height"] * size + index * line, content, "label",
@@ -73,13 +82,13 @@ def prisma_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
         main = wrap(row["main"], main_width - 2 * pad, measure)
         side = wrap(row["exclusion"], side_width - 2 * pad, measure) if row["exclusion"] else []
         height = max(len(main), len(side)) * line + 2 * pad
-        shapes.append({"kind": "polygon", "points": rectangle(main_left, top, main_width, height),
-                       "fill": style["neutral"]["surface"], "edge": style["neutral"]["axis"],
-                       "edge_width": style["axis_width"], "role": "main"})
+        shapes.append(box_target({"kind": "polygon", "points": rectangle(main_left, top, main_width, height),
+                                  "fill": style["neutral"]["surface"], "edge": style["neutral"]["axis"],
+                                  "edge_width": style["axis_width"], "role": "main"}, row["main"]))
         shapes += box_texts(main, main_left, top, style, pad)
         if side:
-            shapes.append({"kind": "polygon", "points": rectangle(side_left, top, side_width, height),
-                           "fill": style["neutral"]["band"], "role": "exclusion"})
+            shapes.append(box_target({"kind": "polygon", "points": rectangle(side_left, top, side_width, height),
+                                      "fill": style["neutral"]["band"], "role": "exclusion"}, row["exclusion"]))
             shapes += box_texts(side, side_left, top, style, pad)
             shapes += arrow([main_left + main_width, top + height / 2], [side_left, top + height / 2], style, rules)
         if places:

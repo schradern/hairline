@@ -5,8 +5,9 @@ a line under each row), the axis title under the numbers. Pure."""
 from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
-from hairline.charts.forest_geometry import axis_shapes, dot_size, marker, x_scale
+from hairline.charts.forest_geometry import axis_shapes, dot_size, fitted_axis, marker, x_scale
 from hairline.charts.options import numbers_beside, reference_line_height, reference_shapes
+from hairline.charts.tips import pairs_tip
 from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
 from hairline.tokens import load_tokens
@@ -116,7 +117,7 @@ def row_shapes(row: dict, centre: float, pitch: float, scale, style: dict, rules
         shapes.append({"kind": "line", "points": [[x, centre - tick], [x, centre + tick]],
                        "color": style["neutral"]["ink"], "width": style["leader_width"], "role": "mark"})
     if shapes:
-        tip = f"{row['name']}: " + ", ".join(f"{label} {value}" for label, value in row["pairs"])
+        tip = pairs_tip(row["name"], row["pairs"])
         shapes[0] = {**shapes[0], "tip": tip, "tip_at": [scale(row_centre(row)), centre - half]}
     return [{**shape, "series": row["name"]} for shape in shapes]
 
@@ -169,6 +170,8 @@ def spread_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
     rules = load_tokens()["spread"]
     layout = spread_layout(spec, box, measure, style, rules)
     (left, right), lead = layout["plot"], line_height(style, "label")
+    # The axis thinned to the plot's width, before anything is placed on its scale.
+    spec = {**spec, "axis": fitted_axis(spec["axis"], False, (left, right), measure, style)}
     scale = x_scale(spec["axis"], False, left, right)
     line = rules["row_pitch"] * lead
     pitch = line + (lead if layout["under"] else 0.0)

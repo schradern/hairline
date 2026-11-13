@@ -18,11 +18,19 @@ test_that("hard cases draw without collisions or are refused plainly", {
   for (case in cases) {
     data <- as.data.frame(lapply(case$data, unlist), check.names = FALSE)
     arguments <- lapply(case$args, unlist)
-    found <- tryCatch(hl_check_layout(do.call(paste0("hl_", case$chart), c(list(data), arguments)), size = case$size),
-                      error = function(error) {
-                        expect_match(conditionMessage(error), "hairline:.*(use a wider size|Shorten)")
-                        list()
-                      })
+    # A case with a host context is drawn in that host's column, as a document editor would hand it.
+    context <- if (!is.null(case$host)) tempfile(fileext = ".json")
+    if (!is.null(context)) jsonlite::write_json(case$host, context, auto_unbox = TRUE)
+    found <- withr::with_envvar(c(HAIRLINE_HOST_CONTEXT = context %||% ""), {
+      hairline_state$host_path <- NULL
+      tryCatch(hl_check_layout(do.call(paste0("hl_", case$chart), c(list(data), arguments)), size = case$size),
+               error = function(error) {
+                 expect_match(conditionMessage(error), "hairline:.*(use a wider size|Shorten)", label = case$name)
+                 list()
+               })
+    })
+    hairline_state$host_path <- NULL
+    hairline_state$host_context <- NULL
     expect_length(found, 0)
   }
 })

@@ -130,8 +130,9 @@ likert_order <- function(rows, bins, sort) {
   rows[order(rank)]
 }
 
-# One axis in percent either side of the split, as far as the longer side reaches, labelled outward from 0.
-likert_axis <- function(rows, bins) {
+# One axis in percent either side of the split, as far as the longer side reaches, labelled outward from 0; `rebuild`
+# gives it again with fewer ticks (see fitted_axis()).
+likert_axis <- function(rows, bins, target = ticks_target) {
   side <- function(row, name) {
     weights <- vapply(bins, function(entry) {
       if (entry$side == "middle") 0.5 else if (entry$side == name) 1 else 0
@@ -139,9 +140,10 @@ likert_axis <- function(rows, bins) {
     sum(row$shares * weights)
   }
   reach <- max(vapply(rows, function(row) max(side(row, "left"), side(row, "right")), 0))
-  half <- spread_axis(0, reach, FALSE, TRUE)
+  half <- spread_axis(0, reach, FALSE, TRUE, target)
   list(breaks = c(-rev(half$breaks[-1]), half$breaks), labels = c(rev(half$labels[-1]), half$labels),
-       low = -half$high, high = half$high)
+       low = -half$high, high = half$high, target = target,
+       rebuild = function(fewer) likert_axis(rows, bins, fewer))
 }
 
 likert_check_options <- function(stats, sort, reverse, names) {
@@ -303,6 +305,8 @@ likert_drawing <- function(spec, box, measure, style) {
   left <- layout$plot[1]
   right <- layout$plot[2]
   lead <- line_height(style, "label")
+  # The axis thinned to the plot's width, before anything is placed on its scale.
+  spec$axis <- fitted_axis(spec$axis, FALSE, c(left, right), measure, style)
   scale <- forest_scale(spec$axis, FALSE, left, right)
   line <- rules$row_pitch * lead
   pitch <- line + if (layout$under) lead else 0

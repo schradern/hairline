@@ -62,7 +62,8 @@ scatter_check_fit <- function(x) {
 hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, caption = NULL, fit = "linear",
                        order = NULL, colors = NULL, clip = NULL, clip_stats = FALSE, color_by = NULL,
                        dimension = NULL, min_n = NULL, percent = FALSE, x_title = NULL, y_title = NULL,
-                       reference = NULL, highlight = NULL, key_title = NULL, facet = NULL, columns = NULL) {
+                       reference = NULL, highlight = NULL, key_title = NULL, facet = NULL, columns = NULL,
+                       reference_legend = FALSE) {
   check_columns(data, c(x, y, by, color_by, facet))
   if (!is.null(color_by) && is.null(by)) {
     stop("hairline: scatter: color_by needs by =, the groups it colours", call. = FALSE)
@@ -119,5 +120,6 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
     theme_hairline()
   if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
   chart_options(plot, "scatter", groups, x_title = x_title, y_title = y_title, reference = reference,
+                reference_legend = reference_legend,
                 key_title = key_title)
 }

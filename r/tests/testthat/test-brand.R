@@ -100,3 +100,18 @@ test_that("an export override is named with its layer", {
   entity <- grep("^entity Unit A:", strsplit(report, "\n", fixed = TRUE)[[1]], value = TRUE)
   expect_true(endsWith(entity, "(layer 2, docx)"))
 })
+
+test_that("explicit colours draw more groups than the brand has slots", {
+  folder <- withr::local_tempdir()
+  writeLines(c("meta:", "  name: One slot", "color:", "  palette:", "    ink: \"#1a1a1a\"", "    accent: \"#0a6ddd\"",
+               "  primary: accent", "  foreground: ink", "defaults:", "  hairline:", "    adapt: readable"),
+             file.path(folder, "_brand.yml"))
+  hl_use(brand = file.path(folder, "_brand.yml"))
+  on.exit(hl_use(brand = FALSE))
+  data <- data.frame(ward = c("A", "A", "B", "B"), arm = c("x", "y", "x", "y"), n = c(3, 4, 5, 6))
+  for (colors in list(c(x = "#0a6ddd", y = "#c0392b"), "blues")) {
+    expect_no_error(hl_save(hl_bars(data, "ward", "n", by = "arm", colors = colors), file.path(folder, "bars"),
+                            formats = "png"))
+  }
+  expect_error(hl_bars(data, "ward", "n", by = "arm"), "1 slots but 2 categories")
+})

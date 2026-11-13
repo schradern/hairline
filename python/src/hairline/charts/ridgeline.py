@@ -7,7 +7,6 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
-from matplotlib.patches import Polygon
 
 from hairline.charts.common import (
     check_columns,
@@ -23,8 +22,8 @@ from hairline.charts.common import (
     within,
 )
 from hairline.charts.comparisons import section_comparisons
-from hairline.charts.options import Reference, apply_options, references, sorted_groups
-from hairline.charts.spread_geometry import DIAMOND, OPEN_EDGE
+from hairline.charts.options import Reference, apply_options, legend_references, references, sorted_groups
+from hairline.charts.ridgeline_drawing import draw_ridges, mean_floor, mean_plot_height
 from hairline.charts.summaries import (
     CENTRES,
     STAT_NAMES,
@@ -33,79 +32,17 @@ from hairline.charts.summaries import (
     measure_numbers,
     stat_pairs,
     summary_legend,
-    summary_values,
 )
 from hairline.charts.timeseries import groups_of
+from hairline.charts.tips import pairs_tip, tip_measures
 from hairline.figure import HairlineFigure, figure
 from hairline.layout.geometry import load_font_metrics
-from hairline.marks import STATIC_ID
 from hairline.numbers import format_number
 from hairline.settings import current_settings
 from hairline.stats.density import density
 from hairline.tokens import load_tokens
 
-RIDGE_ID, MEDIAN_ID = "hairline-ridge", "hairline-median"
 WHY = "A ridge shows its own spread; raincloud() and spread() draw intervals"
-
-
-def draw_ridge(ax, curve: tuple[list[float], list[float]], base: float, scale: float, color: str, layer: float) -> None:
-    """A surface-coloured shape hiding the ridges behind, the light fill and the outline in the group colour."""
-    settings, rules = current_settings(), load_tokens()["ridgeline"]
-    grid, height = curve
-    outline = [(x, base + value * scale) for x, value in zip(grid, height, strict=True)]
-    corners = [(grid[0], base), *outline, (grid[-1], base)]
-    ax.add_patch(Polygon(corners, closed=True, facecolor=settings.neutral["surface"], edgecolor="none", linewidth=0,
-                         zorder=layer, gid="hairline-occluder"))
-    ax.add_patch(Polygon(corners, closed=True, facecolor=color, alpha=rules["fill_opacity"], edgecolor="none",
-                         linewidth=0, zorder=layer + 0.001, gid=RIDGE_ID))
-    xs, ys = zip(*outline, strict=True)
-    ax.plot(xs, ys, color=color, linewidth=load_tokens()["lines"]["data"] * settings.base_size, zorder=layer + 0.002,
-            label="_nolegend_", gid=STATIC_ID)
-
-
-def draw_centres(ax, values: np.ndarray, curve: tuple[list[float], list[float]], base: float, scale: float,
-                 layer: float, marks: Sequence[str], color: str) -> None:
-    """The median as a line from the baseline up to the ridge, the mean as an open diamond on the ridge's outline;
-    both held within the ridge."""
-    settings, tokens = current_settings(), load_tokens()
-    found = summary_values(values)
-
-    def on_ridge(value: float) -> tuple[float, float]:
-        x = min(max(value, curve[0][0]), curve[0][-1])
-        return x, base + float(np.interp(x, curve[0], curve[1])) * scale
-    if "median" in marks:
-        middle, top = on_ridge(found["median"])
-        ax.plot([middle, middle], [base, top], color=settings.neutral["ink"], zorder=layer + 0.003,
-                linewidth=tokens["reference"]["width"] * settings.base_size, gid=MEDIAN_ID, label="_nolegend_")
-    if "mean" in marks:
-        width = tokens["lines"]["data"] * settings.base_size
-        size = DIAMOND * tokens["lines"]["point_radius"] * settings.base_size * math.sqrt(2)
-        ax.plot(*([coordinate] for coordinate in on_ridge(found["mean"])), marker="D", markersize=size,
-                linestyle="none", markerfacecolor=settings.neutral["surface"], markeredgecolor=color,
-                markeredgewidth=width * OPEN_EDGE, zorder=layer + 0.004, gid=MEDIAN_ID, label="_nolegend_")
-
-
-def draw_spikes(ax, values: np.ndarray, base: float, color: str, layer: float) -> None:
-    """A group too small or too uniform for a density (one value, or all alike) shows each value as a spike, so
-    its row is never empty."""
-    settings = current_settings()
-    height = load_tokens()["ridgeline"]["spike"]
-    for value in sorted(set(np.asarray(values, dtype=float))):
-        ax.plot([value, value], [base, base + height], color=color, zorder=layer + 0.002, label="_nolegend_",
-                linewidth=load_tokens()["lines"]["data"] * settings.base_size, gid=STATIC_ID)
-
-
-def draw_ridges(ax, groups: list, curves: list, scale: float, marks: Sequence[str], palette: dict[str, str],
-                statistics: list) -> None:
-    """Top row first, so each lower ridge is drawn in front of the one above."""
-    for index, ((name, values), curve, (_, counted)) in enumerate(zip(groups, curves, statistics, strict=True)):
-        base, layer = float(len(groups) - 1 - index), 1 + index * 0.01
-        if curve is None:
-            draw_spikes(ax, values, base, palette[name], layer)
-            continue
-        draw_ridge(ax, curve, base, scale, palette[name], layer)
-        if len(counted):
-            draw_centres(ax, counted, curve, base, scale, layer, marks, palette[name])
 
 
 def panel_groups(rows_of: dict, names: list[str], value: str, facet: str | None, panel: str | None) -> list:
@@ -142,22 +79,38 @@ def frame_panel(result: HairlineFigure, index: int, panel: str | None, labels: l
         result.percent_axis(index, "x")
 
 
-def ridge_numbers(panels: list[list], stats: Sequence[str], every: np.ndarray, percent: bool, compare: str | None,
-                  marks: Sequence[str], locale: str) -> tuple[list[list[tuple[float, str, str]]], str | None]:
-    """Each panel's numbers column: every ridge's measures and, with `compare`, its Δ and p against the reference
-    or the ridge above, at its baseline (a group without values in a panel has none); and the caption note naming
-    the test."""
+def ridge_rows(panels: list[list], measures: Sequence[str], every: np.ndarray, percent: bool, compare: str | None,
+               marks: Sequence[str], locale: str) -> tuple[list[dict], dict, str | None]:
+    """Every ridge's measures as key-number pairs and, with `compare`, its Δ and p against the reference or the
+    ridge above, within its panel; the values by row key; and the caption note naming the test."""
     numbers = measure_numbers(every, percent, None)
     rows = [{"name": f"{index}\x1f{name}", "section": index, "count": len(groups), "position": position,
-             "pairs": stat_pairs(values, stats, numbers, locale=locale) if len(values) else []}
+             "pairs": stat_pairs(values, measures, numbers, locale=locale) if len(values) else []}
             for index, groups in enumerate(panels) for position, (name, values) in enumerate(groups)]
     values = {f"{index}\x1f{name}": data for index, groups in enumerate(panels) for name, data in groups}
     note = section_comparisons(rows, values, compare, marks, numbers, "ridgeline",
                                {key: key.split("\x1f", 1)[1] for key in values})
+    return rows, values, note
+
+
+def ridge_numbers(panels: list[list], stats: Sequence[str], every: np.ndarray, percent: bool, compare: str | None,
+                  marks: Sequence[str], locale: str) -> tuple[list[list[tuple[float, str, str]]], str | None]:
+    """Each panel's numbers column: every ridge's measures and, with `compare`, its Δ and p, at its baseline (a
+    group without values in a panel has none); and the caption note naming the test."""
+    rows, values, note = ridge_rows(panels, stats, every, percent, compare, marks, locale)
     columns = [[(float(row["count"] - 1 - row["position"]), label, text) for row in rows
                 if row["section"] == index and len(values[row["name"]]) for label, text in row["pairs"]]
                for index in range(len(panels))]
     return columns, note
+
+
+def ridge_tips(panels: list[list], stats: Sequence[str], every: np.ndarray, percent: bool, compare: str | None,
+               marks: Sequence[str], locale: str) -> list[dict[str, str]]:
+    """Each panel's ridge tooltips by group: the marks it draws and the numbers beside it, its n, and its Δ and p
+    with `compare`, in the numbers column's digits; a group without values in a panel has none."""
+    rows, values, _ = ridge_rows(panels, tip_measures(marks, stats), every, percent, compare, marks, locale)
+    return [{row["name"].split("\x1f", 1)[1]: pairs_tip(row["name"].split("\x1f", 1)[1], row["pairs"])
+             for row in rows if row["section"] == index and len(values[row["name"]])} for index in range(len(panels))]
 
 
 def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None = None, subtitle: str | None = None,
@@ -166,16 +119,16 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
               min_n: int | None = None, clip: float | tuple[float | None, float | None] | None = None,
               clip_stats: bool = False, color_by: str | None = None,
               dimension: str | None = None, sort: str | None = None, percent: bool = False,
-              x_title: str | None = None, reference: Reference = None,
+              x_title: str | None = None, reference: Reference = None, reference_legend: bool = False,
               highlight: Sequence[str] | str | None = None, key_title: str | None = None, facet: str | None = None,
               columns: int | None = None, summary: str | Sequence[str] | None = None,
               stats: str | Sequence[str] = (), compare: str | None = None) -> HairlineFigure:
     """Distributions per group as overlapping ridges, the first group on top; all ridges share one height scale.
-    `show_n` writes each group's n after its name; `min_n`, `clip`, `color_by` and `dimension` work as in
-    `spread()`: groups too small are named in the caption, and so are the values clipped off. Shared with the
-    other charts: `sort` ("median", "mean", "n"), `percent`, `x_title`, `reference` (lines on the value axis),
-    `highlight` (groups kept in colour), `key_title` and `facet` (one panel per value, in `columns` columns, on
-    shared axes and one height scale; with `show_n` each panel's n in its header).
+    `show_n` writes each group's n after its name; `min_n`, `clip`, `color_by` and `dimension` work as in `spread()`:
+    groups too small are named in the caption, and so are the values clipped off. Shared with the other charts: `sort`
+    ("median", "mean", "n"), `percent`, `x_title`, `reference` (lines on the value axis; `reference_legend` names the
+    label in the legend row), `highlight` (groups kept in colour), `key_title` and `facet` (one panel per value, in
+    `columns` columns, on shared axes and one height scale; with `show_n` each panel's n in its header).
 
     `summary` chooses the marks on each ridge: "median" (a line up to the ridge) and "mean" (an open diamond on
     its outline); by default the median, or nothing with `medians=False`. A summary you give is named in the
@@ -206,6 +159,9 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
     scale = (1 + rules["overlap"]) / peak
     statistics = drawn if clip_stats else counted
     numbers, compared = ridge_numbers(statistics, stats, every, percent, compare, marks, locale)
+    tips = ridge_tips(statistics, stats, every, percent, compare, marks, locale)
+    # Labels named in the legend row take no room above the ridges.
+    drawn_references = legend_references(reference, reference_legend, "ridgeline")[0]
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None, compared]
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *notes), size=size, panels=len(panels),
@@ -214,15 +170,25 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
                                     named=True)
     labels = labels_with_n(names, {name: len(values) for name, values in groups}, locale) \
         if show_n and not facet else names
+    top = (len(labels) + rules["overlap"] + rules["headroom"]) / (1 - label_room(drawn_references))
+    lifts = []
     for index, panel in enumerate(panels):
-        draw_ridges(result.axes[index], drawn[index], curves[index], scale, marks, palette, statistics[index])
-        frame_panel(result, index, panel, labels, statistics[index], show_n, percent, label_room(reference))
+        ridges = draw_ridges(result.axes[index], drawn[index], curves[index], scale, marks, palette,
+                             statistics[index], mean_floor(top))
+        bottom = ridges.get(drawn[index][-1][0], {"marks": []})["marks"]
+        lifts += [mark["diamond"][1] for mark in bottom if "diamond" in mark]
+        for name, ridge in ridges.items():
+            tip = [{"at": ridge["at"], "text": tips[index][name]}] if name in tips[index] else []
+            result.target(index, name, palette[name], ridge["marks"], tip)
+        frame_panel(result, index, panel, labels, statistics[index], show_n, percent, label_room(drawn_references))
         if numbers[index]:
             result.numbers_column(index, numbers[index])
+    # A mean diamond on a flat bottom ridge would reach below the panel on a short plot: the plot grows instead.
+    result.min_plot = mean_plot_height(lifts, top, math.ceil(len(panels) / result.columns))
     legend = [("square", color, label) for label, color in
               dict.fromkeys((coarse[name], palette[name]) for name in names)] if color_by else []
     legend += summary_legend(marks, "tick", current_settings().neutral["ink"], locale) if summary is not None else []
     if legend:
         result.legend(legend)
     return apply_options(result, "ridgeline", names=names, x_title=x_title or humanise(value), reference=reference,
-                         reference_axis="x", key_title=key_title)
+                         reference_legend=reference_legend, reference_axis="x", key_title=key_title)

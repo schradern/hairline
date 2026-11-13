@@ -146,7 +146,7 @@ km_layers <- function(layers, colours, median_line) {
 hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = NULL, subtitle = NULL, caption = NULL,
                             x_title = "Time", endpoint = "Survival", median_line = TRUE, stats = character(),
                             at_risk = TRUE, times = NULL, order = NULL, test = TRUE, colors = NULL, reference = NULL,
-                            highlight = NULL, key_title = NULL) {
+                            highlight = NULL, key_title = NULL, reference_legend = FALSE) {
   if (inherits(time, "formula")) {
     sides <- formula_sides(time)
     time <- as.character(sides$left[[2]])
@@ -189,5 +189,6 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
     })
     plot@meta$hairline_table <- list(heading = "Number at risk", rows = rows)
   }
-  chart_options(plot, "kaplan_meier", names, reference = reference, key_title = key_title)
+  chart_options(plot, "kaplan_meier", names, reference = reference, reference_legend = reference_legend,
+                key_title = key_title)
 }

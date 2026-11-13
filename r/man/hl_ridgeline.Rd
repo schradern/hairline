@@ -30,7 +30,8 @@ hl_ridgeline(
   columns = NULL,
   summary = NULL,
   stats = character(),
-  compare = NULL
+  compare = NULL,
+  reference_legend = FALSE
 )
 }
 \arguments{
@@ -80,6 +81,9 @@ legend. A ridge shows its own spread, so intervals belong to \code{\link[=hl_rai
 \item{compare}{Add each ridge's difference against one group or the ridge above (\code{"adjacent"}), with its 95\% CI
 and p, to that column (within each panel); the caption names the test, which follows the centre as in
 \code{\link[=hl_spread]{hl_spread()}}.}
+
+\item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
+line; one labelled reference at most.}
 }
 \value{
 A ggplot with the hairline frame.

@@ -80,8 +80,7 @@ spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
                                          color = style$neutral$ink, width = style$leader_width, role = "mark")
   }
   if (length(shapes)) {
-    shapes[[1]]$tip <- paste0(row$name, ": ", paste(vapply(row$pairs, paste, character(1), collapse = " "),
-                                                    collapse = ", "))
+    shapes[[1]]$tip <- pairs_tip(row$name, row$pairs)
     shapes[[1]]$tip_at <- c(scale(spread_row_centre(row)), centre - half)
   }
   lapply(shapes, function(shape) c(shape, series = row$name))
@@ -163,6 +162,8 @@ spread_drawing <- function(spec, box, measure, style) {
   left <- layout$plot[1]
   right <- layout$plot[2]
   lead <- line_height(style, "label")
+  # The axis thinned to the plot's width, before anything is placed on its scale.
+  spec$axis <- fitted_axis(spec$axis, FALSE, c(left, right), measure, style)
   scale <- forest_scale(spec$axis, FALSE, left, right)
   line <- rules$row_pitch * lead
   pitch <- line + if (layout$under) lead else 0
