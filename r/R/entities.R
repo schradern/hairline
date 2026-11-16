@@ -9,9 +9,8 @@ assign_colors <- function(palette, label, fixed, requests) {
     free <- setdiff(palette, taken)
     if (length(free) == 0) {
       needed <- unique(c(names(mapping), requests))
-      stop(sprintf(paste0("hairline: %s has %d slots but %d categories need colours: %s; ",
-                          "fold small categories into 'Other' or split the figure into panels"),
-                   label, length(palette), length(needed), paste(needed, collapse = ", ")), call. = FALSE)
+      stop(sprintf("hairline: %s but %d categories need colours: %s; %s", slot_count(label, length(palette)),
+                   length(needed), paste(needed, collapse = ", "), more_slots_advice(label)), call. = FALSE)
     }
     mapping[[name]] <- free[1]
     taken <- c(taken, free[1])
@@ -55,9 +54,8 @@ no_room <- function(palette, label, names, reserved, dimension) {
                    paste0("'", others, "'", collapse = ", "), length(names), dimension %||% "None",
                    paste(names, collapse = ", ")))
   }
-  sprintf(paste0("hairline: %s has %d slots but %d categories need colours: %s; ",
-                 "fold small categories into 'Other' or split the figure into panels"),
-          label, length(palette), length(names), paste(names, collapse = ", "))
+  sprintf("hairline: %s but %d categories need colours: %s; %s", slot_count(label, length(palette)),
+          length(names), paste(names, collapse = ", "), more_slots_advice(label))
 }
 
 # Colours remembered for names of other dimensions than `dimension` (NULL: names given no dimension), named by

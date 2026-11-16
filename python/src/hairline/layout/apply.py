@@ -22,6 +22,7 @@ from hairline.layout.table import draw_table, table_keys, table_label_width, tab
 from hairline.layout.ticking import configure_all_ticks
 from hairline.marks import apply_light_slots, line_scale, scale_panel_lines
 from hairline.settings import role_size
+from hairline.slots import more_slots_advice, slot_count
 from hairline.tokens import load_tokens
 
 if TYPE_CHECKING:
@@ -447,8 +448,9 @@ def check_categories(figure: HairlineFigure) -> None:
     items, slots = items_from_axes(figure.axes), len(figure.settings.palette)
     count = len(items)
     if count > slots and len({item.color.lower() for item in items}) < count:
-        raise HairlineLayoutError(f"hairline: {figure.settings.palette_label} has {slots} slots but {count} categories "
-                                  "were given; fold small categories into 'Other' or split the figure into panels")
+        label = figure.settings.palette_label
+        raise HairlineLayoutError(f"hairline: {slot_count(label, slots)} but {count} categories were given; "
+                                  f"{more_slots_advice(label)}")
 
 
 def apply_frame(figure: HairlineFigure) -> dict[int, list[str]]:

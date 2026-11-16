@@ -6,6 +6,8 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 
+from hairline.slots import more_slots_advice, slot_count
+
 _state: dict[str, dict[str, str]] = {"fixed": {}, "auto": {}, "dimensions": {}}
 _scopes: list[dict[str, str]] = []
 _dimensions: list[str | None] = []
@@ -21,8 +23,8 @@ def assign_colors(palette: Sequence[str], label: str, fixed: Mapping[str, str],
         free = [color for color in palette if color not in taken]
         if not free:
             names = list(dict.fromkeys([*mapping, *requests]))
-            raise ValueError(f"hairline: {label} has {len(palette)} slots but {len(names)} categories need colours: "
-                             f"{', '.join(names)}; fold small categories into 'Other' or split the figure into panels")
+            raise ValueError(f"hairline: {slot_count(label, len(palette))} but {len(names)} categories need "
+                             f"colours: {', '.join(names)}; {more_slots_advice(label)}")
         mapping[name] = free[0]
         taken.add(free[0])
     return {name: mapping[name] for name in requests}
@@ -63,8 +65,8 @@ def no_room(palette: Sequence[str], label: str, names: Sequence[str], reserved: 
                 f"{', '.join(repr(other) for other in others)} and {len(names)} categories of dimension "
                 f"{dimension!r} need colours: {', '.join(names)}; use fewer categories, pin colours with "
                 f"use(colors=...) or give the dimensions one palette each")
-    return (f"hairline: {label} has {len(palette)} slots but {len(names)} categories need colours: "
-            f"{', '.join(names)}; fold small categories into 'Other' or split the figure into panels")
+    return (f"hairline: {slot_count(label, len(palette))} but {len(names)} categories need colours: "
+            f"{', '.join(names)}; {more_slots_advice(label)}")
 
 
 def reserved_colors(dimension: str | None) -> dict[str, str]:

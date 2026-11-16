@@ -25,6 +25,7 @@ from matplotlib.colors import LinearSegmentedColormap
 
 from hairline.color.check import check_palette
 from hairline.color.space import hex_to_oklab, linear_to_hex, oklab_to_linear, parse_hex
+from hairline.slots import more_slots_advice, slot_count
 from hairline.tokens import load_tokens
 
 if TYPE_CHECKING:
@@ -80,8 +81,8 @@ def palette(name: str | Sequence[str] | None = None, n: int | None = None) -> li
     if n is None:
         return colors
     if n > len(colors):
-        raise ValueError(f"hairline: {label} has {len(colors)} slots but {n} categories were given; "
-                         "fold small categories into 'Other' or split the figure into panels")
+        raise ValueError(f"hairline: {slot_count(label, len(colors))} but {n} categories were given; "
+                         f"{more_slots_advice(label)}")
     return colors[:n]
 
 

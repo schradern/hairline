@@ -200,9 +200,11 @@ study_figure <- function(endpoint, names, what, draw) {
   settings <- hl_settings()
   slots <- length(settings$palette)
   if (length(names) <= slots) return(draw())
+  label <- settings$palette_label
+  advice <- if (startsWith(label, "brand ")) more_slots_advice(label) else sprintf("fold small %s into 'Other'", what)
   warning(sprintf(paste("hairline: %s: %d %s need more colours than the %d of %s, so the result has no figure; its",
-                        "table, values and text are complete. Fold small %s into 'Other' to draw it"),
-                  endpoint, length(names), what, slots, settings$palette_label, what), call. = FALSE)
+                        "table, values and text are complete. To draw it, %s"),
+                  endpoint, length(names), what, slots, label, advice), call. = FALSE)
   NULL
 }
 

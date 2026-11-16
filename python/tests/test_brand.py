@@ -197,5 +197,8 @@ def test_explicit_colors_draw_more_groups_than_the_brand_has_slots(tmp_path, col
     import pandas as pd
     data = pd.DataFrame({"ward": ["A", "A", "B", "B"], "arm": ["x", "y", "x", "y"], "n": [3, 4, 5, 6]})
     assert hl.save(hl.bars(data, "ward", "n", by="arm", colors=colors), tmp_path / "bars", formats=["png"])
-    with pytest.raises(ValueError, match="1 slots but 2 categories"):
+    with pytest.raises(ValueError, match="brand 'One slot' has 1 slot but 2 categories") as raised:
         hl.bars(data, "ward", "n", by="arm")
+    # The brand names one chart colour: the advice is to list more, not to merge categories.
+    assert "defaults.hairline.categorical" in str(raised.value)
+    assert "'Other'" not in str(raised.value)

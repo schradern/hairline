@@ -1,5 +1,13 @@
 # hairline (development version)
 
+## A brand short of chart colours says how to add them
+
+* When a chart has more groups than the brand has slots, the error now says where slots come from: the brand's
+  `defaults.hairline.categorical`, or failing that `color.primary`, `secondary` and `tertiary`. Colours named under
+  `color.palette` are not slots until listed there, so a brand that names five colours but sets only `primary` has
+  one slot. The advice to fold categories into "Other" stays for hairline's own palettes, where it fits.
+* "1 slot", not "1 slots".
+
 ## Tooltips on every chart
 
 * `hl_raincloud()`: each group's box reads its n, every measure of `summary =` and `stats =`, and with `compare =`

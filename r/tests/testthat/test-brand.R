@@ -113,5 +113,9 @@ test_that("explicit colours draw more groups than the brand has slots", {
     expect_no_error(hl_save(hl_bars(data, "ward", "n", by = "arm", colors = colors), file.path(folder, "bars"),
                             formats = "png"))
   }
-  expect_error(hl_bars(data, "ward", "n", by = "arm"), "1 slots but 2 categories")
+  error <- tryCatch(hl_bars(data, "ward", "n", by = "arm"), error = conditionMessage)
+  expect_match(error, "brand 'One slot' has 1 slot but 2 categories", fixed = TRUE)
+  # The brand names one chart colour: the advice is to list more, not to merge categories.
+  expect_match(error, "defaults.hairline.categorical", fixed = TRUE)
+  expect_no_match(error, "'Other'", fixed = TRUE)
 })

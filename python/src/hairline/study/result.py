@@ -34,11 +34,16 @@ def figure_for(endpoint: str, names: Sequence[str], what: str,
     """The endpoint's figure, or None with a warning when its `what` (groups, or a variable's categories) need more
     colours than the palette has: the table, values and text need none."""
     from hairline.settings import current_settings
+    from hairline.slots import more_slots_advice
     settings = current_settings()
+
+    def draw_advice(label: str, what: str) -> str:
+        return more_slots_advice(label) if label.startswith("brand ") else f"fold small {what} into 'Other'"
+
     slots = len(settings.palette)
     if len(names) <= slots:
         return draw()
     warnings.warn(f"hairline: {endpoint}: {len(names)} {what} need more colours than the {slots} of "
                   f"{settings.palette_label}, so the result has no figure; its table, values and text are complete. "
-                  f"Fold small {what} into 'Other' to draw it", UserWarning, stacklevel=3)
+                  f"To draw it, {draw_advice(settings.palette_label, what)}", UserWarning, stacklevel=3)
     return None

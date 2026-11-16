@@ -60,9 +60,8 @@ hl_palette <- function(name = NULL, n = NULL) {
   resolved <- resolve_palette(name)
   if (is.null(n)) return(resolved$colors)
   if (n > length(resolved$colors)) {
-    stop(sprintf(paste0("hairline: %s has %d slots but %d categories were given; ",
-                        "fold small categories into 'Other' or split the figure into panels"),
-                 resolved$label, length(resolved$colors), n), call. = FALSE)
+    stop(sprintf("hairline: %s but %d categories were given; %s", slot_count(resolved$label, length(resolved$colors)),
+                 n, more_slots_advice(resolved$label)), call. = FALSE)
   }
   resolved$colors[seq_len(n)]
 }
@@ -187,4 +186,19 @@ hl_palettes <- function(kind = NULL) {
   if (!is.null(kind)) table <- table[table$kind == kind, , drop = FALSE]
   rownames(table) <- NULL
   table
+}
+
+# The wording of a palette that has fewer slots than a chart has categories, as the Python package's slots.py.
+slot_count <- function(label, slots) {
+  sprintf("%s has %d slot%s", label, slots, if (slots == 1) "" else "s")
+}
+
+# A brand is short of slots because its file names too few chart colours, which merging categories doesn't fix;
+# a hairline palette has eight, so a chart that needs more has too many categories.
+more_slots_advice <- function(label) {
+  if (startsWith(label, "brand ")) {
+    return(paste0("list the brand's chart colours under defaults.hairline.categorical (colours named under ",
+                  "color.palette are not slots until listed there), or give this chart colors="))
+  }
+  "fold small categories into 'Other' or split the figure into panels"
 }
