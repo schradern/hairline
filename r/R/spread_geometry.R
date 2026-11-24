@@ -86,18 +86,44 @@ spread_row_shapes <- function(row, centre, pitch, scale, style, rules) {
   lapply(shapes, function(shape) c(shape, series = row$name))
 }
 
-spread_pair_width <- function(pair, measure) {
-  measure(paste0(pair[1], " "), "label") + measure(pair[2], "label", hl_tokens()$type$value_weight)
+spread_pair_width <- function(pair, measure, headed = FALSE) {
+  value <- measure(pair[2], "label", hl_tokens()$type$value_weight)
+  if (headed) value else measure(paste0(pair[1], " "), "label") + value
 }
 
-# Width of each key-number column: one column per statistic, so labels line up from row to row.
-spread_stat_widths <- function(spec, measure) {
+# The positions of the key-number columns under a heading (the written columns), and their headings.
+spread_headed <- function(headings) {
+  stats::setNames(vapply(headings, `[[`, "", "label"), vapply(headings, function(entry) entry$index, numeric(1)))
+}
+
+# Width of each key-number column: one column per statistic, so labels line up from row to row. A column under a
+# heading writes its values alone, and is as wide as its heading at least.
+spread_stat_widths <- function(spec, measure, headings = list()) {
+  headed <- spread_headed(headings)
   count <- max(vapply(spec$rows, function(row) length(row$pairs), integer(1)))
   vapply(seq_len(count), function(index) {
-    max(c(0, unlist(lapply(spec$rows, function(row) {
-      if (index <= length(row$pairs)) spread_pair_width(row$pairs[[index]], measure)
+    heading <- headed[as.character(index)]
+    max(c(0, if (!is.na(heading)) measure(heading, "label"), unlist(lapply(spec$rows, function(row) {
+      if (index <= length(row$pairs)) spread_pair_width(row$pairs[[index]], measure, !is.na(heading))
     }))))
   }, numeric(1))
+}
+
+# With written columns, every key-number column is named once (Median, IQR, n, the written columns, a mark, the
+# difference and p) and its rows hold values alone, so all of them line up as one table; without, none is: a row
+# keeps its labels beside its numbers. As Python's every_heading().
+spread_every_heading <- function(spec) {
+  written <- spec$headings %||% list()
+  if (!length(written)) return(list())
+  named <- character()
+  for (row in spec$rows) {
+    for (index in seq_along(row$pairs)) {
+      if (is.na(named[as.character(index)])) named[as.character(index)] <- row$pairs[[index]][1]
+    }
+  }
+  for (entry in written) named[as.character(entry$index)] <- entry$label
+  positions <- sort(as.integer(names(named)))
+  lapply(positions, function(index) list(index = index, label = unname(named[as.character(index)])))
 }
 
 # Left edges of the key-number columns from `start`, separated like a panel header's key numbers.
@@ -122,24 +148,34 @@ spread_layout <- function(spec, box, measure, style, rules) {
   pair_gap <- hl_tokens()$spacing$stats_pair * style$base
   gap <- rules$column_gap * style$base
   least <- rules$min_plot * style$base
-  widths <- spread_stat_widths(spec, measure)
+  headings <- spread_every_heading(spec)
+  widths <- spread_stat_widths(spec, measure, headings)
   block <- if (length(widths)) sum(widths) + pair_gap * (length(widths) - 1) else 0
   names <- max(vapply(spec$rows, function(row) measure(row$name, "label"), numeric(1)))
   left <- box[1] + names + gap
   right <- box[1] + box[3]
-  if (!length(widths)) return(list(plot = c(left, right), lefts = numeric(), under = FALSE))
+  if (!length(widths)) return(list(plot = c(left, right), lefts = numeric(), under = FALSE, headings = list()))
   if (numbers_beside(spec$numbers, right - block - gap - left, least, style$base, "spread")) {
     return(list(plot = c(left, right - block - gap), lefts = spread_stat_columns(widths, right - block, pair_gap),
-                under = FALSE))
+                under = FALSE, headings = headings))
   }
+  # Under each row there is no column to head: written columns name themselves, as every other number does.
+  widths <- spread_stat_widths(spec, measure)
+  block <- sum(widths) + pair_gap * (length(widths) - 1)
   spread_check_room(box[3], block, least, names, gap)
-  list(plot = c(left, right), lefts = spread_stat_columns(widths, box[1], pair_gap), under = TRUE)
+  list(plot = c(left, right), lefts = spread_stat_columns(widths, box[1], pair_gap), under = TRUE, headings = list())
 }
 
-# Label in faint, value in muted at the value weight: the panel header's key-number style.
-spread_pair_texts <- function(pairs, lefts, baseline, measure, style) {
+# Label in faint, value in muted at the value weight: the panel header's key-number style. A column under a heading
+# writes its value alone.
+spread_pair_texts <- function(pairs, lefts, baseline, measure, style, headings = list()) {
   weight <- hl_tokens()$type$value_weight
+  headed <- names(spread_headed(headings))
   unlist(lapply(seq_along(pairs), function(index) {
+    if (as.character(index) %in% headed) {
+      return(list(shape_text(lefts[index], baseline, pairs[[index]][2], "label", style$neutral$muted, "left",
+                             weight)))
+    }
     label <- paste0(pairs[[index]][1], " ")
     list(shape_text(lefts[index], baseline, label, "label", style$neutral$faint),
          shape_text(lefts[index] + measure(label, "label"), baseline, pairs[[index]][2], "label",
@@ -147,12 +183,25 @@ spread_pair_texts <- function(pairs, lefts, baseline, measure, style) {
   }), recursive = FALSE)
 }
 
-spread_title_shape <- function(spec, right, axis_y, style, rules) {
-  if (is.null(spec$axis_title)) return(list())
+# The written columns' headings under their values, on the axis title's line and in its style: the plot and each
+# written column named on one line.
+spread_heading_texts <- function(layout, baseline, style) {
+  lapply(layout$headings, function(entry) {
+    c(shape_text(layout$lefts[entry$index], baseline, entry$label, "label", style$neutral$muted), part = "title")
+  })
+}
+
+# The axis title's baseline: under the axis numbers by the frame's x-title gap.
+spread_title_baseline <- function(axis_y, style, rules) {
   size <- style$sizes$label
   ticks <- axis_y + rules$axis_gap * style$base + style$cap_height * size
-  baseline <- ticks + style$descender * size + hl_tokens()$spacing$x_title * style$base + style$cap_height * size
-  list(c(shape_text(right, baseline, spec$axis_title, "label", style$neutral$muted, "right"), part = "title"))
+  ticks + style$descender * size + hl_tokens()$spacing$x_title * style$base + style$cap_height * size
+}
+
+spread_title_shape <- function(spec, right, axis_y, style, rules) {
+  if (is.null(spec$axis_title)) return(list())
+  list(c(shape_text(right, spread_title_baseline(axis_y, style, rules), spec$axis_title, "label", style$neutral$muted,
+                    "right"), part = "title"))
 }
 
 # Rows keep their pitch (the figure's height follows them); a row whose numbers sit under it is a line taller.
@@ -190,11 +239,13 @@ spread_drawing <- function(spec, box, measure, style) {
     }
     shapes <- c(shapes, spread_row_shapes(entry, centre, line, scale, style, rules),
                 list(shape_text(box[1], baseline, entry$name, "label", style$neutral$ink)),
-                spread_pair_texts(entry$pairs, layout$lefts, baseline + if (layout$under) lead else 0, measure, style))
+                spread_pair_texts(entry$pairs, layout$lefts, baseline + if (layout$under) lead else 0, measure, style,
+                                  layout$headings))
   }
   axis <- list(axis = spec$axis, favours = NULL, null = NULL)
   c(shapes, forest_axis_shapes(axis, scale, c(left, right), bottom, style, rules),
-    spread_title_shape(spec, right, bottom, style, rules))
+    spread_title_shape(spec, right, bottom, style, rules),
+    spread_heading_texts(layout, spread_title_baseline(bottom, style, rules), style))
 }
 
 # spread_spec() with a block of rows per value of `facet`: every row keyed by facet and group, the blocks drawn as

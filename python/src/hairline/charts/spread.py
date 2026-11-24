@@ -35,6 +35,14 @@ from hairline.charts.options import (
     legend_references,
     references,
 )
+from hairline.charts.spread_columns import (
+    checked_columns,
+    column_measures,
+    column_numbers,
+    columns_note,
+    group_columns,
+    with_columns,
+)
 from hairline.charts.spread_geometry import spread_drawing
 from hairline.charts.summaries import (
     BARS,
@@ -175,8 +183,10 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
                 section: str | None = None, panel_letters: bool = False, mean: bool = False,
                 sort: str | None = None, reference: Reference = None,
                 highlight: Sequence[str] | str | None = None, summary: str | Sequence[str] | None = None,
-                compare: str | None = None, group_names: Mapping[str, str] | None = None) -> dict:
+                compare: str | None = None, group_names: Mapping[str, str] | None = None,
+                columns: str | Sequence[str] | Mapping[str, str] | None = None) -> dict:
     check_columns(data, [group, value, color_by, section])
+    written = checked_columns(data, columns, "spread")
     if sort not in SORTS:
         raise ValueError(f"hairline: spread: sort {sort!r} must be 'median' or None")
     check_numeric(data, [value], "spread")
@@ -184,8 +194,8 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
     if show_n and "n" not in stats:
         stats = (*stats, "n")
     locale = current_settings().locale
-    groups = [(str(name), rows[value].dropna().astype(float).to_numpy())
-              for name, rows in groups_of(data, group, order, "spread")]
+    frames = {str(name): rows for name, rows in groups_of(data, group, order, "spread")}
+    groups = [(name, rows[value].dropna().astype(float).to_numpy()) for name, rows in frames.items()]
     groups = [(name, values) for name, values in groups if len(values)]
     if not groups:
         raise ValueError(f"hairline: spread: no values to draw; '{value}' is empty or missing in every row")
@@ -207,18 +217,21 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
     lines = references(reference, "spread")
     marks = checked_marks(marks, groups)
     sections = coarse_groups(data, group, section, "spread") if section else {}
+    measures, written_numbers = column_measures(stats), column_numbers(data, written)
     rows = []
     for (name, values), (_, shown) in zip(counted, drawn, strict=True):
         mark = marks.get(name)
         rows.append({**summary_row(values, shown, drawn_marks, discrete), "name": name, "color": palette[name],
                      "mark": None if mark is None else float(mark), "section": sections[name] if section else None,
-                     "pairs": stats_pairs(values, stats, numbers, mark, mark_label, discrete)})
+                     "pairs": with_columns(stats_pairs(values, stats, numbers, mark, mark_label, discrete),
+                                           len(stats), group_columns(frames, name, written, measures,
+                                                                     written_numbers))})
     rows = arranged(rows, sort)
     extra = [row["mark"] for row in rows if row["mark"] is not None] + [value for value, _ in lines] + \
         [end for row in rows if row["bar"] for end in row["bar"][:2]]
     lows, highs = [row["low"] for row in rows] + extra, [row["high"] for row in rows] + extra
     notes = [small, clip_caption(every, limits, clip_stats, locale) if clip is not None else None,
-             word("levels_note", locale) if discrete else None,
+             word("levels_note", locale) if discrete else None, columns_note(written, measures, locale),
              section_comparisons(rows, dict(counted), compare, drawn_marks, numbers, "spread", group_names)]
     legend = [("square", color, label) for label, color in dict.fromkeys((coarse[name], palette[name])
                                                                            for name in names)] if color_by else []
@@ -227,6 +240,7 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
         named = drawn_marks if summary is not None else ("median", "mean")
         legend += summary_legend(named, "dot", current_settings().neutral["ink"], locale)
     return {"rows": rows, "axis": spread_axis(lows, highs, percent, zero), "axis_title": axis_title,
+            "headings": {len(stats) + index: label for index, label in enumerate(written.values())},
             "notes": [note for note in notes if note], "legend": legend, "letters": panel_letters,
             "references": [list(line) for line in lines]}
 
@@ -242,7 +256,8 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
            sort: str | None = None, x_title: str | None = None, reference: Reference = None,
            reference_legend: bool = False, highlight: Sequence[str] | str | None = None, key_title: str | None = None,
            facet: str | None = None, summary: str | Sequence[str] | None = None,
-           compare: str | None = None, numbers: str = "auto") -> HairlineFigure:
+           compare: str | None = None, numbers: str = "auto",
+           columns: str | Sequence[str] | Mapping[str, str] | None = None) -> HairlineFigure:
     """Distributions per group compared on one axis, first group on top; `marks` adds a reference tick per group
     (a capacity, a target), `mark_label` names it in the numbers column; `axis_title` (e.g. the unit) goes under
     the axis numbers. On a figure too narrow for the numbers beside the plot, they sit on a line under each row.
@@ -267,7 +282,13 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
     with its 95 % CI and p, beside the other numbers (within each block); the caption names the test, which follows
     the centre: the Hodges–Lehmann shift and Wilcoxon rank-sum test with the median, the difference in means and
     Welch's t-test with the mean alone. `numbers` places the numbers: beside the plot while it keeps its least
-    width, else under each row ("auto"), always beside it ("right"), or always under each row ("below")."""
+    width, else under each row ("auto"), always beside it ("right"), or always under each row ("below").
+
+    `columns` writes other measures of each group beside its numbers, not drawn: a column name, several, or
+    {column: label}. Then every number column beside the plot is named once under its values, on the axis title's
+    line, and the rows hold values alone. Each shows the centre and interval named
+    in `stats` (stats=("mean", "iqr") gives "61.4 (53–73)"; the median alone without them), and the caption says
+    which."""
     reference, legend_labels = legend_references(reference, reference_legend, "spread")
     if facet is not None:
         spec = faceted_spec(data, group, value, facet, order=order, marks=marks, mark_label=mark_label, stats=stats,
@@ -275,14 +296,14 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
                             colors=colors, show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats,
                             color_by=color_by, dimension=dimension, discrete=discrete, section=section,
                             panel_letters=panel_letters, mean=mean, sort=sort, reference=reference,
-                            highlight=highlight, summary=summary, compare=compare)
+                            highlight=highlight, summary=summary, compare=compare, columns=columns)
     else:
         spec = spread_spec(data, group, value, order=order, marks=marks, mark_label=mark_label, stats=stats,
                            percent=percent, digits=digits, zero=zero, axis_title=axis_title or x_title, colors=colors,
                            show_n=show_n, min_n=min_n, clip=clip, clip_stats=clip_stats, color_by=color_by,
                            dimension=dimension, discrete=discrete, section=section, panel_letters=panel_letters,
                            mean=mean, sort=sort, reference=reference, highlight=highlight, summary=summary,
-                           compare=compare)
+                           compare=compare, columns=columns)
     spec["numbers"] = check_numbers(numbers, "spread")
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *spec["notes"]), size=size)

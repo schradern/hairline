@@ -103,7 +103,7 @@ def test_a_figure_too_narrow_for_the_plot_and_numbers_names_the_room_needed():
 def test_without_numbers_the_plot_reaches_the_right_edge():
     data = spec(stats=[])
     layout = spread_layout(data, Box(20, 60, 200, 300), measure, STYLE, load_tokens()["spread"])
-    assert layout == {"plot": (layout["plot"][0], 220), "lefts": [], "under": False}
+    assert layout == {"plot": (layout["plot"][0], 220), "lefts": [], "under": False, "headings": {}}
 
 
 def test_spread_at_a_two_column_width_keeps_its_plot(narrow_context):

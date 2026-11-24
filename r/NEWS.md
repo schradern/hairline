@@ -13,6 +13,15 @@
   interactive session, a result also draws its figure.
 * `hl_save(result, name)` writes a result's figure and its table as `name.csv`.
 
+## Other measures beside spread rows
+
+* `hl_spread(columns =)` writes other measures of each group beside its numbers, not drawn: a column, several, or
+  `c(column = "label")`. Each shows the centre and interval named in `stats` (`stats = c("mean", "iqr")` writes
+  "61.4 (53-73)"); the caption says which. A group without values writes a dash.
+* With written columns, every number column beside the plot (Median, IQR, n, the written ones, the difference and
+  p) is named once under its values, on the axis title's line, and the rows hold values alone. Without them nothing
+  changes; under each row, on a narrow figure, every number keeps its label.
+
 ## A brand short of chart colours says how to add them
 
 * When a chart has more groups than the brand has slots, the error now says where slots come from: the brand's

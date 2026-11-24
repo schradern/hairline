@@ -39,7 +39,8 @@ hl_spread(
   summary = NULL,
   compare = NULL,
   numbers = "auto",
-  reference_legend = FALSE
+  reference_legend = FALSE,
+  columns = NULL
 )
 }
 \arguments{
@@ -119,6 +120,12 @@ difference in means and Welch's t-test with the mean alone.}
 
 \item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
 line; one labelled reference at most.}
+
+\item{columns}{Other measures of each group written beside its numbers, not drawn: a column name, several, or
+\code{c(column = "label")}. Then every number column beside the plot is named once under its values, on the axis
+title's line, and the rows hold values alone. Each shows the centre and
+interval named in \code{stats} (\code{stats = c("mean", "iqr")} gives "61.4 (53-73)"; the median alone without them),
+and the caption says which.}
 }
 \value{
 A ggplot with the hairline frame.

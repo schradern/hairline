@@ -141,8 +141,9 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
                         axis_title = NULL, colors = NULL, show_n = FALSE, min_n = NULL, clip = NULL,
                         clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
                         panel_letters = FALSE, mean = FALSE, sort = NULL, reference = NULL, highlight = NULL,
-                        summary = NULL, compare = NULL, group_names = NULL) {
+                        summary = NULL, compare = NULL, group_names = NULL, columns = NULL) {
   check_columns(data, c(group, value, color_by, section))
+  written <- spread_checked_columns(data, columns, "spread")
   if (!is.null(sort) && !identical(sort, "median")) {
     stop(sprintf("hairline: spread: sort '%s' must be 'median' or NULL", sort), call. = FALSE)
   }
@@ -165,13 +166,20 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
                              named = TRUE)
   lines <- option_references(reference, "spread")
   sections <- if (!is.null(section)) coarse_groups(data, group, section, "spread")
+  measures <- spread_column_measures(stats)
+  written_numbers <- spread_column_numbers(data, written)
   rows <- lapply(names, function(name) {
+    pairs <- spread_with_columns(spread_pairs(counted[[name]], stats, numbers,
+                                              if (name %in% names(marks)) as.numeric(marks[[name]]), mark_label,
+                                              discrete), length(stats),
+                                 if (length(written)) spread_column_pairs(data, group, name, written, measures,
+                                                                          written_numbers))
     values <- counted[[name]]
     mark <- if (name %in% names(marks)) as.numeric(marks[[name]]) else NULL
     c(spread_summary_row(values, drawn[[name]], drawn_marks, discrete),
       list(name = name, color = coloured$palette[[name]], mark = mark,
            section = if (!is.null(section)) unname(sections[[name]]),
-           pairs = spread_pairs(values, stats, numbers, mark, mark_label, discrete)))
+           pairs = pairs))
   })
   rows <- arranged_rows(rows, sort)
   compared <- section_comparisons(rows, counted, compare, drawn_marks, numbers, "spread", group_names)
@@ -179,10 +187,13 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   bar_ends <- unlist(lapply(rows, function(row) if (!is.null(row$bar)) c(row$bar$low, row$bar$high)))
   marked <- c(unlist(lapply(rows, `[[`, "mark")), vapply(lines, `[[`, numeric(1), "value"), bar_ends)
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats),
-             if (discrete) word("levels_note"), compared$note)
+             if (discrete) word("levels_note"), spread_columns_note(written, measures), compared$note)
   list(rows = rows, axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
                                        c(vapply(rows, `[[`, numeric(1), "high"), marked), percent, zero),
        axis_title = axis_title, notes = notes, letters = isTRUE(panel_letters),
+       headings = lapply(seq_along(written), function(index) {
+         list(index = length(stats) + index, label = unname(written[[index]]))
+       }),
        legend = c(if (!is.null(color_by)) coarse_legend(coloured), spread_summary_legend(summary, mean, drawn_marks)),
        references = lines)
 }
@@ -257,6 +268,11 @@ faceted_spread_spec <- function(data, group, value, facet, order, options) {
 #' @param numbers Where the numbers go: beside the plot while it keeps its least width, else under each row
 #'   (`"auto"`), always beside it (`"right"`), or always under each row (`"below"`).
 #' @param sort `"median"` orders the rows of a section by median, highest first; `NULL` keeps their order.
+#' @param columns Other measures of each group written beside its numbers, not drawn: a column name, several, or
+#'   `c(column = "label")`. Then every number column beside the plot is named once under its values, on the axis
+#'   title's line, and the rows hold values alone. Each shows the centre and
+#'   interval named in `stats` (`stats = c("mean", "iqr")` gives "61.4 (53-73)"; the median alone without them),
+#'   and the caption says which.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -273,8 +289,9 @@ hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption
                       clip_stats = FALSE, color_by = NULL, dimension = NULL, discrete = FALSE, section = NULL,
                       panel_letters = FALSE, mean = FALSE, sort = NULL, x_title = NULL, reference = NULL,
                       highlight = NULL, key_title = NULL, facet = NULL, summary = NULL, compare = NULL,
-                      numbers = "auto", reference_legend = FALSE) {
+                      numbers = "auto", reference_legend = FALSE, columns = NULL) {
   options <- list(summary = summary, compare = compare, marks = marks, mark_label = mark_label, stats = stats,
+                  columns = columns,
                   percent = percent, digits = digits,
                   zero = zero, axis_title = axis_title %||% x_title, colors = colors, show_n = show_n, min_n = min_n,
                   clip = clip, clip_stats = clip_stats, color_by = color_by, dimension = dimension,

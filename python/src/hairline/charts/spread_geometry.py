@@ -4,6 +4,8 @@ a line under each row), the axis title under the numbers. Pure."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from hairline.charts.donut_geometry import Measure, baseline_for, line_height, text
 from hairline.charts.forest_geometry import axis_shapes, dot_size, fitted_axis, marker, x_scale
 from hairline.charts.options import numbers_beside, reference_line_height, reference_shapes
@@ -18,15 +20,33 @@ OPEN_EDGE = 0.6
 LETTERS = "abcdefghijklmnopqrstuvwxyz"
 
 
-def pair_width(pair: list[str], measure: Measure) -> float:
-    return measure(f"{pair[0]} ", "label") + measure(pair[1], "label", load_tokens()["type"]["value_weight"])
+def pair_width(pair: list[str], measure: Measure, headed: bool = False) -> float:
+    value = measure(pair[1], "label", load_tokens()["type"]["value_weight"])
+    return value if headed else measure(f"{pair[0]} ", "label") + value
 
 
-def stat_widths(spec: dict, measure: Measure) -> list[float]:
-    """Width of each key-number column: one column per statistic, so labels line up from row to row."""
+def stat_widths(spec: dict, measure: Measure, headed: Mapping[int, str] | None = None) -> list[float]:
+    """Width of each key-number column: one column per statistic, so labels line up from row to row. A column
+    under a heading (`headed`, by position) writes its values alone, and is as wide as its heading at least."""
+    headed = headed or {}
     count = max(len(row["pairs"]) for row in spec["rows"])
-    return [max((pair_width(row["pairs"][index], measure) for row in spec["rows"] if index < len(row["pairs"])),
+    return [max([pair_width(row["pairs"][index], measure, index in headed) for row in spec["rows"]
+                 if index < len(row["pairs"])] + ([measure(headed[index], "label")] if index in headed else []),
                 default=0.0) for index in range(count)]
+
+
+def every_heading(spec: dict) -> dict[int, str]:
+    """With written columns, every key-number column is named once (Median, IQR, n, the written columns, a mark,
+    Δ and p) and its rows hold values alone, so all of them line up as one table; without, none is: a row keeps
+    its labels beside its numbers."""
+    written = spec.get("headings", {})
+    if not written:
+        return {}
+    named = {}
+    for row in spec["rows"]:
+        for index, (label, _) in enumerate(row["pairs"]):
+            named.setdefault(index, label)
+    return {**named, **written}
 
 
 def stat_columns(widths: list[float], start: float, gap: float) -> list[float]:
@@ -54,28 +74,43 @@ def spread_layout(spec: dict, box: Box, measure: Measure, style: dict, rules: di
     plot spans the width the names leave. No statistic is dropped."""
     base, pair_gap = style["base"], load_tokens()["spacing"]["stats_pair"] * style["base"]
     gap, least = rules["column_gap"] * base, rules["min_plot"] * base
-    widths = stat_widths(spec, measure)
+    headings = every_heading(spec)
+    widths = stat_widths(spec, measure, headings)
     block = sum(widths) + pair_gap * (len(widths) - 1) if widths else 0.0
     names = max(measure(row["name"], "label") for row in spec["rows"])
     left, right = box.x + names + gap, box.x + box.width
     if not widths:
-        return {"plot": (left, right), "lefts": [], "under": False}
+        return {"plot": (left, right), "lefts": [], "under": False, "headings": {}}
     if numbers_beside(spec.get("numbers", "auto"), right - block - gap - left, least, base, "spread"):
         return {"plot": (left, right - block - gap), "lefts": stat_columns(widths, right - block, pair_gap),
-                "under": False}
+                "under": False, "headings": headings}
+    # Under each row there is no column to head: written columns name themselves, as every other number does.
+    widths = stat_widths(spec, measure)
+    block = sum(widths) + pair_gap * (len(widths) - 1)
     check_room(box.width, block, least, names, gap)
-    return {"plot": (left, right), "lefts": stat_columns(widths, box.x, pair_gap), "under": True}
+    return {"plot": (left, right), "lefts": stat_columns(widths, box.x, pair_gap), "under": True, "headings": {}}
 
 
 def pair_texts(pairs: list[list[str]], lefts: list[float], baseline: float, measure: Measure,
-               style: dict) -> list[dict]:
-    """Label in faint, value in muted at the value weight: the panel header's key-number style."""
+               style: dict, headed: Mapping[int, str] | None = None) -> list[dict]:
+    """Label in faint, value in muted at the value weight: the panel header's key-number style. A column under a
+    heading writes its value alone."""
     neutral, weight, shapes = style["neutral"], load_tokens()["type"]["value_weight"], []
-    for (label, value), left in zip(pairs, lefts, strict=False):
+    for index, ((label, value), left) in enumerate(zip(pairs, lefts, strict=False)):
+        if index in (headed or {}):
+            shapes.append(text(left, baseline, value, "label", neutral["muted"], "left", weight))
+            continue
         shapes += [text(left, baseline, f"{label} ", "label", neutral["faint"]),
                    text(left + measure(f"{label} ", "label"), baseline, value, "label", neutral["muted"], "left",
                         weight)]
     return shapes
+
+
+def heading_texts(layout: dict, baseline: float, style: dict) -> list[dict]:
+    """The written columns' headings under their values, on the axis title's line and in its style: the plot and
+    each written column named on one line."""
+    return [{**text(layout["lefts"][index], baseline, label, "label", style["neutral"]["muted"]), "part": "title"}
+            for index, label in layout["headings"].items()]
 
 
 def bar_shape(row: dict, centre: float, half: float, scale, rules: dict) -> dict:
@@ -155,14 +190,18 @@ def section_lines(rows: list[dict]) -> list[tuple[str, object]]:
     return lines
 
 
+def title_baseline(axis_y: float, style: dict, rules: dict) -> float:
+    """The axis title's baseline: under the axis numbers by the frame's x-title gap."""
+    size, base = style["sizes"]["label"], style["base"]
+    ticks = axis_y + rules["axis_gap"] * base + style["cap_height"] * size
+    return ticks + style["descender"] * size + load_tokens()["spacing"]["x_title"] * base + style["cap_height"] * size
+
+
 def axis_title_shape(spec: dict, right: float, axis_y: float, style: dict, rules: dict) -> list[dict]:
     if not spec["axis_title"]:
         return []
-    size, base = style["sizes"]["label"], style["base"]
-    ticks = axis_y + rules["axis_gap"] * base + style["cap_height"] * size
-    gap = load_tokens()["spacing"]["x_title"] * base
-    baseline = ticks + style["descender"] * size + gap + style["cap_height"] * size
-    return [{**text(right, baseline, spec["axis_title"], "label", style["neutral"]["muted"], "right"), "part": "title"}]
+    return [{**text(right, title_baseline(axis_y, style, rules), spec["axis_title"], "label",
+                    style["neutral"]["muted"], "right"), "part": "title"}]
 
 
 def spread_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[dict]:
@@ -196,8 +235,9 @@ def spread_drawing(spec: dict, box: Box, measure: Measure, style: dict) -> list[
         shapes += row_shapes(entry, centre, line, scale, style, rules)
         shapes += [text(box.x, baseline, entry["name"], "label", style["neutral"]["ink"])]
         shapes += pair_texts(entry["pairs"], layout["lefts"], baseline + (lead if layout["under"] else 0.0), measure,
-                             style)
+                             style, layout["headings"])
     axis = {"axis": spec["axis"], "favours": None, "null": None}
     return shapes + axis_shapes(axis, scale, (left, right), bottom, style, rules) + \
-        axis_title_shape(spec, right, bottom, style, rules)
+        axis_title_shape(spec, right, bottom, style, rules) + \
+        heading_texts(layout, title_baseline(bottom, style, rules), style)
 
