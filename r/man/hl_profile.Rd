@@ -27,7 +27,8 @@ every tile into the session's colours, one legend for all; the table then has a 
 }
 \examples{
 set.seed(1)
-cohort <- data.frame(sex = sample(c("Female", "Male"), 120, TRUE), age = round(stats::rnorm(120, 60, 12)),
+cohort <- data.frame(sex = sample(c("Female", "Male"), 120, TRUE),
+                     age = round(stats::rnorm(120, 60, 12)),
                      operated = format(as.Date("2024-01-01") + sample(0:500, 120, TRUE)))
 profile <- hl_profile(hl_study(cohort, variables = c("age", "sex"), units = c(age = "years")),
                       dates = "operated", by = "sex")
