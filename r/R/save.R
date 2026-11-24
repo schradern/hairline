@@ -116,7 +116,10 @@ write_format <- function(plot, path, format, size_mm, dpi, background, size = "o
 #' cairo before 1.17.6; later versions keep a creation date inside a
 #' compressed stream that no PDF reader shows.
 #'
-#' @param plot A ggplot, ideally with [theme_hairline()].
+#' A result of a study (from [hl_describe()], [hl_profile()] and the like) writes its figure in each format and its
+#' table as `name.csv`, formatted as printed.
+#'
+#' @param plot A ggplot, ideally with [theme_hairline()], or a `hairline_result`.
 #' @param name Output path without extension; parent folders are created.
 #' @param formats Any of `"pdf"`, `"png"`, `"svg"`, `"tiff"`, `"html"` (the SVG with tooltips and series
 #'   highlighting, self-contained).
@@ -134,6 +137,9 @@ write_format <- function(plot, path, format, size_mm, dpi, background, size = "o
 #' @export
 hl_save <- function(plot, name, formats = c("pdf", "png"), size = NULL, width_mm = NULL, height_mm = NULL,
                     dpi = 600, background = NULL) {
+  if (inherits(plot, "hairline_result")) {
+    return(save_result(plot, name, formats, size, width_mm, height_mm, dpi, background))
+  }
   formats <- validated_formats(formats)
   check_positive(dpi, "dpi")
   least <- hl_tokens()$export$min_dpi
@@ -201,4 +207,14 @@ move_into_place <- function(partials, paths) {
                  paths[moved + 1L]), call. = FALSE)
   }
   unlink(backups[existed])
+}
+
+# A result's figure in each format (none without a figure) and its table as name.csv. As Python's Result.save().
+save_result <- function(result, name, formats, size, width_mm, height_mm, dpi, background) {
+  paths <- if (is.null(result$figure)) character() else
+    hl_save(result$figure, name, formats, size, width_mm, height_mm, dpi, background)
+  table <- paste0(strip_known_extension(name), ".csv")
+  dir.create(dirname(table), recursive = TRUE, showWarnings = FALSE)
+  utils::write.csv(result$table, table, row.names = FALSE, fileEncoding = "UTF-8")
+  invisible(c(paths, table))
 }

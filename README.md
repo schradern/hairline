@@ -98,6 +98,33 @@ hl_save(overview$figure, "cohort", formats = c("pdf", "png"), size = "double")
 The same study gives `compare()`, `distribution()`, `effects()`, `survival()` and `over_time()` in Python,
 and `hl_compare()`, `hl_distribution()`, `hl_effects()`, `hl_survival()` and `hl_over_time()` in R.
 
+### The cohort at a glance
+
+`profile()` describes one cohort, whatever its groups: a histogram for each number (its median as a line, median
+and IQR above it), the share of each level for each category and, for a date column, patients per month. `by`
+splits every tile into the same coloured groups, named once in the legend row; the table is Table 1 of the cohort.
+
+```python
+study = hl.study(pd.read_csv("gallery/data/surgery.csv"), id="id",
+                 variables=["age", "height", "weight", "asa", "duration", "stay"],
+                 labels={"asa": "ASA class", "duration": "Operating time", "stay": "Length of stay"},
+                 units={"age": "years", "height": "cm", "weight": "kg", "duration": "minutes", "stay": "days"},
+                 unit="patients")
+cohort = study.profile(dates="surgery_date", by="sex")
+cohort.save("figures/cohort")    # cohort.pdf, cohort.png and the table as cohort.csv
+```
+
+```r
+cohort <- hl_profile(study, dates = "surgery_date", by = "sex")
+hl_save(cohort, "figures/cohort")  # cohort.pdf, cohort.png and the table as cohort.csv
+```
+
+![The surgical cohort at a glance: age, height, weight, ASA class, operating time, length of stay and operations per month, split by sex](docs/images/gallery/study_profile_sex.png)
+
+In a notebook (Jupyter, VS Code) a cell that ends with a figure shows it, once, at its own size, and one that ends
+with a result shows its figure, sentence and table; figures made along the way stay hidden until shown. In R
+Markdown and Quarto a chunk that ends with a result does the same.
+
 ## Saving figures
 
 One call writes every format you need, named after the figure and in a folder that is created if it is missing:
@@ -126,6 +153,9 @@ it is given when saving (`hl_save(plot, "name", size = "double")`), and a plot m
 (`hl_timeseries()` saves at `"double"`, `hl_bars(size =)`). Charts whose height follows their content, such as
 forest plots and Sankey diagrams, size themselves, and a plot with axes is never squeezed: in one narrow column
 the figure grows until its panels keep 8 × the base size.
+
+A figure saves itself too, `figure.save("figures/cohort")`, and a study result writes its table beside it
+(`result.save(...)` in Python, `hl_save(result, ...)` in R).
 
 **Every file** carries the figure's title and subtitle as its description and no timestamp;
 `background="transparent"` leaves out the white surface.
@@ -203,6 +233,7 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 <tr><td width="50%" valign="top"><a href="gallery/python/occupancy_rows.py"><img src="docs/images/gallery/occupancy_rows.png" alt="Time series, two levels of detail"></a><br><sub>Time series, two levels of detail</sub></td><td width="50%" valign="top"><a href="gallery/python/grid_panels.py"><img src="docs/images/gallery/grid_panels.png" alt="Small multiples"></a><br><sub>Small multiples</sub></td></tr>
 <tr><td width="50%" valign="top"><a href="gallery/python/study_describe.py"><img src="docs/images/gallery/study_describe.png" alt="Study: cohort overview"></a><br><sub>Study: cohort overview</sub></td><td width="50%" valign="top"><a href="gallery/python/unit_day.py"><img src="docs/images/gallery/unit_day.png" alt="Lanes and staffing over the day"></a><br><sub>Lanes and staffing over the day</sub></td></tr>
 <tr><td width="50%" valign="top"><a href="gallery/python/swimlanes_day.py"><img src="docs/images/gallery/swimlanes_day.png" alt="Swimlanes for one day"></a><br><sub>Swimlanes for one day</sub></td><td width="50%" valign="top"><a href="gallery/python/brand_example.py"><img src="docs/images/gallery/brand_example.png" alt="Brand file"></a><br><sub>Brand file</sub></td></tr>
+<tr><td width="50%" valign="top"><a href="gallery/python/study_profile.py"><img src="docs/images/gallery/study_profile.png" alt="Study: the cohort at a glance"></a><br><sub>Study: the cohort at a glance</sub></td><td width="50%" valign="top"><a href="gallery/python/study_profile_sex.py"><img src="docs/images/gallery/study_profile_sex.png" alt="Study: the cohort by sex"></a><br><sub>Study: the cohort by sex</sub></td></tr>
 </table>
 
 ## The same figure in Python and R

@@ -27,7 +27,7 @@ FIGURES = ["theme_scatter", "occupancy_rows", "grid_panels", "brand_example", "d
            "bars_facets", "spread_doses", "table_characteristics", "unit_day", "swimlanes_day",
            "likert_visits", "spread_importance", "bars_sources", "bars_answers", "scatter_sites",
            "spread_years", "ridgeline_sites", "raincloud_means", "dotplot_means",
-           "spread_compare"]
+           "spread_compare", "study_profile", "study_profile_sex"]
 TOLERANCE_PT = 1.0
 
 

@@ -52,6 +52,18 @@ hl_rows <- function(..., heights = NULL, sharex = TRUE, title = NULL, subtitle =
   plot
 }
 
+# One-panel hairline plots as the cells of a grid, `columns` wide, filled row by row under one title, subtitle,
+# legend row and caption: the R counterpart of the Python package's figure(panels=, layout="compose", columns=) with
+# a different chart in each panel. Internal; hl_profile() builds its tiles with it.
+plot_grid <- function(plots, columns, title = NULL, subtitle = NULL, caption = NULL, height_mm = NULL,
+                      size = "double") {
+  plot <- ggplot2::ggplot() + ggplot2::labs(title = title, subtitle = subtitle, caption = caption) + theme_hairline()
+  plot@meta$hairline_rows <- list(plots = plots, heights = NULL, sharex = FALSE, columns = columns)
+  plot@meta$hairline_size <- size
+  plot@meta$hairline_height_mm <- height_mm
+  plot
+}
+
 # The plots of a composition with one shared time-of-day window, when `sharex` asks for it.
 shared_time_plots <- function(rows) {
   times <- unlist(lapply(rows$plots, function(plot) plot@meta$hairline_time), recursive = FALSE)
@@ -76,6 +88,16 @@ member_parts <- function(plots) {
   })
 }
 
+# Stacked rows take plots whose panels sit in one column; a grid takes plots of one panel each.
+check_member_panels <- function(member, columns) {
+  if (columns == 1 && member$columns > 1) {
+    stop("hairline: hl_rows(): each plot needs its panels in one column", call. = FALSE)
+  }
+  if (columns > 1 && length(member$panels) != 1) {
+    stop("hairline: a grid of plots takes one panel per plot", call. = FALSE)
+  }
+}
+
 check_row_heights <- function(heights, rows) {
   if (is.null(heights) || length(heights) == rows) return(invisible())
   stop(sprintf(paste("hairline: heights names %d rows, but the plots make %d panel rows; give one height per row"),
@@ -97,17 +119,21 @@ merged_legend <- function(members) {
 # keeps its axes, row blocks, line layers and resolved header; with `sharex` only the bottom row keeps x labels.
 composed_parts <- function(parts, rows) {
   members <- member_parts(shared_time_plots(rows))
+  columns <- rows$columns %||% 1
   panels <- list()
   inside <- list()
   ranges <- list(x = list(), y = list())
   placed <- list()
   row_offset <- 0
-  for (member in members) {
-    if (member$columns > 1) stop("hairline: hl_rows(): each plot needs its panels in one column", call. = FALSE)
+  for (position in seq_along(members)) {
+    member <- members[[position]]
+    check_member_panels(member, columns)
     offset <- length(panels)
     for (index in seq_along(member$panels)) {
       panel <- member$panels[[index]]
-      panel$row <- panel$row + row_offset
+      # In a grid each one-panel plot takes the next cell, row by row; stacked rows keep their plot's own rows.
+      if (columns > 1) panel[c("row", "col")] <- list((position - 1) %/% columns + 1, (position - 1) %% columns + 1)
+      else panel$row <- panel$row + row_offset
       panel["header"] <- list(panel_header_for(member, index))
       panel$header_set <- TRUE
       panel$layers <- member$line_layers
@@ -122,15 +148,16 @@ composed_parts <- function(parts, rows) {
     placed[[length(placed) + 1]] <- list(parts = member, panels = offset + seq_along(member$panels))
     row_offset <- row_offset + member$rows
   }
+  if (columns > 1) row_offset <- ceiling(length(members) / columns)
   check_row_heights(rows$heights, row_offset)
   if (rows$sharex) {
     for (index in seq_along(panels)) if (panels[[index]]$row < row_offset) panels[[index]]$axis_b <- ggplot2::zeroGrob()
   }
   keys <- Filter(Negate(is.null), lapply(members, `[[`, "ramp_key"))
-  replaced(parts, list(panels = panels, rows = row_offset, columns = 1, bare = FALSE, drawing = NULL, table = NULL,
-                       min_plot = NULL, aspect = NULL, y_title = NULL, x_title = NULL, legend = merged_legend(members),
-                       notes = list(), headers = list(), references = list(), x_ranges = ranges$x,
-                       y_ranges = ranges$y, row_weights = rows$heights,
+  replaced(parts, list(panels = panels, rows = row_offset, columns = columns, bare = FALSE, drawing = NULL,
+                       table = NULL, min_plot = NULL, aspect = NULL, y_title = NULL, x_title = NULL,
+                       legend = merged_legend(members), notes = list(), headers = list(), references = list(),
+                       x_ranges = ranges$x, y_ranges = ranges$y, row_weights = rows$heights,
                        ramp_key = if (length(keys)) keys[[length(keys)]], hover = NULL, inside = inside,
                        members = placed))
 }

@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### The cohort at a glance, and notebooks that show and save
+
+* `study().profile(dates=, by=)`: one tile per variable. A histogram for each number on round bins (5 years, 5 kg,
+  1 day), its median as an ink line, "Median (IQR)" in the header; the share of each level for each category; and
+  for each column of `dates` (dates or ISO date text) patients per month, quarter or year. Missing values are named
+  beside the variable ("9 missing"). The table is Table 1 of the whole cohort, whatever its groups.
+* `by=` splits every tile into the same groups, in the session's colours, named once in the legend row; rows
+  without a group are a grey "Missing". The table gets a column per group before Overall.
+* Tooltips name the bin, level or period, and the group.
+* In a notebook kernel (Jupyter, VS Code) a figure shows itself when a cell ends with it, once, at its own size and
+  at twice the screen resolution; a study result shows its figure, sentence and table. Figures made along the way
+  (`result = study.profile()`) no longer show on their own. Paperings, scripts and terminal IPython keep pyplot's
+  behaviour.
+* `figure.save(name, formats=)` saves a figure as `hl.save()` does; `result.save(name)` writes the figure and the
+  table as `name.csv`.
+* A figure prints as one line (`<hairline figure 'Bars', 120 x 84 mm, 1 panel>`) instead of every field.
+
 ### A brand short of chart colours says how to add them
 
 * When a chart has more groups than the brand has slots, the error now says where slots come from: the brand's

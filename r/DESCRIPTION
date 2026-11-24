@@ -30,6 +30,7 @@ Imports:
     yaml
 Suggests:
     cowplot,
+    knitr,
     metafor,
     patchwork,
     png,

@@ -212,5 +212,22 @@ study_figure <- function(endpoint, names, what, draw) {
 print.hairline_result <- function(x, ...) {
   cat(x$text, "\n\n", sep = "")
   print(x$table, row.names = FALSE, right = FALSE)
+  # In a session someone reads (RStudio, the console) the figure shows in the plot pane too; a script draws nothing.
+  if (interactive() && !is.null(x$figure)) print(x$figure)
   invisible(x)
+}
+
+#' Show a result in R Markdown and Quarto
+#'
+#' A chunk that ends with a result shows its figure, then its sentence, then its table (as [knitr::kable()] writes it
+#' for the document's format), as the Python package shows a result in a notebook.
+#'
+#' @param x A `hairline_result`.
+#' @param ... Unused.
+#' @return Output for knitr.
+#' @exportS3Method knitr::knit_print
+knit_print.hairline_result <- function(x, ...) {
+  if (!is.null(x$figure)) print(x$figure)
+  table <- paste(knitr::kable(x$table, row.names = FALSE), collapse = "\n")
+  knitr::asis_output(paste0("\n\n", x$text, "\n\n", table, "\n\n"))
 }

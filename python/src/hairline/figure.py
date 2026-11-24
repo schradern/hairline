@@ -18,6 +18,7 @@ from hairline.layout.draw import FrameArtist
 from hairline.layout.engine import HairlineLayout
 from hairline.layout.legend import LegendItem, validate_items
 from hairline.layout.panels import PanelHeader
+from hairline.notebook import keeps_display
 from hairline.settings import Settings, check_positive, current_settings
 from hairline.style import rcparams_for
 from hairline.tokens import load_tokens
@@ -297,6 +298,22 @@ class HairlineFigure:
         """Frame positions in pt from the top-left corner, as of the last draw."""
         return dict(self.report)
 
+    def save(self, name: str | os.PathLike, formats: Sequence[str] = ("pdf", "png"), dpi: int | None = None,
+             background: str | None = None) -> list[Path]:
+        """Write `name.<format>` for each format, as hl.save(figure, ...) does; returns the paths."""
+        from hairline.export import save
+        return save(self, name, formats, dpi, background)
+
+    def __repr__(self) -> str:
+        width, height = (value * MM_PER_INCH for value in self.figure.get_size_inches())
+        panels = f"{len(self.axes)} panel{'' if len(self.axes) == 1 else 's'}"
+        return f"<hairline figure {self.title!r}, {width:.0f} x {height:.0f} mm, {panels}>"
+
+    def _repr_mimebundle_(self, include=None, exclude=None) -> tuple[dict, dict]:
+        """A notebook shows the figure itself when a cell ends with it."""
+        from hairline.notebook import figure_bundle
+        return figure_bundle(self)
+
 
 RASTER_FORMATS = ("png", "tif", "tiff", "jpg", "jpeg", "webp", "raw", "rgba")
 
@@ -421,6 +438,7 @@ def figure(title: str, subtitle: str | None = None, caption: str | None = None, 
     hairline_figure.size = size
     fig.hairline_figure = hairline_figure
     fig.set_layout_engine(HairlineLayout(hairline_figure))
+    keeps_display(fig)
     return hairline_figure
 
 

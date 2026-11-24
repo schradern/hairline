@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import warnings
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -27,6 +29,25 @@ class Result:
 
     def __repr__(self) -> str:
         return f"{self.text}\n\n{self.table.to_string(index=False)}"
+
+    def _repr_mimebundle_(self, include=None, exclude=None) -> dict:
+        """A notebook shows the figure, the sentence and the table when a cell ends with the result."""
+        from hairline.notebook import result_html
+        return {"text/html": result_html(self), "text/plain": repr(self)}
+
+    def save(self, name: str | os.PathLike, formats: Sequence[str] = ("pdf", "png"), table: bool = True,
+             dpi: int | None = None, background: str | None = None) -> list[Path]:
+        """The figure as `name.<format>` for each format and, with `table`, the table as `name.csv` (formatted
+        values, as printed); returns the paths. A result without a figure writes its table only."""
+        paths = self.figure.save(name, formats, dpi, background) if self.figure is not None else []
+        if table:
+            from hairline.export import strip_known_extension
+            base = strip_known_extension(Path(name))
+            path = base.with_name(f"{base.name}.csv")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self.table.to_csv(path, index=False)
+            paths.append(path)
+        return paths
 
 
 def figure_for(endpoint: str, names: Sequence[str], what: str,

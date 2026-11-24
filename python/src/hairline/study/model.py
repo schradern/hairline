@@ -113,6 +113,10 @@ class Study:
         from hairline.study.describe import describe
         return describe(self, stats, size)
 
+    def profile(self, dates: str | Sequence[str] = (), by: str | None = None, size: str = "double") -> Result:
+        from hairline.study.profile import profile
+        return profile(self, dates, by, size)
+
     def distribution(self, variable: str, stats: Sequence[str] = ("median_iqr",), size: str = "double") -> Result:
         from hairline.study.compare import distribution
         return distribution(self, variable, stats, size)

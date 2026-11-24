@@ -16,7 +16,7 @@ hl_save(
 )
 }
 \arguments{
-\item{plot}{A ggplot, ideally with \code{\link[=theme_hairline]{theme_hairline()}}.}
+\item{plot}{A ggplot, ideally with \code{\link[=theme_hairline]{theme_hairline()}}, or a \code{hairline_result}.}
 
 \item{name}{Output path without extension; parent folders are created.}
 
@@ -46,6 +46,10 @@ once it can be found: cairo finds it on its own outside Windows, otherwise
 run \code{\link[=hl_install_font]{hl_install_font()}} once. PDFs are byte-identical across runs with
 cairo before 1.17.6; later versions keep a creation date inside a
 compressed stream that no PDF reader shows.
+}
+\details{
+A result of a study (from \code{\link[=hl_describe]{hl_describe()}}, \code{\link[=hl_profile]{hl_profile()}} and the like) writes its figure in each format and its
+table as \code{name.csv}, formatted as printed.
 }
 \examples{
 plot <- ggplot2::ggplot(datasets::mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() +

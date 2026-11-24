@@ -1,5 +1,18 @@
 # hairline (development version)
 
+## The cohort at a glance, and results that show and save
+
+* `hl_profile(study, dates =, by =)`: one tile per variable. A histogram for each number on round bins (5 years,
+  5 kg, 1 day), its median as an ink line, "Median (IQR)" in the header; the share of each level for each category;
+  and for each column of `dates` (dates or ISO date text) patients per month, quarter or year. Missing values are
+  named beside the variable ("9 missing"). The table is Table 1 of the whole cohort, whatever its groups.
+* `by =` splits every tile into the same groups, in the session's colours, named once in the legend row; rows
+  without a group are a grey "Missing". The table gets a column per group before Overall.
+* Tooltips name the bin, level or period, and the group.
+* In R Markdown and Quarto a chunk that ends with a study result shows its figure, sentence and table; printed in an
+  interactive session, a result also draws its figure.
+* `hl_save(result, name)` writes a result's figure and its table as `name.csv`.
+
 ## A brand short of chart colours says how to add them
 
 * When a chart has more groups than the brand has slots, the error now says where slots come from: the brand's

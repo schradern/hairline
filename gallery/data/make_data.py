@@ -228,6 +228,31 @@ def cohort_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+ASA_CLASSES = (("ASA I", 0.12), ("ASA II", 0.46), ("ASA III", 0.36), ("ASA IV", 0.06))
+SURGERY_DAYS = 1095  # three years of operations from 2022-01-03
+MISSING_WEIGHT = 0.03  # weights not recorded
+
+
+def surgery_rows(rng: np.random.Generator) -> list[dict]:
+    """One elective operation in one cohort: who was operated on, when, and how long it took."""
+    rows, start = [], np.datetime64("2022-01-03")
+    names, shares = zip(*ASA_CLASSES, strict=True)
+    for index in range(412):
+        sex = str(rng.choice(["Female", "Male"], p=[0.47, 0.53]))
+        height = rng.normal(166 if sex == "Female" else 179, 7)
+        bmi = float(np.clip(rng.lognormal(math.log(27.5), 0.17), 17, 48))
+        weight = bmi * (height / 100) ** 2
+        day = start + np.timedelta64(int(rng.integers(0, SURGERY_DAYS)), "D")
+        rows.append({"id": index + 1, "sex": sex, "age": int(round(float(np.clip(rng.normal(61, 13), 19, 92)))),
+                     "height": int(round(float(height))),
+                     "weight": "" if rng.random() < MISSING_WEIGHT else round(float(weight), 1),
+                     "asa": str(rng.choice(names, p=shares)), "surgery_date": str(day),
+                     "duration": int(round(float(rng.gamma(6.0, 24.0)))),
+                     "stay": int(1 + rng.poisson(4.2))})
+    rows.sort(key=lambda row: row["surgery_date"])
+    return [{**row, "id": index + 1} for index, row in enumerate(rows)]
+
+
 PROCEDURES = [("General anaesthesia", 2000), ("Combined", 360), ("Sedation", 130), ("Regional, no ventilation", 54)]
 YEAR_MONTHS = [(2021, 2), (2022, 12), (2023, 12), (2024, 12), (2025, 12), (2026, 10)]
 
@@ -418,6 +443,8 @@ def main() -> None:
     write("sources.csv", source_rows(survey))
     write("answers.csv", [{"question": question, "answer": answer, "count": count}
                           for question, answer, count in ANSWERS])
+    # The surgical cohort has its own generator too, so every file above stays as it was.
+    write("surgery.csv", surgery_rows(np.random.default_rng(SEED + 2)))
 
 
 if __name__ == "__main__":
