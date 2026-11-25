@@ -1,5 +1,15 @@
 # hairline (development version)
 
+## 3D surfaces
+
+* `hl_surface(data, x, y, z)`: one value over two numeric axes (time of day by week, dose by age) as a 3D surface
+  from a fixed viewpoint (`elevation =`, `azimuth =`), its height binned into the steps of a ramp (`colors =`) and
+  keyed in the legend row; `gradient = TRUE` blends each cell's colour along the ramp instead, the key showing the
+  ramp at each tick. Drawn as flat vector shapes, so PDF and SVG stay sharp; ticks sit on the edges nearest
+  the reader, titles clear of them. A pair without a row leaves a gap in the surface.
+* In the HTML export the reader turns the surface by dragging or with the arrow keys (Home or a double click
+  returns to the printed view), and the pointer reads the nearest grid point. The file stays one offline page.
+
 ## The cohort at a glance, and results that show and save
 
 * `hl_profile(study, dates =, by =)`: one tile per variable. A histogram for each number on round bins (5 years,

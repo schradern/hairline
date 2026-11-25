@@ -403,6 +403,19 @@ def source_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+def hour_rows(rng: np.random.Generator) -> list[dict]:
+    """Share of ICU beds occupied by hour of day across half a year: a midday ridge after the morning admissions,
+    an evening shoulder, and more beds in use through the winter weeks."""
+    rows = []
+    for week in range(1, 27):
+        winter = 0.08 * math.cos((week - 4) / 26 * 2 * math.pi)
+        for hour in range(6, 23):
+            ridge = 0.22 * math.exp(-(((hour - 12.5) / 2.8) ** 2)) + 0.08 * math.exp(-(((hour - 19) / 1.6) ** 2))
+            share = 0.55 + ridge + winter + rng.normal(0, 0.006)
+            rows.append({"hour": hour, "week": week, "occupied": round(min(share, 1.0), 3)})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -445,6 +458,7 @@ def main() -> None:
                           for question, answer, count in ANSWERS])
     # The surgical cohort has its own generator too, so every file above stays as it was.
     write("surgery.csv", surgery_rows(np.random.default_rng(SEED + 2)))
+    write("hours.csv", hour_rows(np.random.default_rng(SEED + 3)))
 
 
 if __name__ == "__main__":

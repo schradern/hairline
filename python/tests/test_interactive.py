@@ -121,8 +121,12 @@ def gallery_figures(name, monkeypatch):
 
 
 def untipped(figure):
-    """The series a figure exports without a tooltip, or ['no series'] when it exports none."""
-    series = figure_targets(figure)["series"]
+    """The series a figure exports without a tooltip, or ['no series'] when it exports none; a surface reads its
+    grid points from its scene instead of series."""
+    targets = figure_targets(figure)
+    series = targets["series"]
+    if not series and all(scene["tips"]["z"] for scene in targets.get("scenes", [])) and targets.get("scenes"):
+        return []
     return [entry["name"] for entry in series if not entry["tips"]] if series else ["no series"]
 
 

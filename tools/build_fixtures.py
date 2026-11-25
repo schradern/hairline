@@ -42,6 +42,8 @@ from hairline.charts.risk_of_bias import risk_of_bias_spec
 from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
 from hairline.charts.sankey import sankey_spec
 from hairline.charts.sankey_geometry import sankey_drawing
+from hairline.charts.surface import surface_spec
+from hairline.charts.surface_geometry import scene_shapes, surface_scene
 from hairline.charts.swatches_geometry import swatches_drawing
 from hairline.charts.venn import venn_spec
 from hairline.charts.venn_geometry import venn_drawing
@@ -382,6 +384,34 @@ def correlation_cases() -> list[dict]:
     return cases
 
 
+SURFACE_VIEWS = [None, {"elevation": 60.0, "azimuth": 120.0}, {"elevation": 15.0, "azimuth": -170.0},
+                 {"elevation": 45.0, "azimuth": 90.0}]
+
+
+def surface_cases() -> list[dict]:
+    """A grid with a gap (a pair without a row) and a missing value, as numbers and as shares, in bands from four
+    views and blended along the ramp from two."""
+    use(brand=False)
+    rows = [{"hour": hour, "week": week, "load": round(2 + 3 * math.exp(-((hour - 12) / 3) ** 2) + 0.2 * week, 3)}
+            for week in range(1, 6) for hour in range(8, 20, 2)]
+    rows = [row for row in rows if (row["hour"], row["week"]) != (14, 2)]
+    rows[5]["load"] = float("nan")
+    data = pd.DataFrame(rows)
+    cases = []
+    for percent, gradient in ((False, False), (True, False), (False, True), (True, True)):
+        frame = data.assign(load=data["load"] / 10) if percent else data
+        titles = {"x": "Hour", "y": "Week", "z": "Load"}
+        spec = surface_spec(frame, "hour", "week", "load", titles=titles, percent=percent, gradient=gradient)
+        scene = surface_scene(spec, fake_measure, DRAWING_STYLE)
+        for view in SURFACE_VIEWS[:2] if gradient else SURFACE_VIEWS:
+            columns = {key: [None if pd.isna(value) else value for value in values]
+                       for key, values in frame.to_dict(orient="list").items()}
+            cases.append({"data": columns, "percent": percent, "gradient": gradient,
+                          "titles": titles, "view": view, "spec": spec, "scene": scene, "box": [20, 60, 440, 300],
+                          "shapes": scene_shapes(scene, Box(20, 60, 440, 300), view)})
+    return cases
+
+
 def meta_review_cases() -> dict:
     use(brand=False)
     trials = pd.DataFrame({"or": [0.62, 0.81, 0.47, 1.05, 0.69, 0.4, 0.55, 0.9],
@@ -590,6 +620,7 @@ def main() -> int:
     write("flows.json", {"style": DRAWING_STYLE, **flow_cases()})
     write("meta_review.json", {"style": DRAWING_STYLE, **meta_review_cases()})
     write("correlation.json", {"style": DRAWING_STYLE, "cases": correlation_cases()})
+    write("surface.json", {"style": DRAWING_STYLE, "cases": surface_cases()})
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})

@@ -17,7 +17,7 @@ from matplotlib.container import BarContainer
 
 from hairline.fonts import face_weight
 from hairline.marks import FIXED_WIDTH_IDS, SECONDARY_ID, STATIC_ID
-from hairline.numbers import auto_digits, format_number, format_percent, snap_noise
+from hairline.numbers import auto_digits, format_number, format_percent, snap_noise, word
 from hairline.settings import role_size
 from hairline.tokens import load_tokens
 
@@ -285,14 +285,32 @@ def legend_targets(figure: HairlineFigure) -> list[dict]:
             for entry in figure.legend_placed if entry.row < len(centers)]
 
 
-def rounded(value):
+def rounded(value, digits: int = 2):
     if isinstance(value, float):
-        return round(value, 2)
+        return round(value, digits)
     if isinstance(value, (list, tuple)):
-        return [rounded(item) for item in value]
+        return [rounded(item, digits) for item in value]
     if isinstance(value, dict):
-        return {key: rounded(item) for key, item in value.items()}
+        return {key: rounded(item, digits) for key, item in value.items()}
     return value
+
+
+# Decimals of a scene's cube coordinates: finer than the targets' pt, so the turned surface starts where the static
+# one is drawn (a hundredth of the cube's width would be a point or two on the page).
+SCENE_DIGITS = 5
+
+
+def scene_targets(figure: HairlineFigure) -> list[dict]:
+    """Each surface's scene, its tooltip texts and the limits of turning it, for the script to draw it again from
+    the reader's angle (charts/surface_geometry.py)."""
+    from hairline.charts.surface_geometry import surface_scene
+    from hairline.drawing import drawing_style, measure_for
+    rules = load_tokens()["surface"]
+    turning = {key: rules[key] for key in ("elevation_limits", "turn_step", "tilt_step", "drag_degrees_per_pt")}
+    style, measure = drawing_style(figure.settings), measure_for(figure.settings)
+    hint = word("turn_hint", figure.settings.locale)
+    return [rounded({"panel": index, **surface_scene(spec, measure, style), "tips": spec["tips"],
+                     "turning": turning, "hint": hint}, SCENE_DIGITS) for index, spec in sorted(figure.scenes.items())]
 
 
 def figure_targets(figure: HairlineFigure) -> dict:
@@ -315,9 +333,10 @@ def figure_targets(figure: HairlineFigure) -> dict:
     style = {"ink": neutral["ink"], "surface": neutral["surface"], "axis": neutral["axis"],
              "font": figure.settings.font, "size": role_size(figure.settings, "label"), "veil": rules["veil"],
              "hit": rules["hit_pt"]}
-    return rounded({"version": 1, "width": width, "height": height, "style": style,
-                    "panels": [[box.x, box.y, box.width, box.height] for box in figure.plot_boxes],
-                    "series": merged(series), "legend": legend_targets(figure)})
+    targets = rounded({"version": 1, "width": width, "height": height, "style": style,
+                       "panels": [[box.x, box.y, box.width, box.height] for box in figure.plot_boxes],
+                       "series": merged(series), "legend": legend_targets(figure)})
+    return {**targets, "scenes": scene_targets(figure)} if figure.scenes else targets
 
 
 def asset(name: str) -> str:
@@ -371,12 +390,13 @@ def figure_html(svg: str, targets: dict, family: str, alt: str = "") -> str:
                 f"--hl-font:'{style['font']}'"
     data = json.dumps(targets, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     label = alt.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+    scene_script = f'<script>{asset("hairline-scene.js")}</script>' if targets.get("scenes") else ""
     return (f'<figure class="hairline-figure" style="{variables}" aria-label="{label}">'
             f'<style>{font_faces(family)}{asset("hairline.css")}</style>{body}'
             f'<svg class="hairline-overlay" viewBox="0 0 {targets["width"]} {targets["height"]}" '
             f'xmlns="http://www.w3.org/2000/svg"></svg><div class="hairline-tip"></div>'
             f'<script type="application/json" class="hairline-targets">{data}</script>'
-            f'<script>{asset("hairline.js")}</script></figure>')
+            f'{scene_script}<script>{asset("hairline.js")}</script></figure>')
 
 
 def page(title: str, fragment: str, surface: str = "#ffffff") -> str:

@@ -23,7 +23,7 @@ LAZY_NAMES = {
     **{name: f"hairline.charts.{name}" for name in (
         "arcs", "bars", "chord", "correlation", "donut", "dotplot", "forest", "funnel", "kaplan_meier", "lanes",
         "levels", "likert", "partition", "prisma", "raincloud", "ridgeline", "risk_of_bias", "sankey", "scatter",
-        "spread", "swatches", "swimlanes", "table", "timeseries", "venn")},
+        "spread", "surface", "swatches", "swimlanes", "table", "timeseries", "venn")},
     "Result": "hairline.study", "Study": "hairline.study", "study": "hairline.study",
     "Report": "hairline.report", "report": "hairline.report", "scope": "hairline.entities",
 }
@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from hairline.charts.sankey import sankey
     from hairline.charts.scatter import scatter
     from hairline.charts.spread import spread
+    from hairline.charts.surface import surface
     from hairline.charts.swatches import swatches
     from hairline.charts.swimlanes import swimlanes
     from hairline.charts.table import table
@@ -88,7 +89,7 @@ __all__ = [
     "current_settings", "donut", "dotplot", "figure", "forest", "format_interval", "format_number", "format_percent",
     "frame", "funnel", "kaplan_meier", "lanes", "levels", "likert", "load_brand", "load_tokens", "palette", "palettes",
     "partition", "prisma", "raincloud", "ramp", "report", "ridgeline", "risk_of_bias", "sankey", "save", "scatter",
-    "scope", "spread", "study", "swatches", "swimlanes", "table", "timeseries", "use", "venn",
+    "scope", "spread", "study", "surface", "swatches", "swimlanes", "table", "timeseries", "use", "venn",
 ]
 __version__ = "0.3.0"
 

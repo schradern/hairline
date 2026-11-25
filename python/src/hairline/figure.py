@@ -80,6 +80,8 @@ class HairlineFigure:
     whole_axes: set[tuple[int, str]] = field(default_factory=set)
     hover_marks: list[dict] = field(default_factory=list)
     targets: list[dict] = field(default_factory=list)
+    # Surfaces by panel, for the HTML export to draw again from the reader's angle (charts/surface_geometry.py).
+    scenes: dict[int, dict] = field(default_factory=dict)
     inside_labels: list[tuple] = field(default_factory=list)
     side_numbers: dict[int, list[tuple[float, str, str]]] = field(default_factory=dict)
     legend_heading: str | None = None

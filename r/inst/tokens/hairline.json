@@ -364,6 +364,7 @@
         "levels_note": "Quantiles on the data's own levels.",
         "move": "Move",
         "share_of_days": "Share of days",
+        "turn_hint": "Drag or use the arrow keys to turn; Home returns to this view",
         "up_to": "Up to",
         "typical": "Typical",
         "days": "{n} days",
@@ -445,6 +446,7 @@
         "levels_note": "Quantile auf den Stufen der Daten.",
         "move": "Wechsel",
         "share_of_days": "Anteil der Tage",
+        "turn_hint": "Zum Drehen ziehen oder die Pfeiltasten nutzen; Pos1 führt zu dieser Ansicht zurück",
         "up_to": "Bis",
         "typical": "Typisch",
         "days": "{n} Tage",
@@ -699,6 +701,25 @@
       0.5,
       1
     ]
+  },
+  "surface": {
+    "elevation": 28,
+    "azimuth": -35,
+    "elevation_limits": [
+      10,
+      80
+    ],
+    "height": 1.1,
+    "ticks": 5,
+    "max_bins": 5,
+    "gradient_steps": 64,
+    "label_gap": 0.4,
+    "align": 0.3,
+    "seam_pt": 0.3,
+    "max_side": 150,
+    "turn_step": 10,
+    "tilt_step": 5,
+    "drag_degrees_per_pt": 0.5
   },
   "funnel": {
     "z": 1.959963984540054,

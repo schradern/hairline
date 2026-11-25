@@ -37,6 +37,7 @@ CHARTS = [("bars_admissions", "Bar chart"), ("bars_stacked", "Stacked bars"), ("
           ("ridgeline_sites", "Facets on a ridgeline"),
           ("raincloud_means", "Summary marks and numbers"), ("dotplot_means", "Means with their 95% CI"),
           ("spread_compare", "Comparisons as numbers"), ("spread_columns", "Other measures as written columns"),
+          ("surface_hours", "3D surface, turnable in HTML"),
           ("occupancy_rows", "Time series, two levels of detail"), ("grid_panels", "Small multiples"),
           ("theme_scatter", "Scatter with the theme"), ("brand_example", "Brand file"),
           ("colour_sets", "Colour sets")]

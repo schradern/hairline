@@ -15,8 +15,8 @@ language: one frame for titles, legends, panels and captions, one type scale, co
 and files ready for a journal, a report or a slide. You choose the data and the chart; hairline makes the
 hundred small layout decisions, the same way every time.
 
-- **One call per chart.** Twenty-four chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
-  and PRISMA diagrams, lanes and staffing levels over the day, and tables for documents, each from a data frame
+- **One call per chart.** Twenty-five chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
+  and PRISMA diagrams, lanes and staffing levels over the day, 3D surfaces and tables for documents, each from a data frame
   and its column names.
 - **Report-ready by default.** Facets with their own scale, incomplete periods drawn lighter, n per group,
   minimum n, clipped outliers and coarser colour groups are one argument each, and the caption says in the
@@ -169,6 +169,8 @@ A figure saves itself too, `figure.save("figures/cohort")`, and a study result w
   written beside them, and a flow diagram's boxes their counts. Every chart has tooltips; only a table, exported
   as a real `<table>`, has none.
 - **Legend:** hovering an entry brings its series forward. **Keyboard:** Tab moves through the series.
+- **Turn a surface:** drag a 3D surface, or use the arrow keys, to see it from another angle; Home or a double
+  click returns to the printed view, and the pointer reads the nearest grid point's values.
 - **One file:** the figure as SVG with its font, script and styles inside. It works offline, opens in any
   browser, and its `<figure>` element can be placed in another HTML page or report as it is. The figure's title
   and subtitle are its accessible name for screen readers.
@@ -234,6 +236,7 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 <tr><td width="50%" valign="top"><a href="gallery/python/study_describe.py"><img src="docs/images/gallery/study_describe.png" alt="Study: cohort overview"></a><br><sub>Study: cohort overview</sub></td><td width="50%" valign="top"><a href="gallery/python/unit_day.py"><img src="docs/images/gallery/unit_day.png" alt="Lanes and staffing over the day"></a><br><sub>Lanes and staffing over the day</sub></td></tr>
 <tr><td width="50%" valign="top"><a href="gallery/python/swimlanes_day.py"><img src="docs/images/gallery/swimlanes_day.png" alt="Swimlanes for one day"></a><br><sub>Swimlanes for one day</sub></td><td width="50%" valign="top"><a href="gallery/python/brand_example.py"><img src="docs/images/gallery/brand_example.png" alt="Brand file"></a><br><sub>Brand file</sub></td></tr>
 <tr><td width="50%" valign="top"><a href="gallery/python/study_profile.py"><img src="docs/images/gallery/study_profile.png" alt="Study: the cohort at a glance"></a><br><sub>Study: the cohort at a glance</sub></td><td width="50%" valign="top"><a href="gallery/python/study_profile_sex.py"><img src="docs/images/gallery/study_profile_sex.png" alt="Study: the cohort by sex"></a><br><sub>Study: the cohort by sex</sub></td></tr>
+<tr><td width="50%" valign="top"><a href="gallery/python/surface_hours.py"><img src="docs/images/gallery/surface_hours.png" alt="3D surface, turnable in HTML"></a><br><sub>3D surface, turnable in HTML</sub></td><td width="50%" valign="top"></td></tr>
 </table>
 
 ## The same figure in Python and R

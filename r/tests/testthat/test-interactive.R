@@ -94,9 +94,15 @@ gallery_plots <- function(name) {
   found
 }
 
-# The series a plot exports without a tooltip, or "no series" when it exports none.
+# The series a plot exports without a tooltip, or "no series" when it exports none; a surface reads its grid points
+# from its scene instead of series.
 untipped <- function(plot, size = NULL) {
-  series <- interactive_targets(plot, size = size)$series
+  targets <- interactive_targets(plot, size = size)
+  series <- targets$series
+  if (!length(series) && length(targets$scenes) &&
+      all(vapply(targets$scenes, function(scene) length(scene$tips$z) > 0, logical(1)))) {
+    return(character())
+  }
   if (!length(series)) return("no series")
   vapply(Filter(function(entry) !length(entry$tips), series), `[[`, character(1), "name")
 }

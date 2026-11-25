@@ -326,7 +326,24 @@ plot_targets <- function(parts, plan) {
                     fitted_box(plan$layout$panels[[index]], parts$aspect)
                   }),
                   series = merge_targets(c(series, drawn_targets(plan$shapes))), legend = legend_targets(parts, plan))
-  rapply(targets, function(value) round(value, 2), classes = "numeric", how = "replace")
+  targets <- rapply(targets, function(value) round(value, 2), classes = "numeric", how = "replace")
+  if (is.null(parts$scene)) return(targets)
+  c(targets, list(scenes = list(scene_target(parts))))
+}
+
+# Decimals of a scene's cube coordinates: finer than the targets' pt, so the turned surface starts where the static
+# one is drawn. As Python's SCENE_DIGITS.
+scene_digits <- 5
+
+# The surface's scene, its tooltip texts and the limits of turning it, for the script to draw it again from the
+# reader's angle. As Python's scene_targets().
+scene_target <- function(parts) {
+  rules <- hl_tokens()$surface
+  turning <- rules[c("elevation_limits", "turn_step", "tilt_step", "drag_degrees_per_pt")]
+  scene <- surface_scene(parts$scene, measure_for(parts$settings), drawing_style(parts$settings))
+  hint <- word("turn_hint", parts$settings$locale)
+  rapply(c(list(panel = 0), scene, list(tips = parts$scene$tips, turning = turning, hint = hint)),
+         function(value) round(value, scene_digits), classes = "numeric", how = "replace")
 }
 
 interactive_targets <- function(plot, size = NULL, width_mm = NULL, height_mm = NULL) {
@@ -398,12 +415,17 @@ figure_html <- function(svg, targets, family, alt = "") {
                        style$axis, style$font)
   data <- gsub("</", "<\\/", jsonlite::toJSON(targets, auto_unbox = TRUE, digits = NA), fixed = TRUE)
   label <- gsub("<", "&lt;", gsub('"', "&quot;", gsub("&", "&amp;", alt, fixed = TRUE), fixed = TRUE), fixed = TRUE)
+  scene_script <- if (length(targets$scenes)) {
+    paste0("<script>", interactive_asset("hairline-scene.js"), "</script>")
+  } else {
+    ""
+  }
   paste0('<figure class="hairline-figure" style="', variables, '" aria-label="', label, '"><style>',
          font_faces(family),
          interactive_asset("hairline.css"), "</style>", body, '<svg class="hairline-overlay" viewBox="0 0 ',
          targets$width, " ", targets$height, '" xmlns="http://www.w3.org/2000/svg"></svg>',
          '<div class="hairline-tip"></div><script type="application/json" class="hairline-targets">', data,
-         "</script><script>", interactive_asset("hairline.js"), "</script></figure>")
+         "</script>", scene_script, "<script>", interactive_asset("hairline.js"), "</script></figure>")
 }
 
 html_page <- function(title, fragment, surface = "#ffffff") {

@@ -2,6 +2,8 @@
 .hairline-figure > svg { display: block; width: 100%; height: auto; }
 .hairline-figure > svg.hairline-overlay { position: absolute; inset: 0; height: 100%; overflow: visible; }
 .hairline-figure .hairline-hit { cursor: default; outline: none; }
+.hairline-figure .hairline-turn { cursor: grab; touch-action: none; }
+.hairline-figure .hairline-turn:active { cursor: grabbing; }
 .hairline-figure .hairline-veil { pointer-events: none; display: none; }
 .hairline-figure .hairline-tip {
   position: absolute; display: none; pointer-events: none; white-space: pre;

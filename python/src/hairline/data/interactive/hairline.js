@@ -118,4 +118,142 @@
     box.addEventListener("pointerenter", function () { show(series, null, null); });
     box.addEventListener("pointerleave", hide);
   });
+
+  // Surfaces turn: dragging or the arrow keys draw the scene again from another angle (hairline-scene.js), Home or a
+  // double click returns to the printed view, and a pointer on the surface reads its nearest grid point.
+  function text(item, size, parent) {
+    var node = element("text", { x: item.x, y: item.y, fill: item.color, "font-size": size,
+      "font-family": data.style.font, "text-anchor": { left: "start", center: "middle", right: "end" }[item.align] },
+      parent);
+    node.textContent = item.text;
+  }
+
+  function inside(point, polygon) {
+    var found = false;
+    for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+      var a = polygon[i], b = polygon[j];
+      if ((a[1] > point[1]) !== (b[1] > point[1]) &&
+          point[0] < (b[0] - a[0]) * (point[1] - a[1]) / (b[1] - a[1]) + a[0]) { found = !found; }
+    }
+    return found;
+  }
+
+  function pointer(event) {
+    var matrix = overlay.getScreenCTM();
+    if (!matrix) { return null; }
+    var cursor = overlay.createSVGPoint();
+    cursor.x = event.clientX;
+    cursor.y = event.clientY;
+    var at = cursor.matrixTransform(matrix.inverse());
+    return [at.x, at.y];
+  }
+
+  function drawScene(shown, scene, parent) {
+    while (parent.firstChild) { parent.removeChild(parent.firstChild); }
+    shown.lines.forEach(function (line) {
+      element("polyline", { points: points(line.points), fill: "none", stroke: line.color,
+        "stroke-width": line.width }, parent);
+    });
+    shown.cells.forEach(function (cell) {
+      element("polygon", { points: points(cell.points), fill: cell.fill, stroke: cell.fill,
+        "stroke-width": scene.seam, "stroke-linejoin": "miter" }, parent);
+    });
+    shown.texts.forEach(function (item) { text(item, scene.text.size, parent); });
+  }
+
+  // The grid point nearest `at` on the frontmost cell under it, as [cell, corner index], or null off the surface.
+  function nearestPoint(shown, at) {
+    for (var k = shown.cells.length - 1; k >= 0; k -= 1) {
+      var cell = shown.cells[k];
+      if (!inside(at, cell.points)) { continue; }
+      var distances = cell.points.map(function (p) { return Math.pow(p[0] - at[0], 2) + Math.pow(p[1] - at[1], 2); });
+      return [cell, distances.indexOf(Math.min.apply(null, distances))];
+    }
+    return null;
+  }
+
+  function readPoint(scene, shown, at, outline) {
+    var found = nearestPoint(shown, at);
+    var corner = found && found[0].corners[found[1]];
+    var value = corner && scene.tips.z[corner[1]][corner[0]];
+    if (!value) {
+      outline.setAttribute("display", "none");
+      tip.style.display = "none";
+      return;
+    }
+    outline.setAttribute("points", points(found[0].points));
+    outline.setAttribute("display", "inline");
+    place(found[0].points[found[1]], scene.titles.x.text + " " + scene.tips.x[corner[0]] + ", " +
+      scene.titles.y.text + " " + scene.tips.y[corner[1]] + ": " + value);
+  }
+
+  // Pointer and keys of a turnable surface: dragging and the arrow keys call turn(azimuth, elevation) from the
+  // current view, Home, Escape and a double click turn back to the printed one.
+  function bindTurning(hit, surface) {
+    var drag = null, turning = surface.scene.turning, printed = surface.scene.view;
+    hit.addEventListener("pointerdown", function (event) {
+      hit.setPointerCapture(event.pointerId);
+      drag = { x: event.clientX, y: event.clientY, view: surface.view() };
+    });
+    hit.addEventListener("pointermove", function (event) {
+      if (!drag) { var at = pointer(event); if (at) { surface.read(at); } return; }
+      var rate = turning.drag_degrees_per_pt * data.width / root.clientWidth;
+      surface.turn(drag.view.azimuth - (event.clientX - drag.x) * rate,
+        drag.view.elevation + (event.clientY - drag.y) * rate);
+    });
+    hit.addEventListener("pointerup", function () { drag = null; });
+    hit.addEventListener("pointercancel", function () { drag = null; });
+    hit.addEventListener("pointerleave", function () { if (!drag) { surface.leave(); } });
+    hit.addEventListener("dblclick", function () { surface.turn(printed.azimuth, printed.elevation); });
+    hit.addEventListener("keydown", function (event) {
+      var view = surface.view();
+      var steps = { ArrowLeft: [turning.turn_step, 0], ArrowRight: [-turning.turn_step, 0],
+        ArrowUp: [0, turning.tilt_step], ArrowDown: [0, -turning.tilt_step] }[event.key];
+      if (steps) { surface.turn(view.azimuth + steps[0], view.elevation + steps[1]); }
+      else if (event.key === "Home" || event.key === "Escape") { surface.turn(printed.azimuth, printed.elevation); }
+      else { return; }
+      event.preventDefault();
+    });
+  }
+
+  function turnable(scene) {
+    var box = data.panels[scene.panel], printed = scene.view;
+    var first = hairlineSceneShapes(scene, box, printed, Infinity);
+    if (!first) { return; }
+    var layer = element("g", {}, overlay);
+    var cover = element("rect", { x: box[0], y: box[1], width: box[2], height: box[3], fill: data.style.surface,
+      display: "none" }, layer);
+    var drawn = element("g", {}, layer);
+    var outline = element("polygon", { fill: "none", stroke: data.style.ink, "stroke-width": 1, display: "none" },
+      layer);
+    var hit = element("rect", { x: box[0], y: box[1], width: box[2], height: box[3], fill: "transparent",
+      tabindex: 0, role: "img", "aria-label": scene.hint, "class": "hairline-hit hairline-turn" }, layer);
+    var view = { elevation: printed.elevation, azimuth: printed.azimuth }, shown = first, frame = 0;
+
+    function draw() {
+      frame = 0;
+      var turned = view.elevation !== printed.elevation || view.azimuth !== printed.azimuth;
+      shown = turned ? hairlineSceneShapes(scene, box, view, first.scale) || shown : first;
+      cover.setAttribute("display", turned ? "inline" : "none");
+      drawScene(turned ? shown : { lines: [], cells: [], texts: [] }, scene, drawn);
+    }
+    bindTurning(hit, {
+      scene: scene,
+      view: function () { return view; },
+      read: function (at) { readPoint(scene, shown, at, outline); },
+      leave: function () { outline.setAttribute("display", "none"); hide(); },
+      turn: function (azimuth, elevation) {
+        var limits = scene.turning.elevation_limits;
+        view = { azimuth: ((azimuth + 180) % 360 + 360) % 360 - 180,
+          elevation: Math.min(limits[1], Math.max(limits[0], elevation)) };
+        outline.setAttribute("display", "none");
+        tip.style.display = "none";
+        if (!frame) { frame = window.requestAnimationFrame(draw); }
+      }
+    });
+    hit.addEventListener("focus", function () { place([box[0] + box[2] / 2, box[1]], scene.hint); });
+    hit.addEventListener("blur", hide);
+  }
+
+  if (data.scenes && typeof hairlineSceneShapes === "function") { data.scenes.forEach(turnable); }
 }());

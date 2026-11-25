@@ -52,7 +52,7 @@ Each chart is one call with the data and its column names, and returns a ggplot 
 `hl_bars()`, `hl_scatter()`, `hl_timeseries()`, `hl_spread()`, `hl_raincloud()`, `hl_ridgeline()`,
 `hl_kaplan_meier()`, `hl_forest()`, `hl_dotplot()`, `hl_funnel()`, `hl_correlation()`, `hl_donut()`,
 `hl_partition()`, `hl_sankey()`, `hl_chord()`, `hl_arcs()`, `hl_venn()`, `hl_prisma()`, `hl_risk_of_bias()`,
-`hl_lanes()`, `hl_levels()`, `hl_swimlanes()`, `hl_likert()` and `hl_table()`.
+`hl_lanes()`, `hl_levels()`, `hl_swimlanes()`, `hl_likert()`, `hl_surface()` and `hl_table()`.
 
 ```r
 admissions <- data.frame(diagnosis = c("Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac"),

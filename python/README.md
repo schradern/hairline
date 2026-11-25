@@ -57,7 +57,7 @@ measurements are not counted as separate patients.
 Each chart is one call with the data and its column names, and returns a figure in the hairline frame:
 `bars`, `scatter`, `timeseries`, `spread`, `raincloud`, `ridgeline`, `kaplan_meier`, `forest`, `dotplot`,
 `funnel`, `correlation`, `donut`, `partition`, `sankey`, `chord`, `arcs`, `venn`, `prisma`, `risk_of_bias`,
-`lanes`, `levels`, `swimlanes`, `likert` and `table`.
+`lanes`, `levels`, `swimlanes`, `likert`, `surface` and `table`.
 
 ```python
 admissions = pd.DataFrame({"diagnosis": ["Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac"],
