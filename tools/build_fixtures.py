@@ -437,6 +437,26 @@ ALT_SERIES_OPTIONS = [("three", {"by": "unit"}), ("three", {"by": "unit", "windo
                       ("gap", {"by": "unit", "window": 1}), ("three", {"by": "unit", "clip": [45, 60]})]
 
 
+def alt_samples(units: int = 3, years: tuple[str, ...] = ("2024", "2025"), scale: float = 1.0) -> dict:
+    """Thirty values per unit and year, spread unevenly, the units' centres apart."""
+    rows = [{"unit": f"Unit {chr(65 + unit)}", "year": year,
+             "days": round(scale * (2 + 1.5 * unit + year_index + ((index * 7) % 11) / 3), 2)}
+            for year_index, year in enumerate(years) for unit in range(units) for index in range(30)]
+    return {key: [row[key] for row in rows] for key in ("unit", "year", "days")}
+
+
+ALT_SAMPLES = {"three": alt_samples(), "one": alt_samples(1, ("2025",)), "shares": alt_samples(scale=0.05),
+               "even": {"unit": ["Unit A", "Unit A", "Unit B", "Unit B"], "year": ["2025"] * 4,
+                        "days": [2.0, 4.0, 1.0, 5.0]}}
+ALT_DISTRIBUTION_OPTIONS = [
+    ("spread", "three", {}), ("spread", "three", {"facet": "year"}), ("spread", "three", {"summary": ["mean", "sd"]}),
+    ("spread", "three", {"clip": [3, 7], "clip_stats": True}), ("spread", "shares", {"percent": True}),
+    ("spread", "one", {}), ("spread", "even", {}), ("raincloud", "three", {}),
+    ("raincloud", "three", {"facet": "year"}), ("raincloud", "three", {"summary": ["mean", "ci"]}),
+    ("ridgeline", "three", {}),
+    ("ridgeline", "three", {"summary": "mean"}), ("ridgeline", "three", {"facet": "year"})]
+
+
 def alt_text_cases() -> dict:
     """Bar charts and time series with their alt text, in English and German, for both packages to write alike."""
     import matplotlib.pyplot as plt
@@ -459,8 +479,13 @@ def alt_text_cases() -> dict:
               for locale in ("en", "de") for name, options in ALT_SERIES_OPTIONS]
     series.append(case("de", share, {"by": "unit", "percent": True},
                        lambda frame, options: hl.timeseries(frame, "t", "v", **options)))
+    charts = {"spread": hl.spread, "raincloud": hl.raincloud, "ridgeline": hl.ridgeline}
+    distributions = [{"chart": chart, **case(locale, ALT_SAMPLES[name], options,
+                                             lambda frame, options, chart=chart: charts[chart](frame, "unit", "days",
+                                                                                                **options))}
+                     for locale in ("en", "de") for chart, name, options in ALT_DISTRIBUTION_OPTIONS]
     hl.use(brand=False)
-    return {"bars": bars, "timeseries": series}
+    return {"bars": bars, "timeseries": series, "distributions": distributions}
 
 
 def heatmap_cases() -> dict:

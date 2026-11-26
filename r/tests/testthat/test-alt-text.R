@@ -24,6 +24,15 @@ test_that("time series alt text matches the shared fixture, in English and Germa
                     function(data, options) do.call(hl_timeseries, c(list(data, "t", "v"), options)))
 })
 
+test_that("distribution alt text matches the shared fixture, in English and German", {
+  cases <- read_fixture("alt_text.json")$distributions
+  charts <- list(spread = hl_spread, raincloud = hl_raincloud, ridgeline = hl_ridgeline)
+  for (chart in names(charts)) {
+    alt_fixture_check(Filter(function(case) identical(case$chart, chart), cases),
+                      function(data, options) do.call(charts[[chart]], c(list(data, "unit", "days"), options)))
+  }
+})
+
 test_that("extremes name ties together and leave out missing values", {
   hl_use(brand = FALSE)
   expect_equal(alt_extremes(c("a", "b", "c", "d", "e"), c(2, NA, 5, 5, 1), c("2", "", "5", "5", "1")),

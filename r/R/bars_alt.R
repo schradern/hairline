@@ -1,11 +1,10 @@
 # The description of a bar chart for its alt text: its highest and lowest bars, as their labels write them. Mirrors
 # the Python package's charts/bars_alt.py.
 
-# Between the parts of a bar's name: its panel, its category and its group ("Surgery / ICU / 2025").
-bar_name_parts <- " / "
-
-# A bar's name from its parts, each once (a facet by the groups names them once).
-bar_alt_name <- function(parts) paste(unique(parts), collapse = bar_name_parts)
+# A bar's name from its parts (its panel, its category and its group), each once (a facet by the groups names them
+# once): "Surgery · ICU · 2025", as the captions name a facet's rows. The separator is written here, not kept in a
+# constant, so it stays UTF-8 whatever locale the package was installed in.
+bar_alt_name <- function(parts) paste(unique(parts), collapse = " \u00b7 ")
 
 # The sum of the values; missing when none has one.
 bar_alt_amount <- function(values) {

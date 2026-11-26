@@ -22,6 +22,7 @@ from hairline.charts.common import (
     within,
 )
 from hairline.charts.comparisons import section_comparisons
+from hairline.charts.distribution_alt import distribution_description, facet_named
 from hairline.charts.options import Reference, apply_options, legend_references, references, sorted_groups
 from hairline.charts.ridgeline_drawing import draw_ridges, mean_floor, mean_plot_height
 from hairline.charts.summaries import (
@@ -183,6 +184,9 @@ def ridgeline(data: pd.DataFrame, group: str, value: str, *, title: str | None =
         frame_panel(result, index, panel, labels, statistics[index], show_n, percent, label_room(drawn_references))
         if numbers[index]:
             result.numbers_column(index, numbers[index])
+    result.description = distribution_description("kind_ridgeline", facet_named(list(zip(panels, statistics,
+                                                                                         strict=True))),
+                                                  marks, every, percent, locale)
     # A mean diamond on a flat bottom ridge would reach below the panel on a short plot: the plot grows instead.
     result.min_plot = mean_plot_height(lifts, top, math.ceil(len(panels) / result.columns))
     legend = [("square", color, label) for label, color in

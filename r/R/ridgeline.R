@@ -195,7 +195,14 @@ hl_ridgeline <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   plot@meta$hairline_min_plot <- ridge_mean_plot_height(lifts, top, ceiling(length(panels) / panel_columns))
   plot@meta$hairline_targets <- targets
   if (percent) plot <- plot + scale_x_hairline(percent = TRUE)
-  chart_options(plot, "ridgeline", names, x_title = x_title, reference = reference,
-                reference_legend = reference_legend, reference_axis = "x",
-                key_title = key_title)
+  plot <- chart_options(plot, "ridgeline", names, x_title = x_title, reference = reference,
+                        reference_legend = reference_legend, reference_axis = "x",
+                        key_title = key_title)
+  statistics <- if (clip_stats) drawn else counted
+  described <- lapply(seq_along(panels), function(index) {
+    list(name = if (!is.null(facet)) panels[index], groups = statistics[[index]])
+  })
+  plot@meta$hairline_description <- distribution_description("kind_ridgeline", distribution_facet_named(described),
+                                                             marks, every, percent)
+  plot
 }

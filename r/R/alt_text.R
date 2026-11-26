@@ -13,22 +13,28 @@ alt_named <- function(names) {
   if (length(names) <= most) shown else word("more_names", names = shown, n = length(names) - most)
 }
 
+# The words alt_extremes() writes: both ends, one value alone, every value the same.
+alt_value_words <- c("extremes", "one_value", "all_same")
+# The same for each group's centre ("Highest median: …"), its name given as the `centre` field.
+alt_centre_words <- c("centre_extremes", "centre_one", "centre_same")
+
 # The highest and lowest of `names`, `values` and `texts` (each value as written) in reading order, ties named
-# together; one value on its own, or every value when they are all the same. Missing values are left out.
-alt_extremes <- function(names, values, texts) {
+# together; one value on its own, or every value when they are all the same, in `words` with any further fields.
+# Missing values are left out.
+alt_extremes <- function(names, values, texts, words = alt_value_words, ...) {
   known <- is.finite(values)
   names <- names[known]
   texts <- texts[known]
   values <- round(values[known], alt_tie_digits)
   if (!length(values)) return("")
-  if (length(values) == 1) return(word("one_value", name = names, value = texts))
+  if (length(values) == 1) return(word(words[2], name = names, value = texts, ...))
   high <- max(values)
   low <- min(values)
-  if (high == low) return(word("all_same", value = texts[1]))
+  if (high == low) return(word(words[3], value = texts[1], ...))
   highs <- which(values == high)
   lows <- which(values == low)
-  word("extremes", high = alt_named(names[highs]), high_value = texts[highs[1]], low = alt_named(names[lows]),
-       low_value = texts[lows[1]])
+  word(words[1], high = alt_named(names[highs]), high_value = texts[highs[1]], low = alt_named(names[lows]),
+       low_value = texts[lows[1]], ...)
 }
 
 # Where a grid (rows y, columns x) is highest and lowest, as its tooltips (grid_tips()) name the point: the first such

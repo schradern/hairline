@@ -24,6 +24,7 @@ from hairline.charts.common import (
     within,
 )
 from hairline.charts.comparisons import section_comparisons
+from hairline.charts.distribution_alt import distribution_description
 from hairline.charts.forest import decimals
 from hairline.charts.options import (
     FACET_BLOCK,
@@ -239,7 +240,11 @@ def spread_spec(data: pd.DataFrame, group: str, value: str, *, order: Sequence[s
         # mean=True alone names the two centres, as it always has; a summary names every mark it draws.
         named = drawn_marks if summary is not None else ("median", "mean")
         legend += summary_legend(named, "dot", current_settings().neutral["ink"], locale)
+    by_name = dict(counted)
+    description = distribution_description("kind_spread", [(row["name"], by_name[row["name"]]) for row in rows],
+                                           drawn_marks, every, percent, locale, digits, discrete)
     return {"rows": rows, "axis": spread_axis(lows, highs, percent, zero), "axis_title": axis_title,
+            "description": description,
             "headings": {len(stats) + index: label for index, label in enumerate(written.values())},
             "notes": [note for note in notes if note], "legend": legend, "letters": panel_letters,
             "references": [list(line) for line in lines]}
@@ -307,6 +312,7 @@ def spread(data: pd.DataFrame, group: str, value: str, *, title: str | None = No
     spec["numbers"] = check_numbers(numbers, "spread")
     result = figure(title or f"{humanise(value)} by {str(group).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, *spec["notes"]), size=size)
+    result.description = spec["description"]
     result.draw(0, lambda box, measure, style: spread_drawing(spec, box, measure, style))
     if spec["legend"]:
         result.legend(spec["legend"])

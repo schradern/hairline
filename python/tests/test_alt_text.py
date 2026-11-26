@@ -35,6 +35,14 @@ def test_time_series_alt_text_matches_the_shared_fixture(case):
     hl.use(brand=False)
 
 
+@pytest.mark.parametrize("case", FIXTURE["distributions"], ids=lambda case: f"{case['chart']}-{case_id(case)}")
+def test_distribution_alt_text_matches_the_shared_fixture(case):
+    hl.use(brand=False, locale=case["locale"])
+    draw = {"spread": hl.spread, "raincloud": hl.raincloud, "ridgeline": hl.ridgeline}[case["chart"]]
+    assert figure_alt(draw(frame_of(case), "unit", "days", **case["options"])) == case["alt"]
+    hl.use(brand=False)
+
+
 def test_extremes_name_ties_together_and_leave_out_missing_values():
     entries = [("a", 2.0, "2"), ("b", float("nan"), ""), ("c", 5.0, "5"), ("d", 5.0, "5"), ("e", 1.0, "1")]
     assert extremes(entries, "en") == "Highest: c, d (5); lowest: e (1)."

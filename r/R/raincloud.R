@@ -302,6 +302,7 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   compared <- raincloud_compare_rows(counted, compare, facet, marks, percent)
   every_counted <- unlist(counted, use.names = FALSE)
   targets <- list()
+  described <- list()
   for (panel in panels) {
     here <- if (is.null(facet)) rep(TRUE, nrow(data)) else as.character(data[[facet]]) == panel
     values <- lapply(names, function(name) data[[value]][here & as.character(data[[group]]) == name])
@@ -310,6 +311,8 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
                                     marks)
     plot <- plot + if (is.null(facet)) built$layers else in_facet(built$layers, panel, panels)
     levels <- max(levels, built$levels)
+    described[[length(described) + 1]] <- list(name = if (!is.null(facet)) panel,
+                                                groups = stats::setNames(if (clip_stats) shown else values, names))
     tips <- raincloud_group_tips(stats::setNames(if (clip_stats) shown else values, names), every_counted, marks,
                                  stats, compared$pairs, percent)
     targets <- c(targets, raincloud_targets(match(panel, panels), built$groups, tips, coloured$palette))
@@ -343,6 +346,10 @@ hl_raincloud <- function(data, group, value = NULL, title = NULL, subtitle = NUL
   # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
   plot@meta$hairline_min_plot <- bracket_plot_height(levels)
   plot@meta$hairline_targets <- targets
-  chart_options(plot, "raincloud", names, x_title = x_title, reference = reference,
-                reference_legend = reference_legend, key_title = key_title)
+  plot <- chart_options(plot, "raincloud", names, x_title = x_title, reference = reference,
+                        reference_legend = reference_legend, key_title = key_title)
+  plot@meta$hairline_description <- distribution_description("kind_raincloud",
+                                                             distribution_facet_named(described), marks,
+                                                             every_counted, percent)
+  plot
 }

@@ -21,6 +21,7 @@ from hairline.charts.common import (
     series_colors,
     with_caption,
 )
+from hairline.charts.distribution_alt import distribution_description, facet_named
 from hairline.charts.options import Reference, apply_options, sorted_groups
 from hairline.charts.raincloud_numbers import check_raincloud_stats, compare_rows, group_tips, stat_rows
 from hairline.charts.spread_geometry import DIAMOND, OPEN_EDGE
@@ -280,12 +281,13 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
                     sharey=bool(facet))
     palette, coarse = series_colors(names, data, group, color_by, colors, dimension, "raincloud", highlight,
                                     named=True)
-    levels = 0
+    levels, described = 0, []
     for index, (panel, _) in enumerate(panels):
         def in_panel(rows: pd.DataFrame, panel: str | None = panel) -> pd.DataFrame:
             return rows if panel is None else rows[rows[facet].astype(str) == panel]
         drawn_here = [(name, in_panel(rows)) for name, rows in drawn]
         counted_here = [(name, in_panel(rows)) for name, rows in counted]
+        described.append((panel, [(name, rows[value].to_numpy(dtype=float)) for name, rows in counted_here]))
         found, groups_here = draw_panel(result.axes[index], drawn_here, counted_here, comparisons, value, palette,
                                         marks)
         levels = max(levels, found)
@@ -299,6 +301,8 @@ def raincloud(data: pd.DataFrame, group: str, value: str, *, title: str | None =
             result.panel_header(index, panel, stats=[("n", format_number(total, 0, locale))] if show_n else None)
         if percent:
             result.percent_axis(index, "y")
+    result.description = distribution_description("kind_raincloud", facet_named(described), marks, every_counted,
+                                                  percent, locale)
     # A short plot (one column of a two-column page) would stack the p labels into the brackets above them.
     result.min_plot = bracket_plot_height(levels)
     counts = [format_number(len(rows), 0, locale) for _, rows in counted]

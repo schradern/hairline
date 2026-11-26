@@ -188,7 +188,10 @@ spread_spec <- function(data, group, value, order = NULL, marks = NULL, mark_lab
   marked <- c(unlist(lapply(rows, `[[`, "mark")), vapply(lines, `[[`, numeric(1), "value"), bar_ends)
   notes <- c(dropped$note, if (!is.null(clip)) clip_caption(every, limits, clip_stats),
              if (discrete) word("levels_note"), spread_columns_note(written, measures), compared$note)
-  list(rows = rows, axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
+  description <- distribution_description("kind_spread", counted[vapply(rows, `[[`, "", "name")], drawn_marks, every,
+                                          percent, digits, discrete)
+  list(rows = rows, description = description,
+       axis = spread_axis(c(vapply(rows, `[[`, numeric(1), "low"), marked),
                                        c(vapply(rows, `[[`, numeric(1), "high"), marked), percent, zero),
        axis_title = axis_title, notes = notes, letters = isTRUE(panel_letters),
        headings = lapply(seq_along(written), function(index) {
@@ -306,6 +309,7 @@ hl_spread <- function(data, group, value, title = NULL, subtitle = NULL, caption
                   caption = with_caption(caption, spec$notes), x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   if (length(spec$legend)) plot <- plot + hl_legend(spec$legend)
   plot@meta$hairline_drawing <- function(box, measure, style) spread_drawing(spec, box, measure, style)
+  plot@meta$hairline_description <- spec$description
   plot@meta$hairline_fit_height <- TRUE
   plot@meta$hairline_key_title <- key_title
   plot@meta$hairline_reference_legend <- legend_references(reference, reference_legend, "spread")$labels

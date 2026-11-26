@@ -10,8 +10,9 @@ import pandas as pd
 
 from hairline.alt_text import described, extremes
 
-# Between the parts of a bar's name: its panel, its category and its group ("Surgery / ICU / 2025").
-NAME_PARTS = " / "
+# Between the parts of a bar's name: its panel, its category and its group ("Surgery · ICU · 2025"), as the
+# captions name a facet's rows.
+NAME_PARTS = " · "
 
 
 def bar_name(parts: Sequence[str]) -> str:

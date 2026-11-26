@@ -15,7 +15,10 @@
   value is highest and lowest ("3D surface. Highest at Hour 12, Week 3 (85%); …"); `timeseries` says where each
   series' line starts, ends and is highest ("Line chart. ICU: from 41 (2025-01-01) to 52 (2025-12-01), highest 55
   (2025-08-01)."), the line being the rolling mean (or the `summary=` centre) and not the raw values under it, four
-  series at most and then how many more. The other charts follow.
+  series at most and then how many more; `spread`, `raincloud` and `ridgeline` name the groups whose centre is
+  highest and lowest ("Interval plot. Highest median: ER (5.4); lowest: ICU (2.4)."), the centre they draw (the
+  mean where `summary=` centres on it) written as their numbers write it. A facet's rows are named as the captions
+  name them ("2025 · ICU"). The other charts follow.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.

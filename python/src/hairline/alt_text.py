@@ -24,21 +24,30 @@ def named(names: Sequence[str], locale: str | None) -> str:
     return shown if len(names) <= most else word("more_names", locale, names=shown, n=len(names) - most)
 
 
-def extremes(entries: Sequence[tuple[str, float, str]], locale: str | None) -> str:
+# The words extremes() writes: both ends, one value alone, every value the same.
+VALUE_WORDS = ("extremes", "one_value", "all_same")
+# The same for each group's centre ("Highest median: …"), its name given as the `centre` field.
+CENTRE_WORDS = ("centre_extremes", "centre_one", "centre_same")
+
+
+def extremes(entries: Sequence[tuple[str, float, str]], locale: str | None, words: Sequence[str] = VALUE_WORDS,
+             **fields: str) -> str:
     """The highest and lowest of (name, value, value as written) in reading order, ties named together; one value
-    on its own, or every value when they are all the same. Missing values are left out."""
+    on its own, or every value when they are all the same, in `words` with any further `fields`. Missing values
+    are left out."""
     known = [(name, round(value, TIE_DIGITS), text) for name, value, text in entries if math.isfinite(value)]
+    both, one, same = words
     if not known:
         return ""
     if len(known) == 1:
-        return word("one_value", locale, name=known[0][0], value=known[0][2])
+        return word(one, locale, name=known[0][0], value=known[0][2], **fields)
     high, low = max(value for _, value, _ in known), min(value for _, value, _ in known)
     if high == low:
-        return word("all_same", locale, value=known[0][2])
+        return word(same, locale, value=known[0][2], **fields)
     highs = [entry for entry in known if entry[1] == high]
     lows = [entry for entry in known if entry[1] == low]
-    return word("extremes", locale, high=named([name for name, _, _ in highs], locale), high_value=highs[0][2],
-                low=named([name for name, _, _ in lows], locale), low_value=lows[0][2])
+    return word(both, locale, high=named([name for name, _, _ in highs], locale), high_value=highs[0][2],
+                low=named([name for name, _, _ in lows], locale), low_value=lows[0][2], **fields)
 
 
 def grid_extremes(grid: np.ndarray, tips: dict, titles: dict[str, str], locale: str | None) -> str:
