@@ -67,13 +67,16 @@ funnel_spec <- function(data, estimate, se, ratio = TRUE, pooled = NULL, x_title
        y_title = "Standard error", color = lone_colour(), egger = egger_p(effects, errors))
 }
 
+# The plot's c(left, top, right, bottom): below it the x tick band and title the frame gives an axis chart.
+# As Python's plot_area().
 funnel_area <- function(spec, box, measure, style) {
   spacing <- hl_tokens()$spacing
   base <- style$base
-  line <- line_height(style, "label")
+  size <- style$sizes$label
   widest <- max(vapply(unlist(spec$y_axis$labels), measure, numeric(1), role = "label"))
-  c(box[1] + widest + spacing$y_labels_plot * base, box[2] + line + hl_tokens()$funnel$title_gap * base,
-    box[1] + box[3], box[2] + box[4] - 2 * line - spacing$x_tick_pad * style$sizes$label - spacing$x_title * base)
+  below <- spacing$x_tick_labels * size + spacing$x_title * base + (style$cap_height + style$descender) * size
+  top <- box[2] + line_height(style, "label") + hl_tokens()$funnel$title_gap * base
+  c(box[1] + widest + spacing$y_labels_plot * base, top, box[1] + box[3], box[2] + box[4] - below)
 }
 
 funnel_scales <- function(spec, area) {

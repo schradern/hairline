@@ -9,7 +9,8 @@ drawing_style <- function(settings) {
        line_gap = tokens$type$line_gap, cap_height = font_metrics()$cap_height, neutral = settings$neutral,
        swatch = tokens$spacing$legend_swatch_square, swatch_text = tokens$spacing$legend_swatch_text,
        leader_width = tokens$reference$width * base, data_width = tokens$lines$data * base,
-       axis_width = tokens$lines$axis * base, grid = tokens$lines$grid * base, descender = font_metrics()$descender)
+       axis_width = tokens$lines$axis * base, grid = tokens$lines$grid * base, descender = font_metrics()$descender,
+       ascender = font_metrics()$ascender)
 }
 
 measure_for <- function(settings) {

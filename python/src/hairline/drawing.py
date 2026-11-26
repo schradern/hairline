@@ -32,7 +32,7 @@ def drawing_style(settings: Settings) -> dict:
             "swatch_text": spacing["legend_swatch_text"], "leader_width": tokens["reference"]["width"] * base,
             "data_width": tokens["lines"]["data"] * base, "axis_width": tokens["lines"]["axis"] * base,
             "grid": tokens["lines"]["grid"] * base,
-            "descender": load_font_metrics().descender}
+            "descender": load_font_metrics().descender, "ascender": load_font_metrics().ascender}
 
 
 def measure_for(settings: Settings):

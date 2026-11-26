@@ -13,12 +13,14 @@ from hairline.tokens import load_tokens
 
 
 def plot_area(spec: dict, box: Box, measure: Measure, style: dict) -> tuple[float, float, float, float]:
-    spacing, base, line = load_tokens()["spacing"], style["base"], line_height(style, "label")
+    """The plot's (left, top, right, bottom): below it the x tick band and title the frame gives an axis chart."""
+    spacing, base, size = load_tokens()["spacing"], style["base"], style["sizes"]["label"]
     widest = max(measure(label, "label") for label in spec["y_axis"]["labels"])
     left = box.x + widest + spacing["y_labels_plot"] * base
-    top = box.y + line + load_tokens()["funnel"]["title_gap"] * base
-    bottom = box.y + box.height - 2 * line - spacing["x_tick_pad"] * style["sizes"]["label"] - spacing["x_title"] * base
-    return left, top, box.x + box.width, bottom
+    top = box.y + line_height(style, "label") + load_tokens()["funnel"]["title_gap"] * base
+    line = (style["cap_height"] + style["descender"]) * size
+    below = spacing["x_tick_labels"] * size + spacing["x_title"] * base + line
+    return left, top, box.x + box.width, box.y + box.height - below
 
 
 def scales(spec: dict, area: tuple[float, float, float, float]):
@@ -32,20 +34,21 @@ def scales(spec: dict, area: tuple[float, float, float, float]):
 
 
 def axis_shapes(spec: dict, box: Box, area: tuple, x, y, style: dict) -> list[dict]:
+    """Tick labels (faint) and axis titles (muted) where the frame puts an axis chart's, and the y grid."""
     left, top, right, bottom = area
     neutral, spacing, size = style["neutral"], load_tokens()["spacing"], style["sizes"]["label"]
     shapes = [{**text(left - spacing["y_labels_plot"] * style["base"], baseline_for(y(value), style, "label"), label,
-                      "label", neutral["muted"], "right"), "part": "y_label"}
+                      "label", neutral["faint"], "right"), "part": "y_label"}
               for value, label in zip(spec["y_axis"]["breaks"], spec["y_axis"]["labels"], strict=True)]
     shapes += [{"kind": "line", "points": [[left, y(value)], [right, y(value)]], "color": neutral["grid"],
                 "width": style["grid"]} for value in spec["y_axis"]["breaks"] if value > 0]
-    tick = bottom + spacing["x_tick_pad"] * size + style["cap_height"] * size
+    tick = bottom + spacing["x_tick_pad"] * size + style["ascender"] * size
     for value, label in zip(spec["x_axis"]["breaks"], spec["x_axis"]["labels"], strict=True):
         position = x(math.log(value) if spec["ratio"] else value)
-        shapes.append({**text(position, tick, label, "label", neutral["muted"],
+        shapes.append({**text(position, tick, label, "label", neutral["faint"],
                               edge_alignment((position - left) / (right - left))), "part": "x_label"})
-    shapes.append(text(right, tick + line_height(style, "label") + spacing["x_title"] * style["base"],
-                       spec["x_title"], "label", neutral["muted"], "right"))
+    title = bottom + spacing["x_tick_labels"] * size + spacing["x_title"] * style["base"] + style["cap_height"] * size
+    shapes.append(text(right, title, spec["x_title"], "label", neutral["muted"], "right"))
     title_baseline = top - load_tokens()["funnel"]["title_gap"] * style["base"] - style["descender"] * size
     shapes.append(text(box.x, title_baseline, spec["y_title"], "label", neutral["muted"]))
     return shapes

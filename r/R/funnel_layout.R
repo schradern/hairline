@@ -1,5 +1,7 @@
 # Funnel plot axes and the entry point funnel_drawing().
 
+# Tick labels (faint) and axis titles (muted) where the frame puts an axis chart's, and the y grid.
+# As Python's axis_shapes().
 funnel_axis_shapes <- function(spec, box, area, scale, style) {
   neutral <- style$neutral
   spacing <- hl_tokens()$spacing
@@ -9,24 +11,24 @@ funnel_axis_shapes <- function(spec, box, area, scale, style) {
   labels <- unlist(spec$y_axis$labels)
   shapes <- lapply(seq_along(breaks), function(index) {
     c(shape_text(area[1] - pad, baseline_for(scale$y(breaks[index]), style, "label"), labels[index], "label",
-                 neutral$muted, "right"), part = "y_label")
+                 neutral$faint, "right"), part = "y_label")
   })
   for (value in breaks[breaks > 0]) {
     shapes[[length(shapes) + 1]] <- list(kind = "line", points = rbind(c(area[1], scale$y(value)),
                                                                        c(area[3], scale$y(value))),
                                          color = neutral$grid, width = style$grid)
   }
-  tick <- area[4] + spacing$x_tick_pad * size + style$cap_height * size
+  tick <- area[4] + spacing$x_tick_pad * size + style$ascender * size
   x_breaks <- as.numeric(unlist(spec$x_axis$breaks))
   x_labels <- unlist(spec$x_axis$labels)
   for (index in seq_along(x_breaks)) {
     position <- scale$x(if (isTRUE(spec$ratio)) log(x_breaks[index]) else x_breaks[index])
     align <- c("left", "right", "center")[match(edge_hjust((position - area[1]) / (area[3] - area[1])), c(0, 1, 0.5))]
-    shapes[[length(shapes) + 1]] <- c(shape_text(position, tick, x_labels[index], "label", neutral$muted, align),
+    shapes[[length(shapes) + 1]] <- c(shape_text(position, tick, x_labels[index], "label", neutral$faint, align),
                                       part = "x_label")
   }
-  shapes[[length(shapes) + 1]] <- shape_text(area[3], tick + line_height(style, "label") + spacing$x_title * style$base,
-                                             spec$x_title, "label", neutral$muted, "right")
+  title <- area[4] + spacing$x_tick_labels * size + spacing$x_title * style$base + style$cap_height * size
+  shapes[[length(shapes) + 1]] <- shape_text(area[3], title, spec$x_title, "label", neutral$muted, "right")
   title_baseline <- area[2] - hl_tokens()$funnel$title_gap * style$base - style$descender * size
   shapes[[length(shapes) + 1]] <- shape_text(box[1], title_baseline, spec$y_title, "label", neutral$muted)
   shapes

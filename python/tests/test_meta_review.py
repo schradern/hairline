@@ -12,7 +12,7 @@ from hairline.charts.risk_of_bias import risk_of_bias_spec
 from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
 from hairline.layout.geometry import Box
 
-STYLE = {**FOREST_STYLE, "grid": 0.45}
+STYLE = {**FOREST_STYLE, "grid": 0.45, "ascender": 0.95}
 
 
 def trials():
