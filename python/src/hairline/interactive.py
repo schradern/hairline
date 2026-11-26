@@ -309,8 +309,26 @@ def scene_targets(figure: HairlineFigure) -> list[dict]:
     turning = {key: rules[key] for key in ("elevation_limits", "turn_step", "tilt_step", "drag_degrees_per_pt")}
     style, measure = drawing_style(figure.settings), measure_for(figure.settings)
     hint = word("turn_hint", figure.settings.locale)
-    return [rounded({"panel": index, **surface_scene(spec, measure, style), "tips": spec["tips"],
-                     "turning": turning, "hint": hint}, SCENE_DIGITS) for index, spec in sorted(figure.scenes.items())]
+    found = []
+    for index, spec in sorted(figure.scenes.items()):
+        scene = surface_scene(spec, measure, style)
+        found.append(rounded({"panel": index, **scene, "tips": spec["tips"], "turning": turning, "hint": hint,
+                              **pair_targets(figure.plot_boxes[index], spec, scene, measure, style)}, SCENE_DIGITS))
+    return found
+
+
+def pair_targets(box, spec: dict, scene: dict, measure, style: dict) -> dict:
+    """For a surface with its heatmap beside it: the surface's own box, and the heatmap's box and cells as
+    [x, y, width, height, column, row] in pt, so the script marks one grid point in both."""
+    if "flat" not in spec:
+        return {}
+    from hairline.charts.heatmap_geometry import heatmap_scene
+    from hairline.charts.surface_geometry import pair_layout
+    layout = pair_layout(scene, heatmap_scene(spec["flat"], measure, style), box)
+
+    def corners(found) -> list[float]:
+        return [found.x, found.y, found.width, found.height]
+    return {"box": corners(layout["box"]), "flat": {"box": corners(layout["flat_box"]), "cells": layout["cells"]}}
 
 
 def figure_targets(figure: HairlineFigure) -> dict:

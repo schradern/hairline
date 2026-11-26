@@ -18,6 +18,7 @@ hl_surface(
   colors = NULL,
   percent = FALSE,
   gradient = FALSE,
+  heatmap = FALSE,
   elevation = NULL,
   azimuth = NULL
 )
@@ -41,6 +42,11 @@ ramp, else \code{"blues"}, by default.}
 
 \item{gradient}{Blend each cell's colour along the ramp instead of
 binning it into bands; the key then shows the ramp at each tick.}
+
+\item{heatmap}{Draw the values as a heatmap beside the surface, in the
+same colours: the surface shows the shape, the heatmap the values.
+Pointing at either in the HTML export marks the same grid point in both.
+It is saved at the double size unless \code{\link[=hl_save]{hl_save()}} names another.}
 
 \item{elevation, azimuth}{The viewpoint in degrees: height above the
 floor (10 to 80) and turn about the vertical axis.}

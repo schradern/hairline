@@ -35,7 +35,8 @@ def surface_scene(spec: dict, measure: Measure, style: dict) -> dict:
                      "ticks": neutral["faint"], "titles": neutral["muted"]},
             "lines": {"axis": neutral["axis"], "grid": neutral["grid"], "axis_width": style["axis_width"],
                       "grid_width": style["grid"]},
-            "gap": rules["label_gap"] * style["base"], "align": rules["align"], "seam": rules["seam_pt"]}
+            "gap": rules["label_gap"] * style["base"], "align": rules["align"], "seam": rules["seam_pt"],
+            "pair": {"share": rules["pair_share"], "gap": rules["pair_gap"] * style["base"]}}
 
 
 def projector(view: dict):
@@ -232,3 +233,23 @@ def cell_shapes(scene: dict, project, place) -> list[dict]:
     cells.sort(key=lambda cell: (cell[0], cell[1]))
     return [{"kind": "polygon", "points": [place(point) for point in projected], "fill": fill, "edge": fill,
              "edge_width": scene["seam"], "part": "cell"} for _, _, fill, projected in cells]
+
+
+def shapes_bottom(shapes: list[dict], descender: float) -> float:
+    """The lowest point the shapes reach: outlines, and texts down to their descenders."""
+    return max(shape["y"] + descender if shape["kind"] == "text" else max(point[1] for point in shape["points"])
+               for shape in shapes)
+
+
+def pair_layout(scene: dict, flat: dict, box: Box) -> dict:
+    """The surface on the left share of the box and its heatmap on the right, as tall as the surface: the shapes of
+    both, each one's box, and the heatmap's cells for the script that links them."""
+    from hairline.charts.heatmap_geometry import heatmap_layout
+    split = scene["pair"]
+    room = box.width - split["gap"]
+    left = Box(box.x, box.y, room * split["share"], box.height)
+    surface = scene_shapes(scene, left)
+    height = shapes_bottom(surface, scene["text"]["descender"]) - box.y
+    right = Box(left.x + left.width + split["gap"], box.y, room - left.width, height)
+    heat, cells = heatmap_layout(flat, right, height=height, tag=False)
+    return {"shapes": surface + heat, "box": left, "flat_box": right, "cells": cells}

@@ -5,26 +5,27 @@ point at, how to split the data into panels. hairline answers each of them with 
 works the same way in every chart that has the concept, in Python and in R. Each option is built once in each
 package (`charts/options.py`, `chart_options.R`), so a chart that offers it cannot drift from the others.
 
-| Option | `bars` | `spread` | `dotplot` | `raincloud` | `ridgeline` | `scatter` | `timeseries` | `kaplan_meier` | `likert` | `lanes` | `levels` | `arcs` | `surface` |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `order` | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
-| `sort` | ● | ● | ● | ● | ● |  |  |  | ● |  |  |  |  |
-| `colors` | ● | ● |  | ● | ● | ● | ● | ● |  | ● | ● |  | ● |
-| `highlight` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  |
-| `key_title` | ● | ● |  | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
-| `x_title` | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  | ● |
-| `y_title` | ● |  |  | ● |  | ● | ● |  |  |  |  |  | ● |
-| `reference` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  |
-| `reference_legend` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  |
-| `percent` | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  | ● |
-| `show_n` | ● | ● | ● | ● | ● |  |  |  | ● |  |  |  |  |
-| `min_n` | ● | ● | ● | ● | ● | ● |  |  | ● |  |  |  |  |
-| `clip` |  | ● |  | ● | ● | ● | ● |  |  |  |  |  |  |
-| `facet` | ● | ● | ● | ● | ● | ● |  |  | ● |  |  |  |  |
+| Option | `bars` | `spread` | `dotplot` | `raincloud` | `ridgeline` | `scatter` | `timeseries` | `kaplan_meier` | `likert` | `lanes` | `levels` | `arcs` | `surface` | `heatmap` |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `order` | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  |
+| `sort` | ● | ● | ● | ● | ● |  |  |  | ● |  |  |  |  |  |
+| `colors` | ● | ● |  | ● | ● | ● | ● | ● |  | ● | ● |  | ● | ● |
+| `highlight` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  |  |
+| `key_title` | ● | ● |  | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  |
+| `x_title` | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  | ● | ● |
+| `y_title` | ● |  |  | ● |  | ● | ● |  |  |  |  |  | ● | ● |
+| `reference` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  |  |
+| `reference_legend` | ● | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  |  |
+| `percent` | ● | ● | ● | ● | ● | ● | ● |  |  |  |  |  | ● | ● |
+| `show_n` | ● | ● | ● | ● | ● |  |  |  | ● |  |  |  |  |  |
+| `min_n` | ● | ● | ● | ● | ● | ● |  |  | ● |  |  |  |  |  |
+| `clip` |  | ● |  | ● | ● | ● | ● |  |  |  |  |  |  |  |
+| `facet` | ● | ● | ● | ● | ● | ● |  |  | ● |  |  |  |  |  |
 
 An empty cell is a chart without the concept: a Likert row has no single value to draw a reference at, a dot plot
 has one series and so no legend, and the dot plot takes its n from a column (`n=`) instead of counting rows.
-A surface's `z_title` names both its height and its colour key, so it needs no `key_title`.
+A surface's and a heatmap's `z_title` names the colour key (and the surface's height), so they need no
+`key_title`.
 
 ## What each option does
 

@@ -719,7 +719,12 @@
     "max_side": 150,
     "turn_step": 10,
     "tilt_step": 5,
-    "drag_degrees_per_pt": 0.5
+    "drag_degrees_per_pt": 0.5,
+    "pair_share": 0.58,
+    "pair_gap": 2.5
+  },
+  "heatmap": {
+    "aspect": 0.55
   },
   "funnel": {
     "z": 1.959963984540054,

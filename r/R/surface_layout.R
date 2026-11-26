@@ -137,3 +137,23 @@ surface_scene_shapes <- function(scene, box, view = NULL) {
   })
   c(lines, surface_cell_shapes(scene, project, place), texts)
 }
+
+# The lowest point the shapes reach: outlines, and texts down to their descenders. As Python's shapes_bottom().
+surface_shapes_bottom <- function(shapes, descender) {
+  max(vapply(shapes, function(shape) {
+    if (shape$kind == "text") shape$y + descender else max(shape_points(shape)[, 2])
+  }, 0))
+}
+
+# The surface on the left share of the box and its heatmap on the right, as tall as the surface. As Python's
+# pair_layout().
+surface_pair_layout <- function(scene, flat, box) {
+  split <- scene$pair
+  room <- box[3] - split$gap
+  left <- c(box[1], box[2], room * split$share, box[4])
+  surface <- surface_scene_shapes(scene, left)
+  height <- surface_shapes_bottom(surface, scene$text$descender) - box[2]
+  right <- c(left[1] + left[3] + split$gap, box[2], room - left[3], height)
+  heat <- heatmap_layout(flat, right, height = height, tag = FALSE)
+  list(shapes = c(surface, heat$shapes), box = left, flat_box = right, cells = heat$cells)
+}

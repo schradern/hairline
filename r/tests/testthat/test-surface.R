@@ -32,8 +32,8 @@ test_that("surface spec and shapes match the shared fixture", {
 })
 
 test_that("colour bins are half a tick step while the key keeps to one row", {
-  expect_equal(surface_colour_steps(c(0.4, 0.6, 0.8), 0.87), c(0.5, 0.6, 0.7, 0.8, 0.9))
-  expect_equal(surface_colour_steps(c(0.5, 0.6, 0.7, 0.8), 0.84), c(0.6, 0.7, 0.8, 0.9))
+  expect_equal(grid_colour_steps(c(0.4, 0.6, 0.8), 0.87), c(0.5, 0.6, 0.7, 0.8, 0.9))
+  expect_equal(grid_colour_steps(c(0.5, 0.6, 0.7, 0.8), 0.84), c(0.6, 0.7, 0.8, 0.9))
 })
 
 test_that("the surface keys its bins, lays out cleanly and turns in HTML", {
@@ -57,7 +57,9 @@ test_that("the surface refuses data it cannot draw", {
   expect_error(hl_surface(surface_grid_data(hours = 8), "hour", "week", "share"), "'hour' needs 2 to 150",
                fixed = TRUE)
   empty <- transform(data, share = NA_real_)
-  expect_error(hl_surface(empty, "hour", "week", "share"), "no cell of the grid", fixed = TRUE)
+  expect_error(hl_surface(empty, "hour", "week", "share"), "'share' is missing in every row", fixed = TRUE)
+  sparse <- transform(data, share = ifelse((hour + week) %% 2 == 0, share, NA_real_))
+  expect_error(hl_surface(sparse, "hour", "week", "share"), "no cell of the grid", fixed = TRUE)
   expect_error(hl_surface(data, "hour", "week", "share", elevation = 85), "elevation 85 must lie between 10 and 80",
                fixed = TRUE)
 })

@@ -328,7 +328,7 @@ plot_targets <- function(parts, plan) {
                   series = merge_targets(c(series, drawn_targets(plan$shapes))), legend = legend_targets(parts, plan))
   targets <- rapply(targets, function(value) round(value, 2), classes = "numeric", how = "replace")
   if (is.null(parts$scene)) return(targets)
-  c(targets, list(scenes = list(scene_target(parts))))
+  c(targets, list(scenes = list(scene_target(parts, fitted_box(plan$layout$panels[[1]], parts$aspect)))))
 }
 
 # Decimals of a scene's cube coordinates: finer than the targets' pt, so the turned surface starts where the static
@@ -337,13 +337,24 @@ scene_digits <- 5
 
 # The surface's scene, its tooltip texts and the limits of turning it, for the script to draw it again from the
 # reader's angle. As Python's scene_targets().
-scene_target <- function(parts) {
+scene_target <- function(parts, box) {
   rules <- hl_tokens()$surface
   turning <- rules[c("elevation_limits", "turn_step", "tilt_step", "drag_degrees_per_pt")]
-  scene <- surface_scene(parts$scene, measure_for(parts$settings), drawing_style(parts$settings))
+  measure <- measure_for(parts$settings)
+  style <- drawing_style(parts$settings)
+  scene <- surface_scene(parts$scene, measure, style)
   hint <- word("turn_hint", parts$settings$locale)
-  rapply(c(list(panel = 0), scene, list(tips = parts$scene$tips, turning = turning, hint = hint)),
+  rapply(c(list(panel = 0), scene, list(tips = parts$scene$tips, turning = turning, hint = hint),
+           scene_pair_target(parts$scene, scene, box, measure, style)),
          function(value) round(value, scene_digits), classes = "numeric", how = "replace")
+}
+
+# For a surface with its heatmap beside it: the surface's own box, and the heatmap's box and cells as
+# c(x, y, width, height, column, row) in pt. As Python's pair_targets().
+scene_pair_target <- function(spec, scene, box, measure, style) {
+  if (is.null(spec$flat)) return(list())
+  layout <- surface_pair_layout(scene, heatmap_scene(spec$flat, measure, style), box)
+  list(box = layout$box, flat = list(box = layout$flat_box, cells = layout$cells))
 }
 
 interactive_targets <- function(plot, size = NULL, width_mm = NULL, height_mm = NULL) {

@@ -172,19 +172,66 @@
     return null;
   }
 
-  function readPoint(scene, shown, at, outline) {
+  function tipText(scene, corner) {
+    return scene.titles.x.text + " " + scene.tips.x[corner[0]] + ", " + scene.titles.y.text + " " +
+      scene.tips.y[corner[1]] + ": " + scene.tips.z[corner[1]][corner[0]];
+  }
+
+  // The outlines that mark one grid point: the surface cell under the pointer, the heatmap cell of the same point
+  // and a ring at the point on the surface.
+  function pointMarks(scene, layer) {
+    var stroke = { fill: "none", stroke: data.style.ink, "stroke-width": 1, display: "none" };
+    var surface = element("polygon", stroke, layer), cell = element("rect", stroke, layer);
+    var ring = element("circle", Object.assign({ r: 2.5 }, stroke), layer), cells = {};
+    (scene.flat ? scene.flat.cells : []).forEach(function (found) { cells[found[4] + "," + found[5]] = found; });
+    function show(node, attributes) {
+      Object.keys(attributes).forEach(function (key) { node.setAttribute(key, attributes[key]); });
+      node.setAttribute("display", "inline");
+    }
+    return {
+      cells: scene.flat ? scene.flat.cells : [],
+      clear: function () {
+        [surface, cell, ring].forEach(function (node) { node.setAttribute("display", "none"); });
+        tip.style.display = "none";
+      },
+      surface: function (polygon) { show(surface, { points: points(polygon) }); },
+      cell: function (corner) {
+        var found = cells[corner[0] + "," + corner[1]];
+        if (found) { show(cell, { x: found[0], y: found[1], width: found[2], height: found[3] }); }
+      },
+      ring: function (at) { if (at) { show(ring, { cx: at[0], cy: at[1] }); } }
+    };
+  }
+
+  function readPoint(scene, shown, at, marks) {
     var found = nearestPoint(shown, at);
     var corner = found && found[0].corners[found[1]];
-    var value = corner && scene.tips.z[corner[1]][corner[0]];
-    if (!value) {
-      outline.setAttribute("display", "none");
-      tip.style.display = "none";
-      return;
-    }
-    outline.setAttribute("points", points(found[0].points));
-    outline.setAttribute("display", "inline");
-    place(found[0].points[found[1]], scene.titles.x.text + " " + scene.tips.x[corner[0]] + ", " +
-      scene.titles.y.text + " " + scene.tips.y[corner[1]] + ": " + value);
+    marks.clear();
+    if (!corner || !scene.tips.z[corner[1]][corner[0]]) { return; }
+    marks.surface(found[0].points);
+    marks.cell(corner);
+    place(found[0].points[found[1]], tipText(scene, corner));
+  }
+
+  // A pointer on the heatmap beside a surface: its cell, and the same grid point marked on the surface.
+  function readCell(scene, shown, at, marks) {
+    marks.clear();
+    var found = marks.cells.filter(function (cell) {
+      return at[0] >= cell[0] && at[0] <= cell[0] + cell[2] && at[1] >= cell[1] && at[1] <= cell[1] + cell[3];
+    })[0];
+    if (!found || !scene.tips.z[found[5]][found[4]]) { return; }
+    var corner = [found[4], found[5]];
+    marks.cell(corner);
+    marks.ring(shown.vertex(corner[0], corner[1]));
+    place([found[0] + found[2] / 2, found[1]], tipText(scene, corner));
+  }
+
+  function bindCells(scene, layer, surface) {
+    var box = scene.flat.box;
+    var hit = element("rect", { x: box[0], y: box[1], width: box[2], height: box[3], fill: "transparent",
+      "class": "hairline-hit" }, layer);
+    hit.addEventListener("pointermove", function (event) { var at = pointer(event); if (at) { surface.cell(at); } });
+    hit.addEventListener("pointerleave", surface.leave);
   }
 
   // Pointer and keys of a turnable surface: dragging and the arrow keys call turn(azimuth, elevation) from the
@@ -217,15 +264,14 @@
   }
 
   function turnable(scene) {
-    var box = data.panels[scene.panel], printed = scene.view;
+    var box = scene.box || data.panels[scene.panel], printed = scene.view;
     var first = hairlineSceneShapes(scene, box, printed, Infinity);
     if (!first) { return; }
     var layer = element("g", {}, overlay);
     var cover = element("rect", { x: box[0], y: box[1], width: box[2], height: box[3], fill: data.style.surface,
       display: "none" }, layer);
     var drawn = element("g", {}, layer);
-    var outline = element("polygon", { fill: "none", stroke: data.style.ink, "stroke-width": 1, display: "none" },
-      layer);
+    var marks = pointMarks(scene, layer);
     var hit = element("rect", { x: box[0], y: box[1], width: box[2], height: box[3], fill: "transparent",
       tabindex: 0, role: "img", "aria-label": scene.hint, "class": "hairline-hit hairline-turn" }, layer);
     var view = { elevation: printed.elevation, azimuth: printed.azimuth }, shown = first, frame = 0;
@@ -237,20 +283,22 @@
       cover.setAttribute("display", turned ? "inline" : "none");
       drawScene(turned ? shown : { lines: [], cells: [], texts: [] }, scene, drawn);
     }
-    bindTurning(hit, {
+    var surface = {
       scene: scene,
       view: function () { return view; },
-      read: function (at) { readPoint(scene, shown, at, outline); },
-      leave: function () { outline.setAttribute("display", "none"); hide(); },
+      read: function (at) { readPoint(scene, shown, at, marks); },
+      cell: function (at) { readCell(scene, shown, at, marks); },
+      leave: function () { marks.clear(); hide(); },
       turn: function (azimuth, elevation) {
         var limits = scene.turning.elevation_limits;
         view = { azimuth: ((azimuth + 180) % 360 + 360) % 360 - 180,
           elevation: Math.min(limits[1], Math.max(limits[0], elevation)) };
-        outline.setAttribute("display", "none");
-        tip.style.display = "none";
+        marks.clear();
         if (!frame) { frame = window.requestAnimationFrame(draw); }
       }
-    });
+    };
+    bindTurning(hit, surface);
+    if (scene.flat) { bindCells(scene, layer, surface); }
     hit.addEventListener("focus", function () { place([box[0] + box[2] / 2, box[1]], scene.hint); });
     hit.addEventListener("blur", hide);
   }

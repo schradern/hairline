@@ -16,6 +16,10 @@
   the reader, titles clear of them. A pair without a row leaves a gap in the surface.
 * In the HTML export the reader turns the surface by dragging or with the arrow keys (Home or a double click
   returns to the printed view), and the pointer reads the nearest grid point. The file stays one offline page.
+* `heatmap(data, x, y, z)`: the same grid as one cell per pair, in the same bands or gradient and key; a row
+  highlights as one series in HTML. `surface(heatmap=True)` draws it beside the surface (the double size by
+  default): the surface shows the shape, the heatmap the values, and in HTML pointing at either marks the same grid
+  point in both.
 
 ### The cohort at a glance, and notebooks that show and save
 

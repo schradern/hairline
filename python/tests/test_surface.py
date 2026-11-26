@@ -8,7 +8,8 @@ import pandas as pd
 import pytest
 
 import hairline as hl
-from hairline.charts.surface import color_steps, surface_spec
+from hairline.charts.grid_values import color_steps
+from hairline.charts.surface import surface_spec
 from hairline.charts.surface_geometry import scene_shapes, surface_scene
 from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
@@ -118,7 +119,9 @@ def test_figures_without_a_surface_leave_the_scene_script_out(tmp_path):
 @pytest.mark.parametrize(("data", "message"), [
     (pd.concat([grid(), grid().head(1)]), "share an (hour, week) pair"),
     (grid(hours=[8]), "'hour' needs 2 to 150 distinct values"),
-    (grid().assign(share=np.nan), "no cell of the grid"),
+    (grid().assign(share=np.nan), "'share' is missing in every row"),
+    (grid().assign(share=lambda frame: frame["share"].where((frame["hour"] + frame["week"]) % 2 == 0)),
+     "no cell of the grid"),
     (grid().assign(share="high"), "needs numbers"),
 ])
 def test_surface_refuses_data_it_cannot_draw(data, message):

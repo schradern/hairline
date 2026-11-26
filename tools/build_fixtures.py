@@ -33,6 +33,8 @@ from hairline.charts.forest import forest_spec
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.charts.funnel import funnel_spec
 from hairline.charts.funnel_geometry import funnel_drawing
+from hairline.charts.heatmap import heatmap_spec
+from hairline.charts.heatmap_geometry import heatmap_layout, heatmap_scene
 from hairline.charts.labels import spread_labels
 from hairline.charts.partition import partition_drawing
 from hairline.charts.prisma import prisma_spec
@@ -43,7 +45,7 @@ from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
 from hairline.charts.sankey import sankey_spec
 from hairline.charts.sankey_geometry import sankey_drawing
 from hairline.charts.surface import surface_spec
-from hairline.charts.surface_geometry import scene_shapes, surface_scene
+from hairline.charts.surface_geometry import pair_layout, scene_shapes, surface_scene
 from hairline.charts.swatches_geometry import swatches_drawing
 from hairline.charts.venn import venn_spec
 from hairline.charts.venn_geometry import venn_drawing
@@ -388,6 +390,41 @@ SURFACE_VIEWS = [None, {"elevation": 60.0, "azimuth": 120.0}, {"elevation": 15.0
                  {"elevation": 45.0, "azimuth": 90.0}]
 
 
+def surface_data() -> pd.DataFrame:
+    """A grid with a gap (a pair without a row) and a missing value."""
+    rows = [{"hour": hour, "week": week, "load": round(2 + 3 * math.exp(-((hour - 12) / 3) ** 2) + 0.2 * week, 3)}
+            for week in range(1, 6) for hour in range(8, 20, 2)]
+    rows = [row for row in rows if (row["hour"], row["week"]) != (14, 2)]
+    rows[5]["load"] = float("nan")
+    return pd.DataFrame(rows)
+
+
+def listed(frame: pd.DataFrame) -> dict:
+    return {key: [None if pd.isna(value) else value for value in values]
+            for key, values in frame.to_dict(orient="list").items()}
+
+
+def heatmap_cases() -> dict:
+    """The surface's grid as a heatmap (numbers and shares, bands and gradient), in a box and at a given height;
+    and the surface with its heatmap beside it."""
+    use(brand=False)
+    data, titles, box = surface_data(), {"x": "Hour", "y": "Week", "z": "Load"}, [20, 60, 440, 300]
+    cases = []
+    for percent, gradient, height in ((False, False, None), (True, True, None), (False, True, 180.0)):
+        frame = data.assign(load=data["load"] / 10) if percent else data
+        spec = heatmap_spec(frame, "hour", "week", "load", titles=titles, percent=percent, gradient=gradient)
+        shapes, cells = heatmap_layout(heatmap_scene(spec, fake_measure, DRAWING_STYLE), Box(*box), height)
+        cases.append({"data": listed(frame), "percent": percent, "gradient": gradient, "height": height,
+                      "titles": titles, "box": box, "spec": spec, "shapes": shapes, "cells": cells})
+    spec = surface_spec(data, "hour", "week", "load", titles=titles, heatmap=True)
+    layout = pair_layout(surface_scene(spec, fake_measure, DRAWING_STYLE),
+                         heatmap_scene(spec["flat"], fake_measure, DRAWING_STYLE), Box(*box))
+    pair = {"data": listed(data), "titles": titles, "box": box, "spec": spec, "shapes": layout["shapes"],
+            "cells": layout["cells"], "surface_box": [layout["box"].x, layout["box"].y, layout["box"].width,
+                                                      layout["box"].height]}
+    return {"cases": cases, "pair": pair}
+
+
 def surface_cases() -> list[dict]:
     """A grid with a gap (a pair without a row) and a missing value, as numbers and as shares, in bands from four
     views and blended along the ramp from two."""
@@ -621,6 +658,7 @@ def main() -> int:
     write("meta_review.json", {"style": DRAWING_STYLE, **meta_review_cases()})
     write("correlation.json", {"style": DRAWING_STYLE, "cases": correlation_cases()})
     write("surface.json", {"style": DRAWING_STYLE, "cases": surface_cases()})
+    write("heatmap.json", {"style": DRAWING_STYLE, **heatmap_cases()})
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})

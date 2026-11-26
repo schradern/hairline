@@ -187,6 +187,11 @@ var hairlineSceneShapes = (function () {
     function place(point) { return [fit.offset[0] + fit.scale * point[0], fit.offset[1] + fit.scale * point[1]]; }
     return {
       scale: fit.scale,
+      // Where grid point (column, row) is drawn in this view, or null where it has no value.
+      vertex: function (column, row) {
+        var z = scene.zs[row][column];
+        return typeof z === "number" ? place(project([scene.xs[column], scene.ys[row], z])) : null;
+      },
       lines: frameLines(scene, frame).map(function (line) {
         return { points: line[0].map(function (end) { return place(project(end)); }), color: scene.lines[line[1]],
           width: scene.lines[line[1] + "_width"] };
