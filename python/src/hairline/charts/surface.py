@@ -7,6 +7,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from hairline.alt_text import described, grid_extremes
 from hairline.charts.common import humanise
 from hairline.charts.grid_values import color_scale, corner_means, fills, grid_tips, inner_ticks, read_grid, value_texts
 from hairline.charts.heatmap import flat_spec
@@ -66,6 +67,7 @@ def surface_spec(data: pd.DataFrame, x: str, y: str, z: str, *, titles: dict[str
     limits = scale["key"]["limits"]
     height = rules["height"]
     normal = height * ((grid - limits[0]) / (limits[1] - limits[0]) - 0.5)
+    tips = grid_tips(xs, ys, grid, percent, locale)
     return {"xs": (2 * (xs - xs[0]) / (xs[-1] - xs[0]) - 1).tolist(),
             "ys": (2 * (ys - ys[0]) / (ys[-1] - ys[0]) - 1).tolist(),
             "zs": [[float(value) if np.isfinite(value) else None for value in row] for row in normal],
@@ -73,7 +75,7 @@ def surface_spec(data: pd.DataFrame, x: str, y: str, z: str, *, titles: dict[str
             "ticks": {"x": cube_ticks(xs, locale), "y": cube_ticks(ys, locale),
                       "z": height_ticks(breaks, limits, height, percent, locale)},
             "titles": titles, "key": scale["key"],
-            "tips": grid_tips(xs, ys, grid, percent, locale),
+            "tips": tips, "description": described("kind_surface", grid_extremes(grid, tips, titles, locale), locale),
             **({"flat": flat_spec(xs, ys, grid, scale, titles, percent)} if heatmap else {})}
 
 
@@ -103,6 +105,7 @@ def surface(data: pd.DataFrame, x: str, y: str, z: str, *, title: str | None = N
                         heatmap=heatmap, view=checked_view(elevation, azimuth))
     result = figure(title or titles["z"], subtitle=subtitle, caption=caption,
                     size=size or ("double" if heatmap else "onehalf"))
+    result.description = spec["description"]
     result.draw(0, surface_drawing(spec))
     result.scenes[0] = spec
     key = spec["key"]

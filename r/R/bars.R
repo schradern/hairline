@@ -468,9 +468,13 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
   }
   plot@meta$hairline_size <- size
   series <- if (is.null(by)) character() else unique(unname(drawn$coloured$series %||% groups))
-  chart_options(plot, "bars", series, x_title = x_title, y_title = y_title, reference = reference,
-                reference_legend = reference_legend,
-                reference_axis = if (horizontal) "x" else "y", highlight = highlight, key_title = key_title)
+  plot <- chart_options(plot, "bars", series, x_title = x_title, y_title = y_title, reference = reference,
+                        reference_legend = reference_legend,
+                        reference_axis = if (horizontal) "x" else "y", highlight = highlight, key_title = key_title)
+  plot@meta$hairline_description <- bars_description(panels, category, by, groups,
+                                                     list(stacked = stacked, divide = divide, percent = percent),
+                                                     !is.null(facet))
+  plot
 }
 
 # Categories that are all numbers (years, 1, 2, ...), so their order is their own. As Python's numbered().

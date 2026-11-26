@@ -25,6 +25,7 @@ test_that("heatmap spec and shapes match the shared fixture", {
                          gradient = case$gradient)
     expect_equal(fills(spec$fills), fills(case$spec$fills))
     expect_equal(unlist(spec$key$colors), unlist(case$spec$key$colors))
+    expect_equal(spec$description, case$spec$description)
     layout <- heatmap_layout(heatmap_scene(spec, measure, fixture$style), as.numeric(unlist(case$box)),
                              height = case$height)
     expect_equal(heatmap_flat_points(layout$shapes), heatmap_flat_points(case$shapes), tolerance = 1e-6)

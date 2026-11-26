@@ -12,7 +12,7 @@ gallery_data <- function(name) utils::read.csv(file.path(gallery_dir, "data", pa
 finish <- function(plot, name, size) {
   formats <- if (nzchar(Sys.getenv("HAIRLINE_GALLERY_HTML"))) c("pdf", "png", "html") else c("pdf", "png")
   hairline::hl_save(plot, file.path(out_dir, name), formats = formats, size = size)
-  targets <- hairline:::interactive_targets(plot, size = size)
+  targets <- c(hairline:::interactive_targets(plot, size = size), list(alt = hairline:::figure_alt(plot)))
   jsonlite::write_json(targets, file.path(out_dir, paste0(name, ".targets.json")), auto_unbox = TRUE, digits = NA,
                        pretty = TRUE)
   jsonlite::write_json(hairline::hl_check_layout(plot, size = size), file.path(out_dir, paste0(name, ".audit.json")),

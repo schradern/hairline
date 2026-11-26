@@ -87,6 +87,9 @@ class HairlineFigure:
     legend_heading: str | None = None
     size: str = "onehalf"
     fitting: bool = False
+    # What the data shows, for the alt text after the title and subtitle; charts write it (see alt_text.py), and
+    # setting it replaces theirs.
+    description: str | None = None
 
     def __post_init__(self) -> None:
         self.figure.add_artist(self.frame_artist)

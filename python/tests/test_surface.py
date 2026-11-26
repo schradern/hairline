@@ -47,7 +47,7 @@ def test_surface_spec_and_shapes_match_the_shared_fixture(case):
                         gradient=case["gradient"])
     assert spec["fills"] == case["spec"]["fills"] and spec["ticks"] == case["spec"]["ticks"]
     assert spec["key"] == case["spec"]["key"]
-    assert spec["tips"] == case["spec"]["tips"]
+    assert spec["tips"] == case["spec"]["tips"] and spec["description"] == case["spec"]["description"]
     shapes = scene_shapes(surface_scene(spec, fake_measure, FIXTURE["style"]), Box(*case["box"]), case["view"])
     assert flat(shapes) == pytest.approx(flat(case["shapes"]), abs=1e-6)
     assert [shape.get("text") for shape in shapes] == [shape.get("text") for shape in case["shapes"]]

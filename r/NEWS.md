@@ -6,6 +6,18 @@
   other: the plot grows until each bar is as tall as its value, as the category labels already keep their rows
   apart.
 
+## Figures that describe their data
+
+* A chart writes what its data shows into its alt text, in the plot's locale: the kind of chart and what stands
+  out. `hl_bars()` names the highest and lowest bar as their labels write them ("Bar chart. Highest: Ward (30);
+  lowest: ICU (12)."; ties named together, a stack by its total); `hl_heatmap()` and `hl_surface()` name the grid
+  point where the value is highest and lowest ("3D surface. Highest at Hour 12, Week 3 (85%); …"). The other
+  charts follow.
+* The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
+  description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
+* `hl_description(plot)` reads the sentence; `hl_description(plot) <- text` writes your own, and `NULL` leaves it
+  out.
+
 ## Figures linked across a report
 
 * `hl_report_write(report, "….html")` draws the figures as interactive SVG, as `hl_save(formats = "html")` does,

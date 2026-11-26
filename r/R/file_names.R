@@ -1,13 +1,52 @@
 # Each saved file names its figure, as the Python package's save() does: PDF Title and Subject, PNG Title and
-# Description, SVG <title> and <desc>, TIFF DocumentName and ImageDescription. The description is the title and
-# subtitle, the alt text that the HTML figure and the host manifest give.
+# Description, SVG <title> and <desc>, TIFF DocumentName and ImageDescription. The description is the alt text that
+# the HTML figure and the host manifest give: title, subtitle and what the data shows (see alt_text.R).
 
 is_text <- function(value) is.character(value) && length(value) == 1 && !is.na(value) && nzchar(value)
 
-# The figure's alt text: title and subtitle, leaving out a missing or empty one.
+# The figure's alt text: title, subtitle and the description of its data (a sentence of its own), leaving out a
+# missing or empty one. As Python's figure_alt().
 figure_alt <- function(plot) {
   labels <- if (ggplot2::is_ggplot(plot)) plot@labels else list()
-  enc2utf8(paste(unlist(Filter(is_text, list(labels$title, labels$subtitle))), collapse = ". "))
+  named <- paste(unlist(Filter(is_text, list(labels$title, labels$subtitle))), collapse = ". ")
+  description <- if (ggplot2::is_ggplot(plot)) plot@meta$hairline_description
+  if (!is_text(description)) return(enc2utf8(named))
+  if (!nzchar(named)) return(enc2utf8(description))
+  enc2utf8(paste0(named, if (grepl("[.!?]$", named)) " " else ". ", description))
+}
+
+#' What a figure's data shows, for its alt text
+#'
+#' Charts describe their data in a sentence for the alt text, in the
+#' figure's locale: the kind of chart and what stands out ("Bar chart.
+#' Highest: ICU (727); lowest: Ward (495)."). [hl_save()] puts it after the
+#' title and subtitle in every file it writes (PDF Subject, PNG and TIFF
+#' description, SVG `<desc>`), the HTML figure gives it to screen readers and
+#' a host's manifest names it. `hl_description()` reads it;
+#' `hl_description(plot) <- text` replaces it, and `NULL` removes it.
+#'
+#' @param plot A hairline plot.
+#' @param value The description, or `NULL`.
+#' @return `hl_description()` returns the description, or `NULL` when the plot has none.
+#' @examples
+#' plot <- hl_bars(data.frame(unit = c("ICU", "Ward"), n = c(12, 30)), "unit", "n")
+#' hl_description(plot)
+#' hl_description(plot) <- "Bar chart. The ward admits more than twice as many."
+#' @export
+hl_description <- function(plot) {
+  if (!ggplot2::is_ggplot(plot)) stop("hairline: hl_description() takes a plot", call. = FALSE)
+  plot@meta$hairline_description
+}
+
+#' @rdname hl_description
+#' @export
+`hl_description<-` <- function(plot, value) {
+  if (!ggplot2::is_ggplot(plot)) stop("hairline: hl_description() takes a plot", call. = FALSE)
+  if (!is.null(value) && !is_text(value)) {
+    stop("hairline: a description is one text, or NULL to remove it", call. = FALSE)
+  }
+  plot@meta$hairline_description <- value
+  plot
 }
 
 figure_name <- function(plot) {

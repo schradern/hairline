@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 import hairline as hl
+from hairline.export import figure_alt
 from hairline.interactive import figure_targets
 
 GALLERY = Path(__file__).resolve().parents[1]
@@ -27,7 +28,8 @@ def finish(figure: hl.HairlineFigure, name: str) -> None:
     """Save PDF + PNG and the frame report used by the parity check."""
     formats = ("pdf", "png", "html") if os.environ.get("HAIRLINE_GALLERY_HTML") else ("pdf", "png")
     hl.save(figure, OUT / name, formats=formats)
-    (OUT / f"{name}.targets.json").write_text(json.dumps(figure_targets(figure), indent=1, ensure_ascii=False))
+    targets = {**figure_targets(figure), "alt": figure_alt(figure)}
+    (OUT / f"{name}.targets.json").write_text(json.dumps(targets, indent=1, ensure_ascii=False))
     (OUT / f"{name}.audit.json").write_text(json.dumps(hl.check_layout(figure), indent=1, ensure_ascii=False))
     report = figure.layout_report()
     (OUT / f"{name}.layout.json").write_text(json.dumps({key: report.get(key) for key in FRAME_KEYS}, indent=1))

@@ -9,6 +9,7 @@ import pandas as pd
 from matplotlib.patches import Rectangle
 
 from hairline import entities
+from hairline.charts.bars_alt import bars_description
 from hairline.charts.common import (
     check_columns,
     check_labels,
@@ -477,6 +478,10 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
         result.legend([])
     elif by:
         result.legend()
+    result.description = bars_description(
+        panels, groups, options, facet is not None,
+        lambda panel: bar_numbers(panel["table"], category, value, by, panel["names"], groups, options),
+        value_text, locale)
     return apply_options(result, "bars", names=list(dict.fromkeys(series.values())) if by else [], x_title=x_title,
                          y_title=y_title, reference=reference, reference_legend=reference_legend,
                          reference_axis="x" if horizontal else "y", highlight=highlight, key_title=key_title)

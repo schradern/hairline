@@ -67,6 +67,7 @@ surface_spec <- function(data, x, y, z, titles, colors = NULL, percent = FALSE, 
                ticks = list(x = surface_cube_ticks(xs), y = surface_cube_ticks(ys),
                             z = surface_height_ticks(breaks, limits, height, percent)),
                titles = titles, key = scale$key, tips = grid_tips(xs, ys, grid, percent))
+  spec$description <- alt_described("kind_surface", alt_grid_extremes(grid, spec$tips, titles))
   if (heatmap) spec$flat <- heatmap_flat_spec(xs, ys, grid, scale, titles, percent)
   spec
 }
@@ -128,6 +129,7 @@ hl_surface <- function(data, x, y, z, title = NULL, subtitle = NULL, caption = N
   plot@meta$hairline_drawing <- surface_drawing(spec)
   if (heatmap) plot@meta$hairline_size <- "double"
   plot@meta$hairline_surface <- spec
+  plot@meta$hairline_description <- spec$description
   plot@meta$hairline_fit_height <- TRUE
   plot
 }

@@ -46,6 +46,7 @@ def test_heatmap_spec_and_shapes_match_the_shared_fixture(case):
                         gradient=case["gradient"])
     assert spec["fills"] == case["spec"]["fills"] and spec["tips"] == case["spec"]["tips"]
     assert spec["ticks"] == case["spec"]["ticks"] and spec["key"] == case["spec"]["key"]
+    assert spec["description"] == case["spec"]["description"]
     shapes, cells = heatmap_layout(heatmap_scene(spec, fake_measure, FIXTURE["style"]), Box(*case["box"]),
                                    case["height"])
     assert flat(shapes) == pytest.approx(flat(case["shapes"]), abs=1e-6)

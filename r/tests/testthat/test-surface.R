@@ -23,6 +23,7 @@ test_that("surface spec and shapes match the shared fixture", {
     expect_equal(spec$key$steps, as.numeric(unlist(case$spec$key$steps)), tolerance = 1e-9)
     expect_equal(fills(spec$fills), fills(case$spec$fills))
     expect_equal(unlist(spec$tips), unlist(case$spec$tips))
+    expect_equal(spec$description, case$spec$description)
     expect_equal(unlist(lapply(spec$ticks$z, `[[`, "text")), unlist(lapply(case$spec$ticks$z, `[[`, "text")))
     shapes <- surface_scene_shapes(surface_scene(spec, measure, fixture$style), as.numeric(unlist(case$box)),
                                    case$view)

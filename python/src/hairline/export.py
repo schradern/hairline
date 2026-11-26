@@ -59,8 +59,12 @@ def save_options(dpi: float | None, background: str | None) -> tuple[float, dict
 
 
 def figure_alt(owner: HairlineFigure) -> str:
-    """The figure's alt text: title and subtitle, leaving out a missing or empty one."""
-    return ". ".join(part for part in (owner.title, owner.subtitle) if part)
+    """The figure's alt text: title, subtitle and the description of its data (a sentence of its own), leaving out
+    a missing or empty one."""
+    named = ". ".join(part for part in (owner.title, owner.subtitle) if part)
+    if not (named and owner.description):
+        return named or owner.description or ""
+    return f"{named} {owner.description}" if named.endswith((".", "!", "?")) else f"{named}. {owner.description}"
 
 
 def figure_name(fig: Figure) -> tuple[str, str] | None:

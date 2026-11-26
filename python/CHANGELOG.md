@@ -7,6 +7,16 @@
 * Values beside horizontal bars side by side (`bars(by=..., horizontal=True)`) no longer run into each other: the
   plot grows until each bar is as tall as its value, as the category labels already keep their rows apart.
 
+### Figures that describe their data
+
+* A chart writes what its data shows into its alt text, in the figure's locale: the kind of chart and what stands
+  out. `bars` name the highest and lowest bar as their labels write them ("Bar chart. Highest: Ward (30); lowest:
+  ICU (12)."; ties named together, a stack by its total); `heatmap` and `surface` name the grid point where the
+  value is highest and lowest ("3D surface. Highest at Hour 12, Week 3 (85%); …"). The other charts follow.
+* The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
+  description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
+* `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.
+
 ### Figures linked across a report
 
 * `report().write("….html")` draws its figures as interactive SVG, as `save(formats="html")` does, instead of PNG

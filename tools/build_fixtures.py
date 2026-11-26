@@ -405,6 +405,38 @@ def listed(frame: pd.DataFrame) -> dict:
             for key, values in frame.to_dict(orient="list").items()}
 
 
+ALT_BARS = {
+    "units": {"unit": ["ICU", "Ward", "ER", "ICU", "Ward", "ER"],
+              "year": ["2024", "2024", "2024", "2025", "2025", "2025"], "n": [10, 30, 20, 12, 31.5, 19]},
+    "ties": {"unit": ["a", "b", "c", "d", "e"], "n": [5, 5, 5, 5, 1]},
+    "large": {"unit": ["North", "South"], "n": [1.2e9, 3.45e9]},
+    "missing": {"unit": ["ICU", "Ward", "ER"], "n": [10, None, 20]},
+    "one": {"unit": ["ICU"], "n": [7]},
+}
+ALT_BAR_OPTIONS = [("units", {}), ("units", {"by": "year"}), ("units", {"by": "year", "stacked": True}),
+                   ("units", {"by": "year", "stacked": True, "percent": True}),
+                   ("units", {"by": "year", "facet": "year"}), ("units", {"by": "year", "normalize": True}),
+                   ("ties", {}), ("large", {}), ("missing", {}), ("one", {}), ("ties", {"title": "Why so even?"})]
+
+
+def alt_text_cases() -> list[dict]:
+    """Bar charts and their alt text, in English and German, for both packages to write alike."""
+    import matplotlib.pyplot as plt
+
+    import hairline as hl
+    from hairline.export import figure_alt
+    cases = []
+    for locale in ("en", "de"):
+        for name, options in ALT_BAR_OPTIONS:
+            hl.use(brand=False, locale=locale)
+            frame = pd.DataFrame(ALT_BARS[name])
+            figure = hl.bars(frame, "unit", "n", **options)
+            cases.append({"locale": locale, "data": ALT_BARS[name], "options": options, "alt": figure_alt(figure)})
+            plt.close(figure.figure)
+    hl.use(brand=False)
+    return cases
+
+
 def heatmap_cases() -> dict:
     """The surface's grid as a heatmap (numbers and shares, bands and gradient), in a box and at a given height;
     and the surface with its heatmap beside it."""
@@ -660,6 +692,7 @@ def main() -> int:
     write("correlation.json", {"style": DRAWING_STYLE, "cases": correlation_cases()})
     write("surface.json", {"style": DRAWING_STYLE, "cases": surface_cases()})
     write("heatmap.json", {"style": DRAWING_STYLE, **heatmap_cases()})
+    write("alt_text.json", alt_text_cases())
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})

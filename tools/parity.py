@@ -64,13 +64,16 @@ def tip_key(tip: dict) -> tuple:
 
 
 def compare_targets(name: str) -> list[tuple[str, str, str, str]]:
-    """Interactive targets: the same series and legend entries, the same tooltip texts, positions within 1 pt."""
+    """Interactive targets: the same alt text, series and legend entries, the same tooltip texts, positions within
+    1 pt."""
     python = json.loads((GALLERY / "out" / "python" / f"{name}.targets.json").read_text())
     r = json.loads((GALLERY / "out" / "r" / f"{name}.targets.json").read_text())
     left, right = {s["name"]: s for s in python["series"]}, {s["name"]: s for s in r["series"]}
     problems = []
     if sorted(left) != sorted(right):
         problems.append((name, "target series", str(sorted(left)), str(sorted(right))))
+    if python.get("alt") != r.get("alt"):
+        problems.append((name, "alt text", str(python.get("alt")), str(r.get("alt"))))
     legends = [[entry["name"] for entry in targets["legend"]] for targets in (python, r)]
     if legends[0] != legends[1]:
         problems.append((name, "target legend", str(legends[0]), str(legends[1])))

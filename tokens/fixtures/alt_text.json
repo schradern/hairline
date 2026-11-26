@@ -1,0 +1,582 @@
+[
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Bar chart. Highest: Ward (62); lowest: ICU (22)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year"
+  },
+  "alt": "N by unit and year. Bar chart. Highest: Ward / 2025 (32); lowest: ICU / 2024 (10)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year",
+   "stacked": true
+  },
+  "alt": "N by unit and year. Bar chart. Highest: Ward (62); lowest: ICU (22)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year",
+   "stacked": true,
+   "percent": true
+  },
+  "alt": "N by unit and year. Bar chart. Highest: ICU / 2025 (55%); lowest: ICU / 2024 (45%)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year",
+   "facet": "year"
+  },
+  "alt": "N by unit and year. Bar chart. Highest: 2025 / Ward (32); lowest: 2024 / ICU (10)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year",
+   "normalize": true
+  },
+  "alt": "N by unit and year. Bar chart. Highest: ICU / 2025 (55%); lowest: ICU / 2024 (45%)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e"
+   ],
+   "n": [
+    5,
+    5,
+    5,
+    5,
+    1
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Bar chart. Highest: a, b, c and 1 more (5); lowest: e (1)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "North",
+    "South"
+   ],
+   "n": [
+    1200000000.0,
+    3450000000.0
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Bar chart. Highest: South (3.5 bn); lowest: North (1.2 bn)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "n": [
+    10,
+    null,
+    20
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Bar chart. Highest: ER (20); lowest: ICU (10)."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "ICU"
+   ],
+   "n": [
+    7
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Bar chart. ICU: 7."
+ },
+ {
+  "locale": "en",
+  "data": {
+   "unit": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e"
+   ],
+   "n": [
+    5,
+    5,
+    5,
+    5,
+    1
+   ]
+  },
+  "options": {
+   "title": "Why so even?"
+  },
+  "alt": "Why so even? Bar chart. Highest: a, b, c and 1 more (5); lowest: e (1)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Balkendiagramm. Am höchsten: Ward (62); am niedrigsten: ICU (22)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year"
+  },
+  "alt": "N by unit and year. Balkendiagramm. Am höchsten: Ward / 2025 (32); am niedrigsten: ICU / 2024 (10)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year",
+   "stacked": true
+  },
+  "alt": "N by unit and year. Balkendiagramm. Am höchsten: Ward (62); am niedrigsten: ICU (22)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year",
+   "stacked": true,
+   "percent": true
+  },
+  "alt": "N by unit and year. Balkendiagramm. Am höchsten: ICU / 2025 (55 %); am niedrigsten: ICU / 2024 (45 %)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year",
+   "facet": "year"
+  },
+  "alt": "N by unit and year. Balkendiagramm. Am höchsten: 2025 / Ward (32); am niedrigsten: 2024 / ICU (10)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER",
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "year": [
+    "2024",
+    "2024",
+    "2024",
+    "2025",
+    "2025",
+    "2025"
+   ],
+   "n": [
+    10,
+    30,
+    20,
+    12,
+    31.5,
+    19
+   ]
+  },
+  "options": {
+   "by": "year",
+   "normalize": true
+  },
+  "alt": "N by unit and year. Balkendiagramm. Am höchsten: ICU / 2025 (55 %); am niedrigsten: ICU / 2024 (45 %)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e"
+   ],
+   "n": [
+    5,
+    5,
+    5,
+    5,
+    1
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Balkendiagramm. Am höchsten: a, b, c und 1 weitere (5); am niedrigsten: e (1)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "North",
+    "South"
+   ],
+   "n": [
+    1200000000.0,
+    3450000000.0
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Balkendiagramm. Am höchsten: South (3,5 Mrd.); am niedrigsten: North (1,2 Mrd.)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "ICU",
+    "Ward",
+    "ER"
+   ],
+   "n": [
+    10,
+    null,
+    20
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Balkendiagramm. Am höchsten: ER (20); am niedrigsten: ICU (10)."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "ICU"
+   ],
+   "n": [
+    7
+   ]
+  },
+  "options": {},
+  "alt": "N by unit. Balkendiagramm. ICU: 7."
+ },
+ {
+  "locale": "de",
+  "data": {
+   "unit": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e"
+   ],
+   "n": [
+    5,
+    5,
+    5,
+    5,
+    1
+   ]
+  },
+  "options": {
+   "title": "Why so even?"
+  },
+  "alt": "Why so even? Balkendiagramm. Am höchsten: a, b, c und 1 weitere (5); am niedrigsten: e (1)."
+ }
+]

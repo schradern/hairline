@@ -39,8 +39,9 @@ The written paths, invisibly.
 \description{
 Writes \verb{name.<format>} for each format: PDF (vector), PNG and TIFF (600 dpi
 by default, TIFF LZW-compressed) and SVG (text kept as text). Every file
-is named by the plot's title, with the title and subtitle as
-their description; none shows a timestamp or producer banner. PDF uses cairo
+is named by the plot's title, with its alt text as the description: the
+title, subtitle and what the data shows (\code{\link[=hl_description]{hl_description()}}); none shows a
+timestamp or producer banner. PDF uses cairo
 where it is available; otherwise svglite + rsvg. Both embed the bundled font
 once it can be found: cairo finds it on its own outside Windows, otherwise
 run \code{\link[=hl_install_font]{hl_install_font()}} once. PDFs are byte-identical across runs with

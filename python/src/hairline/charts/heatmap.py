@@ -6,6 +6,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from hairline.alt_text import described, grid_extremes
 from hairline.charts.common import humanise
 from hairline.charts.grid_values import color_scale, fills, grid_tips, inner_ticks, read_grid
 from hairline.charts.heatmap_geometry import heatmap_scene, heatmap_shapes
@@ -48,7 +49,10 @@ def heatmap_spec(data: pd.DataFrame, x: str, y: str, z: str, *, titles: dict[str
     """Everything the heatmap draws, independent of the font."""
     xs, ys, grid = read_grid(data, x, y, z, CHART)
     breaks = nice_breaks(float(np.nanmin(grid)), float(np.nanmax(grid)), load_tokens()["surface"]["ticks"])
-    return flat_spec(xs, ys, grid, color_scale(grid, breaks, colors, gradient), titles, percent)
+    spec = flat_spec(xs, ys, grid, color_scale(grid, breaks, colors, gradient), titles, percent)
+    locale = current_settings().locale
+    return {**spec, "description": described("kind_heatmap", grid_extremes(grid, spec["tips"], titles, locale),
+                                             locale)}
 
 
 def heatmap(data: pd.DataFrame, x: str, y: str, z: str, *, title: str | None = None, subtitle: str | None = None,
@@ -62,6 +66,7 @@ def heatmap(data: pd.DataFrame, x: str, y: str, z: str, *, title: str | None = N
     titles = {"x": x_title or humanise(x), "y": y_title or humanise(y), "z": z_title or humanise(z)}
     spec = heatmap_spec(data, x, y, z, titles=titles, colors=colors, percent=percent, gradient=gradient)
     result = figure(title or titles["z"], subtitle=subtitle, caption=caption, size=size)
+    result.description = spec["description"]
     result.draw(0, lambda box, measure, style: heatmap_shapes(heatmap_scene(spec, measure, style), box))
     key = spec["key"]
     result.legend_ramp(key["colors"], key["steps"], titles["z"], format="percent" if percent else "number",

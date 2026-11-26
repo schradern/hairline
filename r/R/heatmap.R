@@ -35,7 +35,10 @@ heatmap_spec <- function(data, x, y, z, titles, colors = NULL, percent = FALSE, 
   found <- read_grid(data, x, y, z, heatmap_chart)
   grid <- found$grid
   breaks <- nice_breaks(min(grid, na.rm = TRUE), max(grid, na.rm = TRUE), hl_tokens()$surface$ticks)
-  heatmap_flat_spec(found$xs, found$ys, grid, grid_colour_scale(grid, breaks, colors, gradient), titles, percent)
+  spec <- heatmap_flat_spec(found$xs, found$ys, grid, grid_colour_scale(grid, breaks, colors, gradient), titles,
+                            percent)
+  spec$description <- alt_described("kind_heatmap", alt_grid_extremes(grid, spec$tips, titles))
+  spec
 }
 
 #' Heatmap
@@ -75,6 +78,7 @@ hl_heatmap <- function(data, x, y, z, title = NULL, subtitle = NULL, caption = N
     hl_legend_ramp(key$colors, key$steps, titles$z, format = if (percent) "percent" else "number",
                    limits = key$limits)
   plot@meta$hairline_drawing <- function(box, measure, style) heatmap_shapes(heatmap_scene(spec, measure, style), box)
+  plot@meta$hairline_description <- spec$description
   plot@meta$hairline_fit_height <- TRUE
   plot
 }
