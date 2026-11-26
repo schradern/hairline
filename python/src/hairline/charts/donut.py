@@ -16,6 +16,7 @@ from hairline.charts.common import (
     joined,
     with_counts,
 )
+from hairline.charts.donut_alt import donut_description
 from hairline.charts.donut_geometry import donut_drawing
 from hairline.color.tints import tints
 from hairline.drawing import fit_height
@@ -119,5 +120,6 @@ def donut(data: pd.DataFrame, label: str | None = None, value: str | None = None
     amount = format_number(sum(item["value"] for item in rings[0]), auto_digits(amounts), current_settings().locale)
     spec = {"rings": rings, "labels": mode, "total": amount if total else None, "total_label": total_label}
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
+    result.description = donut_description(rings[0], spec["total"], total_label, current_settings().locale)
     result.draw(0, lambda box, measure, style: donut_drawing(spec, box, measure, style))
     return fit_height(result, shrink=False)

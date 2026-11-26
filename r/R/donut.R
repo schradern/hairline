@@ -135,5 +135,6 @@ hl_donut <- function(data, label = NULL, value = NULL, levels = NULL, title = NU
     theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) donut_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- "grow"
+  plot@meta$hairline_description <- donut_description(rings[[1]], spec$total, total_label)
   plot
 }

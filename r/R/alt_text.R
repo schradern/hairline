@@ -13,6 +13,12 @@ alt_named <- function(names) {
   if (length(names) <= most) shown else word("more_names", names = shown, n = length(names) - most)
 }
 
+# A value already in percent (13.0) as the charts write it with its sign ("13.0%", "13,0 %" in de). As Python's
+# percent_text().
+alt_percent_text <- function(value, digits) {
+  paste0(hl_format_number(value, digits), locale_symbols(NULL)$percent_space, "%")
+}
+
 # The words alt_extremes() writes: both ends, one value alone, every value the same.
 alt_value_words <- c("extremes", "one_value", "all_same")
 # The same for each group's centre ("Highest median: …"), its name given as the `centre` field.

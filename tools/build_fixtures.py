@@ -494,6 +494,40 @@ ALT_POINTS = {"x": list(range(1, 16)), "y": [round(2 + 0.5 * x + ((x * 7) % 5) /
               "group": ["North" if index % 3 else "South" for index in range(15)]}
 ALT_POINT_OPTIONS = [{}, {"fit": None}, {"by": "group"}, {"facet": "site"}, {"facet": "site", "fit": None}]
 
+ALT_SLICES = {
+    "routes": {"route": ["Home", "Rehabilitation", "Ward", "Died"], "patients": [412, 168, 97, 23]},
+    "even": {"route": ["Home", "Ward"], "patients": [50, 50]},
+    "many": {"route": [f"Route {chr(65 + index)}" for index in range(9)], "patients": [90, 80, 70, 60, 50, 40, 30,
+                                                                                         20, 10]},
+    "nested": {"unit": ["ICU", "ICU", "Ward", "Ward", "Ward"], "route": ["Home", "Died", "Home", "Rehabilitation",
+                                                                         "Died"],
+               "patients": [30, 6, 120, 40, 4]},
+}
+ALT_SLICE_ROUTES = {"label": "route", "value": "patients"}
+ALT_SLICE_OPTIONS = [("routes", ALT_SLICE_ROUTES), ("routes", {**ALT_SLICE_ROUTES, "total_label": "patients"}),
+                     ("routes", {**ALT_SLICE_ROUTES, "total": False}), ("even", ALT_SLICE_ROUTES),
+                     ("many", ALT_SLICE_ROUTES), ("routes", {"label": "route"}),
+                     ("nested", {"levels": ["unit", "route"], "value": "patients"})]
+
+
+ALT_ANSWERS = {"Staffing": [5, 4, 4, 5, 3, 4, 2, 5, 4, 3], "Parking": [2, 3, 4, 1, 2, 5, 3, 2, 4, 1],
+               "Food": [1, 2, 2, 3, 1, 4, 2, 1, 3, 2]}
+
+
+def alt_ratings(items: tuple[str, ...] = ("Staffing", "Parking", "Food"),
+                years: tuple[str, ...] = ("2024", "2025")) -> dict:
+    """Ten ratings on a five-point scale per item and year, the items' agreement apart; a year later every second
+    answer one level higher."""
+    rows = [{"item": item, "year": year, "rating": min(5, rating + 1) if year_index and index % 2 else rating}
+            for year_index, year in enumerate(years) for item in items
+            for index, rating in enumerate(ALT_ANSWERS[item])]
+    return {key: [row[key] for row in rows] for key in ("item", "year", "rating")}
+
+
+ALT_RATINGS = {"three": alt_ratings(), "one": alt_ratings(("Staffing",), ("2025",))}
+ALT_RATING_OPTIONS = [("three", {}), ("three", {"facet": "year"}), ("three", {"reverse": ["Food"]}),
+                      ("three", {"levels": [1, 2, 3, 4, 5, 6, 7]}), ("three", {"split": 2.5}), ("one", {})]
+
 
 def alt_text_cases() -> dict:
     """Every chart that describes its data, with its alt text, in English and German, for both packages to write
@@ -532,9 +566,14 @@ def alt_text_cases() -> dict:
             for locale in ("en", "de") for name, options in ALT_DOT_OPTIONS]
     points = [case(locale, ALT_POINTS, options, lambda frame, options: hl.scatter(frame, "x", "y", **options))
               for locale in ("en", "de") for options in ALT_POINT_OPTIONS]
+    slices = [case(locale, ALT_SLICES[name], options, lambda frame, options: hl.donut(frame, **options))
+              for locale in ("en", "de") for name, options in ALT_SLICE_OPTIONS]
+    ratings = [case(locale, ALT_RATINGS[name], options,
+                    lambda frame, options: hl.likert(frame, "item", "rating", **options))
+               for locale in ("en", "de") for name, options in ALT_RATING_OPTIONS]
     hl.use(brand=False)
     return {"bars": bars, "timeseries": series, "distributions": distributions, "kaplan_meier": survival,
-            "forest": effects, "dotplot": dots, "scatter": points}
+            "forest": effects, "dotplot": dots, "scatter": points, "donut": slices, "likert": ratings}
 
 
 def heatmap_cases() -> dict:

@@ -70,6 +70,19 @@ def test_scatter_alt_text_matches_the_shared_fixture(case):
     assert figure_alt(hl.scatter(frame_of(case), "x", "y", **case["options"])) == case["alt"]
     hl.use(brand=False)
 
+@pytest.mark.parametrize("case", FIXTURE["donut"], ids=case_id)
+def test_donut_alt_text_matches_the_shared_fixture(case):
+    hl.use(brand=False, locale=case["locale"])
+    assert figure_alt(hl.donut(frame_of(case), **case["options"])) == case["alt"]
+    hl.use(brand=False)
+
+
+@pytest.mark.parametrize("case", FIXTURE["likert"], ids=case_id)
+def test_likert_alt_text_matches_the_shared_fixture(case):
+    hl.use(brand=False, locale=case["locale"])
+    assert figure_alt(hl.likert(frame_of(case), "item", "rating", **case["options"])) == case["alt"]
+    hl.use(brand=False)
+
 def test_extremes_name_ties_together_and_leave_out_missing_values():
     entries = [("a", 2.0, "2"), ("b", float("nan"), ""), ("c", 5.0, "5"), ("d", 5.0, "5"), ("e", 1.0, "1")]
     assert extremes(entries, "en") == "Highest: c, d (5); lowest: e (1)."

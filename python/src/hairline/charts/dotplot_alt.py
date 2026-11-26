@@ -5,15 +5,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from hairline.alt_text import CENTRE_WORDS, VALUE_WORDS, described, extremes
+from hairline.alt_text import CENTRE_WORDS, VALUE_WORDS, described, extremes, percent_text
 from hairline.charts.distribution_alt import FACET_PARTS
-from hairline.numbers import format_number, locale_symbols, word
+from hairline.numbers import format_number, word
 
 
 def dot_text(value: float, digits: int, percent: bool, locale: str) -> str:
     """A row's value as its number writes it, with the percent sign the heading gives it where it is a share."""
-    text = format_number(value, digits, locale)
-    return text + locale_symbols(locale)["percent_space"] + "%" if percent else text
+    return percent_text(value, digits, locale) if percent else format_number(value, digits, locale)
 
 
 def dotplot_description(names: Sequence[str], blocks: Sequence[str], values: Sequence[float], digits: int,

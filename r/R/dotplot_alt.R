@@ -4,8 +4,7 @@
 # A row's value as its number writes it, with the percent sign the heading gives it where it is a share. As Python's
 # dot_text().
 dotplot_alt_text <- function(value, digits, percent) {
-  text <- hl_format_number(value, digits)
-  if (isTRUE(percent)) paste0(text, locale_symbols(NULL)$percent_space, "%") else text
+  if (isTRUE(percent)) alt_percent_text(value, digits) else hl_format_number(value, digits)
 }
 
 # "Dot plot. Highest: Medical (13.0%); lowest: Cardiac (6.0%)." over the rows as drawn, each named with its block

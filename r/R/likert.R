@@ -255,6 +255,7 @@ hl_likert <- function(data, item, rating, levels = NULL, split = NULL, bins = NU
   plot@meta$hairline_drawing <- function(box, measure, style) likert_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot@meta$hairline_size <- size
+  plot@meta$hairline_description <- likert_description(spec, bin_label(likert_high_levels(spec$bins)), !is.null(facet))
   plot
 }
 

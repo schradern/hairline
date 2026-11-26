@@ -19,6 +19,7 @@ from hairline.charts.common import (
     with_caption,
     without_small_categories,
 )
+from hairline.charts.likert_alt import high_levels, likert_description
 from hairline.charts.likert_geometry import likert_drawing
 from hairline.charts.options import FACET_BLOCK, FACET_KEY, facet_rows
 from hairline.charts.spread import spread_axis
@@ -27,6 +28,7 @@ from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_number, word
 from hairline.palettes import default_ramp, interpolate, ramp
+from hairline.settings import current_settings
 from hairline.stats.density import level_quantiles
 from hairline.ticks import TARGET
 from hairline.tokens import load_tokens
@@ -234,6 +236,8 @@ def likert(data: pd.DataFrame, item: str, rating: str, *, levels: Sequence[float
         for row in spec["rows"]:
             row["name"] = row["name"].split(" · ", 1)[1]
     result = figure(title, subtitle=subtitle, caption=with_caption(caption, small), size=size)
+    result.description = likert_description(spec, bin_label(high_levels(spec["bins"])), facet is not None,
+                                            current_settings().locale)
     result.draw(0, lambda box, measure, style: likert_drawing(spec, box, measure, style))
     count = len(spec["bins"])
     result.legend([])

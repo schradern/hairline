@@ -25,7 +25,10 @@
   0.96]. Highest: Lee 2021 (1.20); lowest: Smith 2019 (0.55)."); `dotplot` names its highest and lowest row in
   its digits ("Dot plot. Highest: Medical (13.00%); lowest: Cardiac (6.00%)."), with `summary=` the centre it
   draws; `scatter` gives each panel's linear fit as its header writes it ("Scatter plot. Linear fit: n = 144,
-  r = 0.64, slope 0.23."), or with `fit=None` how many points it draws. The other charts follow.
+  r = 0.64, slope 0.23."), or with `fit=None` how many points it draws; `donut` gives the total its centre writes
+  and the largest and smallest slice of the inner ring ("Donut chart. Total: 700 patients. Largest: Home (59%);
+  smallest: Died (3%)."); `likert` names the items with the highest and lowest share on the high side of the split
+  ("Likert chart. Highest share at 4–5: Staffing (75%); lowest: Food (15%)."). The other charts follow.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.

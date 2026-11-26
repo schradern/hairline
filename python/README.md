@@ -171,12 +171,12 @@ the details.
 
 ## Files
 
-`save()` writes PDF (fonts embedded), PNG and TIFF (600 dpi by default), SVG (text kept as text) and
-self-contained interactive HTML with tooltips. Files carry the figure's alt text as their description: its title,
-subtitle and what the data shows, in the figure's locale ("Bar chart. Highest: Ward (30); lowest: ICU (12).").
-Bars, time series, distributions (spread, raincloud, ridgeline), Kaplan–Meier curves, forest and dot plots,
-scatter plots, heatmaps and surfaces describe themselves so far; set `figure.description` to write your own. No timestamps: the same figure
-gives the same bytes again.
+`save()` writes PDF (fonts embedded), PNG and TIFF (600 dpi by default), SVG (text kept as text) and self-contained
+interactive HTML with tooltips. Files carry the figure's alt text as their description: its title, subtitle and what
+the data shows, in the figure's locale ("Bar chart. Highest: Ward (30); lowest: ICU (12)."). Bars, time series,
+distributions (spread, raincloud, ridgeline), Kaplan–Meier curves, forest and dot plots, scatter plots, donuts,
+Likert charts, heatmaps and surfaces describe themselves so far; set `figure.description` to write your own. No
+timestamps: the same figure gives the same bytes again.
 
 ## Design
 

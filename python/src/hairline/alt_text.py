@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from hairline.numbers import word
+from hairline.numbers import format_number, locale_symbols, word
 from hairline.tokens import load_tokens
 
 # Values equal to this many decimals are a tie: shares divided in Python and R may differ in their last bits.
@@ -22,6 +22,11 @@ def named(names: Sequence[str], locale: str | None) -> str:
     most = load_tokens()["alt_text"]["max_names"]
     shown = ", ".join(names[:most])
     return shown if len(names) <= most else word("more_names", locale, names=shown, n=len(names) - most)
+
+
+def percent_text(value: float, digits: int, locale: str | None) -> str:
+    """A value already in percent (13.0) as the charts write it with its sign ('13.0%', '13,0 %' in de)."""
+    return format_number(value, digits, locale) + locale_symbols(locale)["percent_space"] + "%"
 
 
 # The words extremes() writes: both ends, one value alone, every value the same.
