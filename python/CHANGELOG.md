@@ -28,7 +28,11 @@
   r = 0.64, slope 0.23."), or with `fit=None` how many points it draws; `donut` gives the total its centre writes
   and the largest and smallest slice of the inner ring ("Donut chart. Total: 700 patients. Largest: Home (59%);
   smallest: Died (3%)."); `likert` names the items with the highest and lowest share on the high side of the split
-  ("Likert chart. Highest share at 4–5: Staffing (75%); lowest: Food (15%)."). The other charts follow.
+  ("Likert chart. Highest share at 4–5: Staffing (75%); lowest: Food (15%)."); `sankey` gives its total and the
+  largest flow at each step ("Sankey diagram. Total: 270. Largest flow per step: ER → ICU (100); ICU → Home
+  (130)."); `chord` the largest exchange and the groups with the highest and lowest total; `venn` each set's size
+  and how many are in all of them ("Venn diagram. Sets: Diabetes (120), Obesity (90). In both: 40."). The other
+  charts follow.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.

@@ -157,5 +157,6 @@ hl_chord <- function(data, source, target, value = NULL, title = NULL, subtitle 
                   subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) chord_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- "grow"
+  plot@meta$hairline_description <- chord_description(spec)
   plot
 }

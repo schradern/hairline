@@ -528,6 +528,31 @@ ALT_RATINGS = {"three": alt_ratings(), "one": alt_ratings(("Staffing",), ("2025"
 ALT_RATING_OPTIONS = [("three", {}), ("three", {"facet": "year"}), ("three", {"reverse": ["Food"]}),
                       ("three", {"levels": [1, 2, 3, 4, 5, 6, 7]}), ("three", {"split": 2.5}), ("one", {})]
 
+ALT_FLOWS = {
+    "paths": {"origin": ["ER", "ER", "OR", "OR", "Ward"], "unit": ["ICU", "Ward", "ICU", "ICU", "ICU"],
+              "outcome": ["Home", "Home", "Rehab", "Home", "Died"], "n": [100, 80, 50, 30, 10]},
+    "ties": {"origin": ["ER", "OR", "Ward"], "unit": ["ICU", "ICU", "ICU"], "outcome": ["Home", "Rehab", "Home"],
+             "n": [40, 40, 12.5]},
+}
+ALT_FLOW_OPTIONS = [("paths", {"columns": ["origin", "unit", "outcome"], "value": "n"}),
+                    ("paths", {"columns": ["origin", "outcome"], "value": "n"}),
+                    ("paths", {"columns": ["origin", "unit", "outcome"], "value": "n", "color_by": "origin"}),
+                    ("paths", {"columns": ["origin", "outcome"]}),
+                    ("ties", {"columns": ["origin", "unit", "outcome"], "value": "n"})]
+ALT_EXCHANGES = {
+    "units": {"source": ["ICU", "ICU", "Ward", "ER", "Ward"], "target": ["Ward", "ER", "ER", "ICU", "ICU"],
+              "n": [80, 20, 40, 10, 5]},
+    "ties": {"source": ["A", "B", "C"], "target": ["B", "C", "A"], "n": [30, 30, 30]},
+}
+ALT_EXCHANGE_OPTIONS = [("units", {"value": "n"}), ("units", {}), ("ties", {"value": "n"})]
+ALT_SETS = {
+    "two": {"diabetes": [1, 1, 1, 0, 0, 1, 0, 1], "obesity": [1, 0, 1, 1, 1, 0, 0, 1]},
+    "three": {"diabetes": [1, 1, 1, 0, 0, 1, 0, 1], "obesity": [1, 0, 1, 1, 1, 0, 0, 1],
+              "smoking": [1, 0, 0, 1, 0, 1, 1, 1]},
+}
+ALT_SET_OPTIONS = [("two", {"columns": ["diabetes", "obesity"]}),
+                   ("three", {"columns": ["diabetes", "obesity", "smoking"]})]
+
 
 def alt_text_cases() -> dict:
     """Every chart that describes its data, with its alt text, in English and German, for both packages to write
@@ -571,9 +596,17 @@ def alt_text_cases() -> dict:
     ratings = [case(locale, ALT_RATINGS[name], options,
                     lambda frame, options: hl.likert(frame, "item", "rating", **options))
                for locale in ("en", "de") for name, options in ALT_RATING_OPTIONS]
+    flows = [case(locale, ALT_FLOWS[name], options, lambda frame, options: hl.sankey(frame, **options))
+             for locale in ("en", "de") for name, options in ALT_FLOW_OPTIONS]
+    exchanges = [case(locale, ALT_EXCHANGES[name], options,
+                      lambda frame, options: hl.chord(frame, "source", "target", **options))
+                 for locale in ("en", "de") for name, options in ALT_EXCHANGE_OPTIONS]
+    sets = [case(locale, ALT_SETS[name], options, lambda frame, options: hl.venn(frame, **options))
+            for locale in ("en", "de") for name, options in ALT_SET_OPTIONS]
     hl.use(brand=False)
     return {"bars": bars, "timeseries": series, "distributions": distributions, "kaplan_meier": survival,
-            "forest": effects, "dotplot": dots, "scatter": points, "donut": slices, "likert": ratings}
+            "forest": effects, "dotplot": dots, "scatter": points, "donut": slices, "likert": ratings,
+            "sankey": flows, "chord": exchanges, "venn": sets}
 
 
 def heatmap_cases() -> dict:

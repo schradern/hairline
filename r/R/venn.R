@@ -98,5 +98,6 @@ hl_venn <- function(data, columns = NULL, title = NULL, subtitle = NULL, caption
                   y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) venn_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- "grow"
+  plot@meta$hairline_description <- venn_description(spec)
   plot
 }

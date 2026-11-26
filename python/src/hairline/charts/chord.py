@@ -9,6 +9,7 @@ import pandas as pd
 from hairline import entities
 from hairline.charts.chord_geometry import chord_drawing
 from hairline.charts.common import flow_rows, humanise, with_counts
+from hairline.charts.diagrams_alt import chord_description
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
@@ -48,5 +49,6 @@ def chord(data: pd.DataFrame, source: str, target: str, value: str | None = None
     label = humanise(value) if value else "Count"
     result = figure(title or f"{label} between {str(source).replace('_', ' ')} and {str(target).replace('_', ' ')}",
                     subtitle=subtitle, caption=caption, size=size)
+    result.description = chord_description(spec, current_settings().locale)
     result.draw(0, lambda box, measure, style: chord_drawing(spec, box, measure, style))
     return fit_height(result, shrink=False)

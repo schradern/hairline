@@ -115,5 +115,6 @@ hl_sankey <- function(data, columns, value = NULL, title = NULL, subtitle = NULL
     theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) sankey_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- "grow"
+  plot@meta$hairline_description <- sankey_description(spec)
   plot
 }

@@ -8,7 +8,7 @@ donut_slice_words <- c("slice_extremes", "slice_one", "slice_same")
 # it, with the text under it. As Python's donut_description().
 donut_description <- function(ring, total, total_label) {
   findings <- if (!is.null(total)) {
-    word("donut_total", total = if (is.null(total_label)) total else paste(total, total_label))
+    word("total_amount", total = if (is.null(total_label)) total else paste(total, total_label))
   }
   findings <- c(findings, alt_extremes(vapply(ring, `[[`, "", "name"), vapply(ring, `[[`, 0, "share"),
                                        vapply(ring, `[[`, "", "share_text"), donut_slice_words))

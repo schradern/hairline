@@ -10,6 +10,7 @@ import pandas as pd
 
 from hairline import entities
 from hairline.charts.common import check_columns, humanise, joined
+from hairline.charts.diagrams_alt import venn_description
 from hairline.charts.venn_geometry import venn_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -83,5 +84,6 @@ def venn(data: Mapping[str, Iterable] | pd.DataFrame, columns: Sequence[str] | N
     spec = venn_spec(data, columns, colors=colors, proportional=proportional)
     label = joined(list(columns) if isinstance(data, pd.DataFrame) else [entry["name"] for entry in spec["sets"]])
     result = figure(title or f"Overlap of {label}", subtitle=subtitle, caption=caption, size=size)
+    result.description = venn_description(spec, current_settings().locale)
     result.draw(0, lambda box, measure, style: venn_drawing(spec, box, measure, style))
     return fit_height(result, shrink=False)

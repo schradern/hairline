@@ -8,6 +8,7 @@ import pandas as pd
 
 from hairline import entities
 from hairline.charts.common import check_columns, check_labels, check_numeric, humanise, joined, with_counts
+from hairline.charts.diagrams_alt import sankey_description
 from hairline.charts.sankey_geometry import sankey_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -93,5 +94,6 @@ def sankey(data: pd.DataFrame, columns: Sequence[str], value: str | None = None,
     spec = sankey_spec(data, columns, value, color_by=color_by,
                        headings=headings or [humanise(column) for column in columns], colors=colors)
     result = figure(title, subtitle=subtitle, caption=caption, size=size)
+    result.description = sankey_description(spec, current_settings().locale)
     result.draw(0, lambda box, measure, style: sankey_drawing(spec, box, measure, style))
     return fit_height(result, shrink=False)

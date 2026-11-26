@@ -63,6 +63,21 @@ test_that("Likert alt text matches the shared fixture, in English and German", {
                     function(data, options) do.call(hl_likert, c(list(data, "item", "rating"), options)))
 })
 
+test_that("Sankey alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$sankey,
+                    function(data, options) do.call(hl_sankey, c(list(data), options)))
+})
+
+test_that("chord alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$chord,
+                    function(data, options) do.call(hl_chord, c(list(data, "source", "target"), options)))
+})
+
+test_that("Venn alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$venn,
+                    function(data, options) do.call(hl_venn, c(list(data), options)))
+})
+
 test_that("extremes name ties together and leave out missing values", {
   hl_use(brand = FALSE)
   expect_equal(alt_extremes(c("a", "b", "c", "d", "e"), c(2, NA, 5, 5, 1), c("2", "", "5", "5", "1")),

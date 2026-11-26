@@ -13,7 +13,7 @@ SLICE_WORDS = ("slice_extremes", "slice_one", "slice_same")
 def donut_description(ring: list[dict], total: str | None, total_label: str | None, locale: str) -> str:
     """'Donut chart. Total: 700 patients. Largest: Home (59%); smallest: Died (3%).'; the total where the centre
     shows it, with the text under it."""
-    findings = [word("donut_total", locale, total=f"{total} {total_label}" if total_label else total)] if total \
+    findings = [word("total_amount", locale, total=f"{total} {total_label}" if total_label else total)] if total \
         else []
     findings.append(extremes([(item["name"], item["share"], item["share_text"]) for item in ring], locale,
                              SLICE_WORDS))

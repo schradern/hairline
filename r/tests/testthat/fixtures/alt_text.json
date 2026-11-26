@@ -20206,5 +20206,725 @@
    "options": {},
    "alt": "Rating by item. Likert-Diagramm. Staffing: 70 % bei 4–5."
   }
+ ],
+ "sankey": [
+  {
+   "locale": "en",
+   "data": {
+    "origin": [
+     "ER",
+     "ER",
+     "OR",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Home",
+     "Rehab",
+     "Home",
+     "Died"
+    ],
+    "n": [
+     100,
+     80,
+     50,
+     30,
+     10
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "unit",
+     "outcome"
+    ],
+    "value": "n"
+   },
+   "alt": "N from origin to outcome. Sankey diagram. Total: 270. Largest flow per step: ER → ICU (100); ICU → Home (130)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "origin": [
+     "ER",
+     "ER",
+     "OR",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Home",
+     "Rehab",
+     "Home",
+     "Died"
+    ],
+    "n": [
+     100,
+     80,
+     50,
+     30,
+     10
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "outcome"
+    ],
+    "value": "n"
+   },
+   "alt": "N from origin to outcome. Sankey diagram. Total: 270. Largest flow: ER → Home (180)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "origin": [
+     "ER",
+     "ER",
+     "OR",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Home",
+     "Rehab",
+     "Home",
+     "Died"
+    ],
+    "n": [
+     100,
+     80,
+     50,
+     30,
+     10
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "unit",
+     "outcome"
+    ],
+    "value": "n",
+    "color_by": "origin"
+   },
+   "alt": "N from origin to outcome. Sankey diagram. Total: 270. Largest flow per step: ER → ICU (100); ICU → Home (130)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "origin": [
+     "ER",
+     "ER",
+     "OR",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Home",
+     "Rehab",
+     "Home",
+     "Died"
+    ],
+    "n": [
+     100,
+     80,
+     50,
+     30,
+     10
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "outcome"
+    ]
+   },
+   "alt": "Count from origin to outcome. Sankey diagram. Total: 5. Largest flow: ER → Home (2)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "origin": [
+     "ER",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Rehab",
+     "Home"
+    ],
+    "n": [
+     40,
+     40,
+     12.5
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "unit",
+     "outcome"
+    ],
+    "value": "n"
+   },
+   "alt": "N from origin to outcome. Sankey diagram. Total: 93. Largest flow per step: ER → ICU, OR → ICU (40); ICU → Home (53)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "origin": [
+     "ER",
+     "ER",
+     "OR",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Home",
+     "Rehab",
+     "Home",
+     "Died"
+    ],
+    "n": [
+     100,
+     80,
+     50,
+     30,
+     10
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "unit",
+     "outcome"
+    ],
+    "value": "n"
+   },
+   "alt": "N from origin to outcome. Sankey-Diagramm. Gesamt: 270. Größter Fluss je Schritt: ER → ICU (100); ICU → Home (130)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "origin": [
+     "ER",
+     "ER",
+     "OR",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Home",
+     "Rehab",
+     "Home",
+     "Died"
+    ],
+    "n": [
+     100,
+     80,
+     50,
+     30,
+     10
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "outcome"
+    ],
+    "value": "n"
+   },
+   "alt": "N from origin to outcome. Sankey-Diagramm. Gesamt: 270. Größter Fluss: ER → Home (180)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "origin": [
+     "ER",
+     "ER",
+     "OR",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Home",
+     "Rehab",
+     "Home",
+     "Died"
+    ],
+    "n": [
+     100,
+     80,
+     50,
+     30,
+     10
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "unit",
+     "outcome"
+    ],
+    "value": "n",
+    "color_by": "origin"
+   },
+   "alt": "N from origin to outcome. Sankey-Diagramm. Gesamt: 270. Größter Fluss je Schritt: ER → ICU (100); ICU → Home (130)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "origin": [
+     "ER",
+     "ER",
+     "OR",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Home",
+     "Rehab",
+     "Home",
+     "Died"
+    ],
+    "n": [
+     100,
+     80,
+     50,
+     30,
+     10
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "outcome"
+    ]
+   },
+   "alt": "Count from origin to outcome. Sankey-Diagramm. Gesamt: 5. Größter Fluss: ER → Home (2)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "origin": [
+     "ER",
+     "OR",
+     "Ward"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU"
+    ],
+    "outcome": [
+     "Home",
+     "Rehab",
+     "Home"
+    ],
+    "n": [
+     40,
+     40,
+     12.5
+    ]
+   },
+   "options": {
+    "columns": [
+     "origin",
+     "unit",
+     "outcome"
+    ],
+    "value": "n"
+   },
+   "alt": "N from origin to outcome. Sankey-Diagramm. Gesamt: 93. Größter Fluss je Schritt: ER → ICU, OR → ICU (40); ICU → Home (53)."
+  }
+ ],
+ "chord": [
+  {
+   "locale": "en",
+   "data": {
+    "source": [
+     "ICU",
+     "ICU",
+     "Ward",
+     "ER",
+     "Ward"
+    ],
+    "target": [
+     "Ward",
+     "ER",
+     "ER",
+     "ICU",
+     "ICU"
+    ],
+    "n": [
+     80,
+     20,
+     40,
+     10,
+     5
+    ]
+   },
+   "options": {
+    "value": "n"
+   },
+   "alt": "N between source and target. Chord diagram. Largest exchange: ICU and Ward (85). Highest total: Ward (125); lowest: ER (70)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "source": [
+     "ICU",
+     "ICU",
+     "Ward",
+     "ER",
+     "Ward"
+    ],
+    "target": [
+     "Ward",
+     "ER",
+     "ER",
+     "ICU",
+     "ICU"
+    ],
+    "n": [
+     80,
+     20,
+     40,
+     10,
+     5
+    ]
+   },
+   "options": {},
+   "alt": "Count between source and target. Chord diagram. Largest exchange: ICU and Ward, ICU and ER (2). Highest total: ICU (4); lowest: Ward, ER (3)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "source": [
+     "A",
+     "B",
+     "C"
+    ],
+    "target": [
+     "B",
+     "C",
+     "A"
+    ],
+    "n": [
+     30,
+     30,
+     30
+    ]
+   },
+   "options": {
+    "value": "n"
+   },
+   "alt": "N between source and target. Chord diagram. Largest exchange: A and B, B and C, A and C (30). Every group: total 60."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "source": [
+     "ICU",
+     "ICU",
+     "Ward",
+     "ER",
+     "Ward"
+    ],
+    "target": [
+     "Ward",
+     "ER",
+     "ER",
+     "ICU",
+     "ICU"
+    ],
+    "n": [
+     80,
+     20,
+     40,
+     10,
+     5
+    ]
+   },
+   "options": {
+    "value": "n"
+   },
+   "alt": "N between source and target. Chord-Diagramm. Größter Austausch: ICU und Ward (85). Höchster Gesamtwert: Ward (125); niedrigster: ER (70)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "source": [
+     "ICU",
+     "ICU",
+     "Ward",
+     "ER",
+     "Ward"
+    ],
+    "target": [
+     "Ward",
+     "ER",
+     "ER",
+     "ICU",
+     "ICU"
+    ],
+    "n": [
+     80,
+     20,
+     40,
+     10,
+     5
+    ]
+   },
+   "options": {},
+   "alt": "Count between source and target. Chord-Diagramm. Größter Austausch: ICU und Ward, ICU und ER (2). Höchster Gesamtwert: ICU (4); niedrigster: Ward, ER (3)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "source": [
+     "A",
+     "B",
+     "C"
+    ],
+    "target": [
+     "B",
+     "C",
+     "A"
+    ],
+    "n": [
+     30,
+     30,
+     30
+    ]
+   },
+   "options": {
+    "value": "n"
+   },
+   "alt": "N between source and target. Chord-Diagramm. Größter Austausch: A und B, B und C, A und C (30). Jede Gruppe: Gesamtwert 60."
+  }
+ ],
+ "venn": [
+  {
+   "locale": "en",
+   "data": {
+    "diabetes": [
+     1,
+     1,
+     1,
+     0,
+     0,
+     1,
+     0,
+     1
+    ],
+    "obesity": [
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     0,
+     1
+    ]
+   },
+   "options": {
+    "columns": [
+     "diabetes",
+     "obesity"
+    ]
+   },
+   "alt": "Overlap of diabetes and obesity. Venn diagram. Sets: Diabetes (5), Obesity (5). In both: 3."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "diabetes": [
+     1,
+     1,
+     1,
+     0,
+     0,
+     1,
+     0,
+     1
+    ],
+    "obesity": [
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     0,
+     1
+    ],
+    "smoking": [
+     1,
+     0,
+     0,
+     1,
+     0,
+     1,
+     1,
+     1
+    ]
+   },
+   "options": {
+    "columns": [
+     "diabetes",
+     "obesity",
+     "smoking"
+    ]
+   },
+   "alt": "Overlap of diabetes, obesity and smoking. Venn diagram. Sets: Diabetes (5), Obesity (5), Smoking (5). In all three: 2."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "diabetes": [
+     1,
+     1,
+     1,
+     0,
+     0,
+     1,
+     0,
+     1
+    ],
+    "obesity": [
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     0,
+     1
+    ]
+   },
+   "options": {
+    "columns": [
+     "diabetes",
+     "obesity"
+    ]
+   },
+   "alt": "Overlap of diabetes and obesity. Venn-Diagramm. Mengen: Diabetes (5), Obesity (5). In beiden: 3."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "diabetes": [
+     1,
+     1,
+     1,
+     0,
+     0,
+     1,
+     0,
+     1
+    ],
+    "obesity": [
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     0,
+     1
+    ],
+    "smoking": [
+     1,
+     0,
+     0,
+     1,
+     0,
+     1,
+     1,
+     1
+    ]
+   },
+   "options": {
+    "columns": [
+     "diabetes",
+     "obesity",
+     "smoking"
+    ]
+   },
+   "alt": "Overlap of diabetes, obesity and smoking. Venn-Diagramm. Mengen: Diabetes (5), Obesity (5), Smoking (5). In allen dreien: 2."
+  }
  ]
 }
