@@ -23,6 +23,7 @@ from hairline.charts.common import (
 )
 from hairline.charts.options import Reference, apply_options
 from hairline.charts.summaries import STAT_NAMES, stat_label
+from hairline.charts.timeseries_alt import series_line, timeseries_description
 from hairline.charts.timeseries_summary import (
     checked_summary,
     draw_summary_series,
@@ -220,9 +221,11 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
     labels = {"share_above": share_label, **{name: stat_label(name) for name in STAT_NAMES}}
     palette = series_colors([name for name, _ in groups], data, by, color_by, colors, dimension,
                             "timeseries")[0] if by else {}
+    lines = []
     for index, (name, rows) in enumerate(groups):
         ax = result.axes[index]
         drawn = rows.assign(**{y: rows[y].where(rows[y].between(*limits))})
+        lines.append((name, series_line(drawn, x, y, window, marks)))
         if marks:
             draw_summary_series(ax, drawn, x, y, palette.get(name, lone_color()), marks)
         else:
@@ -242,6 +245,7 @@ def timeseries(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, tit
         result.reference(y=threshold, label=threshold_label)
     if highlight:
         result.highlight(panels=list(highlight))
+    result.description = timeseries_description(lines, percent, current_settings().locale)
     labels = {"raw": raw_label, "threshold": threshold_legend, "mean": mean_label or f"Rolling mean ({window})"}
     result.legend(legend_items(raw and not marks, period_mean, list(bands), labels, marks))
     return apply_options(result, "timeseries", x_title=x_title, y_title=y_title, reference=reference,

@@ -265,7 +265,11 @@ hl_timeseries <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, 
   plot <- headers_for(plot, counted, y, stats, percent, threshold, share_label, key, key_panels, qualifiers)
   # Panels in rows across the page, as the Python package's default size.
   plot@meta$hairline_size <- "double"
-  chart_options(plot, "timeseries", x_title = x_title, y_title = y_title, reference = reference,
-                reference_legend = reference_legend,
-                key_title = key_title)
+  plot <- chart_options(plot, "timeseries", x_title = x_title, y_title = y_title, reference = reference,
+                        reference_legend = reference_legend,
+                        key_title = key_title)
+  groups <- levels(data$.group)
+  lines <- lapply(groups, function(group) timeseries_alt_line(data[data$.group == group, , drop = FALSE], marks))
+  plot@meta$hairline_description <- timeseries_description(groups, lines, percent)
+  plot
 }

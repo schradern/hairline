@@ -419,22 +419,48 @@ ALT_BAR_OPTIONS = [("units", {}), ("units", {"by": "year"}), ("units", {"by": "y
                    ("ties", {}), ("large", {}), ("missing", {}), ("one", {}), ("ties", {"title": "Why so even?"})]
 
 
-def alt_text_cases() -> list[dict]:
-    """Bar charts and their alt text, in English and German, for both packages to write alike."""
+def alt_series(units: int, days: bool = True, step: str = "") -> dict:
+    """Twelve points per unit, a wave on a rising trend, so start, end and peak differ."""
+    rows = [{"t": f"2025-{month:02d}-01{step}" if days else month, "unit": f"Unit {chr(65 + unit)}",
+             "v": round(40 + 8 * unit + month + 6 * math.sin(month + unit), 3)}
+            for unit in range(units) for month in range(1, 13)]
+    return {key: [row[key] for row in rows] for key in ("t", "unit", "v")}
+
+
+ALT_SERIES = {"three": alt_series(3), "six": alt_series(6), "timed": alt_series(1, step=" 08:30"),
+              "numbers": alt_series(2, days=False), "point": {"t": ["2025-01-01"], "unit": ["Unit A"], "v": [4.5]},
+              "gap": {"t": ["2025-01-01", "2025-02-01", "2025-01-01"], "unit": ["Unit A", "Unit A", "Unit B"],
+                      "v": [3.0, 5.0, None]}}
+ALT_SERIES_OPTIONS = [("three", {"by": "unit"}), ("three", {"by": "unit", "window": 3}),
+                      ("three", {"summary": ["median", "iqr"]}), ("six", {"by": "unit", "window": 1}),
+                      ("timed", {}), ("numbers", {"by": "unit", "window": 2}), ("point", {}),
+                      ("gap", {"by": "unit", "window": 1}), ("three", {"by": "unit", "clip": [45, 60]})]
+
+
+def alt_text_cases() -> dict:
+    """Bar charts and time series with their alt text, in English and German, for both packages to write alike."""
     import matplotlib.pyplot as plt
 
     import hairline as hl
     from hairline.export import figure_alt
-    cases = []
-    for locale in ("en", "de"):
-        for name, options in ALT_BAR_OPTIONS:
-            hl.use(brand=False, locale=locale)
-            frame = pd.DataFrame(ALT_BARS[name])
-            figure = hl.bars(frame, "unit", "n", **options)
-            cases.append({"locale": locale, "data": ALT_BARS[name], "options": options, "alt": figure_alt(figure)})
-            plt.close(figure.figure)
+
+    def case(locale: str, data: dict, options: dict, draw) -> dict:
+        hl.use(brand=False, locale=locale)
+        frame = pd.DataFrame({key: [np.nan if value is None else value for value in values]
+                              for key, values in data.items()})
+        figure = draw(frame, options)
+        plt.close(figure.figure)
+        return {"locale": locale, "data": data, "options": options, "alt": figure_alt(figure)}
+    bars = [case(locale, ALT_BARS[name], options, lambda frame, options: hl.bars(frame, "unit", "n", **options))
+            for locale in ("en", "de") for name, options in ALT_BAR_OPTIONS]
+    share = {**ALT_SERIES["three"], "v": [value / 100 for value in ALT_SERIES["three"]["v"]]}
+    series = [case(locale, ALT_SERIES[name], options,
+                   lambda frame, options: hl.timeseries(frame, "t", "v", **options))
+              for locale in ("en", "de") for name, options in ALT_SERIES_OPTIONS]
+    series.append(case("de", share, {"by": "unit", "percent": True},
+                       lambda frame, options: hl.timeseries(frame, "t", "v", **options)))
     hl.use(brand=False)
-    return cases
+    return {"bars": bars, "timeseries": series}
 
 
 def heatmap_cases() -> dict:

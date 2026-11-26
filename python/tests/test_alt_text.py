@@ -12,12 +12,26 @@ from hairline.export import figure_alt
 FIXTURE = json.loads((Path(__file__).parent / "fixtures" / "alt_text.json").read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("case", FIXTURE, ids=lambda case: f"{case['locale']}-{sorted(case['options'])}")
+def frame_of(case):
+    return pd.DataFrame({key: [np.nan if value is None else value for value in values]
+                         for key, values in case["data"].items()})
+
+
+def case_id(case):
+    return f"{case['locale']}-{sorted(case['options'])}"
+
+
+@pytest.mark.parametrize("case", FIXTURE["bars"], ids=case_id)
 def test_bar_alt_text_matches_the_shared_fixture(case):
     hl.use(brand=False, locale=case["locale"])
-    frame = pd.DataFrame({key: [np.nan if value is None else value for value in values]
-                          for key, values in case["data"].items()})
-    assert figure_alt(hl.bars(frame, "unit", "n", **case["options"])) == case["alt"]
+    assert figure_alt(hl.bars(frame_of(case), "unit", "n", **case["options"])) == case["alt"]
+    hl.use(brand=False)
+
+
+@pytest.mark.parametrize("case", FIXTURE["timeseries"], ids=case_id)
+def test_time_series_alt_text_matches_the_shared_fixture(case):
+    hl.use(brand=False, locale=case["locale"])
+    assert figure_alt(hl.timeseries(frame_of(case), "t", "v", **case["options"])) == case["alt"]
     hl.use(brand=False)
 
 

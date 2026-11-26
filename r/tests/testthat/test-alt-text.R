@@ -1,13 +1,27 @@
-test_that("bar alt text matches the shared fixture, in English and German", {
+alt_fixture_frame <- function(case) {
+  as.data.frame(lapply(case$data, function(values) {
+    if (is.character(unlist(values))) unlist(values) else vapply(values, function(value) value %||% NA_real_, 0)
+  }), stringsAsFactors = FALSE)
+}
+
+alt_fixture_check <- function(cases, draw) {
   on.exit(hl_use(brand = FALSE))
-  for (case in read_fixture("alt_text.json")) {
+  for (case in cases) {
     hl_use(brand = FALSE, locale = case$locale)
-    data <- as.data.frame(lapply(case$data, function(values) {
-      if (is.character(unlist(values))) unlist(values) else vapply(values, function(value) value %||% NA_real_, 0)
-    }), stringsAsFactors = FALSE)
-    plot <- do.call(hl_bars, c(list(data, "unit", "n"), case$options))
+    options <- lapply(case$options, function(value) if (is.list(value)) unlist(value) else value)
+    plot <- draw(alt_fixture_frame(case), options)
     expect_equal(figure_alt(plot), case$alt, info = paste(case$locale, names(case$options), collapse = " "))
   }
+}
+
+test_that("bar alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$bars,
+                    function(data, options) do.call(hl_bars, c(list(data, "unit", "n"), options)))
+})
+
+test_that("time series alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$timeseries,
+                    function(data, options) do.call(hl_timeseries, c(list(data, "t", "v"), options)))
 })
 
 test_that("extremes name ties together and leave out missing values", {

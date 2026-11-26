@@ -403,7 +403,17 @@
         "grid_point": "{x_title} {x}, {y_title} {y}",
         "one_value": "{name}: {value}.",
         "all_same": "Every value {value}.",
-        "more_names": "{names} and {n} more"
+        "more_names": "{names} and {n} more",
+        "kind_lines": "Line chart",
+        "line_course": "{name}: from {first} ({start}) to {last} ({end}), {highest}.",
+        "line_course_alone": "From {first} ({start}) to {last} ({end}), {highest}.",
+        "peak_at": "highest {peak} ({when})",
+        "peak_start": "highest at the start",
+        "peak_end": "highest at the end",
+        "line_point": "{name}: {value} ({when}).",
+        "line_point_alone": "{value} ({when}).",
+        "more_series_one": "1 more series.",
+        "more_series_many": "{n} more series."
       }
     },
     "de": {
@@ -495,7 +505,17 @@
         "grid_point": "{x_title} {x}, {y_title} {y}",
         "one_value": "{name}: {value}.",
         "all_same": "Jeder Wert {value}.",
-        "more_names": "{names} und {n} weitere"
+        "more_names": "{names} und {n} weitere",
+        "kind_lines": "Liniendiagramm",
+        "line_course": "{name}: von {first} ({start}) auf {last} ({end}), {highest}.",
+        "line_course_alone": "Von {first} ({start}) auf {last} ({end}), {highest}.",
+        "peak_at": "am höchsten {peak} ({when})",
+        "peak_start": "am höchsten am Anfang",
+        "peak_end": "am höchsten am Ende",
+        "line_point": "{name}: {value} ({when}).",
+        "line_point_alone": "{value} ({when}).",
+        "more_series_one": "Eine weitere Reihe.",
+        "more_series_many": "{n} weitere Reihen."
       }
     }
   },
@@ -879,7 +899,8 @@
     "key_bar": 0.45
   },
   "alt_text": {
-    "max_names": 3
+    "max_names": 3,
+    "max_series": 4
   },
   "interactive": {
     "veil": 0.75,
