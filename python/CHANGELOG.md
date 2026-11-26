@@ -31,8 +31,11 @@
   ("Likert chart. Highest share at 4–5: Staffing (75%); lowest: Food (15%)."); `sankey` gives its total and the
   largest flow at each step ("Sankey diagram. Total: 270. Largest flow per step: ER → ICU (100); ICU → Home
   (130)."); `chord` the largest exchange and the groups with the highest and lowest total; `venn` each set's size
-  and how many are in all of them ("Venn diagram. Sets: Diabetes (120), Obesity (90). In both: 40."). The other
-  charts follow.
+  and how many are in all of them ("Venn diagram. Sets: Diabetes (120), Obesity (90). In both: 40.");
+  `correlation` names the pairs with the highest and lowest correlation; `funnel` gives its studies, the pooled
+  estimate and Egger's test as its header writes them ("Funnel plot. 14 studies; pooled estimate 0.80, Egger's test
+  p = 0.018."); `prisma` the records at each stage ("PRISMA flow diagram. 1,325 records identified, 1,020
+  screened, 110 reports assessed, 18 studies included."). The other charts follow.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.

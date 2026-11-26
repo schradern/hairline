@@ -184,5 +184,6 @@ hl_correlation <- function(data, columns = NULL, method = "pearson", title = NUL
     hl_legend_ramp(vapply(key, correlation_colour, ""), key, format = "number", limits = c(-1, 1))
   plot@meta$hairline_drawing <- function(box, measure, style) correlation_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
+  plot@meta$hairline_description <- correlation_description(spec)
   plot
 }

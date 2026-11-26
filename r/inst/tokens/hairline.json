@@ -458,7 +458,16 @@
         "kind_venn": "Venn diagram",
         "venn_sets": "Sets: {sets}.",
         "venn_both": "In both: {value}.",
-        "venn_all": "In all three: {value}."
+        "venn_all": "In all three: {value}.",
+        "kind_correlation": "Correlation matrix",
+        "kind_funnel": "Funnel plot",
+        "funnel_found": "{n} studies; pooled estimate {estimate}, Egger's test {egger}.",
+        "kind_prisma": "PRISMA flow diagram",
+        "prisma_flow": "{stages}.",
+        "prisma_identified": "{n} records identified",
+        "prisma_screened": "{n} screened",
+        "prisma_assessed": "{n} reports assessed",
+        "prisma_included": "{n} studies included"
       }
     },
     "de": {
@@ -605,7 +614,16 @@
         "kind_venn": "Venn-Diagramm",
         "venn_sets": "Mengen: {sets}.",
         "venn_both": "In beiden: {value}.",
-        "venn_all": "In allen dreien: {value}."
+        "venn_all": "In allen dreien: {value}.",
+        "kind_correlation": "Korrelationsmatrix",
+        "kind_funnel": "Funnel-Plot",
+        "funnel_found": "{n} Studien; gepoolter Schätzer {estimate}, Egger-Test {egger}.",
+        "kind_prisma": "PRISMA-Flussdiagramm",
+        "prisma_flow": "{stages}.",
+        "prisma_identified": "{n} Datensätze identifiziert",
+        "prisma_screened": "{n} gesichtet",
+        "prisma_assessed": "{n} Berichte auf Eignung geprüft",
+        "prisma_included": "{n} Studien eingeschlossen"
       }
     }
   },

@@ -20926,5 +20926,539 @@
    },
    "alt": "Overlap of diabetes, obesity and smoking. Venn-Diagramm. Mengen: Diabetes (5), Obesity (5), Smoking (5). In allen dreien: 2."
   }
+ ],
+ "correlation": [
+  {
+   "locale": "en",
+   "data": {
+    "age": [
+     52,
+     61,
+     70,
+     48,
+     66,
+     58,
+     75,
+     44
+    ],
+    "sofa": [
+     3,
+     5,
+     9,
+     4,
+     6,
+     4,
+     8,
+     2
+    ],
+    "gcs": [
+     14,
+     12,
+     8,
+     15,
+     10,
+     13,
+     9,
+     15
+    ]
+   },
+   "options": {},
+   "alt": "Pearson correlations. Correlation matrix. Highest: Age and Sofa (0.92); lowest: Age and Gcs (−0.96)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "age": [
+     52,
+     61,
+     70,
+     48,
+     66,
+     58,
+     75,
+     44
+    ],
+    "sofa": [
+     3,
+     5,
+     9,
+     4,
+     6,
+     4,
+     8,
+     2
+    ],
+    "gcs": [
+     14,
+     12,
+     8,
+     15,
+     10,
+     13,
+     9,
+     15
+    ]
+   },
+   "options": {
+    "method": "spearman"
+   },
+   "alt": "Spearman correlations. Correlation matrix. Highest: Age and Sofa (0.93); lowest: Age and Gcs (−0.97)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "age": [
+     52,
+     61,
+     70,
+     48,
+     66,
+     58,
+     75,
+     44
+    ],
+    "sofa": [
+     3,
+     5,
+     9,
+     4,
+     6,
+     4,
+     8,
+     2
+    ],
+    "gcs": [
+     14,
+     12,
+     8,
+     15,
+     10,
+     13,
+     9,
+     15
+    ]
+   },
+   "options": {
+    "columns": [
+     "age",
+     "sofa"
+    ]
+   },
+   "alt": "Pearson correlations. Correlation matrix. Age and Sofa: 0.92."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "age": [
+     52,
+     61,
+     70,
+     48,
+     66,
+     58,
+     75,
+     44
+    ],
+    "sofa": [
+     3,
+     5,
+     9,
+     4,
+     6,
+     4,
+     8,
+     2
+    ],
+    "gcs": [
+     14,
+     12,
+     8,
+     15,
+     10,
+     13,
+     9,
+     15
+    ]
+   },
+   "options": {},
+   "alt": "Pearson correlations. Korrelationsmatrix. Am höchsten: Age und Sofa (0,92); am niedrigsten: Age und Gcs (−0,96)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "age": [
+     52,
+     61,
+     70,
+     48,
+     66,
+     58,
+     75,
+     44
+    ],
+    "sofa": [
+     3,
+     5,
+     9,
+     4,
+     6,
+     4,
+     8,
+     2
+    ],
+    "gcs": [
+     14,
+     12,
+     8,
+     15,
+     10,
+     13,
+     9,
+     15
+    ]
+   },
+   "options": {
+    "method": "spearman"
+   },
+   "alt": "Spearman correlations. Korrelationsmatrix. Am höchsten: Age und Sofa (0,93); am niedrigsten: Age und Gcs (−0,97)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "age": [
+     52,
+     61,
+     70,
+     48,
+     66,
+     58,
+     75,
+     44
+    ],
+    "sofa": [
+     3,
+     5,
+     9,
+     4,
+     6,
+     4,
+     8,
+     2
+    ],
+    "gcs": [
+     14,
+     12,
+     8,
+     15,
+     10,
+     13,
+     9,
+     15
+    ]
+   },
+   "options": {
+    "columns": [
+     "age",
+     "sofa"
+    ]
+   },
+   "alt": "Pearson correlations. Korrelationsmatrix. Age und Sofa: 0,92."
+  }
+ ],
+ "funnel": [
+  {
+   "locale": "en",
+   "data": {
+    "odds": [
+     0.8,
+     1.1,
+     0.6,
+     0.9,
+     0.75,
+     0.95
+    ],
+    "se": [
+     0.1,
+     0.2,
+     0.3,
+     0.15,
+     0.25,
+     0.12
+    ],
+    "difference": [
+     -1.2,
+     0.4,
+     -2.1,
+     -0.6,
+     -1.5,
+     -0.3
+    ]
+   },
+   "options": {
+    "estimate": "odds",
+    "se": "se"
+   },
+   "alt": "Funnel plot of odds. Funnel plot. 6 studies; pooled estimate 0.87, Egger's test p = 0.73."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "odds": [
+     0.8,
+     1.1,
+     0.6,
+     0.9,
+     0.75,
+     0.95
+    ],
+    "se": [
+     0.1,
+     0.2,
+     0.3,
+     0.15,
+     0.25,
+     0.12
+    ],
+    "difference": [
+     -1.2,
+     0.4,
+     -2.1,
+     -0.6,
+     -1.5,
+     -0.3
+    ]
+   },
+   "options": {
+    "estimate": "odds",
+    "se": "se",
+    "pooled": 0.9
+   },
+   "alt": "Funnel plot of odds. Funnel plot. 6 studies; pooled estimate 0.90, Egger's test p = 0.73."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "odds": [
+     0.8,
+     1.1,
+     0.6,
+     0.9,
+     0.75,
+     0.95
+    ],
+    "se": [
+     0.1,
+     0.2,
+     0.3,
+     0.15,
+     0.25,
+     0.12
+    ],
+    "difference": [
+     -1.2,
+     0.4,
+     -2.1,
+     -0.6,
+     -1.5,
+     -0.3
+    ]
+   },
+   "options": {
+    "estimate": "difference",
+    "se": "se",
+    "ratio": false
+   },
+   "alt": "Funnel plot of difference. Funnel plot. 6 studies; pooled estimate −0.77, Egger's test p = 0.87."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "odds": [
+     0.8,
+     1.1,
+     0.6,
+     0.9,
+     0.75,
+     0.95
+    ],
+    "se": [
+     0.1,
+     0.2,
+     0.3,
+     0.15,
+     0.25,
+     0.12
+    ],
+    "difference": [
+     -1.2,
+     0.4,
+     -2.1,
+     -0.6,
+     -1.5,
+     -0.3
+    ]
+   },
+   "options": {
+    "estimate": "odds",
+    "se": "se"
+   },
+   "alt": "Funnel plot of odds. Funnel-Plot. 6 Studien; gepoolter Schätzer 0,87, Egger-Test p = 0,73."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "odds": [
+     0.8,
+     1.1,
+     0.6,
+     0.9,
+     0.75,
+     0.95
+    ],
+    "se": [
+     0.1,
+     0.2,
+     0.3,
+     0.15,
+     0.25,
+     0.12
+    ],
+    "difference": [
+     -1.2,
+     0.4,
+     -2.1,
+     -0.6,
+     -1.5,
+     -0.3
+    ]
+   },
+   "options": {
+    "estimate": "odds",
+    "se": "se",
+    "pooled": 0.9
+   },
+   "alt": "Funnel plot of odds. Funnel-Plot. 6 Studien; gepoolter Schätzer 0,90, Egger-Test p = 0,73."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "odds": [
+     0.8,
+     1.1,
+     0.6,
+     0.9,
+     0.75,
+     0.95
+    ],
+    "se": [
+     0.1,
+     0.2,
+     0.3,
+     0.15,
+     0.25,
+     0.12
+    ],
+    "difference": [
+     -1.2,
+     0.4,
+     -2.1,
+     -0.6,
+     -1.5,
+     -0.3
+    ]
+   },
+   "options": {
+    "estimate": "difference",
+    "se": "se",
+    "ratio": false
+   },
+   "alt": "Funnel plot of difference. Funnel-Plot. 6 Studien; gepoolter Schätzer −0,77, Egger-Test p = 0,87."
+  }
+ ],
+ "prisma": [
+  {
+   "locale": "en",
+   "counts": {
+    "identified": 1200,
+    "registers": 30,
+    "duplicates": 230,
+    "screened": 1000,
+    "excluded": 870,
+    "sought": 130,
+    "not_retrieved": 10,
+    "assessed": 120,
+    "excluded_reasons": {
+     "Wrong population": 70,
+     "Wrong outcome": 30
+    },
+    "included": 20,
+    "reports": 24
+   },
+   "alt": "Study selection. PRISMA flow diagram. 1,230 records identified, 1,000 screened, 120 reports assessed, 20 studies included."
+  },
+  {
+   "locale": "en",
+   "counts": {
+    "identified": 100,
+    "screened": 100,
+    "included": 5
+   },
+   "alt": "Study selection. PRISMA flow diagram. 100 records identified, 100 screened, 5 studies included."
+  },
+  {
+   "locale": "en",
+   "counts": {
+    "identified": 300,
+    "screened": 300,
+    "assessed": 40,
+    "excluded_reasons": {
+     "Wrong design": 32
+    },
+    "included": 8
+   },
+   "alt": "Study selection. PRISMA flow diagram. 300 records identified, 300 screened, 40 reports assessed, 8 studies included."
+  },
+  {
+   "locale": "de",
+   "counts": {
+    "identified": 1200,
+    "registers": 30,
+    "duplicates": 230,
+    "screened": 1000,
+    "excluded": 870,
+    "sought": 130,
+    "not_retrieved": 10,
+    "assessed": 120,
+    "excluded_reasons": {
+     "Wrong population": 70,
+     "Wrong outcome": 30
+    },
+    "included": 20,
+    "reports": 24
+   },
+   "alt": "Study selection. PRISMA-Flussdiagramm. 1 230 Datensätze identifiziert, 1 000 gesichtet, 120 Berichte auf Eignung geprüft, 20 Studien eingeschlossen."
+  },
+  {
+   "locale": "de",
+   "counts": {
+    "identified": 100,
+    "screened": 100,
+    "included": 5
+   },
+   "alt": "Study selection. PRISMA-Flussdiagramm. 100 Datensätze identifiziert, 100 gesichtet, 5 Studien eingeschlossen."
+  },
+  {
+   "locale": "de",
+   "counts": {
+    "identified": 300,
+    "screened": 300,
+    "assessed": 40,
+    "excluded_reasons": {
+     "Wrong design": 32
+    },
+    "included": 8
+   },
+   "alt": "Study selection. PRISMA-Flussdiagramm. 300 Datensätze identifiziert, 300 gesichtet, 40 Berichte auf Eignung geprüft, 8 Studien eingeschlossen."
+  }
  ]
 }

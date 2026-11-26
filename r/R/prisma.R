@@ -9,25 +9,25 @@ prisma_counted <- function(label, value) sprintf("%s (n = %s)", label, hl_format
 prisma_check <- function(counts) {
   number <- function(value) hl_format_number(value, 0)
   removed <- sum(unlist(counts[intersect(names(prisma_removals), names(counts))]))
-  found <- counts$identified + (counts$registers %||% 0)
+  found <- counts[["identified"]] + (counts[["registers"]] %||% 0)
   checks <- list(list("screened", found - removed, sprintf("identified %s minus removed %s", number(found),
                                                            number(removed))))
-  if (!is.null(counts$excluded)) {
-    step <- if (!is.null(counts$sought)) "sought" else "assessed"
-    checks[[length(checks) + 1]] <- list(step, counts$screened - counts$excluded,
-                                         sprintf("screened %s minus excluded %s", number(counts$screened),
-                                                 number(counts$excluded)))
+  if (!is.null(counts[["excluded"]])) {
+    step <- if (!is.null(counts[["sought"]])) "sought" else "assessed"
+    checks[[length(checks) + 1]] <- list(step, counts[["screened"]] - counts[["excluded"]],
+                                         sprintf("screened %s minus excluded %s", number(counts[["screened"]]),
+                                                 number(counts[["excluded"]])))
   }
-  if (!is.null(counts$sought) && !is.null(counts$assessed)) {
-    lost <- counts$not_retrieved %||% 0
-    checks[[length(checks) + 1]] <- list("assessed", counts$sought - lost,
-                                         sprintf("sought %s minus not retrieved %s", number(counts$sought),
+  if (!is.null(counts[["sought"]]) && !is.null(counts[["assessed"]])) {
+    lost <- counts[["not_retrieved"]] %||% 0
+    checks[[length(checks) + 1]] <- list("assessed", counts[["sought"]] - lost,
+                                         sprintf("sought %s minus not retrieved %s", number(counts[["sought"]]),
                                                  number(lost)))
   }
-  if (!is.null(counts$assessed) && !is.null(counts$excluded_reasons)) {
-    reasons <- sum(unlist(counts$excluded_reasons))
-    checks[[length(checks) + 1]] <- list("included", counts$assessed - reasons,
-                                         sprintf("assessed %s minus excluded %s", number(counts$assessed),
+  if (!is.null(counts[["assessed"]]) && !is.null(counts[["excluded_reasons"]])) {
+    reasons <- sum(unlist(counts[["excluded_reasons"]]))
+    checks[[length(checks) + 1]] <- list("included", counts[["assessed"]] - reasons,
+                                         sprintf("assessed %s minus excluded %s", number(counts[["assessed"]]),
                                                  number(reasons)))
   }
   for (check in checks) {
@@ -42,34 +42,38 @@ prisma_rows <- function(counts) {
   present <- intersect(names(prisma_removals), names(counts))
   removed <- vapply(present, function(key) prisma_counted(prisma_removals[[key]], counts[[key]]), character(1),
                     USE.NAMES = FALSE)
-  found <- prisma_counted("Records identified from databases", counts$identified)
-  if (!is.null(counts$registers)) {
-    found <- c(found, prisma_counted("Records identified from registers", counts$registers))
+  found <- prisma_counted("Records identified from databases", counts[["identified"]])
+  if (!is.null(counts[["registers"]])) {
+    found <- c(found, prisma_counted("Records identified from registers", counts[["registers"]]))
   }
   rows <- list(list(main = found, exclusion = if (length(removed)) c("Records removed before screening:", removed)),
-               list(main = prisma_counted("Records screened", counts$screened),
-                    exclusion = if (!is.null(counts$excluded)) prisma_counted("Records excluded", counts$excluded)))
-  if (!is.null(counts$sought)) {
-    rows[[length(rows) + 1]] <- list(main = prisma_counted("Reports sought for retrieval", counts$sought),
-                                     exclusion = if (!is.null(counts$not_retrieved)) {
-                                       prisma_counted("Reports not retrieved", counts$not_retrieved)
+               list(main = prisma_counted("Records screened", counts[["screened"]]),
+                    exclusion = if (!is.null(counts[["excluded"]])) {
+                      prisma_counted("Records excluded", counts[["excluded"]])
+                    }))
+  if (!is.null(counts[["sought"]])) {
+    rows[[length(rows) + 1]] <- list(main = prisma_counted("Reports sought for retrieval", counts[["sought"]]),
+                                     exclusion = if (!is.null(counts[["not_retrieved"]])) {
+                                       prisma_counted("Reports not retrieved", counts[["not_retrieved"]])
                                      })
   }
-  if (!is.null(counts$assessed)) {
-    reasons <- unlist(counts$excluded_reasons)
+  if (!is.null(counts[["assessed"]])) {
+    reasons <- unlist(counts[["excluded_reasons"]])
     lines <- vapply(names(reasons), function(reason) prisma_counted(reason, reasons[[reason]]), character(1),
                     USE.NAMES = FALSE)
-    rows[[length(rows) + 1]] <- list(main = prisma_counted("Reports assessed for eligibility", counts$assessed),
+    rows[[length(rows) + 1]] <- list(main = prisma_counted("Reports assessed for eligibility", counts[["assessed"]]),
                                      exclusion = if (length(lines)) c("Reports excluded:", lines))
   }
-  included <- prisma_counted("Studies included in review", counts$included)
-  if (!is.null(counts$reports)) included <- c(included, prisma_counted("Reports of included studies", counts$reports))
+  included <- prisma_counted("Studies included in review", counts[["included"]])
+  if (!is.null(counts[["reports"]])) {
+    included <- c(included, prisma_counted("Reports of included studies", counts[["reports"]]))
+  }
   c(rows, list(list(main = included, exclusion = NULL)))
 }
 
 # Every count is a whole number of zero or more: records and reports cannot be negative or fractional.
 prisma_check_counts <- function(counts) {
-  reasons <- unlist(counts$excluded_reasons)
+  reasons <- unlist(counts[["excluded_reasons"]])
   named <- c(counts[setdiff(names(counts), "excluded_reasons")],
              stats::setNames(as.list(reasons), sprintf("excluded_reasons['%s']", names(reasons))))
   for (key in names(named)) {

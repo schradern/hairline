@@ -37,6 +37,14 @@ test_that("PRISMA counts that do not add up give a warning", {
   expect_error(prisma_spec(list(identified = 10)), "needs identified, screened and included")
 })
 
+test_that("PRISMA reasons for excluded reports do not stand in for the excluded records", {
+  hl_use(brand = FALSE)
+  counts <- list(identified = 300, screened = 300, assessed = 40, excluded_reasons = list(`Wrong design` = 32),
+                 included = 8)
+  expect_no_warning(spec <- prisma_spec(counts))
+  expect_null(spec$rows[[2]]$exclusion)
+})
+
 test_that("drawn charts fit the figure height to their content", {
   hl_use(brand = FALSE)
   plot <- hl_dotplot(data.frame(unit = c("A", "B", "C"), rate = c(0.1, 0.2, 0.15)), "unit", "rate")

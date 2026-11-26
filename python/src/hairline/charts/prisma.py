@@ -8,6 +8,7 @@ import warnings
 from collections.abc import Mapping
 
 from hairline.charts.prisma_geometry import prisma_drawing
+from hairline.charts.review_alt import prisma_description
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.numbers import format_number
@@ -104,5 +105,6 @@ def prisma(counts: Mapping, *, title: str | None = None, subtitle: str | None = 
     not_retrieved, assessed, excluded_reasons (reason -> n), included, reports."""
     spec = prisma_spec(counts)
     result = figure(title or "Study selection", subtitle=subtitle, caption=caption, size=size)
+    result.description = prisma_description(counts, current_settings().locale)
     result.draw(0, lambda box, measure, style: prisma_drawing(spec, box, measure, style))
     return fit_height(result)

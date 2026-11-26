@@ -95,5 +95,7 @@ hl_funnel <- function(data, estimate, se, title = NULL, subtitle = NULL, caption
                   caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE) +
     hl_panel_header(name = "Pooled", stats = c(Estimate = hl_format_number(value, 2), Egger = format_p(spec$egger)))
   plot@meta$hairline_drawing <- function(box, measure, style) funnel_drawing(spec, box, measure, style)
+  plot@meta$hairline_description <- funnel_description(length(spec$points), hl_format_number(value, 2),
+                                                       format_p(spec$egger))
   plot
 }

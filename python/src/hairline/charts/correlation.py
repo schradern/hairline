@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from hairline.charts.common import check_columns, check_numeric, humanise
+from hairline.charts.correlation_alt import correlation_description
 from hairline.charts.correlation_geometry import correlation_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -65,6 +66,7 @@ def correlation(data: pd.DataFrame, columns: Sequence[str] | None = None, *, met
     """Correlations between numeric columns (all of them by default); rows with gaps are left out."""
     spec = correlation_spec(data, columns, method)
     result = figure(title or f"{method.title()} correlations", subtitle=subtitle, caption=caption, size=size)
+    result.description = correlation_description(spec, current_settings().locale)
     result.draw(0, lambda box, measure, style: correlation_drawing(spec, box, measure, style))
     key = [float(value) for value in load_tokens()["correlation"]["key"]]
     result.legend_ramp([ramp_color(value) for value in key], key, format="number", limits=(-1.0, 1.0))

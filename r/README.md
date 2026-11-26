@@ -172,8 +172,8 @@ has the details.
 HTML with tooltips. Files carry the figure's alt text as their description: its title, subtitle and what the data
 shows, in the figure's locale ("Bar chart. Highest: Ward (30); lowest: ICU (12)."). Bars, time series, distributions
 (spread, raincloud, ridgeline), Kaplan–Meier curves, forest and dot plots, scatter plots, donuts, Likert charts,
-Sankey, chord and Venn diagrams, heatmaps and surfaces describe themselves so far; `hl_description(plot) <- text`
-writes your own. No timestamps.
+Sankey, chord and Venn diagrams, correlation heatmaps, funnel plots, PRISMA flows, heatmaps and surfaces describe
+themselves so far; `hl_description(plot) <- text` writes your own. No timestamps.
 
 ## Design
 

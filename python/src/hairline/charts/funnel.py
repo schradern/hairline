@@ -11,6 +11,7 @@ from hairline.charts.common import check_columns, check_numeric, humanise
 from hairline.charts.forest import decimals
 from hairline.charts.forest_geometry import RATIO_PLACES, log_breaks
 from hairline.charts.funnel_geometry import funnel_drawing
+from hairline.charts.review_alt import funnel_description
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
 from hairline.numbers import format_number, format_p
@@ -95,6 +96,7 @@ def funnel(data: pd.DataFrame, estimate: str, se: str, *, title: str | None = No
                     size=size)
     result.draw(0, lambda box, measure, style: funnel_drawing(spec, box, measure, style))
     value = math.exp(spec["pooled"]) if ratio else spec["pooled"]
-    result.panel_header(0, "Pooled", stats=[("Estimate", format_number(value, 2, locale)),
-                                            ("Egger", format_p(spec["egger"], locale))])
+    estimate, egger_text = format_number(value, 2, locale), format_p(spec["egger"], locale)
+    result.panel_header(0, "Pooled", stats=[("Estimate", estimate), ("Egger", egger_text)])
+    result.description = funnel_description(len(spec["points"]), estimate, egger_text, locale)
     return result

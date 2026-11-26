@@ -32,7 +32,11 @@
   total and the largest flow at each step ("Sankey diagram. Total: 270. Largest flow per step: ER → ICU (100);
   ICU → Home (130)."); `hl_chord()` the largest exchange and the groups with the highest and lowest total;
   `hl_venn()` each set's size and how many are in all of them ("Venn diagram. Sets: Diabetes (120), Obesity (90).
-  In both: 40."). The other charts follow.
+  In both: 40."); `hl_correlation()` names the pairs with the highest and lowest correlation; `hl_funnel()` gives
+  its studies, the pooled estimate and Egger's test as its header writes them ("Funnel plot. 14 studies; pooled
+  estimate 0.80, Egger's test p = 0.018."); `hl_prisma()` the records at each stage ("PRISMA flow diagram. 1,325
+  records identified, 1,020 screened, 110 reports assessed, 18 studies included."). The other charts follow.
+* `hl_prisma()` no longer reads `excluded_reasons` as the excluded records when `excluded` is left out.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `hl_description(plot)` reads the sentence; `hl_description(plot) <- text` writes your own, and `NULL` leaves it

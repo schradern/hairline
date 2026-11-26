@@ -553,6 +553,21 @@ ALT_SETS = {
 ALT_SET_OPTIONS = [("two", {"columns": ["diabetes", "obesity"]}),
                    ("three", {"columns": ["diabetes", "obesity", "smoking"]})]
 
+ALT_MEASURES = {"age": [52, 61, 70, 48, 66, 58, 75, 44], "sofa": [3, 5, 9, 4, 6, 4, 8, 2],
+                "gcs": [14, 12, 8, 15, 10, 13, 9, 15]}
+ALT_MEASURE_OPTIONS = [{}, {"method": "spearman"}, {"columns": ["age", "sofa"]}]
+ALT_STUDIES = {"odds": [0.8, 1.1, 0.6, 0.9, 0.75, 0.95], "se": [0.1, 0.2, 0.3, 0.15, 0.25, 0.12],
+               "difference": [-1.2, 0.4, -2.1, -0.6, -1.5, -0.3]}
+ALT_STUDY_OPTIONS = [{"estimate": "odds", "se": "se"}, {"estimate": "odds", "se": "se", "pooled": 0.9},
+                     {"estimate": "difference", "se": "se", "ratio": False}]
+ALT_FLOWS_PRISMA = [
+    {"identified": 1200, "registers": 30, "duplicates": 230, "screened": 1000, "excluded": 870, "sought": 130,
+     "not_retrieved": 10, "assessed": 120, "excluded_reasons": {"Wrong population": 70, "Wrong outcome": 30},
+     "included": 20, "reports": 24},
+    {"identified": 100, "screened": 100, "included": 5},
+    {"identified": 300, "screened": 300, "assessed": 40, "excluded_reasons": {"Wrong design": 32}, "included": 8},
+]
+
 
 def alt_text_cases() -> dict:
     """Every chart that describes its data, with its alt text, in English and German, for both packages to write
@@ -603,10 +618,22 @@ def alt_text_cases() -> dict:
                  for locale in ("en", "de") for name, options in ALT_EXCHANGE_OPTIONS]
     sets = [case(locale, ALT_SETS[name], options, lambda frame, options: hl.venn(frame, **options))
             for locale in ("en", "de") for name, options in ALT_SET_OPTIONS]
+    measures = [case(locale, ALT_MEASURES, options, lambda frame, options: hl.correlation(frame, **options))
+                for locale in ("en", "de") for options in ALT_MEASURE_OPTIONS]
+    studies = [case(locale, ALT_STUDIES, options, lambda frame, options: hl.funnel(frame, **options))
+               for locale in ("en", "de") for options in ALT_STUDY_OPTIONS]
+    reviews = []
+    for locale in ("en", "de"):
+        hl.use(brand=False, locale=locale)
+        for counts in ALT_FLOWS_PRISMA:
+            figure = hl.prisma(counts)
+            plt.close(figure.figure)
+            reviews.append({"locale": locale, "counts": counts, "alt": figure_alt(figure)})
     hl.use(brand=False)
     return {"bars": bars, "timeseries": series, "distributions": distributions, "kaplan_meier": survival,
             "forest": effects, "dotplot": dots, "scatter": points, "donut": slices, "likert": ratings,
-            "sankey": flows, "chord": exchanges, "venn": sets}
+            "sankey": flows, "chord": exchanges, "venn": sets, "correlation": measures, "funnel": studies,
+            "prisma": reviews}
 
 
 def heatmap_cases() -> dict:

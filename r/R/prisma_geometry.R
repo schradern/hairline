@@ -139,5 +139,6 @@ hl_prisma <- function(counts, title = NULL, subtitle = NULL, caption = NULL) {
     theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) prisma_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
+  plot@meta$hairline_description <- prisma_description(counts)
   plot
 }

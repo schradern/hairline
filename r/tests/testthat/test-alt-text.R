@@ -78,6 +78,25 @@ test_that("Venn alt text matches the shared fixture, in English and German", {
                     function(data, options) do.call(hl_venn, c(list(data), options)))
 })
 
+test_that("correlation alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$correlation,
+                    function(data, options) do.call(hl_correlation, c(list(data), options)))
+})
+
+test_that("funnel alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$funnel,
+                    function(data, options) do.call(hl_funnel, c(list(data), options)))
+})
+
+test_that("PRISMA alt text matches the shared fixture, in English and German", {
+  on.exit(hl_use(brand = FALSE))
+  for (case in read_fixture("alt_text.json")$prisma) {
+    hl_use(brand = FALSE, locale = case$locale)
+    expect_equal(figure_alt(hl_prisma(case$counts)), case$alt, info = paste(case$locale, names(case$counts),
+                                                                             collapse = " "))
+  }
+})
+
 test_that("extremes name ties together and leave out missing values", {
   hl_use(brand = FALSE)
   expect_equal(alt_extremes(c("a", "b", "c", "d", "e"), c(2, NA, 5, 5, 1), c("2", "", "5", "5", "1")),
