@@ -65,3 +65,21 @@ test_that("grouped bars name both columns in the default title", {
   data <- data.frame(unit = c("A", "A", "B"), sex = c("Female", "Male", "Female"))
   expect_equal(hl_bars(data, "unit", by = "sex")@labels$title, "Count by unit and sex")
 })
+
+side_by_side_shares <- function() {
+  items <- c("Item A long name", paste("Item", LETTERS[2:8]))
+  data.frame(item = rep(items, each = 3), unit = rep(c("Unit North", "Unit South", "Unit East"), length(items)),
+             share = c(0.37, 0.39, 0.25, 0.31, 0.33, 0.36, 0.2, 0.4, 0.4, 0.13, 0.44, 0.43, 0.36, 0.38, 0.25, 0.3,
+                       0.51, 0.19, 0.39, 0.39, 0.22, 0.25, 0.17, 0.57))
+}
+
+test_that("values beside horizontal bars side by side stand apart", {
+  hl_use(brand = FALSE)
+  plot <- hl_bars(side_by_side_shares(), "item", "share", by = "unit", percent = TRUE, horizontal = TRUE)
+  expect_gt(plot@meta$hairline_min_plot, 0)
+  overlaps <- Filter(function(finding) finding$rule == "text_overlap", hl_check_layout(plot))
+  expect_length(overlaps, 0)
+  lone <- side_by_side_shares()
+  lone <- lone[lone$unit == "Unit North", ]
+  expect_equal(hl_bars(lone, "item", "share", percent = TRUE, horizontal = TRUE)@meta$hairline_min_plot %||% 0, 0)
+})

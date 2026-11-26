@@ -462,6 +462,10 @@ hl_bars <- function(data, category, value = NULL, by = NULL, title = NULL, subti
     plot <- plot + hairline_position_scale(if (horizontal) "x" else "y", FALSE, NULL, NULL, whole = TRUE)
   }
   if (column) plot@meta$hairline_side_numbers <- bar_side_numbers(panels)
+  if (labels && horizontal && !stacked && is.null(inside)) {
+    plot@meta$hairline_min_plot <- max(plot@meta$hairline_min_plot %||% 0,
+                                       bars_side_by_side_room(panels, groups, columns, hl_settings()))
+  }
   plot@meta$hairline_size <- size
   series <- if (is.null(by)) character() else unique(unname(drawn$coloured$series %||% groups))
   chart_options(plot, "bars", series, x_title = x_title, y_title = y_title, reference = reference,
@@ -518,4 +522,18 @@ stacked_inside <- function(frames, colours, horizontal, percent) {
     }
   }
   entries
+}
+
+# The least plot height, in base sizes, at which the values beside horizontal bars side by side stand apart: each bar
+# as tall as its value's cap height and descender with `ticks.label_rows_gap` between neighbours, as the y labels
+# keep. One bar per row needs nothing more than its row's label. As Python's side_by_side_room().
+bars_side_by_side_room <- function(panels, groups, columns, settings) {
+  if (length(groups) < 2) return(0)
+  tokens <- hl_tokens()
+  metrics <- font_metrics()
+  pitch <- role_size(settings, "label") * (metrics$cap_height + metrics$descender + tokens$ticks$label_rows_gap)
+  bar <- tokens$bars$width / length(groups)
+  span <- max(vapply(panels, function(panel) length(panel$names), numeric(1))) - 1 + 2 * tokens$bars$category_pad
+  rows <- ceiling(length(panels) / columns)
+  pitch * span / bar * rows / settings$base_size
 }

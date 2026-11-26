@@ -1,5 +1,11 @@
 # hairline (development version)
 
+## Fixes
+
+* Values beside horizontal bars side by side (`hl_bars(by = ..., horizontal = TRUE)`) no longer run into each
+  other: the plot grows until each bar is as tall as its value, as the category labels already keep their rows
+  apart.
+
 ## 3D surfaces
 
 * `hl_surface(data, x, y, z)`: one value over two numeric axes (time of day by week, dose by age) as a 3D surface

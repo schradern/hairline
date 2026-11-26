@@ -30,6 +30,7 @@ from hairline.charts.timeseries import groups_of
 from hairline.drawing import measure_for
 from hairline.figure import MM_PER_INCH, HairlineFigure, figure, size_settings
 from hairline.fonts import families
+from hairline.layout.geometry import load_font_metrics
 from hairline.marks import STATIC_ID, context_color, lone_color
 from hairline.numbers import auto_digits, format_compact, format_number, format_percent, is_whole, number_unit, word
 from hairline.palettes import interpolate, ramp
@@ -470,6 +471,8 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
                        horizontal=horizontal)
         for index, panel in enumerate(panels):
             draw_panel(result, index, panel, groups, options, facet, locale)
+    if options["labels"] and horizontal and not options["stacked"] and not inside:
+        result.min_plot = max(result.min_plot or 0.0, side_by_side_room(panels, groups, columns, settings))
     if inside:
         result.legend([])
     elif by:
@@ -477,6 +480,20 @@ def bars(data: pd.DataFrame, category: str, value: str | None = None, by: str | 
     return apply_options(result, "bars", names=list(dict.fromkeys(series.values())) if by else [], x_title=x_title,
                          y_title=y_title, reference=reference, reference_legend=reference_legend,
                          reference_axis="x" if horizontal else "y", highlight=highlight, key_title=key_title)
+
+
+def side_by_side_room(panels: list[dict], groups: list[str], columns: int, settings) -> float:
+    """The least plot height, in base sizes, at which the values beside horizontal bars side by side stand apart:
+    each bar as tall as its value's cap height and descender with `ticks.label_rows_gap` between neighbours, as the y
+    labels keep (same rule in R). One bar per row needs nothing more than its row's label."""
+    if len(groups) < 2:
+        return 0.0
+    tokens, metrics = load_tokens(), load_font_metrics()
+    pitch = role_size(settings, "label") * (metrics.cap_height + metrics.descender + tokens["ticks"]["label_rows_gap"])
+    bar = tokens["bars"]["width"] / len(groups)
+    span = max(len(panel["names"]) for panel in panels) - 1 + 2 * tokens["bars"]["category_pad"]
+    rows = math.ceil(len(panels) / columns)
+    return pitch * span / bar * rows / settings.base_size
 
 
 def draw_panel(result: HairlineFigure, index: int, panel: dict, groups: list[str], options: dict, facet: str | None,

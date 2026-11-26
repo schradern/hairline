@@ -158,3 +158,26 @@ def test_color_by_needs_one_value_per_group():
     data = pd.DataFrame({"row": ["a", "a"], "procedure": ["GA", "RA"], "year": ["1", "1"]})
     with pytest.raises(ValueError, match="gives 'a' more than one value"):
         hl.bars(data, "year", by="row", color_by="procedure")
+
+
+def side_by_side_shares():
+    items = ["Item A long name"] + [f"Item {letter}" for letter in "BCDEFGH"]
+    shares = [0.37, 0.39, 0.25, 0.31, 0.33, 0.36, 0.2, 0.4, 0.4, 0.13, 0.44, 0.43, 0.36, 0.38, 0.25, 0.3, 0.51, 0.19,
+              0.39, 0.39, 0.22, 0.25, 0.17, 0.57]
+    units = ["Unit North", "Unit South", "Unit East"] * len(items)
+    return pd.DataFrame({"item": [item for item in items for _ in range(3)], "unit": units, "share": shares})
+
+
+@pytest.mark.parametrize("facet", [None, "half"])
+def test_values_beside_horizontal_bars_side_by_side_stand_apart(facet):
+    hl.use(brand=False)
+    data = side_by_side_shares().assign(half=["First"] * 12 + ["Second"] * 12)
+    figure = hl.bars(data, "item", "share", by="unit", percent=True, horizontal=True, facet=facet)
+    assert figure.min_plot > 0
+    assert [finding for finding in hl.check_layout(figure) if finding["rule"] == "text_overlap"] == []
+
+
+def test_one_bar_per_row_keeps_its_height():
+    hl.use(brand=False)
+    data = side_by_side_shares().query("unit == 'Unit North'")
+    assert hl.bars(data, "item", "share", percent=True, horizontal=True).min_plot in (None, 0.0)
