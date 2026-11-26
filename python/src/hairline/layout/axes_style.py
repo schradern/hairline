@@ -8,6 +8,7 @@ import matplotlib.dates as mdates
 from matplotlib.axes import Axes
 from matplotlib.axis import Axis
 from matplotlib.ticker import FixedLocator, FuncFormatter, ScalarFormatter
+from matplotlib.transforms import ScaledTranslation
 
 from hairline.layout.measure import text_width
 from hairline.numbers import format_compact, format_number, format_percent, number_unit
@@ -114,3 +115,12 @@ def align_edge_labels(ax: Axes) -> None:
 def set_tick_visibility(ax: Axes, show_x: bool, show_y: bool, y_pad: float, x_pad: float) -> None:
     ax.tick_params(axis="x", labelbottom=show_x, pad=x_pad)
     ax.tick_params(axis="y", labelleft=show_y, pad=y_pad)
+
+
+def centre_y_labels(ax: Axes, lift: float) -> None:
+    """Each y tick label's cap height centred on its tick, as R's axes and the charts drawn in pt place theirs:
+    matplotlib's centre_baseline centres the font's ascender, so each label is lifted by `lift` pt, half of what
+    the ascender stands above the cap height. A label of several lines stays centred as a block."""
+    shift = ScaledTranslation(0, lift / 72, ax.figure.dpi_scale_trans)
+    for tick in ax.yaxis.get_major_ticks(len(ax.yaxis.get_majorticklocs())):
+        tick.label1.set_transform(ax.get_yaxis_text1_transform(tick.get_pad())[0] + shift)

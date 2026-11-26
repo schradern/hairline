@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from hairline.drawing import run_drawings, text_positions
 from hairline.errors import HairlineLayoutError
 from hairline.focus import apply_entity_colors, apply_highlight, focus_legend_items, place_reference_labels
-from hairline.layout.axes_style import align_edge_labels, label_width, set_tick_visibility
+from hairline.layout.axes_style import align_edge_labels, centre_y_labels, label_width, set_tick_visibility
 from hairline.layout.bare import fitted_box
 from hairline.layout.draw import add_text
 from hairline.layout.frame import compute_frame, kept_height
@@ -316,6 +316,8 @@ def position_axes(figure: HairlineFigure, layout: FrameLayout, size: tuple[float
     settings = figure.settings
     y_pad = load_tokens()["spacing"]["y_labels_plot"] * settings.base_size
     x_pad = load_tokens()["spacing"]["x_tick_pad"] * role_size(settings, "label")
+    metrics = load_font_metrics()
+    lift = (metrics.ascender - metrics.cap_height) / 2 * role_size(settings, "label")
     figure.plot_boxes = []
     for index, ax in enumerate(figure.axes):
         box = fitted_box(layout.panels[index], figure.bare_panels.get(index))
@@ -327,6 +329,7 @@ def position_axes(figure: HairlineFigure, layout: FrameLayout, size: tuple[float
         else:
             set_tick_visibility(ax, shows_x_labels(figure, index), shows_y_labels(figure, index), y_pad, x_pad)
             align_edge_labels(ax)
+            centre_y_labels(ax, lift)
 
 
 def draw_lines(figure: HairlineFigure, x: float, baselines: list[float], lines: list[str], role: str) -> list:
