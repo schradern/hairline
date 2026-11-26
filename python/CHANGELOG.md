@@ -22,7 +22,10 @@
   curve stays above half the share still without the event at its last time, and the log-rank p where it shows one
   ("Kaplan–Meier curve. Median: ICU 9.0; Ward not reached (64% at 24). Log-rank: p = 0.038."); `forest` gives
   the pooled estimate with its interval, then the highest and lowest estimate ("Forest plot. Pooled: 0.82 [0.70;
-  0.96]. Highest: Lee 2021 (1.20); lowest: Smith 2019 (0.55)."). The other charts follow.
+  0.96]. Highest: Lee 2021 (1.20); lowest: Smith 2019 (0.55)."); `dotplot` names its highest and lowest row in
+  its digits ("Dot plot. Highest: Medical (13.00%); lowest: Cardiac (6.00%)."), with `summary=` the centre it
+  draws; `scatter` gives each panel's linear fit as its header writes it ("Scatter plot. Linear fit: n = 144,
+  r = 0.64, slope 0.23."), or with `fit=None` how many points it draws. The other charts follow.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.

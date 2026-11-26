@@ -43,6 +43,16 @@ test_that("forest alt text matches the shared fixture, in English and German", {
                     function(data, options) do.call(hl_forest, c(list(data), options)))
 })
 
+test_that("dot plot alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$dotplot,
+                    function(data, options) do.call(hl_dotplot, c(list(data), options)))
+})
+
+test_that("scatter alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$scatter,
+                    function(data, options) do.call(hl_scatter, c(list(data, "x", "y"), options)))
+})
+
 test_that("extremes name ties together and leave out missing values", {
   hl_use(brand = FALSE)
   expect_equal(alt_extremes(c("a", "b", "c", "d", "e"), c(2, NA, 5, 5, 1), c("2", "", "5", "5", "1")),

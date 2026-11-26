@@ -427,7 +427,17 @@
         "km_not_reached": "not reached ({share} at {time})",
         "km_test": "{label}: {value}.",
         "kind_forest": "Forest plot",
-        "forest_pooled": "{label}: {effect}."
+        "forest_pooled": "{label}: {effect}.",
+        "kind_dotplot": "Dot plot",
+        "kind_scatter": "Scatter plot",
+        "fit_stats": "n = {n}, r = {r}, slope {slope}",
+        "fit_one": "Linear fit: {stats}.",
+        "fit_panel": "{panel}: {stats}",
+        "fit_panels": "Linear fit per panel. {fits}.",
+        "more_panels_one": "1 more panel.",
+        "more_panels_many": "{n} more panels.",
+        "points_one": "1 point.",
+        "points_many": "{n} points."
       }
     },
     "de": {
@@ -543,7 +553,17 @@
         "km_not_reached": "nicht erreicht ({share} bei {time})",
         "km_test": "{label}: {value}.",
         "kind_forest": "Forest-Plot",
-        "forest_pooled": "{label}: {effect}."
+        "forest_pooled": "{label}: {effect}.",
+        "kind_dotplot": "Punktdiagramm",
+        "kind_scatter": "Streudiagramm",
+        "fit_stats": "n = {n}, r = {r}, Steigung {slope}",
+        "fit_one": "Lineare Anpassung: {stats}.",
+        "fit_panel": "{panel}: {stats}",
+        "fit_panels": "Lineare Anpassung je Panel. {fits}.",
+        "more_panels_one": "Ein weiteres Panel.",
+        "more_panels_many": "{n} weitere Panels.",
+        "points_one": "1 Punkt.",
+        "points_many": "{n} Punkte."
       }
     }
   },

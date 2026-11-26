@@ -20,6 +20,7 @@ from hairline.charts.common import (
     without_small_categories,
 )
 from hairline.charts.options import Reference, apply_options
+from hairline.charts.scatter_alt import scatter_description
 from hairline.charts.timeseries import groups_of
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import STATIC_ID, lone_color
@@ -99,20 +100,22 @@ def scatter(data: pd.DataFrame, x: str, y: str, by: str | None = None, *, title:
     names = [name for name, _ in groups]
     palette, coarse = series_colors(names, rows, by, color_by, colors, dimension, "scatter",
                                     highlight) if by else ({}, {})
+    fits = []
     for index, (panel, panel_rows) in enumerate(panels):
         draw_points(result.axes[index], panel_rows, x, y, by, names, palette, coarse, limits)
         if fit:
             drawn = panel_rows[panel_rows[y].between(*limits)] if clip_stats else panel_rows
             check_fit(drawn[x])
             draw_fit(result.axes[index], drawn[x], drawn[y])
-            result.panel_header(index, "Linear fit" if panel is None else panel,
-                                stats=fit_stats(drawn[x], drawn[y], locale))
+            fits.append((panel, fit_stats(drawn[x], drawn[y], locale)))
+            result.panel_header(index, "Linear fit" if panel is None else panel, stats=fits[-1][1])
         elif panel is not None:
             result.panel_header(index, panel)
         if percent:
             result.percent_axis(index, "y")
     if by:
         result.legend()
+    result.description = scatter_description(fits, int(rows[y].between(*limits).sum()), locale)
     return apply_options(result, "scatter", names=names, x_title=x_title or humanise(x),
                          y_title=y_title or humanise(y), reference=reference, reference_legend=reference_legend,
                          key_title=key_title)

@@ -91,6 +91,9 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
                       axis_title = x_title, columns = compared$columns,
                       numbers = check_numbers(numbers, "dotplot"))
   spec$chart <- "dotplot"
+  centre <- if (!is.null(summary)) check_paired(check_summary(summary, "dotplot"), "dotplot")$centre
+  described <- dotplot_description(names, arranged$blocks, as.numeric(data[[estimate]]),
+                                   digits %||% forest_default_digits(data, c(estimate, low, high)), percent, centre)
   if (length(chosen)) {
     for (index in seq_along(spec$rows)) {
       spec$rows[[index]]$color <- if (names[index] %in% chosen) spec$color else context_colour()
@@ -103,6 +106,7 @@ hl_dotplot <- function(data, label, estimate, low = NULL, high = NULL, title = N
     theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
+  plot@meta$hairline_description <- described
   plot@meta$hairline_reference_legend <- references$labels
   plot
 }

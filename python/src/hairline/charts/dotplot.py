@@ -19,7 +19,8 @@ from hairline.charts.common import (
     with_caption,
 )
 from hairline.charts.comparisons import section_comparisons
-from hairline.charts.forest import forest_spec
+from hairline.charts.dotplot_alt import dotplot_description
+from hairline.charts.forest import default_digits, forest_spec
 from hairline.charts.forest_geometry import forest_drawing
 from hairline.charts.options import (
     Reference,
@@ -107,6 +108,10 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
                        interval=interval, null=None, references=references(drawn_references, "dotplot"),
                        axis_title=x_title)
     spec["chart"] = "dotplot"
+    centre = check_paired(check_summary(summary, "dotplot"), "dotplot")[0] if summary is not None else None
+    described = dotplot_description(names, blocks, rows[estimate].tolist(),
+                                    default_digits(rows, [estimate, low, high]) if digits is None else digits,
+                                    percent, centre, current_settings().locale)
     if chosen:
         grey = context_color(current_settings())
         for row, row_name in zip(spec["rows"], names, strict=True):
@@ -115,6 +120,7 @@ def dotplot(data: pd.DataFrame, label: str, estimate: str, low: str | None = Non
         spec["rows"] = with_headings(spec["rows"], blocks)
     result = figure(title or f"{humanise(estimate)} by {str(label).replace('_', ' ')}", subtitle=subtitle,
                     caption=with_caption(caption, small, compared), size=size)
+    result.description = described
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))
     add_reference_legend(result, legend_labels)
     return fit_height(result)

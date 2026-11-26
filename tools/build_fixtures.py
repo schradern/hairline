@@ -475,9 +475,29 @@ ALT_EFFECT_OPTIONS = [("three", {"pooled": {"estimate": 0.82, "low": 0.7, "high"
                       ("three", {"interval": False}), ("three", {"digits": 1}), ("ties", {}),
                       ("one", {"ratio": False})]
 
+ALT_DOTS = {
+    "rates": {"unit": ["Medical", "Surgical", "Cardiac", "ICU"], "mortality": [0.13, 0.08, 0.06, 0.13],
+              "low": [0.11, 0.07, 0.04, 0.1], "high": [0.15, 0.1, 0.08, 0.16], "n": [1010, 420, 380, 250]},
+    "one": {"unit": ["Medical"], "mortality": [0.13], "low": [0.11], "high": [0.15], "n": [1010]},
+    # Every third value: ten per unit and year keep the centres apart and the fixture short.
+    "samples": {key: values[::3] for key, values in ALT_SAMPLES["three"].items()},
+}
+ALT_DOT_RATES = {"label": "unit", "estimate": "mortality"}
+ALT_DOT_SAMPLES = {"label": "unit", "estimate": "days"}
+ALT_DOT_OPTIONS = [("rates", {**ALT_DOT_RATES, "low": "low", "high": "high"}),
+                   ("rates", {**ALT_DOT_RATES, "low": "low", "high": "high", "percent": True}),
+                   ("rates", {**ALT_DOT_RATES, "n": "n", "digits": 3}), ("one", ALT_DOT_RATES),
+                   ("samples", {**ALT_DOT_SAMPLES, "summary": "median", "facet": "year"}),
+                   ("samples", {**ALT_DOT_SAMPLES, "summary": ["mean", "ci"]})]
+ALT_POINTS = {"x": list(range(1, 16)), "y": [round(2 + 0.5 * x + ((x * 7) % 5) / 2, 2) for x in range(1, 16)],
+              "site": [f"Site {chr(65 + index // 3)}" for index in range(15)],
+              "group": ["North" if index % 3 else "South" for index in range(15)]}
+ALT_POINT_OPTIONS = [{}, {"fit": None}, {"by": "group"}, {"facet": "site"}, {"facet": "site", "fit": None}]
+
 
 def alt_text_cases() -> dict:
-    """Bar charts and time series with their alt text, in English and German, for both packages to write alike."""
+    """Every chart that describes its data, with its alt text, in English and German, for both packages to write
+    alike."""
     import matplotlib.pyplot as plt
 
     import hairline as hl
@@ -508,9 +528,13 @@ def alt_text_cases() -> dict:
                 for locale in ("en", "de") for name, options in ALT_SURVIVAL_OPTIONS]
     effects = [case(locale, ALT_EFFECTS[name], options, lambda frame, options: hl.forest(frame, **options))
                for locale in ("en", "de") for name, options in ALT_EFFECT_OPTIONS]
+    dots = [case(locale, ALT_DOTS[name], options, lambda frame, options: hl.dotplot(frame, **options))
+            for locale in ("en", "de") for name, options in ALT_DOT_OPTIONS]
+    points = [case(locale, ALT_POINTS, options, lambda frame, options: hl.scatter(frame, "x", "y", **options))
+              for locale in ("en", "de") for options in ALT_POINT_OPTIONS]
     hl.use(brand=False)
     return {"bars": bars, "timeseries": series, "distributions": distributions, "kaplan_meier": survival,
-            "forest": effects}
+            "forest": effects, "dotplot": dots, "scatter": points}
 
 
 def heatmap_cases() -> dict:

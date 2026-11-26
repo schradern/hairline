@@ -96,16 +96,19 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
   labels <- if (is.null(color_by)) ggplot2::waiver() else unname(coloured$coarse[groups])
   plot <- plot + ggplot2::scale_colour_manual(values = coloured$palette, breaks = names(coloured$palette),
                                               labels = labels, guide = if (is.null(by)) "none" else "legend")
+  drawn <- sum(rows[[y]] >= limits[1] & rows[[y]] <= limits[2])
   if (clip_stats) rows <- rows[rows[[y]] >= limits[1] & rows[[y]] <= limits[2], , drop = FALSE]
+  fits <- list()
   for (panel in panels) {
     shown <- if (is.null(facet)) rows else rows[as.character(rows[[facet]]) == panel, , drop = FALSE]
     if (!is.null(fit)) {
       scatter_check_fit(shown[[x]])
       tag <- if (is.null(facet)) NULL else factor(panel, levels = panels)
+      fits[[length(fits) + 1]] <- list(panel = if (!is.null(facet)) panel,
+                                       stats = scatter_stats(shown[[x]], shown[[y]]))
       plot <- plot + scatter_fit_layers(shown[[x]], shown[[y]], tag) +
         hl_panel_header(panel = if (is.null(facet)) NULL else panel,
-                        name = if (is.null(facet)) "Linear fit" else panel,
-                        stats = scatter_stats(shown[[x]], shown[[y]]))
+                        name = if (is.null(facet)) "Linear fit" else panel, stats = fits[[length(fits)]]$stats)
     } else if (!is.null(facet)) {
       plot <- plot + hl_panel_header(panel = panel, name = panel)
     }
@@ -119,6 +122,7 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
                   caption = with_caption(caption, note, kept$note), x = humanise(x), y = humanise(y)) +
     theme_hairline()
   if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
+  plot@meta$hairline_description <- scatter_description(fits, drawn)
   chart_options(plot, "scatter", groups, x_title = x_title, y_title = y_title, reference = reference,
                 reference_legend = reference_legend,
                 key_title = key_title)
