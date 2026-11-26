@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from hairline.charts.common import check_columns, humanise
+from hairline.charts.forest_alt import forest_description
 from hairline.charts.forest_geometry import forest_drawing, log_breaks
 from hairline.charts.options import check_numbers
 from hairline.drawing import fit_height
@@ -140,6 +141,7 @@ def forest_spec(data: pd.DataFrame, study: str, estimate: str, low: str, high: s
     optional = {"references": [list(line) for line in references]} if references else {}
     optional.update({"axis_title": axis_title} if axis_title else {})
     optional["numbers"] = check_numbers(numbers, "forest")
+    optional["description"] = forest_description({"rows": rows, "pooled": pooled_spec}, digits, locale)
     return {**optional, "rows": rows, "columns": list(columns), "pooled": pooled_spec, "ratio": ratio, "null": null,
             "favours": list(favours) if favours else None, "axis": axis, "color": color, "study_heading": study_heading,
             "effect_heading": effect_heading, "weight_heading": weight_heading if weight else None, "marker": marker}
@@ -202,5 +204,6 @@ def forest(data, study: str = "study", estimate: str = "estimate", low: str = "l
                        favours=favours, color=lone_color(), **options)
     note = ". ".join(part.rstrip(".") for part in (heterogeneity, caption) if part)
     result = figure(title, subtitle=subtitle, caption=note + "." if note else None, size=size)
+    result.description = spec["description"]
     result.draw(0, lambda box, measure, style: forest_drawing(spec, box, measure, style))
     return fit_height(result)

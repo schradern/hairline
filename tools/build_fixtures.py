@@ -457,6 +457,25 @@ ALT_DISTRIBUTION_OPTIONS = [
     ("ridgeline", "three", {"summary": "mean"}), ("ridgeline", "three", {"facet": "year"})]
 
 
+ALT_SURVIVAL = {
+    "two": {"t": [2, 4, 5, 7, 9, 11, 13, 3, 8, 12, 15, 18, 20, 24], "e": [1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0],
+            "g": ["ICU"] * 7 + ["Ward"] * 7},
+    "half": {"t": [1, 2, 3, 4], "e": [1, 1, 0, 0], "g": ["ICU"] * 4},
+    "small": {"t": [0.2, 0.35, 0.5, 0.8, 1.1], "e": [1, 0, 1, 1, 0], "g": ["ICU"] * 5},
+}
+ALT_SURVIVAL_OPTIONS = [("two", {"by": "g"}), ("two", {"by": "g", "test": False}), ("two", {}),
+                        ("two", {"by": "g", "order": ["Ward", "ICU"]}), ("half", {}), ("small", {})]
+ALT_EFFECTS = {
+    "three": {"study": ["Smith 2019", "Lee 2021", "Kim 2022"], "estimate": [0.55, 1.2, 0.8], "low": [0.3, 0.9, 0.6],
+              "high": [1.0, 1.6, 1.05]},
+    "ties": {"study": ["A", "B", "C"], "estimate": [1.5, 1.5, 0.9], "low": [1.1, 1.0, 0.7], "high": [2.0, 2.2, 1.2]},
+    "one": {"study": ["A"], "estimate": [-0.4], "low": [-0.9], "high": [0.1]},
+}
+ALT_EFFECT_OPTIONS = [("three", {"pooled": {"estimate": 0.82, "low": 0.7, "high": 0.96}}), ("three", {}),
+                      ("three", {"interval": False}), ("three", {"digits": 1}), ("ties", {}),
+                      ("one", {"ratio": False})]
+
+
 def alt_text_cases() -> dict:
     """Bar charts and time series with their alt text, in English and German, for both packages to write alike."""
     import matplotlib.pyplot as plt
@@ -484,8 +503,14 @@ def alt_text_cases() -> dict:
                                              lambda frame, options, chart=chart: charts[chart](frame, "unit", "days",
                                                                                                 **options))}
                      for locale in ("en", "de") for chart, name, options in ALT_DISTRIBUTION_OPTIONS]
+    survival = [case(locale, ALT_SURVIVAL[name], options,
+                     lambda frame, options: hl.kaplan_meier(frame, "t", "e", **options))
+                for locale in ("en", "de") for name, options in ALT_SURVIVAL_OPTIONS]
+    effects = [case(locale, ALT_EFFECTS[name], options, lambda frame, options: hl.forest(frame, **options))
+               for locale in ("en", "de") for name, options in ALT_EFFECT_OPTIONS]
     hl.use(brand=False)
-    return {"bars": bars, "timeseries": series, "distributions": distributions}
+    return {"bars": bars, "timeseries": series, "distributions": distributions, "kaplan_meier": survival,
+            "forest": effects}
 
 
 def heatmap_cases() -> dict:

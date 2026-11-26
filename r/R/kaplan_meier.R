@@ -189,6 +189,8 @@ hl_kaplan_meier <- function(data, time = NULL, event = NULL, by = NULL, title = 
     })
     plot@meta$hairline_table <- list(heading = "Number at risk", rows = rows)
   }
-  chart_options(plot, "kaplan_meier", names, reference = reference, reference_legend = reference_legend,
-                key_title = key_title)
+  plot <- chart_options(plot, "kaplan_meier", names, reference = reference, reference_legend = reference_legend,
+                        key_title = key_title)
+  plot@meta$hairline_description <- kaplan_meier_description(estimates, grouped, stats)
+  plot
 }

@@ -15028,5 +15028,909 @@
    },
    "alt": "Days by unit. Ridgeline-Plot. Höchster Median: 2025 · Unit C (7,7); niedrigster: 2024 · Unit A (3,7)."
   }
+ ],
+ "kaplan_meier": [
+  {
+   "locale": "en",
+   "data": {
+    "t": [
+     2,
+     4,
+     5,
+     7,
+     9,
+     11,
+     13,
+     3,
+     8,
+     12,
+     15,
+     18,
+     20,
+     24
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward"
+    ]
+   },
+   "options": {
+    "by": "g"
+   },
+   "alt": "Survival by g. Kaplan–Meier curve. Median: ICU 9.0; Ward not reached (64% at 24). Log-rank: p = 0.038."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "t": [
+     2,
+     4,
+     5,
+     7,
+     9,
+     11,
+     13,
+     3,
+     8,
+     12,
+     15,
+     18,
+     20,
+     24
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward"
+    ]
+   },
+   "options": {
+    "by": "g",
+    "test": false
+   },
+   "alt": "Survival by g. Kaplan–Meier curve. Median: ICU 9.0; Ward not reached (64% at 24)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "t": [
+     2,
+     4,
+     5,
+     7,
+     9,
+     11,
+     13,
+     3,
+     8,
+     12,
+     15,
+     18,
+     20,
+     24
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward"
+    ]
+   },
+   "options": {},
+   "alt": "Survival. Kaplan–Meier curve. Median: 15.0."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "t": [
+     2,
+     4,
+     5,
+     7,
+     9,
+     11,
+     13,
+     3,
+     8,
+     12,
+     15,
+     18,
+     20,
+     24
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward"
+    ]
+   },
+   "options": {
+    "by": "g",
+    "order": [
+     "Ward",
+     "ICU"
+    ]
+   },
+   "alt": "Survival by g. Kaplan–Meier curve. Median: Ward not reached (64% at 24); ICU 9.0. Log-rank: p = 0.038."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "t": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU"
+    ]
+   },
+   "options": {},
+   "alt": "Survival. Kaplan–Meier curve. Median: 2.0."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "t": [
+     0.2,
+     0.35,
+     0.5,
+     0.8,
+     1.1
+    ],
+    "e": [
+     1,
+     0,
+     1,
+     1,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU"
+    ]
+   },
+   "options": {},
+   "alt": "Survival. Kaplan–Meier curve. Median: 0.80."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "t": [
+     2,
+     4,
+     5,
+     7,
+     9,
+     11,
+     13,
+     3,
+     8,
+     12,
+     15,
+     18,
+     20,
+     24
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward"
+    ]
+   },
+   "options": {
+    "by": "g"
+   },
+   "alt": "Survival by g. Kaplan-Meier-Kurve. Median: ICU 9,0; Ward nicht erreicht (64 % bei 24). Log-rank: p = 0,038."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "t": [
+     2,
+     4,
+     5,
+     7,
+     9,
+     11,
+     13,
+     3,
+     8,
+     12,
+     15,
+     18,
+     20,
+     24
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward"
+    ]
+   },
+   "options": {
+    "by": "g",
+    "test": false
+   },
+   "alt": "Survival by g. Kaplan-Meier-Kurve. Median: ICU 9,0; Ward nicht erreicht (64 % bei 24)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "t": [
+     2,
+     4,
+     5,
+     7,
+     9,
+     11,
+     13,
+     3,
+     8,
+     12,
+     15,
+     18,
+     20,
+     24
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward"
+    ]
+   },
+   "options": {},
+   "alt": "Survival. Kaplan-Meier-Kurve. Median: 15,0."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "t": [
+     2,
+     4,
+     5,
+     7,
+     9,
+     11,
+     13,
+     3,
+     8,
+     12,
+     15,
+     18,
+     20,
+     24
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     0,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward",
+     "Ward"
+    ]
+   },
+   "options": {
+    "by": "g",
+    "order": [
+     "Ward",
+     "ICU"
+    ]
+   },
+   "alt": "Survival by g. Kaplan-Meier-Kurve. Median: Ward nicht erreicht (64 % bei 24); ICU 9,0. Log-rank: p = 0,038."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "t": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "e": [
+     1,
+     1,
+     0,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU"
+    ]
+   },
+   "options": {},
+   "alt": "Survival. Kaplan-Meier-Kurve. Median: 2,0."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "t": [
+     0.2,
+     0.35,
+     0.5,
+     0.8,
+     1.1
+    ],
+    "e": [
+     1,
+     0,
+     1,
+     1,
+     0
+    ],
+    "g": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU",
+     "ICU"
+    ]
+   },
+   "options": {},
+   "alt": "Survival. Kaplan-Meier-Kurve. Median: 0,80."
+  }
+ ],
+ "forest": [
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Smith 2019",
+     "Lee 2021",
+     "Kim 2022"
+    ],
+    "estimate": [
+     0.55,
+     1.2,
+     0.8
+    ],
+    "low": [
+     0.3,
+     0.9,
+     0.6
+    ],
+    "high": [
+     1.0,
+     1.6,
+     1.05
+    ]
+   },
+   "options": {
+    "pooled": {
+     "estimate": 0.82,
+     "low": 0.7,
+     "high": 0.96
+    }
+   },
+   "alt": "Effects by study. Forest plot. Pooled: 0.82 [0.70; 0.96]. Highest: Lee 2021 (1.20); lowest: Smith 2019 (0.55)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Smith 2019",
+     "Lee 2021",
+     "Kim 2022"
+    ],
+    "estimate": [
+     0.55,
+     1.2,
+     0.8
+    ],
+    "low": [
+     0.3,
+     0.9,
+     0.6
+    ],
+    "high": [
+     1.0,
+     1.6,
+     1.05
+    ]
+   },
+   "options": {},
+   "alt": "Effects by study. Forest plot. Highest: Lee 2021 (1.20); lowest: Smith 2019 (0.55)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Smith 2019",
+     "Lee 2021",
+     "Kim 2022"
+    ],
+    "estimate": [
+     0.55,
+     1.2,
+     0.8
+    ],
+    "low": [
+     0.3,
+     0.9,
+     0.6
+    ],
+    "high": [
+     1.0,
+     1.6,
+     1.05
+    ]
+   },
+   "options": {
+    "interval": false
+   },
+   "alt": "Effects by study. Forest plot. Highest: Lee 2021 (1.20); lowest: Smith 2019 (0.55)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Smith 2019",
+     "Lee 2021",
+     "Kim 2022"
+    ],
+    "estimate": [
+     0.55,
+     1.2,
+     0.8
+    ],
+    "low": [
+     0.3,
+     0.9,
+     0.6
+    ],
+    "high": [
+     1.0,
+     1.6,
+     1.05
+    ]
+   },
+   "options": {
+    "digits": 1
+   },
+   "alt": "Effects by study. Forest plot. Highest: Lee 2021 (1.2); lowest: Smith 2019 (0.6)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "A",
+     "B",
+     "C"
+    ],
+    "estimate": [
+     1.5,
+     1.5,
+     0.9
+    ],
+    "low": [
+     1.1,
+     1.0,
+     0.7
+    ],
+    "high": [
+     2.0,
+     2.2,
+     1.2
+    ]
+   },
+   "options": {},
+   "alt": "Effects by study. Forest plot. Highest: A, B (1.50); lowest: C (0.90)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "A"
+    ],
+    "estimate": [
+     -0.4
+    ],
+    "low": [
+     -0.9
+    ],
+    "high": [
+     0.1
+    ]
+   },
+   "options": {
+    "ratio": false
+   },
+   "alt": "Effects by study. Forest plot. A: −0.40."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Smith 2019",
+     "Lee 2021",
+     "Kim 2022"
+    ],
+    "estimate": [
+     0.55,
+     1.2,
+     0.8
+    ],
+    "low": [
+     0.3,
+     0.9,
+     0.6
+    ],
+    "high": [
+     1.0,
+     1.6,
+     1.05
+    ]
+   },
+   "options": {
+    "pooled": {
+     "estimate": 0.82,
+     "low": 0.7,
+     "high": 0.96
+    }
+   },
+   "alt": "Effects by study. Forest-Plot. Pooled: 0,82 [0,70; 0,96]. Am höchsten: Lee 2021 (1,20); am niedrigsten: Smith 2019 (0,55)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Smith 2019",
+     "Lee 2021",
+     "Kim 2022"
+    ],
+    "estimate": [
+     0.55,
+     1.2,
+     0.8
+    ],
+    "low": [
+     0.3,
+     0.9,
+     0.6
+    ],
+    "high": [
+     1.0,
+     1.6,
+     1.05
+    ]
+   },
+   "options": {},
+   "alt": "Effects by study. Forest-Plot. Am höchsten: Lee 2021 (1,20); am niedrigsten: Smith 2019 (0,55)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Smith 2019",
+     "Lee 2021",
+     "Kim 2022"
+    ],
+    "estimate": [
+     0.55,
+     1.2,
+     0.8
+    ],
+    "low": [
+     0.3,
+     0.9,
+     0.6
+    ],
+    "high": [
+     1.0,
+     1.6,
+     1.05
+    ]
+   },
+   "options": {
+    "interval": false
+   },
+   "alt": "Effects by study. Forest-Plot. Am höchsten: Lee 2021 (1,20); am niedrigsten: Smith 2019 (0,55)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Smith 2019",
+     "Lee 2021",
+     "Kim 2022"
+    ],
+    "estimate": [
+     0.55,
+     1.2,
+     0.8
+    ],
+    "low": [
+     0.3,
+     0.9,
+     0.6
+    ],
+    "high": [
+     1.0,
+     1.6,
+     1.05
+    ]
+   },
+   "options": {
+    "digits": 1
+   },
+   "alt": "Effects by study. Forest-Plot. Am höchsten: Lee 2021 (1,2); am niedrigsten: Smith 2019 (0,6)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "A",
+     "B",
+     "C"
+    ],
+    "estimate": [
+     1.5,
+     1.5,
+     0.9
+    ],
+    "low": [
+     1.1,
+     1.0,
+     0.7
+    ],
+    "high": [
+     2.0,
+     2.2,
+     1.2
+    ]
+   },
+   "options": {},
+   "alt": "Effects by study. Forest-Plot. Am höchsten: A, B (1,50); am niedrigsten: C (0,90)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "A"
+    ],
+    "estimate": [
+     -0.4
+    ],
+    "low": [
+     -0.9
+    ],
+    "high": [
+     0.1
+    ]
+   },
+   "options": {
+    "ratio": false
+   },
+   "alt": "Effects by study. Forest-Plot. A: −0,40."
+  }
  ]
 }

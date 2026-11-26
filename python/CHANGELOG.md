@@ -18,7 +18,11 @@
   series at most and then how many more; `spread`, `raincloud` and `ridgeline` name the groups whose centre is
   highest and lowest ("Interval plot. Highest median: ER (5.4); lowest: ICU (2.4)."), the centre they draw (the
   mean where `summary=` centres on it) written as their numbers write it. A facet's rows are named as the captions
-  name them ("2025 · ICU"). The other charts follow.
+  name them ("2025 · ICU"). `kaplan_meier` gives each group's median as its panel header writes it, or where the
+  curve stays above half the share still without the event at its last time, and the log-rank p where it shows one
+  ("Kaplan–Meier curve. Median: ICU 9.0; Ward not reached (64% at 24). Log-rank: p = 0.038."); `forest` gives
+  the pooled estimate with its interval, then the highest and lowest estimate ("Forest plot. Pooled: 0.82 [0.70;
+  0.96]. Highest: Lee 2021 (1.20); lowest: Smith 2019 (0.55)."). The other charts follow.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.

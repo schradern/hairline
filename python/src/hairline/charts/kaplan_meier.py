@@ -12,6 +12,7 @@ import pandas as pd
 
 from hairline import entities
 from hairline.charts.common import check_columns, check_numeric
+from hairline.charts.kaplan_meier_alt import kaplan_meier_description
 from hairline.charts.options import Reference, apply_options, highlighted
 from hairline.charts.timeseries import groups_of, reference_style
 from hairline.figure import HairlineFigure, figure
@@ -172,6 +173,8 @@ def kaplan_meier(data, time: str | None = None, event: str | None = None, by: st
                                                zip(moments, counts, strict=True)]))
     finish_survival(result, [(name, table) for name, table, _ in estimates], stats, endpoint, x_title,
                     median_line, grouped)
+    result.description = kaplan_meier_description([(name or endpoint, table) for name, table, _ in estimates],
+                                                  grouped, stats, current_settings().locale)
     if at_risk:
         result.table(rows, heading="Number at risk")
     return apply_options(result, "kaplan_meier", names=names, reference=reference, reference_legend=reference_legend,

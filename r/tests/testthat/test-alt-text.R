@@ -33,6 +33,16 @@ test_that("distribution alt text matches the shared fixture, in English and Germ
   }
 })
 
+test_that("Kaplan-Meier alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$kaplan_meier,
+                    function(data, options) do.call(hl_kaplan_meier, c(list(data, "t", "e"), options)))
+})
+
+test_that("forest alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$forest,
+                    function(data, options) do.call(hl_forest, c(list(data), options)))
+})
+
 test_that("extremes name ties together and leave out missing values", {
   hl_use(brand = FALSE)
   expect_equal(alt_extremes(c("a", "b", "c", "d", "e"), c(2, NA, 5, 5, 1), c("2", "", "5", "5", "1")),

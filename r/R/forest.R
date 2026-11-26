@@ -128,6 +128,7 @@ forest_spec <- function(data, study, estimate, low, high, weight = NULL, columns
   if (length(references)) spec$references <- references
   if (!is.null(axis_title)) spec$axis_title <- axis_title
   spec$numbers <- check_numbers(numbers, "forest")
+  spec$description <- forest_description(rows, pooled, digits)
   spec
 }
 
@@ -224,6 +225,7 @@ hl_forest <- function(data, study = "study", estimate = "estimate", low = "low",
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title, subtitle = subtitle, caption = note, x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) forest_drawing(spec, box, measure, style)
+  plot@meta$hairline_description <- spec$description
   plot@meta$hairline_fit_height <- TRUE
   plot
 }
