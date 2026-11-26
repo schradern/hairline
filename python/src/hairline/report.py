@@ -1,6 +1,7 @@
 """report(): figures and tables in order, numbered in the locale ("Abbildung 1", "Tabelle 2"), written as one
-self-contained Markdown or HTML file with the images embedded. The rest of the document belongs to the document
-tool; this only keeps the numbering and captions right."""
+self-contained Markdown or HTML file with the images embedded. In HTML the figures are interactive and answer each
+other: pointing at a group in one highlights it in all. The rest of the document belongs to the document tool; this
+only keeps the numbering and captions right."""
 
 from __future__ import annotations
 
@@ -44,7 +45,8 @@ class Report:
         return found
 
     def write(self, path: str | os.PathLike) -> Path:
-        """Write `path` as Markdown (.md) or HTML (.html): every image embedded, so the file stands alone."""
+        """Write `path` as Markdown (.md, figures as PNG at `dpi`) or HTML (.html, figures as interactive SVG):
+        everything embedded, so the file stands alone."""
         target = Path(path)
         kind = target.suffix.lower()
         if kind not in (".md", ".html"):
@@ -66,23 +68,30 @@ class Report:
         return "\n".join(lines)
 
     def html(self) -> str:
+        """Tables as real <table>s; figures interactive, sharing one copy of the fonts, styles and scripts."""
         from hairline.charts.table import table_html
+        from hairline.export import interactive_figure
+        from hairline.interactive import shared_assets
         parts = [f"<h1>{escaped(self.title)}</h1>"] if self.title else []
+        figures = [figure for figure, _ in self.items if figure.table_data is None]
         for figure, label, caption in self.numbered():
             caption_html = f"<figcaption><b>{escaped(label)}.</b> {escaped(caption)}</figcaption>"
             if figure.table_data is not None:
                 parts.append(f'<section class="hl-item">{caption_html}{table_html(figure)}</section>')
             else:
-                parts.append(f'<figure class="hl-item"><img alt="{escaped(figure.title)}" style="max-width:100%" '
-                             f'src="data:image/png;base64,{self.image(figure)}">{caption_html}</figure>')
+                parts.append(f'<figure class="hl-item">{interactive_figure(figure, assets=False)}{caption_html}'
+                             f'</figure>')
+        assets = shared_assets([figure.settings.font for figure in figures],
+                               any(figure.scenes for figure in figures)) if figures else ""
         title = escaped(self.title or "Report")
         return (f'<!doctype html>\n<html><head><meta charset="utf-8"><title>{title}</title>'
                 f'<style>body{{margin:0 auto;max-width:760px;padding:24px;font-family:sans-serif}}'
-                f'.hl-item{{margin:0 0 32px}}figcaption{{font-size:0.9em;margin-top:6px}}</style></head>'
+                f'.hl-item{{margin:0 0 32px}}figcaption{{font-size:0.9em;margin-top:6px}}</style>{assets}</head>'
                 f'<body>{"".join(parts)}</body></html>\n')
 
 
 def report(title: str | None = None, dpi: int = 200) -> Report:
     """A report that numbers figures and tables in the order added, in each figure's locale:
-    `hl.report("Quality report").add(fig).add(tab).write("report.html")`."""
+    `hl.report("Quality report").add(fig).add(tab).write("report.html")`. `dpi` is the resolution of the images in
+    Markdown; HTML draws the figures as interactive SVG, linked by group."""
     return Report(title=title, dpi=dpi)

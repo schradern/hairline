@@ -107,21 +107,26 @@ def write_tiff(fig: Figure, path: Path, dpi: int, options: dict) -> None:
         image.save(path, format="TIFF", compression="tiff_lzw", dpi=(dpi, dpi), tiffinfo=tiff_tags(figure_name(fig)))
 
 
+def interactive_figure(owner: HairlineFigure, options: dict | None = None, assets: bool = True) -> str:
+    """The figure as HTML: its SVG with tooltips and series highlighting (see interactive.figure_html())."""
+    from hairline.interactive import figure_html, figure_targets
+    buffer = io.StringIO()
+    owner.figure.savefig(buffer, format="svg", metadata=METADATA["svg"], **(options or {}))
+    return figure_html(buffer.getvalue(), figure_targets(owner), owner.settings.font, figure_alt(owner), assets)
+
+
 def write_html(fig: Figure, path: Path, options: dict) -> None:
     """The static SVG with tooltips and series highlighting."""
-    from hairline.interactive import figure_html, figure_targets, page
+    from hairline.interactive import page
     owner = getattr(fig, "hairline_figure", None)
     if owner is None:
         raise ValueError("hairline: html export needs a figure made with hairline.figure() or a chart function")
+    surface = owner.settings.neutral["surface"]
     if owner.table_data is not None:
         from hairline.charts.table import table_html
-        path.write_text(page(owner.title, table_html(owner), owner.settings.neutral["surface"]), encoding="utf-8")
+        path.write_text(page(owner.title, table_html(owner), surface), encoding="utf-8")
         return
-    buffer = io.StringIO()
-    fig.savefig(buffer, format="svg", metadata=METADATA["svg"], **options)
-    targets = figure_targets(owner)
-    path.write_text(page(owner.title, figure_html(buffer.getvalue(), targets, owner.settings.font, figure_alt(owner)),
-                         targets["style"]["surface"]), encoding="utf-8")
+    path.write_text(page(owner.title, interactive_figure(owner, options), surface), encoding="utf-8")
 
 
 def write_one(fig: Figure, path: Path, name: str, dpi: int, options: dict) -> None:

@@ -106,7 +106,8 @@ with hl.scope("pattern"):                                                      #
 - **`hl.table(frame, …)`**: any frame (or `describe().table`) in hairline's typography, numbers in the locale,
   `bold_rows=`, `footnotes=`, saved as PDF, PNG, SVG and as a real HTML table.
 - **`hl.report()`**: figures and tables numbered in the locale ("Abbildung 1", "Tabelle 2") in one Markdown or
-  HTML file with the images embedded.
+  HTML file with everything embedded. In HTML the figures are interactive and linked: pointing at a group in one
+  highlights the same group in every other.
 
 ### Over the time of day
 

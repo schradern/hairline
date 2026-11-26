@@ -6,6 +6,17 @@
   other: the plot grows until each bar is as tall as its value, as the category labels already keep their rows
   apart.
 
+## Figures linked across a report
+
+* `hl_report_write(report, "….html")` draws the figures as interactive SVG, as `hl_save(formats = "html")` does,
+  instead of PNG images: tooltips, highlighting and turnable surfaces work in the report too (this needs
+  svglite). The fonts, styles and scripts are embedded once for the page, not once per figure. Markdown keeps PNG
+  images at `dpi`.
+* Figures on one page answer each other: pointing at a group (or its legend entry) in one figure highlights the
+  group of the same name and colour in every other, the rest fading as in the figure itself. hairline keeps a
+  group's colour across charts, so name and colour together are the same group. This holds in a report and on any
+  page that holds several figures from `hl_save(formats = "html")`.
+
 ## 3D surfaces
 
 * `hl_surface(data, x, y, z)`: one value over two numeric axes (time of day by week, dose by age) as a 3D surface

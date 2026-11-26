@@ -10,6 +10,7 @@ import pytest
 
 import hairline as hl
 from hairline.interactive import figure_targets
+from hairline.tokens import load_tokens
 
 
 def targets_of(path):
@@ -30,6 +31,30 @@ def test_html_export_holds_the_svg_targets_script_and_font(tmp_path):
     assert [series["name"] for series in targets["series"]] == ["North", "South"]
     assert targets["series"][0]["tips"][1]["text"] == "North: 1, 3"
     assert [entry["name"] for entry in targets["legend"]] == ["North", "South"]
+
+
+def test_report_figures_are_interactive_and_share_one_copy_of_fonts_and_scripts(tmp_path):
+    hl.use(brand=False)
+    units = pd.DataFrame({"unit": ["A", "B", "A", "B"], "days": [2.0, 3.0, 4.0, 5.0]})
+    grid = pd.DataFrame([{"hour": hour, "week": week, "load": hour * week} for hour in (8, 12, 16)
+                         for week in (1, 2, 3)])
+    report = hl.report("Linked").add(hl.bars(units, "unit", "days", by="unit"))
+    report.add(hl.spread(units, "unit", "days")).add(hl.surface(grid, "hour", "week", "load"))
+    html = report.write(tmp_path / "linked.html").read_text(encoding="utf-8")
+    assert html.count('<figure class="hairline-figure"') == 3 and html.count('class="hairline-targets"') == 3
+    assert html.count("@font-face") == len(load_tokens()["interactive"]["fonts"])
+    assert html.count("touch-action: none") == 1 and html.count("var hairlineSceneShapes") == 1
+    assert html.index("var hairlineSceneShapes") < html.index('<figure class="hairline-figure"')
+    assert "data:image/png" not in html and "window.hairlineFigures" in html
+    markdown = report.write(tmp_path / "linked.md").read_text(encoding="utf-8")
+    assert markdown.count("data:image/png;base64,") == 3
+
+
+def test_a_report_without_figures_carries_no_figure_assets(tmp_path):
+    hl.use(brand=False)
+    report = hl.report().add(hl.table(pd.DataFrame({"a": ["x"], "b": [1]}), "One row"))
+    html = report.write(tmp_path / "table.html").read_text(encoding="utf-8")
+    assert "<table" in html and "touch-action" not in html and "<script" not in html
 
 
 def test_fit_lines_stay_static_and_points_are_targets():

@@ -67,7 +67,7 @@
     tip.style.display = "block";
   }
 
-  function show(series, at, text) {
+  function highlight(series, at, text) {
     while (focus.firstChild) { focus.removeChild(focus.firstChild); }
     draw(series, focus, false);
     // A series hovered only (a box under its own text) shows its tip without fading the others.
@@ -78,6 +78,27 @@
   }
 
   function hide() { veil.style.display = "none"; focus.style.display = "none"; tip.style.display = "none"; }
+
+  // The figures on one page answer each other (a report's, or several in one document): pointing at a series
+  // highlights the series of the same name and colour in every other figure. hairline keeps a group's colour across
+  // charts, so the two together are the same group; a name alone could be a chart's own title.
+  function linkKey(series) { return series.name + "\n" + String(series.color).toLowerCase().slice(0, 7); }
+  var byKey = {}, linked = window.hairlineFigures = window.hairlineFigures || [];
+  var self = {
+    echo: function (key) { var series = byKey[key]; if (series) { highlight(series, null, null); } else { hide(); } },
+    clear: hide
+  };
+  linked.push(self);
+
+  function others(act) { linked.forEach(function (figure) { if (figure !== self) { act(figure); } }); }
+
+  function show(series, at, text) {
+    highlight(series, at, text);
+    var key = linkKey(series);
+    others(function (figure) { figure.echo(key); });
+  }
+
+  function leave() { hide(); others(function (figure) { figure.clear(); }); }
 
   function nearest(series, event) {
     var matrix = overlay.getScreenCTM();
@@ -97,18 +118,19 @@
   var byName = {};
   data.series.forEach(function (series) {
     byName[series.name] = series;
+    byKey[linkKey(series)] = series;
     var group = element("g", { "class": "hairline-hit", tabindex: 0, role: "img", "aria-label": series.name }, hits);
     draw(series, group, true);
     group.addEventListener("pointermove", function (event) {
       var target = nearest(series, event);
       show(series, target ? target.at : null, target ? target.text : null);
     });
-    group.addEventListener("pointerleave", hide);
+    group.addEventListener("pointerleave", leave);
     group.addEventListener("focus", function () {
       var first = series.tips[0];
       show(series, first ? first.at : null, first ? first.text : series.name);
     });
-    group.addEventListener("blur", hide);
+    group.addEventListener("blur", leave);
   });
   data.legend.forEach(function (entry) {
     var series = byName[entry.name];
@@ -116,7 +138,7 @@
     var box = element("rect", { x: entry.box[0], y: entry.box[1], width: entry.box[2], height: entry.box[3],
       fill: "transparent", "class": "hairline-hit" }, hits);
     box.addEventListener("pointerenter", function () { show(series, null, null); });
-    box.addEventListener("pointerleave", hide);
+    box.addEventListener("pointerleave", leave);
   });
 
   // Surfaces turn: dragging or the arrow keys draw the scene again from another angle (hairline-scene.js), Home or a

@@ -15,7 +15,7 @@ hl_report_write(report, path)
 \arguments{
 \item{title}{Heading of the report.}
 
-\item{dpi}{Resolution of the embedded images.}
+\item{dpi}{Resolution of the images in Markdown.}
 
 \item{report}{A report from \code{hl_report()}.}
 
@@ -31,10 +31,13 @@ hl_report_write(report, path)
 \description{
 \code{hl_report()} starts a report; \code{hl_report_add()} adds a plot or a table
 (\code{\link[=hl_table]{hl_table()}}) with the sentence after its number (default: its title);
-\code{hl_report_write()} writes it as Markdown (\code{.md}) or HTML (\code{.html}), every
-image embedded, so the file stands alone. Figures and tables are numbered
-apart, in the order added and in each plot's locale ("Figure 2",
-"Tabelle 1"); an HTML report keeps tables as real \verb{<table>}s.
+\code{hl_report_write()} writes it as Markdown (\code{.md}) or HTML (\code{.html}),
+everything embedded, so the file stands alone. Figures and tables are
+numbered apart, in the order added and in each plot's locale ("Figure 2",
+"Tabelle 1"). An HTML report keeps tables as real \verb{<table>}s and draws the
+figures as interactive SVG, as \code{hl_save(formats = "html")} does; pointing
+at a group in one figure highlights the group of the same name and colour
+in every other.
 }
 \examples{
 counts <- data.frame(Year = c("2024", "2025"), Cases = c(1841, 2010))

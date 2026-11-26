@@ -418,25 +418,29 @@ font_faces <- function(family) {
   }, character(1)), collapse = "")
 }
 
-# One self-contained <figure>: static SVG, overlay, tooltip box, targets and script (embeddable as is).
-figure_html <- function(svg, targets, family, alt = "") {
+# What every figure on a page shares: the fonts, the styles and (for a surface) the scene script. A figure carries
+# them itself, or a page of several (a report) carries them once for all. As Python's shared_assets().
+shared_assets <- function(families, scenes) {
+  faces <- paste(vapply(unique(families), font_faces, character(1)), collapse = "")
+  scene_script <- if (scenes) paste0("<script>", interactive_asset("hairline-scene.js"), "</script>") else ""
+  paste0("<style>", faces, interactive_asset("hairline.css"), "</style>", scene_script)
+}
+
+# One <figure>: static SVG, overlay, tooltip box, targets and script. With `assets` it is self-contained (embeddable
+# as is); without, the page gives shared_assets() once.
+figure_html <- function(svg, targets, family, alt = "", assets = TRUE) {
   body <- substring(svg, regexpr("<svg", svg, fixed = TRUE))
   style <- targets$style
   variables <- sprintf("--hl-ink:%s;--hl-surface:%s;--hl-axis:%s;--hl-font:'%s'", style$ink, style$surface,
                        style$axis, style$font)
   data <- gsub("</", "<\\/", jsonlite::toJSON(targets, auto_unbox = TRUE, digits = NA), fixed = TRUE)
   label <- gsub("<", "&lt;", gsub('"', "&quot;", gsub("&", "&amp;", alt, fixed = TRUE), fixed = TRUE), fixed = TRUE)
-  scene_script <- if (length(targets$scenes)) {
-    paste0("<script>", interactive_asset("hairline-scene.js"), "</script>")
-  } else {
-    ""
-  }
-  paste0('<figure class="hairline-figure" style="', variables, '" aria-label="', label, '"><style>',
-         font_faces(family),
-         interactive_asset("hairline.css"), "</style>", body, '<svg class="hairline-overlay" viewBox="0 0 ',
-         targets$width, " ", targets$height, '" xmlns="http://www.w3.org/2000/svg"></svg>',
+  own <- if (assets) shared_assets(family, length(targets$scenes) > 0) else ""
+  paste0('<figure class="hairline-figure" style="', variables, '" aria-label="', label, '">', own, body,
+         '<svg class="hairline-overlay" viewBox="0 0 ', targets$width, " ", targets$height,
+         '" xmlns="http://www.w3.org/2000/svg"></svg>',
          '<div class="hairline-tip"></div><script type="application/json" class="hairline-targets">', data,
-         "</script>", scene_script, "<script>", interactive_asset("hairline.js"), "</script></figure>")
+         "</script><script>", interactive_asset("hairline.js"), "</script></figure>")
 }
 
 html_page <- function(title, fragment, surface = "#ffffff") {
@@ -447,12 +451,10 @@ html_page <- function(title, fragment, surface = "#ffffff") {
          "</body></html>\n")
 }
 
-write_html <- function(plot, path, size, size_mm, background) {
-  if (!is.null(plot@meta$hairline_tabular)) {
-    settings <- plot@meta$hairline_settings %||% hl_settings()
-    writeLines(html_page(plot@labels$title, table_html(plot), settings$neutral$surface), path, useBytes = TRUE)
-    return(invisible(path))
-  }
+# The plot as HTML (`html`): its SVG with tooltips and series highlighting (see figure_html()), with the `surface`
+# colour it was drawn on, its `font` and whether it has `scenes` (what shared_assets() needs for it). As Python's
+# interactive_figure().
+interactive_figure <- function(plot, size, size_mm, background, assets = TRUE) {
   if (!requireNamespace("svglite", quietly = TRUE)) {
     stop("hairline: HTML export needs the 'svglite' package", call. = FALSE)
   }
@@ -461,8 +463,16 @@ write_html <- function(plot, path, size, size_mm, background) {
   draw_to_device(format_device("svg", svg_path, size_mm, 72, background), plot)
   svg <- paste(readLines(svg_path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
   targets <- interactive_targets(plot, size, size_mm[1], size_mm[2])
-  title <- plot@labels$title %||% ""
-  alt <- figure_alt(plot)
-  writeLines(html_page(title, figure_html(svg, targets, targets$style$font, alt), targets$style$surface), path,
-             useBytes = TRUE)
+  list(html = figure_html(svg, targets, targets$style$font, figure_alt(plot), assets),
+       surface = targets$style$surface, font = targets$style$font, scenes = length(targets$scenes) > 0)
+}
+
+write_html <- function(plot, path, size, size_mm, background) {
+  if (!is.null(plot@meta$hairline_tabular)) {
+    settings <- plot@meta$hairline_settings %||% hl_settings()
+    writeLines(html_page(plot@labels$title, table_html(plot), settings$neutral$surface), path, useBytes = TRUE)
+    return(invisible(path))
+  }
+  figure <- interactive_figure(plot, size, size_mm, background)
+  writeLines(html_page(plot@labels$title %||% "", figure$html, figure$surface), path, useBytes = TRUE)
 }

@@ -83,7 +83,7 @@ def test_report_numbers_figures_and_tables_apart_in_the_locale(tmp_path):
     report.add(hl.bars(pd.DataFrame({"a": ["x"]}), "a"))
     assert [label for _, label, _ in report.numbered()] == ["Abbildung 1", "Tabelle 1", "Abbildung 2"]
     page = report.write(tmp_path / "report.html").read_text(encoding="utf-8")
-    assert "<b>Tabelle 1.</b> Fälle pro Jahr" in page and page.count("data:image/png;base64,") == 2
+    assert "<b>Tabelle 1.</b> Fälle pro Jahr" in page and page.count('class="hairline-targets"') == 2
     text = report.write(tmp_path / "report.md").read_text(encoding="utf-8")
     assert text.startswith("# Qualitätsbericht") and "**Abbildung 2.** Count by a" in text
     with pytest.raises(ValueError, match="makes .md or .html files"):

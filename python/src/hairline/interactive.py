@@ -400,21 +400,29 @@ def font_faces(family: str) -> str:
     return "".join(faces)
 
 
-def figure_html(svg: str, targets: dict, family: str, alt: str = "") -> str:
-    """One self-contained <figure>: static SVG, overlay, tooltip box, targets and script (embeddable as is)."""
+def shared_assets(families: list[str], scenes: bool) -> str:
+    """What every figure on a page shares: the fonts, the styles and (for a surface) the scene script. A figure
+    carries them itself, or a page of several (a report) carries them once for all."""
+    faces = "".join(font_faces(family) for family in dict.fromkeys(families))
+    scene_script = f'<script>{asset("hairline-scene.js")}</script>' if scenes else ""
+    return f'<style>{faces}{asset("hairline.css")}</style>{scene_script}'
+
+
+def figure_html(svg: str, targets: dict, family: str, alt: str = "", assets: bool = True) -> str:
+    """One <figure>: static SVG, overlay, tooltip box, targets and script. With `assets` it is self-contained
+    (embeddable as is); without, the page gives `shared_assets()` once."""
     body = svg[svg.index("<svg"):]
     style = targets["style"]
     variables = f"--hl-ink:{style['ink']};--hl-surface:{style['surface']};--hl-axis:{style['axis']};" \
                 f"--hl-font:'{style['font']}'"
     data = json.dumps(targets, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     label = alt.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
-    scene_script = f'<script>{asset("hairline-scene.js")}</script>' if targets.get("scenes") else ""
-    return (f'<figure class="hairline-figure" style="{variables}" aria-label="{label}">'
-            f'<style>{font_faces(family)}{asset("hairline.css")}</style>{body}'
+    own = shared_assets([family], bool(targets.get("scenes"))) if assets else ""
+    return (f'<figure class="hairline-figure" style="{variables}" aria-label="{label}">{own}{body}'
             f'<svg class="hairline-overlay" viewBox="0 0 {targets["width"]} {targets["height"]}" '
             f'xmlns="http://www.w3.org/2000/svg"></svg><div class="hairline-tip"></div>'
             f'<script type="application/json" class="hairline-targets">{data}</script>'
-            f'{scene_script}<script>{asset("hairline.js")}</script></figure>')
+            f'<script>{asset("hairline.js")}</script></figure>')
 
 
 def page(title: str, fragment: str, surface: str = "#ffffff") -> str:

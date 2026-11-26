@@ -7,6 +7,16 @@
 * Values beside horizontal bars side by side (`bars(by=..., horizontal=True)`) no longer run into each other: the
   plot grows until each bar is as tall as its value, as the category labels already keep their rows apart.
 
+### Figures linked across a report
+
+* `report().write("….html")` draws its figures as interactive SVG, as `save(formats="html")` does, instead of PNG
+  images: tooltips, highlighting and turnable surfaces work in the report too. The fonts, styles and scripts are
+  embedded once for the page, not once per figure. Markdown keeps PNG images at `dpi`.
+* Figures on one page answer each other: pointing at a group (or its legend entry) in one figure highlights the
+  group of the same name and colour in every other, the rest fading as in the figure itself. hairline keeps a
+  group's colour across charts, so name and colour together are the same group. This holds in a report and on any
+  page that holds several figures from `save(formats="html")`.
+
 ### 3D surfaces
 
 * `surface(data, x, y, z)`: one value over two numeric axes (time of day by week, dose by age) as a 3D surface

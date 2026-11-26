@@ -1,18 +1,22 @@
 # Reports: figures and tables in order, numbered in the locale ("Abbildung 1", "Tabelle 2"), written as one
-# self-contained Markdown or HTML file with the images embedded; the R twin of the Python package's report(). The
-# rest of the document belongs to the document tool; this only keeps the numbering and captions right.
+# self-contained Markdown or HTML file with the images embedded; the R twin of the Python package's report(). In
+# HTML the figures are interactive and answer each other: pointing at a group in one highlights it in all. The rest
+# of the document belongs to the document tool; this only keeps the numbering and captions right.
 
 #' Numbered figures and tables in one file
 #'
 #' `hl_report()` starts a report; `hl_report_add()` adds a plot or a table
 #' ([hl_table()]) with the sentence after its number (default: its title);
-#' `hl_report_write()` writes it as Markdown (`.md`) or HTML (`.html`), every
-#' image embedded, so the file stands alone. Figures and tables are numbered
-#' apart, in the order added and in each plot's locale ("Figure 2",
-#' "Tabelle 1"); an HTML report keeps tables as real `<table>`s.
+#' `hl_report_write()` writes it as Markdown (`.md`) or HTML (`.html`),
+#' everything embedded, so the file stands alone. Figures and tables are
+#' numbered apart, in the order added and in each plot's locale ("Figure 2",
+#' "Tabelle 1"). An HTML report keeps tables as real `<table>`s and draws the
+#' figures as interactive SVG, as `hl_save(formats = "html")` does; pointing
+#' at a group in one figure highlights the group of the same name and colour
+#' in every other.
 #'
 #' @param title Heading of the report.
-#' @param dpi Resolution of the embedded images.
+#' @param dpi Resolution of the images in Markdown.
 #' @param report A report from `hl_report()`.
 #' @param plot A hairline plot or table.
 #' @param caption The sentence after the number; `NULL` for the plot's title.
@@ -76,22 +80,36 @@ report_markdown <- function(report) {
   paste(lines, collapse = "\n")
 }
 
+# A plot as interactive HTML at the size hl_save() gives it, without the fonts and scripts the report shares.
+report_figure <- function(plot) {
+  size <- plot_size(plot)
+  sized <- plot_for_size(plot, size)
+  size_mm <- fitted_size_mm(sized, figure_size_mm(size, NULL, sized@meta$hairline_height_mm))
+  interactive_figure(sized, size, size_mm, saved_settings(sized, size)$neutral$surface, assets = FALSE)
+}
+
+# Tables as real <table>s; figures interactive, sharing one copy of the fonts, styles and scripts.
 report_html <- function(report) {
   parts <- if (!is.null(report$title)) sprintf("<h1>%s</h1>", html_escaped(report$title)) else character()
+  figures <- list()
   for (item in report_numbered(report)) {
     caption <- sprintf("<figcaption><b>%s.</b> %s</figcaption>", html_escaped(item$label), html_escaped(item$caption))
-    parts <- c(parts, if (item$kind == "table") {
-      sprintf('<section class="hl-item">%s%s</section>', caption, table_html(item$plot))
+    if (item$kind == "table") {
+      parts <- c(parts, sprintf('<section class="hl-item">%s%s</section>', caption, table_html(item$plot)))
     } else {
-      sprintf(paste0('<figure class="hl-item"><img alt="%s" style="max-width:100%%" ',
-                     'src="data:image/png;base64,%s">%s</figure>'),
-              html_escaped(item$plot@labels$title %||% ""), gsub("\n", "", report_image(item$plot, report$dpi)),
-              caption)
-    })
+      figure <- report_figure(item$plot)
+      figures[[length(figures) + 1]] <- figure
+      parts <- c(parts, sprintf('<figure class="hl-item">%s%s</figure>', figure$html, caption))
+    }
+  }
+  assets <- if (length(figures)) {
+    shared_assets(vapply(figures, `[[`, "", "font"), any(vapply(figures, `[[`, FALSE, "scenes")))
+  } else {
+    ""
   }
   paste0('<!doctype html>\n<html><head><meta charset="utf-8"><title>', html_escaped(report$title %||% "Report"),
          "</title><style>body{margin:0 auto;max-width:760px;padding:24px;font-family:sans-serif}",
-         ".hl-item{margin:0 0 32px}figcaption{font-size:0.9em;margin-top:6px}</style></head><body>",
+         ".hl-item{margin:0 0 32px}figcaption{font-size:0.9em;margin-top:6px}</style>", assets, "</head><body>",
          paste(parts, collapse = ""), "</body></html>\n")
 }
 

@@ -224,11 +224,36 @@ test_that("a report numbers figures and tables apart, in the locale", {
   report <- hl_report_add(hl_report_add(hl_report_add(hl_report("Bericht"), figure), table), figure, "Noch einmal.")
   labels <- vapply(report_numbered(report), `[[`, "", "label")
   expect_equal(labels, c("Abbildung 1", "Tabelle 1", "Abbildung 2"))
+  skip_if_not_installed("svglite")
   path <- hl_report_write(report, tempfile(fileext = ".html"))
   html <- paste(readLines(path, warn = FALSE), collapse = "")
   expect_match(html, "<b>Abbildung 2.</b> Noch einmal.", fixed = TRUE)
   expect_match(html, "<table>", fixed = TRUE)
   expect_error(hl_report_write(report, tempfile(fileext = ".pdf")), "makes .md or .html files")
+})
+
+test_that("report figures are interactive and share one copy of fonts and scripts", {
+  hl_use(brand = FALSE)
+  skip_if_not_installed("svglite")
+  units <- data.frame(unit = c("A", "B", "A", "B"), days = c(2, 3, 4, 5))
+  grid <- expand.grid(hour = c(8, 12, 16), week = 1:3)
+  grid$load <- grid$hour * grid$week
+  report <- hl_report_add(hl_report_add(hl_report("Linked"), hl_bars(units, "unit", "days", by = "unit")),
+                          hl_spread(units, "unit", "days"))
+  report <- hl_report_add(report, hl_surface(grid, "hour", "week", "load"))
+  html <- paste(readLines(hl_report_write(report, tempfile(fileext = ".html")), warn = FALSE), collapse = "\n")
+  count <- function(pattern) lengths(regmatches(html, gregexpr(pattern, html, fixed = TRUE)))
+  expect_equal(count('<figure class="hairline-figure"'), 3)
+  expect_equal(count('class="hairline-targets"'), 3)
+  expect_equal(count("@font-face"), length(hl_tokens()$interactive$fonts))
+  expect_equal(count("touch-action: none"), 1)
+  expect_equal(count("var hairlineSceneShapes"), 1)
+  expect_lt(regexpr("var hairlineSceneShapes", html, fixed = TRUE),
+            regexpr('<figure class="hairline-figure"', html, fixed = TRUE))
+  expect_equal(count("data:image/png"), 0)
+  expect_equal(count("linked.push(self)"), 3)
+  markdown <- paste(readLines(hl_report_write(report, tempfile(fileext = ".md")), warn = FALSE), collapse = "\n")
+  expect_equal(lengths(regmatches(markdown, gregexpr("data:image/png;base64,", markdown, fixed = TRUE))), 3)
 })
 
 test_that("describe warns when a median falls between two large levels", {

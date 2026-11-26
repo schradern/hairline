@@ -102,7 +102,8 @@ hl_scope("pattern", hl_bars(patterns, "pattern"))                               
 - **`hl_table(data, …)`**: any data frame (or `hl_describe()$table`) in hairline's typography, numbers in the
   locale, `bold_rows =`, `footnotes =`, saved as PDF, PNG, SVG and as a real HTML table.
 - **`hl_report()`**: figures and tables numbered in the locale ("Abbildung 1", "Tabelle 2") in one Markdown or
-  HTML file with the images embedded (`hl_report_add()`, `hl_report_write()`).
+  HTML file with everything embedded (`hl_report_add()`, `hl_report_write()`). In HTML the figures are interactive
+  and linked: pointing at a group in one highlights the same group in every other.
 
 ### Over the time of day
 
