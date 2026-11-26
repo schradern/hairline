@@ -1,7 +1,6 @@
 # Heatmap geometry in pt, mirroring the Python charts/heatmap_geometry.py: one cell per grid point, its edges halfway
-# to the neighbouring values, y ticks left of the plot, x ticks below it, the y title above the plot on the left and
-# the x title under the ticks on the right. Beside a surface it shares the surface's height and leaves its cells
-# untagged, since the surface's script links the two.
+# to the neighbouring values, its axis text where the frame puts an axis chart's (the spacing tokens). Beside a
+# surface it shares the surface's height and leaves its cells untagged, since the surface's script links the two.
 
 # The flat spec with every text's width in pt and the colours and sizes the drawing needs. As Python's
 # heatmap_scene().
@@ -11,22 +10,27 @@ heatmap_scene <- function(spec, measure, style) {
     lapply(spec$ticks[[axis]], function(tick) c(tick, list(width = measure(tick$text, "label"))))
   })
   rules <- hl_tokens()
+  spacing <- rules$spacing
+  base <- style$base
   list(x_edges = unlist(spec$x_edges), y_edges = unlist(spec$y_edges), fills = spec$fills, tips = spec$tips,
        titles = spec$titles[c("x", "y")], ticks = ticks,
-       text = list(cap = style$cap_height * size, descender = style$descender * size, ticks = style$neutral$faint,
-                   titles = style$neutral$muted),
-       gap = rules$surface$label_gap * style$base, seam = rules$surface$seam_pt, aspect = rules$heatmap$aspect)
+       text = list(cap = style$cap_height * size, descender = style$descender * size,
+                   ascender = style$ascender * size, ticks = style$neutral$faint, titles = style$neutral$muted),
+       gaps = list(y_labels = spacing$y_labels_plot * base, x_pad = spacing$x_tick_pad * size,
+                   x_band = spacing$x_tick_labels * size, x_title = spacing$x_title * base,
+                   y_title = spacing$y_title * base),
+       seam = rules$surface$seam_pt, aspect = rules$heatmap$aspect)
 }
 
 # The cells' rectangle c(x, y, width, height). As Python's plot_frame().
 heatmap_plot_frame <- function(scene, box, height = NULL) {
   glyphs <- scene$text
-  gap <- scene$gap
+  gaps <- scene$gaps
   line <- glyphs$cap + glyphs$descender
   widths <- vapply(scene$ticks$y, `[[`, 0, "width")
-  left <- box[1] + (if (length(widths)) max(widths) else 0) + gap
-  top <- box[2] + (if (nzchar(scene$titles$y)) line + gap else glyphs$cap / 2)
-  below <- gap + line + (if (nzchar(scene$titles$x)) gap + line else 0)
+  left <- box[1] + (if (length(widths)) max(widths) else 0) + gaps$y_labels
+  top <- box[2] + (if (nzchar(scene$titles$y)) line + gaps$y_title else glyphs$cap / 2)
+  below <- gaps$x_band + (if (nzchar(scene$titles$x)) gaps$x_title + line else 0)
   last <- if (length(scene$ticks$x)) scene$ticks$x[[length(scene$ticks$x)]]$width / 2 else 0
   width <- box[1] + box[3] - last - left
   room <- (height %||% box[4]) - (top - box[2]) - below
@@ -74,12 +78,13 @@ heatmap_layout <- function(scene, box, height = NULL, tag = TRUE) {
   plot <- heatmap_plot_frame(scene, box, height)
   drawn <- heatmap_cell_shapes(scene, plot, tag)
   glyphs <- scene$text
-  gap <- scene$gap
+  gaps <- scene$gaps
   texts <- lapply(scene$ticks$y, function(tick) {
-    c(shape_text(plot[1] - gap, plot[2] + (1 - tick$at) * plot[4] + glyphs$cap / 2, tick$text, "label",
+    c(shape_text(plot[1] - gaps$y_labels, plot[2] + (1 - tick$at) * plot[4] + glyphs$cap / 2, tick$text, "label",
                  glyphs$ticks, "right"), part = "tick")
   })
-  baseline <- plot[2] + plot[4] + gap + glyphs$cap
+  bottom <- plot[2] + plot[4]
+  baseline <- bottom + gaps$x_pad + glyphs$ascender
   texts <- c(texts, lapply(scene$ticks$x, function(tick) {
     c(shape_text(plot[1] + tick$at * plot[3], baseline, tick$text, "label", glyphs$ticks, "center"), part = "tick")
   }))
@@ -88,7 +93,7 @@ heatmap_layout <- function(scene, box, height = NULL, tag = TRUE) {
                              part = "title")))
   }
   if (nzchar(scene$titles$x)) {
-    below <- baseline + glyphs$descender + gap + glyphs$cap
+    below <- bottom + gaps$x_band + gaps$x_title + glyphs$cap
     texts <- c(texts, list(c(shape_text(plot[1] + plot[3], below, scene$titles$x, "label", glyphs$titles, "right"),
                              part = "title")))
   }

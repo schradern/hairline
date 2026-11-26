@@ -25,7 +25,7 @@ surface_scene <- function(spec, measure, style) {
        text = list(size = size, cap = style$cap_height * size, descender = style$descender * size,
                    ticks = neutral$faint, titles = neutral$muted),
        lines = list(axis = neutral$axis, grid = neutral$grid, axis_width = style$axis_width, grid_width = style$grid),
-       gap = rules$label_gap * style$base, align = rules$align, seam = rules$seam_pt,
+       gap = hl_tokens()$spacing$y_labels_plot * style$base, align = rules$align, seam = rules$seam_pt,
        pair = list(share = rules$pair_share, gap = rules$pair_gap * style$base))
 }
 

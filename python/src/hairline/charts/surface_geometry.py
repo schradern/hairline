@@ -35,7 +35,8 @@ def surface_scene(spec: dict, measure: Measure, style: dict) -> dict:
                      "ticks": neutral["faint"], "titles": neutral["muted"]},
             "lines": {"axis": neutral["axis"], "grid": neutral["grid"], "axis_width": style["axis_width"],
                       "grid_width": style["grid"]},
-            "gap": rules["label_gap"] * style["base"], "align": rules["align"], "seam": rules["seam_pt"],
+            "gap": load_tokens()["spacing"]["y_labels_plot"] * style["base"], "align": rules["align"],
+            "seam": rules["seam_pt"],
             "pair": {"share": rules["pair_share"], "gap": rules["pair_gap"] * style["base"]}}
 
 

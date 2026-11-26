@@ -713,7 +713,6 @@
     "ticks": 5,
     "max_bins": 5,
     "gradient_steps": 64,
-    "label_gap": 0.4,
     "align": 0.3,
     "seam_pt": 0.3,
     "max_side": 150,

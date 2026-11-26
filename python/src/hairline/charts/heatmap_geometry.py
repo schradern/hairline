@@ -1,5 +1,6 @@
-"""Heatmap geometry in pt: one cell per grid point, its edges halfway to the neighbouring values, y ticks left of the
-plot, x ticks below it, the y title above the plot on the left and the x title under the ticks on the right. Pure;
+"""Heatmap geometry in pt: one cell per grid point, its edges halfway to the neighbouring values, its axis text where
+the frame puts an axis chart's (the spacing tokens: y labels, x tick band and pad, axis titles), so it reads as
+one with the other charts. Pure;
 mirrored in R's heatmap_geometry.R. Beside a surface (`surface(heatmap=True)`) it shares the surface's height and
 leaves its cells untagged, since the surface's script links the two."""
 
@@ -13,26 +14,31 @@ from hairline.tokens import load_tokens
 
 
 def heatmap_scene(spec: dict, measure: Measure, style: dict) -> dict:
-    """The flat spec with every text's width in pt and the colours and sizes the drawing needs."""
-    neutral, size = style["neutral"], style["sizes"]["label"]
+    """The flat spec with every text's width in pt, and the colours, sizes and gaps the drawing needs: those the
+    frame gives an axis chart."""
+    neutral, size, base, tokens = style["neutral"], style["sizes"]["label"], style["base"], load_tokens()
+    spacing = tokens["spacing"]
     ticks = {axis: [{**tick, "width": measure(tick["text"], "label")} for tick in spec["ticks"][axis]]
              for axis in ("x", "y")}
     return {"x_edges": spec["x_edges"], "y_edges": spec["y_edges"], "fills": spec["fills"], "tips": spec["tips"],
             "titles": {axis: spec["titles"][axis] for axis in ("x", "y")}, "ticks": ticks,
             "text": {"cap": style["cap_height"] * size, "descender": style["descender"] * size,
-                     "ticks": neutral["faint"], "titles": neutral["muted"]},
-            "gap": load_tokens()["surface"]["label_gap"] * style["base"], "seam": load_tokens()["surface"]["seam_pt"],
-            "aspect": load_tokens()["heatmap"]["aspect"]}
+                     "ascender": style["ascender"] * size, "ticks": neutral["faint"], "titles": neutral["muted"]},
+            "gaps": {"y_labels": spacing["y_labels_plot"] * base, "x_pad": spacing["x_tick_pad"] * size,
+                     "x_band": spacing["x_tick_labels"] * size, "x_title": spacing["x_title"] * base,
+                     "y_title": spacing["y_title"] * base},
+            "seam": tokens["surface"]["seam_pt"], "aspect": tokens["heatmap"]["aspect"]}
 
 
 def plot_frame(scene: dict, box: Box, height: float | None) -> Box:
-    """The cells' rectangle: right of the y ticks, under the y title, above the x ticks and title, its height
-    `height` less the text rows (or the width times the aspect, at most what the box allows)."""
-    glyphs, gap = scene["text"], scene["gap"]
+    """The cells' rectangle: right of the y ticks, under the y title, above the x tick band and title, as the frame
+    places an axis chart's; its height `height` less the text rows (or the width times the aspect, at most what the
+    box allows)."""
+    glyphs, gaps = scene["text"], scene["gaps"]
     line = glyphs["cap"] + glyphs["descender"]
-    left = box.x + max((tick["width"] for tick in scene["ticks"]["y"]), default=0.0) + gap
-    top = box.y + (line + gap if scene["titles"]["y"] else glyphs["cap"] / 2)
-    below = gap + line + (gap + line if scene["titles"]["x"] else 0.0)
+    left = box.x + max((tick["width"] for tick in scene["ticks"]["y"]), default=0.0) + gaps["y_labels"]
+    top = box.y + (line + gaps["y_title"] if scene["titles"]["y"] else glyphs["cap"] / 2)
+    below = gaps["x_band"] + (gaps["x_title"] + line if scene["titles"]["x"] else 0.0)
     last = scene["ticks"]["x"][-1]["width"] / 2 if scene["ticks"]["x"] else 0.0
     width = box.x + box.width - last - left
     room = (box.height if height is None else height) - (top - box.y) - below
@@ -71,12 +77,13 @@ def heatmap_layout(scene: dict, box: Box, height: float | None = None,
     """Cells, then tick labels and titles; and the cells' rectangles for the script."""
     plot = plot_frame(scene, box, height)
     shapes, cells = cell_shapes(scene, plot, tag)
-    glyphs, gap = scene["text"], scene["gap"]
+    glyphs, gaps = scene["text"], scene["gaps"]
     for tick in scene["ticks"]["y"]:
         y = plot.y + (1 - tick["at"]) * plot.height
-        shapes.append({**text(plot.x - gap, y + glyphs["cap"] / 2, tick["text"], "label", glyphs["ticks"], "right"),
-                       "part": "tick"})
-    baseline = plot.y + plot.height + gap + glyphs["cap"]
+        shapes.append({**text(plot.x - gaps["y_labels"], y + glyphs["cap"] / 2, tick["text"], "label", glyphs["ticks"],
+                              "right"), "part": "tick"})
+    bottom = plot.y + plot.height
+    baseline = bottom + gaps["x_pad"] + glyphs["ascender"]
     for tick in scene["ticks"]["x"]:
         shapes.append({**text(plot.x + tick["at"] * plot.width, baseline, tick["text"], "label", glyphs["ticks"],
                               "center"), "part": "tick"})
@@ -84,7 +91,7 @@ def heatmap_layout(scene: dict, box: Box, height: float | None = None,
         shapes.append({**text(box.x, box.y + glyphs["cap"], scene["titles"]["y"], "label", glyphs["titles"]),
                        "part": "title"})
     if scene["titles"]["x"]:
-        below = baseline + glyphs["descender"] + gap + glyphs["cap"]
+        below = bottom + gaps["x_band"] + gaps["x_title"] + glyphs["cap"]
         shapes.append({**text(plot.x + plot.width, below, scene["titles"]["x"], "label", glyphs["titles"], "right"),
                        "part": "title"})
     return shapes, cells
