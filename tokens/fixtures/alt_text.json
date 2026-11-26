@@ -21460,5 +21460,815 @@
    },
    "alt": "Study selection. PRISMA-Flussdiagramm. 300 Datensätze identifiziert, 300 gesichtet, 40 Berichte auf Eignung geprüft, 8 Studien eingeschlossen."
   }
+ ],
+ "risk_of_bias": [
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Kim 2020",
+     "Diaz 2021",
+     "Roy 2022"
+    ],
+    "Randomisation": [
+     "Low",
+     "High",
+     "Some concerns",
+     "High"
+    ],
+    "Blinding": [
+     "low",
+     "some",
+     "low",
+     "high"
+    ],
+    "Outcome": [
+     "low",
+     "low",
+     "low",
+     "some"
+    ]
+   },
+   "options": {
+    "domains": [
+     "Randomisation",
+     "Blinding",
+     "Outcome"
+    ]
+   },
+   "alt": "Risk of bias. Risk-of-bias summary. Overall: 1 low, 1 some concerns, 2 high. Most often high: Randomisation (2)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Kim 2020",
+     "Diaz 2021",
+     "Roy 2022"
+    ],
+    "Randomisation": [
+     "Low",
+     "High",
+     "Some concerns",
+     "High"
+    ],
+    "Blinding": [
+     "low",
+     "some",
+     "low",
+     "high"
+    ],
+    "Outcome": [
+     "low",
+     "low",
+     "low",
+     "some"
+    ]
+   },
+   "options": {
+    "domains": [
+     "Randomisation",
+     "Blinding"
+    ],
+    "overall": null
+   },
+   "alt": "Risk of bias. Risk-of-bias summary. Most often high: Randomisation (2)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Kim 2020",
+     "Diaz 2021",
+     "Roy 2022"
+    ],
+    "Randomisation": [
+     "Low",
+     "High",
+     "Some concerns",
+     "High"
+    ],
+    "Blinding": [
+     "low",
+     "some",
+     "low",
+     "high"
+    ],
+    "Outcome": [
+     "low",
+     "low",
+     "low",
+     "some"
+    ]
+   },
+   "options": {
+    "domains": [
+     "Outcome"
+    ],
+    "overall": "All"
+   },
+   "alt": "Risk of bias. Risk-of-bias summary. All: 3 low, 1 some concerns, 0 high."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Lee 2019",
+     "Kim 2020",
+     "Kim 2020"
+    ],
+    "domain": [
+     "D1",
+     "D2",
+     "D1",
+     "D2"
+    ],
+    "judgement": [
+     "Low risk",
+     "Unclear",
+     "Low",
+     "Moderate"
+    ]
+   },
+   "options": {
+    "domain": "domain",
+    "judgement": "judgement"
+   },
+   "alt": "Risk of bias. Risk-of-bias summary. Overall: 0 low, 2 some concerns, 0 high."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Lee 2019",
+     "Kim 2020",
+     "Kim 2020"
+    ],
+    "domain": [
+     "D1",
+     "D2",
+     "D1",
+     "D2"
+    ],
+    "judgement": [
+     "Low risk",
+     "Unclear",
+     "Low",
+     "Moderate"
+    ]
+   },
+   "options": {
+    "domain": "domain",
+    "judgement": "judgement",
+    "overall": null
+   },
+   "alt": "Risk of bias. Risk-of-bias summary."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Kim 2020",
+     "Diaz 2021",
+     "Roy 2022"
+    ],
+    "Randomisation": [
+     "Low",
+     "High",
+     "Some concerns",
+     "High"
+    ],
+    "Blinding": [
+     "low",
+     "some",
+     "low",
+     "high"
+    ],
+    "Outcome": [
+     "low",
+     "low",
+     "low",
+     "some"
+    ]
+   },
+   "options": {
+    "domains": [
+     "Randomisation",
+     "Blinding",
+     "Outcome"
+    ]
+   },
+   "alt": "Risk of bias. Risk-of-Bias-Übersicht. Overall: 1 niedrig, 1 mit Bedenken, 2 hoch. Am häufigsten hoch: Randomisation (2)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Kim 2020",
+     "Diaz 2021",
+     "Roy 2022"
+    ],
+    "Randomisation": [
+     "Low",
+     "High",
+     "Some concerns",
+     "High"
+    ],
+    "Blinding": [
+     "low",
+     "some",
+     "low",
+     "high"
+    ],
+    "Outcome": [
+     "low",
+     "low",
+     "low",
+     "some"
+    ]
+   },
+   "options": {
+    "domains": [
+     "Randomisation",
+     "Blinding"
+    ],
+    "overall": null
+   },
+   "alt": "Risk of bias. Risk-of-Bias-Übersicht. Am häufigsten hoch: Randomisation (2)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Kim 2020",
+     "Diaz 2021",
+     "Roy 2022"
+    ],
+    "Randomisation": [
+     "Low",
+     "High",
+     "Some concerns",
+     "High"
+    ],
+    "Blinding": [
+     "low",
+     "some",
+     "low",
+     "high"
+    ],
+    "Outcome": [
+     "low",
+     "low",
+     "low",
+     "some"
+    ]
+   },
+   "options": {
+    "domains": [
+     "Outcome"
+    ],
+    "overall": "All"
+   },
+   "alt": "Risk of bias. Risk-of-Bias-Übersicht. All: 3 niedrig, 1 mit Bedenken, 0 hoch."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Lee 2019",
+     "Kim 2020",
+     "Kim 2020"
+    ],
+    "domain": [
+     "D1",
+     "D2",
+     "D1",
+     "D2"
+    ],
+    "judgement": [
+     "Low risk",
+     "Unclear",
+     "Low",
+     "Moderate"
+    ]
+   },
+   "options": {
+    "domain": "domain",
+    "judgement": "judgement"
+   },
+   "alt": "Risk of bias. Risk-of-Bias-Übersicht. Overall: 0 niedrig, 2 mit Bedenken, 0 hoch."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "study": [
+     "Lee 2019",
+     "Lee 2019",
+     "Kim 2020",
+     "Kim 2020"
+    ],
+    "domain": [
+     "D1",
+     "D2",
+     "D1",
+     "D2"
+    ],
+    "judgement": [
+     "Low risk",
+     "Unclear",
+     "Low",
+     "Moderate"
+    ]
+   },
+   "options": {
+    "domain": "domain",
+    "judgement": "judgement",
+    "overall": null
+   },
+   "alt": "Risk of bias. Risk-of-Bias-Übersicht."
+  }
+ ],
+ "arcs": [
+  {
+   "locale": "en",
+   "data": {
+    "source": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ER"
+    ],
+    "target": [
+     "Ward",
+     "ICU",
+     "ER",
+     "Ward"
+    ],
+    "n": [
+     50,
+     30,
+     20,
+     60
+    ]
+   },
+   "options": {
+    "value": "n"
+   },
+   "alt": "N from source to target. Arc diagram. Largest link: ICU ↔ Ward (80)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "source": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ER"
+    ],
+    "target": [
+     "Ward",
+     "ICU",
+     "ER",
+     "Ward"
+    ],
+    "n": [
+     50,
+     30,
+     20,
+     60
+    ]
+   },
+   "options": {},
+   "alt": "Count from source to target. Arc diagram. Largest link: ICU ↔ Ward (2)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "source": [
+     "A",
+     "B",
+     "C"
+    ],
+    "target": [
+     "B",
+     "C",
+     "A"
+    ],
+    "n": [
+     2.5,
+     2.5,
+     1
+    ]
+   },
+   "options": {
+    "value": "n"
+   },
+   "alt": "N from source to target. Arc diagram. Largest link: A → B, B → C (2.5)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "source": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ER"
+    ],
+    "target": [
+     "Ward",
+     "ICU",
+     "ER",
+     "Ward"
+    ],
+    "n": [
+     50,
+     30,
+     20,
+     60
+    ]
+   },
+   "options": {
+    "value": "n"
+   },
+   "alt": "N from source to target. Bogendiagramm. Größte Verbindung: ICU ↔ Ward (80)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "source": [
+     "ICU",
+     "Ward",
+     "ICU",
+     "ER"
+    ],
+    "target": [
+     "Ward",
+     "ICU",
+     "ER",
+     "Ward"
+    ],
+    "n": [
+     50,
+     30,
+     20,
+     60
+    ]
+   },
+   "options": {},
+   "alt": "Count from source to target. Bogendiagramm. Größte Verbindung: ICU ↔ Ward (2)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "source": [
+     "A",
+     "B",
+     "C"
+    ],
+    "target": [
+     "B",
+     "C",
+     "A"
+    ],
+    "n": [
+     2.5,
+     2.5,
+     1
+    ]
+   },
+   "options": {
+    "value": "n"
+   },
+   "alt": "N from source to target. Bogendiagramm. Größte Verbindung: A → B, B → C (2,5)."
+  }
+ ],
+ "swimlanes": [
+  {
+   "locale": "en",
+   "data": {
+    "room": [
+     "OR 1",
+     "OR 1",
+     "OR 2",
+     "OR 3"
+    ],
+    "start": [
+     7.25,
+     12.0,
+     8.0,
+     8.0
+    ],
+    "end": [
+     11.5,
+     15.0,
+     13.5,
+     13.5
+    ],
+    "operation": [
+     "Hip",
+     "Knee",
+     "Spine",
+     ""
+    ],
+    "team": [
+     "Ortho",
+     "Ortho",
+     "Neuro",
+     "Neuro"
+    ]
+   },
+   "options": {
+    "row": "room"
+   },
+   "alt": "Room over the day. Swimlane chart. 4 intervals in 3 rows, from 07:15 to 15:00. Longest: OR 2, 08:00–13:30."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "room": [
+     "OR 1",
+     "OR 1",
+     "OR 2",
+     "OR 3"
+    ],
+    "start": [
+     7.25,
+     12.0,
+     8.0,
+     8.0
+    ],
+    "end": [
+     11.5,
+     15.0,
+     13.5,
+     13.5
+    ],
+    "operation": [
+     "Hip",
+     "Knee",
+     "Spine",
+     ""
+    ],
+    "team": [
+     "Ortho",
+     "Ortho",
+     "Neuro",
+     "Neuro"
+    ]
+   },
+   "options": {
+    "row": "room",
+    "label": "operation"
+   },
+   "alt": "Room over the day. Swimlane chart. 4 intervals in 3 rows, from 07:15 to 15:00. Longest: Spine · OR 2, 08:00–13:30."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "room": [
+     "OR 1",
+     "OR 1",
+     "OR 2",
+     "OR 3"
+    ],
+    "start": [
+     7.25,
+     12.0,
+     8.0,
+     8.0
+    ],
+    "end": [
+     11.5,
+     15.0,
+     13.5,
+     13.5
+    ],
+    "operation": [
+     "Hip",
+     "Knee",
+     "Spine",
+     ""
+    ],
+    "team": [
+     "Ortho",
+     "Ortho",
+     "Neuro",
+     "Neuro"
+    ]
+   },
+   "options": {
+    "row": null,
+    "assign": "first_free",
+    "group": "team"
+   },
+   "alt": "Tasks over the day. Swimlane chart. 4 intervals in 3 rows, from 07:15 to 15:00. Longest: Neuro 1, 08:00–13:30."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "room": [
+     "Bed 1",
+     "Bed 2"
+    ],
+    "start": [
+     "2025-03-01 22:00",
+     "2025-03-01 23:30"
+    ],
+    "end": [
+     "2025-03-02 01:30",
+     "2025-03-02 06:15"
+    ]
+   },
+   "options": {
+    "row": "room"
+   },
+   "alt": "Room over the day. Swimlane chart. 2 intervals in 2 rows, from 22:00 to 06:15. Longest: Bed 2, 23:30–06:15."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "room": [
+     "OR 1"
+    ],
+    "start": [
+     7.25
+    ],
+    "end": [
+     11.5
+    ]
+   },
+   "options": {
+    "row": "room"
+   },
+   "alt": "Room over the day. Swimlane chart. 1 interval in 1 row, from 07:15 to 11:30."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "room": [
+     "OR 1",
+     "OR 1",
+     "OR 2",
+     "OR 3"
+    ],
+    "start": [
+     7.25,
+     12.0,
+     8.0,
+     8.0
+    ],
+    "end": [
+     11.5,
+     15.0,
+     13.5,
+     13.5
+    ],
+    "operation": [
+     "Hip",
+     "Knee",
+     "Spine",
+     ""
+    ],
+    "team": [
+     "Ortho",
+     "Ortho",
+     "Neuro",
+     "Neuro"
+    ]
+   },
+   "options": {
+    "row": "room"
+   },
+   "alt": "Room over the day. Swimlane-Diagramm. 4 Intervalle in 3 Zeilen, von 07:15 bis 15:00. Am längsten: OR 2, 08:00–13:30."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "room": [
+     "OR 1",
+     "OR 1",
+     "OR 2",
+     "OR 3"
+    ],
+    "start": [
+     7.25,
+     12.0,
+     8.0,
+     8.0
+    ],
+    "end": [
+     11.5,
+     15.0,
+     13.5,
+     13.5
+    ],
+    "operation": [
+     "Hip",
+     "Knee",
+     "Spine",
+     ""
+    ],
+    "team": [
+     "Ortho",
+     "Ortho",
+     "Neuro",
+     "Neuro"
+    ]
+   },
+   "options": {
+    "row": "room",
+    "label": "operation"
+   },
+   "alt": "Room over the day. Swimlane-Diagramm. 4 Intervalle in 3 Zeilen, von 07:15 bis 15:00. Am längsten: Spine · OR 2, 08:00–13:30."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "room": [
+     "OR 1",
+     "OR 1",
+     "OR 2",
+     "OR 3"
+    ],
+    "start": [
+     7.25,
+     12.0,
+     8.0,
+     8.0
+    ],
+    "end": [
+     11.5,
+     15.0,
+     13.5,
+     13.5
+    ],
+    "operation": [
+     "Hip",
+     "Knee",
+     "Spine",
+     ""
+    ],
+    "team": [
+     "Ortho",
+     "Ortho",
+     "Neuro",
+     "Neuro"
+    ]
+   },
+   "options": {
+    "row": null,
+    "assign": "first_free",
+    "group": "team"
+   },
+   "alt": "Tasks over the day. Swimlane-Diagramm. 4 Intervalle in 3 Zeilen, von 07:15 bis 15:00. Am längsten: Neuro 1, 08:00–13:30."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "room": [
+     "Bed 1",
+     "Bed 2"
+    ],
+    "start": [
+     "2025-03-01 22:00",
+     "2025-03-01 23:30"
+    ],
+    "end": [
+     "2025-03-02 01:30",
+     "2025-03-02 06:15"
+    ]
+   },
+   "options": {
+    "row": "room"
+   },
+   "alt": "Room over the day. Swimlane-Diagramm. 2 Intervalle in 2 Zeilen, von 22:00 bis 06:15. Am längsten: Bed 2, 23:30–06:15."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "room": [
+     "OR 1"
+    ],
+    "start": [
+     7.25
+    ],
+    "end": [
+     11.5
+    ]
+   },
+   "options": {
+    "row": "room"
+   },
+   "alt": "Room over the day. Swimlane-Diagramm. 1 Intervall in 1 Zeile, von 07:15 bis 11:30."
+  }
  ]
 }

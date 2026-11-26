@@ -35,7 +35,11 @@
   `correlation` names the pairs with the highest and lowest correlation; `funnel` gives its studies, the pooled
   estimate and Egger's test as its header writes them ("Funnel plot. 14 studies; pooled estimate 0.80, Egger's test
   p = 0.018."); `prisma` the records at each stage ("PRISMA flow diagram. 1,325 records identified, 1,020
-  screened, 110 reports assessed, 18 studies included."). The other charts follow.
+  screened, 110 reports assessed, 18 studies included."); `risk_of_bias` the overall row and the domains most
+  often judged high ("Risk-of-bias summary. Overall: 2 low, 7 some concerns, 3 high. Most often high:
+  Randomisation (2)."); `arcs` the largest link ("Arc diagram. Largest link: Ward → Rehabilitation (61).");
+  `swimlanes` how many intervals in how many rows, from the earliest start to the latest end, and the longest
+  interval as its tooltip names it (not when drawn `into=` another figure). The other charts follow.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.

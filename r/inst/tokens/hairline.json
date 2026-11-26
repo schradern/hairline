@@ -467,7 +467,19 @@
         "prisma_identified": "{n} records identified",
         "prisma_screened": "{n} screened",
         "prisma_assessed": "{n} reports assessed",
-        "prisma_included": "{n} studies included"
+        "prisma_included": "{n} studies included",
+        "kind_risk_of_bias": "Risk-of-bias summary",
+        "rob_counts": "{label}: {low} low, {some} some concerns, {high} high.",
+        "rob_most_high": "Most often high: {domains} ({n}).",
+        "kind_arcs": "Arc diagram",
+        "largest_link": "Largest link: {pairs}.",
+        "kind_swimlanes": "Swimlane chart",
+        "intervals_one": "1 interval",
+        "intervals_many": "{n} intervals",
+        "rows_one": "1 row",
+        "rows_many": "{n} rows",
+        "swimlanes_span": "{intervals} in {rows}, from {start} to {end}.",
+        "swimlanes_longest": "Longest: {name}, {start}–{end}."
       }
     },
     "de": {
@@ -623,7 +635,19 @@
         "prisma_identified": "{n} Datensätze identifiziert",
         "prisma_screened": "{n} gesichtet",
         "prisma_assessed": "{n} Berichte auf Eignung geprüft",
-        "prisma_included": "{n} Studien eingeschlossen"
+        "prisma_included": "{n} Studien eingeschlossen",
+        "kind_risk_of_bias": "Risk-of-Bias-Übersicht",
+        "rob_counts": "{label}: {low} niedrig, {some} mit Bedenken, {high} hoch.",
+        "rob_most_high": "Am häufigsten hoch: {domains} ({n}).",
+        "kind_arcs": "Bogendiagramm",
+        "largest_link": "Größte Verbindung: {pairs}.",
+        "kind_swimlanes": "Swimlane-Diagramm",
+        "intervals_one": "1 Intervall",
+        "intervals_many": "{n} Intervalle",
+        "rows_one": "1 Zeile",
+        "rows_many": "{n} Zeilen",
+        "swimlanes_span": "{intervals} in {rows}, von {start} bis {end}.",
+        "swimlanes_longest": "Am längsten: {name}, {start}–{end}."
       }
     }
   },

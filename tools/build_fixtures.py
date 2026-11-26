@@ -568,6 +568,34 @@ ALT_FLOWS_PRISMA = [
     {"identified": 300, "screened": 300, "assessed": 40, "excluded_reasons": {"Wrong design": 32}, "included": 8},
 ]
 
+ALT_JUDGEMENTS = {
+    "wide": {"study": ["Lee 2019", "Kim 2020", "Diaz 2021", "Roy 2022"],
+             "Randomisation": ["Low", "High", "Some concerns", "High"], "Blinding": ["low", "some", "low", "high"],
+             "Outcome": ["low", "low", "low", "some"]},
+    "long": {"study": ["Lee 2019", "Lee 2019", "Kim 2020", "Kim 2020"], "domain": ["D1", "D2", "D1", "D2"],
+             "judgement": ["Low risk", "Unclear", "Low", "Moderate"]},
+}
+ALT_JUDGEMENT_OPTIONS = [("wide", {"domains": ["Randomisation", "Blinding", "Outcome"]}),
+                         ("wide", {"domains": ["Randomisation", "Blinding"], "overall": None}),
+                         ("wide", {"domains": ["Outcome"], "overall": "All"}),
+                         ("long", {"domain": "domain", "judgement": "judgement"}),
+                         ("long", {"domain": "domain", "judgement": "judgement", "overall": None})]
+ALT_LINKS = {"units": {"source": ["ICU", "Ward", "ICU", "ER"], "target": ["Ward", "ICU", "ER", "Ward"],
+                       "n": [50, 30, 20, 60]},
+             "ties": {"source": ["A", "B", "C"], "target": ["B", "C", "A"], "n": [2.5, 2.5, 1]}}
+ALT_LINK_OPTIONS = [("units", {"value": "n"}), ("units", {}), ("ties", {"value": "n"})]
+ALT_SHIFTS = {
+    "rooms": {"room": ["OR 1", "OR 1", "OR 2", "OR 3"], "start": [7.25, 12.0, 8.0, 8.0],
+              "end": [11.5, 15.0, 13.5, 13.5], "operation": ["Hip", "Knee", "Spine", ""],
+              "team": ["Ortho", "Ortho", "Neuro", "Neuro"]},
+    "night": {"room": ["Bed 1", "Bed 2"], "start": ["2025-03-01 22:00", "2025-03-01 23:30"],
+              "end": ["2025-03-02 01:30", "2025-03-02 06:15"]},
+    "one": {"room": ["OR 1"], "start": [7.25], "end": [11.5]},
+}
+ALT_SHIFT_OPTIONS = [("rooms", {"row": "room"}), ("rooms", {"row": "room", "label": "operation"}),
+                     ("rooms", {"row": None, "assign": "first_free", "group": "team"}), ("night", {"row": "room"}),
+                     ("one", {"row": "room"})]
+
 
 def alt_text_cases() -> dict:
     """Every chart that describes its data, with its alt text, in English and German, for both packages to write
@@ -622,6 +650,15 @@ def alt_text_cases() -> dict:
                 for locale in ("en", "de") for options in ALT_MEASURE_OPTIONS]
     studies = [case(locale, ALT_STUDIES, options, lambda frame, options: hl.funnel(frame, **options))
                for locale in ("en", "de") for options in ALT_STUDY_OPTIONS]
+    judgements = [case(locale, ALT_JUDGEMENTS[name], options,
+                       lambda frame, options: hl.risk_of_bias(frame, "study", **options))
+                  for locale in ("en", "de") for name, options in ALT_JUDGEMENT_OPTIONS]
+    links = [case(locale, ALT_LINKS[name], options, lambda frame, options: hl.arcs(frame, "source", "target",
+                                                                                     **options))
+             for locale in ("en", "de") for name, options in ALT_LINK_OPTIONS]
+    shifts = [case(locale, ALT_SHIFTS[name], options,
+                   lambda frame, options: hl.swimlanes(frame, start="start", end="end", **options))
+              for locale in ("en", "de") for name, options in ALT_SHIFT_OPTIONS]
     reviews = []
     for locale in ("en", "de"):
         hl.use(brand=False, locale=locale)
@@ -633,7 +670,7 @@ def alt_text_cases() -> dict:
     return {"bars": bars, "timeseries": series, "distributions": distributions, "kaplan_meier": survival,
             "forest": effects, "dotplot": dots, "scatter": points, "donut": slices, "likert": ratings,
             "sankey": flows, "chord": exchanges, "venn": sets, "correlation": measures, "funnel": studies,
-            "prisma": reviews}
+            "prisma": reviews, "risk_of_bias": judgements, "arcs": links, "swimlanes": shifts}
 
 
 def heatmap_cases() -> dict:

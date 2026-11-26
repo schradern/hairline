@@ -13,6 +13,7 @@ from matplotlib.patches import Rectangle
 from hairline import entities
 from hairline.charts.common import check_columns, check_labels, humanise, ordered_names
 from hairline.charts.correlation_geometry import text_color
+from hairline.charts.swimlanes_alt import swimlanes_description
 from hairline.charts.time_of_day import add_legend, clock, first_free, row_layout, separators, target_panels
 from hairline.charts.timeseries import iso_datetimes
 from hairline.color.space import hex_to_oklch, oklch_to_hex
@@ -114,6 +115,11 @@ def swimlanes(data: pd.DataFrame, row: str | None, start: str, end: str, *, labe
         made.min_plot = len(rows) * load_tokens()["swimlanes"]["row_pitch"]
         return made
     result, (index,) = target_panels(into, panel, 1, make)
+    if into is None:
+        named = [f"{text} · {name}" if text else name for text, name in
+                 zip(data[label].astype(str) if label else [""] * len(data), data["_row"], strict=True)]
+        result.description = swimlanes_description(named, times[start], times[end], len(rows),
+                                                   current_settings().locale)
     draw_bars(result, index, data, times, ys, palette, {"start": start, "end": end, "inner": inner,
                                                          "label": label, "colour": coloured})
     ax = result.axes[index]

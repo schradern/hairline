@@ -1,6 +1,6 @@
 # The descriptions of the flow and set diagrams for their alt text: a Sankey's total and its largest flow at each
-# step, a chord diagram's largest exchange and the groups with the highest and lowest total, a Venn diagram's sets
-# and how many are in all of them. Mirrors the Python package's charts/diagrams_alt.py.
+# step, a chord diagram's largest exchange and the groups with the highest and lowest total, an arc diagram's largest
+# link, a Venn diagram's sets and how many are in all of them. Mirrors the Python package's charts/diagrams_alt.py.
 
 # "ICU → Ward (40)": the names with the largest value, ties named together, and that value. As Python's largest().
 alt_largest <- function(names, values, digits) {
@@ -42,6 +42,14 @@ chord_description <- function(spec) {
                         vapply(spec$nodes, `[[`, "", "value_text"), alt_centre_words, centre = word("node_total"))
   findings <- c(word("largest_exchange", pairs = alt_largest(pairs, values, auto_digits(values))), nodes)
   alt_described("kind_chord", paste(findings, collapse = " "))
+}
+
+# "Arc diagram. Largest link: ICU <-> Ward (80)."; a link carrying both directions is named with both arrows. As
+# Python's arcs_description().
+arcs_description <- function(spec) {
+  values <- vapply(spec$links, function(link) as.numeric(link$value), 0)
+  pairs <- vapply(spec$links, `[[`, "", "pair")
+  alt_described("kind_arcs", word("largest_link", pairs = alt_largest(pairs, values, auto_digits(values))))
 }
 
 # "Venn diagram. Sets: Diabetes (120), Obesity (90). In both: 40."; the last region holds every set. As Python's

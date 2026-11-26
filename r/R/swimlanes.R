@@ -153,6 +153,7 @@ hl_swimlanes <- function(data, row, start, end, label = NULL, color_by = NULL, i
                                          text = paste0(prefix, data$.row, ": ", clock(bars$x0), "\u2013",
                                                        clock(bars$x1)))
   plot@meta$hairline_time <- list(time)
+  plot@meta$hairline_description <- swimlanes_description(paste0(prefix, data$.row), bars$x0, bars$x1, length(rows))
   plot@meta$hairline_min_plot <- length(rows) * rules$row_pitch
   plot@meta$hairline_height_mm <- 40
   plot@meta$hairline_size <- size

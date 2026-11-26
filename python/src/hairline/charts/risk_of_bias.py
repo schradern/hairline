@@ -7,9 +7,11 @@ from collections.abc import Sequence
 import pandas as pd
 
 from hairline.charts.common import check_columns, check_labels
+from hairline.charts.review_alt import risk_of_bias_description
 from hairline.charts.risk_of_bias_geometry import JUDGEMENTS, risk_of_bias_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
+from hairline.settings import current_settings
 from hairline.tokens import load_tokens
 
 SYNONYMS = {"low": "low", "low risk": "low", "some": "some", "some concerns": "some", "unclear": "some",
@@ -72,6 +74,7 @@ def risk_of_bias(data: pd.DataFrame, study: str, domain: str | None = None, judg
     """From a long table (study, domain, judgement) or a wide one (`domains` as columns)."""
     spec = risk_of_bias_spec(data, study, domain, judgement, domains=domains, overall=overall)
     result = figure(title or "Risk of bias", subtitle=subtitle, caption=caption, size=size)
+    result.description = risk_of_bias_description(spec, current_settings().locale)
     result.draw(0, lambda box, measure, style: risk_of_bias_drawing(spec, box, measure, style))
     labels = load_tokens()["risk_of_bias"]["labels"]
     result.legend([("square", spec["colors"][level], labels[level]) for level in JUDGEMENTS])

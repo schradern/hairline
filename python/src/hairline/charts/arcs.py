@@ -8,6 +8,7 @@ import pandas as pd
 
 from hairline.charts.arcs_geometry import arcs_drawing
 from hairline.charts.common import flow_rows, humanise, with_counts
+from hairline.charts.diagrams_alt import arcs_description
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.marks import lone_color
@@ -62,5 +63,6 @@ def arcs(data: pd.DataFrame, source: str, target: str, value: str | None = None,
     label = humanise(value) if value else "Count"
     result = figure(title or f"{label} from {str(source).replace('_', ' ')} to {str(target).replace('_', ' ')}",
                     subtitle=subtitle, caption=caption, size=size)
+    result.description = arcs_description(spec, current_settings().locale)
     result.draw(0, lambda box, measure, style: arcs_drawing(spec, box, measure, style))
     return fit_height(result)

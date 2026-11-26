@@ -35,7 +35,11 @@
   In both: 40."); `hl_correlation()` names the pairs with the highest and lowest correlation; `hl_funnel()` gives
   its studies, the pooled estimate and Egger's test as its header writes them ("Funnel plot. 14 studies; pooled
   estimate 0.80, Egger's test p = 0.018."); `hl_prisma()` the records at each stage ("PRISMA flow diagram. 1,325
-  records identified, 1,020 screened, 110 reports assessed, 18 studies included."). The other charts follow.
+  records identified, 1,020 screened, 110 reports assessed, 18 studies included."); `hl_risk_of_bias()` the
+  overall row and the domains most often judged high ("Risk-of-bias summary. Overall: 2 low, 7 some concerns,
+  3 high. Most often high: Randomisation (2)."); `hl_arcs()` the largest link ("Arc diagram. Largest link: Ward →
+  Rehabilitation (61)."); `hl_swimlanes()` how many intervals in how many rows, from the earliest start to the
+  latest end, and the longest interval as its tooltip names it. The other charts follow.
 * `hl_prisma()` no longer reads `excluded_reasons` as the excluded records when `excluded` is left out.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.

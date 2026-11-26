@@ -160,5 +160,6 @@ hl_arcs <- function(data, source, target, value = NULL, title = NULL, subtitle =
                   subtitle = subtitle, caption = caption, x = NULL, y = NULL) + theme_hairline(axes = FALSE)
   plot@meta$hairline_drawing <- function(box, measure, style) arcs_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
+  plot@meta$hairline_description <- arcs_description(spec)
   plot
 }

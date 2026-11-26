@@ -123,6 +123,26 @@ def test_prisma_alt_text_matches_the_shared_fixture(case):
     assert figure_alt(hl.prisma(case["counts"])) == case["alt"]
     hl.use(brand=False)
 
+@pytest.mark.parametrize("case", FIXTURE["risk_of_bias"], ids=case_id)
+def test_risk_of_bias_alt_text_matches_the_shared_fixture(case):
+    hl.use(brand=False, locale=case["locale"])
+    assert figure_alt(hl.risk_of_bias(frame_of(case), "study", **case["options"])) == case["alt"]
+    hl.use(brand=False)
+
+
+@pytest.mark.parametrize("case", FIXTURE["arcs"], ids=case_id)
+def test_arcs_alt_text_matches_the_shared_fixture(case):
+    hl.use(brand=False, locale=case["locale"])
+    assert figure_alt(hl.arcs(frame_of(case), "source", "target", **case["options"])) == case["alt"]
+    hl.use(brand=False)
+
+
+@pytest.mark.parametrize("case", FIXTURE["swimlanes"], ids=case_id)
+def test_swimlanes_alt_text_matches_the_shared_fixture(case):
+    hl.use(brand=False, locale=case["locale"])
+    assert figure_alt(hl.swimlanes(frame_of(case), start="start", end="end", **case["options"])) == case["alt"]
+    hl.use(brand=False)
+
 def test_extremes_name_ties_together_and_leave_out_missing_values():
     entries = [("a", 2.0, "2"), ("b", float("nan"), ""), ("c", 5.0, "5"), ("d", 5.0, "5"), ("e", 1.0, "1")]
     assert extremes(entries, "en") == "Highest: c, d (5); lowest: e (1)."

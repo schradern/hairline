@@ -1,6 +1,6 @@
 """The descriptions of the flow and set diagrams for their alt text: a Sankey's total and its largest flow at each
-step, a chord diagram's largest exchange and the groups with the highest and lowest total, a Venn diagram's sets and
-how many are in all of them. Mirrored in R's diagrams_alt.R."""
+step, a chord diagram's largest exchange and the groups with the highest and lowest total, an arc diagram's largest
+link, a Venn diagram's sets and how many are in all of them. Mirrored in R's diagrams_alt.R."""
 
 from __future__ import annotations
 
@@ -49,6 +49,13 @@ def chord_description(spec: dict, locale: str) -> str:
     findings = [word("largest_exchange", locale, pairs=largest(pairs, digits, locale)),
                 extremes(nodes, locale, CENTRE_WORDS, centre=word("node_total", locale))]
     return described("kind_chord", " ".join(findings), locale)
+
+
+def arcs_description(spec: dict, locale: str) -> str:
+    """'Arc diagram. Largest link: ICU ↔ Ward (80).'; a link carrying both directions is named with both arrows."""
+    digits = auto_digits([link["value"] for link in spec["links"]])
+    pairs = [(link["pair"], link["value"]) for link in spec["links"]]
+    return described("kind_arcs", word("largest_link", locale, pairs=largest(pairs, digits, locale)), locale)
 
 
 def venn_description(spec: dict, locale: str) -> str:
