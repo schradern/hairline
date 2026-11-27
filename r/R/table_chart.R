@@ -117,6 +117,7 @@ hl_table <- function(data, title = NULL, subtitle = NULL, caption = NULL, footno
   plot@meta$hairline_drawing <- function(box, measure, style) table_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
   plot@meta$hairline_tabular <- spec
+  plot@meta$hairline_description <- table_description(spec, !is.null(title))
   plot@meta$hairline_size <- size
   plot
 }

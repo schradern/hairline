@@ -479,7 +479,14 @@
         "rows_one": "1 row",
         "rows_many": "{n} rows",
         "swimlanes_span": "{intervals} in {rows}, from {start} to {end}.",
-        "swimlanes_longest": "Longest: {name}, {start}–{end}."
+        "swimlanes_longest": "Longest: {name}, {start}–{end}.",
+        "kind_partition": "Partition bars",
+        "kind_lanes": "Lane chart",
+        "lanes_peak": "{rows}; highest at {name}, {start}–{end} ({value}).",
+        "kind_table": "Table",
+        "columns_one": "1 column",
+        "columns_many": "{n} columns",
+        "table_size": "{rows} and {columns}: {names}."
       }
     },
     "de": {
@@ -647,7 +654,14 @@
         "rows_one": "1 Zeile",
         "rows_many": "{n} Zeilen",
         "swimlanes_span": "{intervals} in {rows}, von {start} bis {end}.",
-        "swimlanes_longest": "Am längsten: {name}, {start}–{end}."
+        "swimlanes_longest": "Am längsten: {name}, {start}–{end}.",
+        "kind_partition": "Partitionsbalken",
+        "kind_lanes": "Belegungsdiagramm",
+        "lanes_peak": "{rows}; am höchsten bei {name}, {start}–{end} ({value}).",
+        "kind_table": "Tabelle",
+        "columns_one": "1 Spalte",
+        "columns_many": "{n} Spalten",
+        "table_size": "{rows} und {columns}: {names}."
       }
     }
   },

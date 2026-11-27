@@ -596,6 +596,19 @@ ALT_SHIFT_OPTIONS = [("rooms", {"row": "room"}), ("rooms", {"row": "room", "labe
                      ("rooms", {"row": None, "assign": "first_free", "group": "team"}), ("night", {"row": "room"}),
                      ("one", {"row": "room"})]
 
+ALT_PARTS = {"routes": {"route": ["Home", "Home", "Ward", "Died"], "support": ["Alone", "Family", "Ward", "Died"],
+                        "patients": [300, 112, 97, 23]}}
+ALT_PART_OPTIONS = [{"levels": ["route", "support"], "value": "patients"}, {"levels": "route", "value": "patients"},
+                    {"levels": ["route", "support"]}]
+ALT_TABLES = {"summary": {"Group": ["ICU", "Ward", "ER"], "n": [12, 30, 7], "Median": [4.5, 3.0, None],
+                          "IQR": ["3–6", "2–4", "–"]},
+              "one": {"Unit": ["ICU"]}}
+ALT_TABLE_OPTIONS = [("summary", {"title": "Admissions"}), ("summary", {"digits": 2}), ("one", {})]
+ALT_STAYS = {"beds": {"bed": ["Bed 1", "Bed 1", "Bed 2", "Bed 3"], "unit": ["ICU", "ICU", "ICU", "Ward"],
+                      "start": ["2025-03-03 07:00", "2025-03-04 08:00", "2025-03-03 09:00", "2025-03-04 13:00"],
+                      "end": ["2025-03-03 12:00", "2025-03-04 10:00", "2025-03-03 10:30", "2025-03-04 18:45"]}}
+ALT_STAY_OPTIONS = [{}, {"value": "count"}, {"group": "unit"}, {"bin": 30}]
+
 
 def alt_text_cases() -> dict:
     """Every chart that describes its data, with its alt text, in English and German, for both packages to write
@@ -659,6 +672,13 @@ def alt_text_cases() -> dict:
     shifts = [case(locale, ALT_SHIFTS[name], options,
                    lambda frame, options: hl.swimlanes(frame, start="start", end="end", **options))
               for locale in ("en", "de") for name, options in ALT_SHIFT_OPTIONS]
+    parts = [case(locale, ALT_PARTS["routes"], options, lambda frame, options: hl.partition(frame, **options))
+             for locale in ("en", "de") for options in ALT_PART_OPTIONS]
+    tables = [case(locale, ALT_TABLES[name], options, lambda frame, options: hl.table(frame, **options))
+              for locale in ("en", "de") for name, options in ALT_TABLE_OPTIONS]
+    stays = [case(locale, ALT_STAYS["beds"], options,
+                  lambda frame, options: hl.lanes(frame, "bed", "start", "end", **options))
+             for locale in ("en", "de") for options in ALT_STAY_OPTIONS]
     reviews = []
     for locale in ("en", "de"):
         hl.use(brand=False, locale=locale)
@@ -670,7 +690,8 @@ def alt_text_cases() -> dict:
     return {"bars": bars, "timeseries": series, "distributions": distributions, "kaplan_meier": survival,
             "forest": effects, "dotplot": dots, "scatter": points, "donut": slices, "likert": ratings,
             "sankey": flows, "chord": exchanges, "venn": sets, "correlation": measures, "funnel": studies,
-            "prisma": reviews, "risk_of_bias": judgements, "arcs": links, "swimlanes": shifts}
+            "prisma": reviews, "risk_of_bias": judgements, "arcs": links, "swimlanes": shifts,
+            "partition": parts, "table": tables, "lanes": stays}
 
 
 def heatmap_cases() -> dict:

@@ -12,6 +12,7 @@ from matplotlib.collections import LineCollection, PolyCollection
 
 from hairline import entities
 from hairline.charts.common import check_columns, check_labels, humanise, ordered_names
+from hairline.charts.swimlanes_alt import lanes_description
 from hairline.charts.time_of_day import (
     MINUTES,
     add_caption,
@@ -190,6 +191,8 @@ def lanes(data: pd.DataFrame, row: str, start: str, end: str | None = None, *, g
         made.min_plot = len(rows) * load_tokens()["lanes"]["row_pitch"]
         return made
     result, (index,) = target_panels(into, panel, 1, make)
+    if into is None:
+        result.description = lanes_description(matrix, bin_minutes, value == "share", locale)
     ax = result.axes[index]
     draw_cells(result, index, matrix, ys, colours, ramps, steps, {"bin": bin_minutes, "value": value, "top": top})
     if flows is not None:

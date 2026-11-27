@@ -8,6 +8,7 @@ from collections.abc import Mapping, Sequence
 
 import pandas as pd
 
+from hairline.charts.table_alt import table_description
 from hairline.charts.table_geometry import table_drawing
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
@@ -105,6 +106,7 @@ def table(data: pd.DataFrame, title: str | None = None, *, subtitle: str | None 
     result = figure(title or "Table", subtitle=subtitle, caption=notes, size=size)
     result.draw(0, lambda box, measure, style: table_drawing(spec, box, measure, style))
     result.table_data = spec
+    result.description = table_description(spec, title is not None, current_settings().locale)
     return fit_height(result)
 
 

@@ -39,7 +39,10 @@
   often judged high ("Risk-of-bias summary. Overall: 2 low, 7 some concerns, 3 high. Most often high:
   Randomisation (2)."); `arcs` the largest link ("Arc diagram. Largest link: Ward → Rehabilitation (61).");
   `swimlanes` how many intervals in how many rows, from the earliest start to the latest end, and the longest
-  interval as its tooltip names it (not when drawn `into=` another figure). The other charts follow.
+  interval as its tooltip names it (not when drawn `into=` another figure); `partition` names the largest and
+  smallest part of its top level as `donut` does; `lanes` gives its rows and its highest cell as the cell's tooltip
+  writes it ("Lane chart. 6 rows; highest at Bed 3, 10:00–10:30 (95%)."); `table` its rows and columns and the
+  columns' names, the HTML table carrying the cells. Every chart but the palette swatches describes its data.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
 * `figure.description` holds the sentence; set it to write your own, or to `None` to leave it out.

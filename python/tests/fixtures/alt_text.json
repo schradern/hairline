@@ -22270,5 +22270,585 @@
    },
    "alt": "Room over the day. Swimlane-Diagramm. 1 Intervall in 1 Zeile, von 07:15 bis 11:30."
   }
+ ],
+ "partition": [
+  {
+   "locale": "en",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "levels": [
+     "route",
+     "support"
+    ],
+    "value": "patients"
+   },
+   "alt": "Patients by route and support. Partition bars. Largest: Home (77%); smallest: Died (4%)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "levels": "route",
+    "value": "patients"
+   },
+   "alt": "Patients by route. Partition bars. Largest: Home (77%); smallest: Died (4%)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "levels": [
+     "route",
+     "support"
+    ]
+   },
+   "alt": "Count by route and support. Partition bars. Largest: Home (50%); smallest: Ward, Died (25%)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "levels": [
+     "route",
+     "support"
+    ],
+    "value": "patients"
+   },
+   "alt": "Patients by route and support. Partitionsbalken. Am größten: Home (77 %); am kleinsten: Died (4 %)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "levels": "route",
+    "value": "patients"
+   },
+   "alt": "Patients by route. Partitionsbalken. Am größten: Home (77 %); am kleinsten: Died (4 %)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "levels": [
+     "route",
+     "support"
+    ]
+   },
+   "alt": "Count by route and support. Partitionsbalken. Am größten: Home (50 %); am kleinsten: Ward, Died (25 %)."
+  }
+ ],
+ "table": [
+  {
+   "locale": "en",
+   "data": {
+    "Group": [
+     "ICU",
+     "Ward",
+     "ER"
+    ],
+    "n": [
+     12,
+     30,
+     7
+    ],
+    "Median": [
+     4.5,
+     3.0,
+     null
+    ],
+    "IQR": [
+     "3–6",
+     "2–4",
+     "–"
+    ]
+   },
+   "options": {
+    "title": "Admissions"
+   },
+   "alt": "Admissions. Table. 3 rows and 4 columns: Group, n, Median and 1 more."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "Group": [
+     "ICU",
+     "Ward",
+     "ER"
+    ],
+    "n": [
+     12,
+     30,
+     7
+    ],
+    "Median": [
+     4.5,
+     3.0,
+     null
+    ],
+    "IQR": [
+     "3–6",
+     "2–4",
+     "–"
+    ]
+   },
+   "options": {
+    "digits": 2
+   },
+   "alt": "Table. 3 rows and 4 columns: Group, n, Median and 1 more."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "Unit": [
+     "ICU"
+    ]
+   },
+   "options": {},
+   "alt": "Table. 1 row and 1 column: Unit."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "Group": [
+     "ICU",
+     "Ward",
+     "ER"
+    ],
+    "n": [
+     12,
+     30,
+     7
+    ],
+    "Median": [
+     4.5,
+     3.0,
+     null
+    ],
+    "IQR": [
+     "3–6",
+     "2–4",
+     "–"
+    ]
+   },
+   "options": {
+    "title": "Admissions"
+   },
+   "alt": "Admissions. Tabelle. 3 Zeilen und 4 Spalten: Group, n, Median und 1 weitere."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "Group": [
+     "ICU",
+     "Ward",
+     "ER"
+    ],
+    "n": [
+     12,
+     30,
+     7
+    ],
+    "Median": [
+     4.5,
+     3.0,
+     null
+    ],
+    "IQR": [
+     "3–6",
+     "2–4",
+     "–"
+    ]
+   },
+   "options": {
+    "digits": 2
+   },
+   "alt": "Table. 3 Zeilen und 4 Spalten: Group, n, Median und 1 weitere."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "Unit": [
+     "ICU"
+    ]
+   },
+   "options": {},
+   "alt": "Table. 1 Zeile und 1 Spalte: Unit."
+  }
+ ],
+ "lanes": [
+  {
+   "locale": "en",
+   "data": {
+    "bed": [
+     "Bed 1",
+     "Bed 1",
+     "Bed 2",
+     "Bed 3"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward"
+    ],
+    "start": [
+     "2025-03-03 07:00",
+     "2025-03-04 08:00",
+     "2025-03-03 09:00",
+     "2025-03-04 13:00"
+    ],
+    "end": [
+     "2025-03-03 12:00",
+     "2025-03-04 10:00",
+     "2025-03-03 10:30",
+     "2025-03-04 18:45"
+    ]
+   },
+   "options": {},
+   "alt": "Bed over the day. All days, 2 days. Lane chart. 3 rows; highest at Bed 1, 08:00–08:15 (100%)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "bed": [
+     "Bed 1",
+     "Bed 1",
+     "Bed 2",
+     "Bed 3"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward"
+    ],
+    "start": [
+     "2025-03-03 07:00",
+     "2025-03-04 08:00",
+     "2025-03-03 09:00",
+     "2025-03-04 13:00"
+    ],
+    "end": [
+     "2025-03-03 12:00",
+     "2025-03-04 10:00",
+     "2025-03-03 10:30",
+     "2025-03-04 18:45"
+    ]
+   },
+   "options": {
+    "value": "count"
+   },
+   "alt": "Bed over the day. All days, 2 days. Lane chart. 3 rows; highest at Bed 1, 08:00–08:15 (1.0)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "bed": [
+     "Bed 1",
+     "Bed 1",
+     "Bed 2",
+     "Bed 3"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward"
+    ],
+    "start": [
+     "2025-03-03 07:00",
+     "2025-03-04 08:00",
+     "2025-03-03 09:00",
+     "2025-03-04 13:00"
+    ],
+    "end": [
+     "2025-03-03 12:00",
+     "2025-03-04 10:00",
+     "2025-03-03 10:30",
+     "2025-03-04 18:45"
+    ]
+   },
+   "options": {
+    "group": "unit"
+   },
+   "alt": "Bed over the day. All days, 2 days. Lane chart. 3 rows; highest at Bed 1, 08:00–08:15 (100%)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "bed": [
+     "Bed 1",
+     "Bed 1",
+     "Bed 2",
+     "Bed 3"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward"
+    ],
+    "start": [
+     "2025-03-03 07:00",
+     "2025-03-04 08:00",
+     "2025-03-03 09:00",
+     "2025-03-04 13:00"
+    ],
+    "end": [
+     "2025-03-03 12:00",
+     "2025-03-04 10:00",
+     "2025-03-03 10:30",
+     "2025-03-04 18:45"
+    ]
+   },
+   "options": {
+    "bin": 30
+   },
+   "alt": "Bed over the day. All days, 2 days. Lane chart. 3 rows; highest at Bed 1, 08:00–08:30 (100%)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "bed": [
+     "Bed 1",
+     "Bed 1",
+     "Bed 2",
+     "Bed 3"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward"
+    ],
+    "start": [
+     "2025-03-03 07:00",
+     "2025-03-04 08:00",
+     "2025-03-03 09:00",
+     "2025-03-04 13:00"
+    ],
+    "end": [
+     "2025-03-03 12:00",
+     "2025-03-04 10:00",
+     "2025-03-03 10:30",
+     "2025-03-04 18:45"
+    ]
+   },
+   "options": {},
+   "alt": "Bed over the day. Alle Tage, 2 Tage. Belegungsdiagramm. 3 Zeilen; am höchsten bei Bed 1, 08:00–08:15 (100 %)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "bed": [
+     "Bed 1",
+     "Bed 1",
+     "Bed 2",
+     "Bed 3"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward"
+    ],
+    "start": [
+     "2025-03-03 07:00",
+     "2025-03-04 08:00",
+     "2025-03-03 09:00",
+     "2025-03-04 13:00"
+    ],
+    "end": [
+     "2025-03-03 12:00",
+     "2025-03-04 10:00",
+     "2025-03-03 10:30",
+     "2025-03-04 18:45"
+    ]
+   },
+   "options": {
+    "value": "count"
+   },
+   "alt": "Bed over the day. Alle Tage, 2 Tage. Belegungsdiagramm. 3 Zeilen; am höchsten bei Bed 1, 08:00–08:15 (1,0)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "bed": [
+     "Bed 1",
+     "Bed 1",
+     "Bed 2",
+     "Bed 3"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward"
+    ],
+    "start": [
+     "2025-03-03 07:00",
+     "2025-03-04 08:00",
+     "2025-03-03 09:00",
+     "2025-03-04 13:00"
+    ],
+    "end": [
+     "2025-03-03 12:00",
+     "2025-03-04 10:00",
+     "2025-03-03 10:30",
+     "2025-03-04 18:45"
+    ]
+   },
+   "options": {
+    "group": "unit"
+   },
+   "alt": "Bed over the day. Alle Tage, 2 Tage. Belegungsdiagramm. 3 Zeilen; am höchsten bei Bed 1, 08:00–08:15 (100 %)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "bed": [
+     "Bed 1",
+     "Bed 1",
+     "Bed 2",
+     "Bed 3"
+    ],
+    "unit": [
+     "ICU",
+     "ICU",
+     "ICU",
+     "Ward"
+    ],
+    "start": [
+     "2025-03-03 07:00",
+     "2025-03-04 08:00",
+     "2025-03-03 09:00",
+     "2025-03-04 13:00"
+    ],
+    "end": [
+     "2025-03-03 12:00",
+     "2025-03-04 10:00",
+     "2025-03-03 10:30",
+     "2025-03-04 18:45"
+    ]
+   },
+   "options": {
+    "bin": 30
+   },
+   "alt": "Bed over the day. Alle Tage, 2 Tage. Belegungsdiagramm. 3 Zeilen; am höchsten bei Bed 1, 08:00–08:30 (100 %)."
+  }
  ]
 }

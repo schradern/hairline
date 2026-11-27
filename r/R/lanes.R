@@ -195,6 +195,7 @@ hl_lanes <- function(data, row, start, end = NULL, group = NULL, bin = NULL, val
   plot@meta$hairline_blocks <- if (!is.null(placed$groups)) list(layout$blocks)
   plot@meta$hairline_hover <- cbind(panel = 1L, cells[, c("name", "colour", "x0", "y0", "x1", "y1", "text")])
   plot@meta$hairline_time <- list(time)
+  plot@meta$hairline_description <- lanes_description(found$matrix, bin, value == "share")
   plot@meta$hairline_row_notes <- if (!is.null(found$label)) paste0(found$label, ".")
   plot@meta$hairline_min_plot <- length(rows) * hl_tokens()$lanes$row_pitch
   plot@meta$hairline_height_mm <- 40

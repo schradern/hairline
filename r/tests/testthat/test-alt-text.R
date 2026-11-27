@@ -112,6 +112,21 @@ test_that("swimlane alt text matches the shared fixture, in English and German",
                     function(data, options) do.call(hl_swimlanes, c(list(data, start = "start", end = "end"), options)))
 })
 
+test_that("partition alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$partition,
+                    function(data, options) do.call(hl_partition, c(list(data), options)))
+})
+
+test_that("table alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$table,
+                    function(data, options) do.call(hl_table, c(list(data), options)))
+})
+
+test_that("lanes alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$lanes,
+                    function(data, options) do.call(hl_lanes, c(list(data, "bed", "start", "end"), options)))
+})
+
 test_that("extremes name ties together and leave out missing values", {
   hl_use(brand = FALSE)
   expect_equal(alt_extremes(c("a", "b", "c", "d", "e"), c(2, NA, 5, 5, 1), c("2", "", "5", "5", "1")),

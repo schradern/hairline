@@ -117,5 +117,6 @@ hl_partition <- function(data, levels, value = NULL, title = NULL, subtitle = NU
     theme_hairline(axes = FALSE) + hl_legend(items)
   plot@meta$hairline_drawing <- function(box, measure, style) partition_drawing(spec, box, measure, style)
   plot@meta$hairline_fit_height <- TRUE
+  plot@meta$hairline_description <- donut_description(spec$rings[[1]], NULL, NULL, "kind_partition")
   plot
 }

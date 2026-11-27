@@ -39,7 +39,10 @@
   overall row and the domains most often judged high ("Risk-of-bias summary. Overall: 2 low, 7 some concerns,
   3 high. Most often high: Randomisation (2)."); `hl_arcs()` the largest link ("Arc diagram. Largest link: Ward →
   Rehabilitation (61)."); `hl_swimlanes()` how many intervals in how many rows, from the earliest start to the
-  latest end, and the longest interval as its tooltip names it. The other charts follow.
+  latest end, and the longest interval as its tooltip names it; `hl_partition()` names the largest and smallest
+  part of its top level as `hl_donut()` does; `hl_lanes()` gives its rows and its highest cell as the cell's tooltip
+  writes it ("Lane chart. 6 rows; highest at Bed 3, 10:00–10:30 (95%)."); `hl_table()` its rows and columns and the
+  columns' names, the HTML table carrying the cells. Every chart but the palette swatches describes its data.
 * `hl_prisma()` no longer reads `excluded_reasons` as the excluded records when `excluded` is left out.
 * The alt text (title, subtitle and description) is the description of every saved file (PDF Subject, PNG and TIFF
   description, SVG `<desc>`), the HTML figure's label for screen readers and the host manifest's `alt`.
