@@ -99,6 +99,8 @@ with hl.scope("pattern"):                                                      #
   numbers column; colours and `order` keep keying on the bare group.
 - **`min_n=`** on `spread`, `ridgeline` and `raincloud`; **`clip=`** (a quantile, or `(low, high)`) on those and
   `scatter`. The statistics use every value unless `clip_stats=True`.
+- **`margins="mean"`** (or `"sum"`, for counts) on `heatmap`: each column's mean in a bar above it and each
+  row's in a bar to its right, the largest of each written at its end.
 - **`density=True`** on `scatter`: the points counted in hexagons, coloured by count and keyed in the legend row,
   for clouds too dense to read point by point; a number sets the hexagons across.
 - **`color_by=`** on every chart with groups, **`dimension=`** or `hl.scope()` across figures.

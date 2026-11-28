@@ -31,12 +31,14 @@ heatmap_flat_spec <- function(xs, ys, grid, scale, titles, percent) {
 }
 
 # Everything the heatmap draws, independent of the font. As Python's heatmap_spec().
-heatmap_spec <- function(data, x, y, z, titles, colors = NULL, percent = FALSE, gradient = FALSE) {
+heatmap_spec <- function(data, x, y, z, titles, colors = NULL, percent = FALSE, gradient = FALSE, margins = NULL) {
+  heatmap_check_margins(margins, heatmap_chart)
   found <- read_grid(data, x, y, z, heatmap_chart)
   grid <- found$grid
   breaks <- nice_breaks(min(grid, na.rm = TRUE), max(grid, na.rm = TRUE), hl_tokens()$surface$ticks)
   spec <- heatmap_flat_spec(found$xs, found$ys, grid, grid_colour_scale(grid, breaks, colors, gradient), titles,
                             percent)
+  if (!is.null(margins)) spec$margins <- heatmap_margin_spec(grid, margins, percent, heatmap_chart)
   spec$description <- alt_described("kind_heatmap", alt_grid_extremes(grid, spec$tips, titles))
   spec
 }
@@ -46,8 +48,8 @@ heatmap_spec <- function(data, x, y, z, titles, colors = NULL, percent = FALSE, 
 #' `z` over a grid of `x` and `y` (one row per pair; a pair without a row
 #' is left blank) as one cell per pair, its value binned into the steps of
 #' the ramp `colors` (or blended along it with `gradient = TRUE`) and keyed
-#' in the legend row. In the HTML export a row highlights as one series and
-#' each cell names its x, y and value. [hl_surface()] with
+#' in the legend row. In the HTML export a row highlights as one series (its
+#' marginal bar with it) and each cell and bar names its x, y and value. [hl_surface()] with
 #' `heatmap = TRUE` draws it beside a 3D surface of the same values.
 #'
 #' @param data A data frame with one row per (`x`, `y`) pair.
@@ -61,6 +63,9 @@ heatmap_spec <- function(data, x, y, z, titles, colors = NULL, percent = FALSE, 
 #' @param percent Read `z` as shares and label it in percent.
 #' @param gradient Blend each cell's colour along the ramp instead of
 #'   binning it into bands; the key then shows the ramp at each tick.
+#' @param margins `"mean"` puts each column's mean of `z` in a bar above it
+#'   and each row's in a bar to its right, the largest of each written at its
+#'   end; `"sum"` their sums, for counts. The bars add to the figure's height.
 #' @return A ggplot with the hairline frame.
 #' @examples
 #' grid <- expand.grid(hour = seq(6, 22, 1), week = 1:12)
@@ -68,9 +73,10 @@ heatmap_spec <- function(data, x, y, z, titles, colors = NULL, percent = FALSE, 
 #' hl_heatmap(grid, "hour", "week", "share", percent = TRUE)
 #' @export
 hl_heatmap <- function(data, x, y, z, title = NULL, subtitle = NULL, caption = NULL, x_title = NULL,
-                       y_title = NULL, z_title = NULL, colors = NULL, percent = FALSE, gradient = FALSE) {
+                       y_title = NULL, z_title = NULL, colors = NULL, percent = FALSE, gradient = FALSE,
+                       margins = NULL) {
   titles <- list(x = x_title %||% humanise(x), y = y_title %||% humanise(y), z = z_title %||% humanise(z))
-  spec <- heatmap_spec(data, x, y, z, titles, colors, percent, gradient)
+  spec <- heatmap_spec(data, x, y, z, titles, colors, percent, gradient, margins)
   key <- spec$key
   plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
     ggplot2::labs(title = title %||% titles$z, subtitle = subtitle, caption = caption, x = NULL, y = NULL) +

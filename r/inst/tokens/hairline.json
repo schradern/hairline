@@ -492,7 +492,8 @@
         "density_key": "Points per hexagon",
         "hexagon_one": "1 point",
         "hexagon_many": "{n} points",
-        "density_peak": "Most points in one hexagon: {n}."
+        "density_peak": "Most points in one hexagon: {n}.",
+        "sum": "Sum"
       }
     },
     "de": {
@@ -673,7 +674,8 @@
         "density_key": "Punkte je Sechseck",
         "hexagon_one": "1 Punkt",
         "hexagon_many": "{n} Punkte",
-        "density_peak": "Meiste Punkte in einem Sechseck: {n}."
+        "density_peak": "Meiste Punkte in einem Sechseck: {n}.",
+        "sum": "Summe"
       }
     }
   },
@@ -934,6 +936,10 @@
     "pair_gap": 2.5
   },
   "heatmap": {
+    "margin_band": 2.4,
+    "margin_gap": 0.6,
+    "margin_pad": 0.3,
+    "margin_bar_gap": 0.16,
     "aspect": 0.55
   },
   "funnel": {

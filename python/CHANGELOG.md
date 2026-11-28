@@ -7,6 +7,13 @@
 * Values beside horizontal bars side by side (`bars(by=..., horizontal=True)`) no longer run into each other: the
   plot grows until each bar is as tall as its value, as the category labels already keep their rows apart.
 
+### Heatmap with marginal bars
+
+* `heatmap(margins="mean")` puts each column's mean of `z` in a grey bar above the grid and each row's in a bar to
+  its right, the largest of each written at its end; `margins="sum"` draws their sums, for counts. The bars add to
+  the figure's height rather than shrink the cells. In the HTML export a row's bar lights up with its cells and
+  each bar names its value ("Week 3: Mean 72%"). New gallery figure `heatmap_margins`.
+
 ### Scatter in hexagons
 
 * `scatter(density=True)` counts the points in hexagons instead of drawing them, each coloured by its count in the

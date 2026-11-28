@@ -7,6 +7,7 @@ leaves its cells untagged, since the surface's script links the two."""
 from __future__ import annotations
 
 from hairline.charts.donut_geometry import Measure, text
+from hairline.charts.heatmap_margins import margin_reserve, margin_scene, margin_shapes
 from hairline.charts.tips import tagged
 from hairline.errors import HairlineLayoutError
 from hairline.layout.geometry import Box
@@ -27,22 +28,29 @@ def heatmap_scene(spec: dict, measure: Measure, style: dict) -> dict:
             "gaps": {"y_labels": spacing["y_labels_plot"] * base, "x_pad": spacing["x_tick_pad"] * size,
                      "x_band": spacing["x_tick_labels"] * size, "x_title": spacing["x_title"] * base,
                      "y_title": spacing["y_title"] * base},
-            "seam": tokens["surface"]["seam_pt"], "aspect": tokens["heatmap"]["aspect"]}
+            "seam": tokens["surface"]["seam_pt"], "aspect": tokens["heatmap"]["aspect"],
+            "margins": margin_scene(spec.get("margins"), measure, style)}
 
 
 def plot_frame(scene: dict, box: Box, height: float | None) -> Box:
-    """The cells' rectangle: right of the y ticks, under the y title, above the x tick band and title, as the frame
-    places an axis chart's; its height `height` less the text rows (or the width times the aspect, at most what the
-    box allows)."""
+    """The cells' rectangle: right of the y ticks, under the y title (and the marginal bars), above the x tick band
+    and title, as the frame places an axis chart's; its height `height` less the text rows, or the width times the
+    aspect (at most what the box allows, unless bars grow the figure)."""
     glyphs, gaps = scene["text"], scene["gaps"]
     line = glyphs["cap"] + glyphs["descender"]
+    above, beside = margin_reserve(scene["margins"], line)
     left = box.x + max((tick["width"] for tick in scene["ticks"]["y"]), default=0.0) + gaps["y_labels"]
     top = box.y + (line + gaps["y_title"] if scene["titles"]["y"] else glyphs["cap"] / 2)
     below = gaps["x_band"] + (gaps["x_title"] + line if scene["titles"]["x"] else 0.0)
     last = scene["ticks"]["x"][-1]["width"] / 2 if scene["ticks"]["x"] else 0.0
-    width = box.x + box.width - last - left
+    width = box.x + box.width - max(last, beside) - left
     room = (box.height if height is None else height) - (top - box.y) - below
     tall = room if height is not None else min(room, width * scene["aspect"])
+    if scene["margins"] is not None and height is None:
+        # The bars add to the figure's height (fit_height() grows it) rather than take it from the cells, which keep
+        # the aspect whatever the box: a height read from the box would grow with the figure again.
+        tall = width * scene["aspect"]
+    top += above
     if width <= 0 or tall <= 0:
         raise HairlineLayoutError(f"hairline: heatmap: the axis labels leave no room for the cells in "
                                   f"{box.width:.0f} x {box.height:.0f} pt. Shorten the labels or use a wider size")
@@ -74,9 +82,10 @@ def cell_shapes(scene: dict, plot: Box, tag: bool) -> tuple[list[dict], list[lis
 
 def heatmap_layout(scene: dict, box: Box, height: float | None = None,
                    tag: bool = True) -> tuple[list[dict], list[list[float]]]:
-    """Cells, then tick labels and titles; and the cells' rectangles for the script."""
+    """Cells, the marginal bars, then tick labels and titles; and the cells' rectangles for the script."""
     plot = plot_frame(scene, box, height)
     shapes, cells = cell_shapes(scene, plot, tag)
+    shapes += margin_shapes(scene, plot)
     glyphs, gaps = scene["text"], scene["gaps"]
     for tick in scene["ticks"]["y"]:
         y = plot.y + (1 - tick["at"]) * plot.height

@@ -745,17 +745,21 @@ def alt_text_cases() -> dict:
 
 
 def heatmap_cases() -> dict:
-    """The surface's grid as a heatmap (numbers and shares, bands and gradient), in a box and at a given height;
-    and the surface with its heatmap beside it."""
+    """The surface's grid as a heatmap (numbers and shares, bands and gradient, with marginal means or sums), in a
+    box and at a given height; and the surface with its heatmap beside it."""
     use(brand=False)
     data, titles, box = surface_data(), {"x": "Hour", "y": "Week", "z": "Load"}, [20, 60, 440, 300]
     cases = []
-    for percent, gradient, height in ((False, False, None), (True, True, None), (False, True, 180.0)):
+    for percent, gradient, height, margins in ((False, False, None, None), (True, True, None, None),
+                                               (False, True, 180.0, None), (True, False, None, "mean"),
+                                               (False, False, 180.0, "sum")):
         frame = data.assign(load=data["load"] / 10) if percent else data
-        spec = heatmap_spec(frame, "hour", "week", "load", titles=titles, percent=percent, gradient=gradient)
+        spec = heatmap_spec(frame, "hour", "week", "load", titles=titles, percent=percent, gradient=gradient,
+                            margins=margins)
         shapes, cells = heatmap_layout(heatmap_scene(spec, fake_measure, DRAWING_STYLE), Box(*box), height)
         cases.append({"data": listed(frame), "percent": percent, "gradient": gradient, "height": height,
-                      "titles": titles, "box": box, "spec": spec, "shapes": shapes, "cells": cells})
+                      "margins": margins, "titles": titles, "box": box, "spec": spec, "shapes": shapes,
+                      "cells": cells})
     spec = surface_spec(data, "hour", "week", "load", titles=titles, heatmap=True)
     layout = pair_layout(surface_scene(spec, fake_measure, DRAWING_STYLE),
                          heatmap_scene(spec["flat"], fake_measure, DRAWING_STYLE), Box(*box))

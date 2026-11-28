@@ -10,6 +10,7 @@ from hairline.alt_text import described, grid_extremes
 from hairline.charts.common import humanise
 from hairline.charts.grid_values import color_scale, fills, grid_tips, inner_ticks, read_grid
 from hairline.charts.heatmap_geometry import heatmap_scene, heatmap_shapes
+from hairline.charts.heatmap_margins import check_margins, margin_spec
 from hairline.drawing import fit_height
 from hairline.figure import HairlineFigure, figure
 from hairline.settings import current_settings
@@ -45,12 +46,15 @@ def flat_spec(xs: np.ndarray, ys: np.ndarray, grid: np.ndarray, scale: dict, tit
 
 
 def heatmap_spec(data: pd.DataFrame, x: str, y: str, z: str, *, titles: dict[str, str], colors: str | None = None,
-                 percent: bool = False, gradient: bool = False) -> dict:
+                 percent: bool = False, gradient: bool = False, margins: str | None = None) -> dict:
     """Everything the heatmap draws, independent of the font."""
+    check_margins(margins, CHART)
     xs, ys, grid = read_grid(data, x, y, z, CHART)
     breaks = nice_breaks(float(np.nanmin(grid)), float(np.nanmax(grid)), load_tokens()["surface"]["ticks"])
     spec = flat_spec(xs, ys, grid, color_scale(grid, breaks, colors, gradient), titles, percent)
     locale = current_settings().locale
+    if margins is not None:
+        spec["margins"] = margin_spec(grid, margins, percent, locale, CHART)
     return {**spec, "description": described("kind_heatmap", grid_extremes(grid, spec["tips"], titles, locale),
                                              locale)}
 
@@ -58,13 +62,16 @@ def heatmap_spec(data: pd.DataFrame, x: str, y: str, z: str, *, titles: dict[str
 def heatmap(data: pd.DataFrame, x: str, y: str, z: str, *, title: str | None = None, subtitle: str | None = None,
             caption: str | None = None, size: str = "onehalf", x_title: str | None = None,
             y_title: str | None = None, z_title: str | None = None, colors: str | None = None, percent: bool = False,
-            gradient: bool = False) -> HairlineFigure:
+            gradient: bool = False, margins: str | None = None) -> HairlineFigure:
     """`z` over a grid of `x` and `y` (one row per pair; a pair without a row is left blank) as one cell per pair,
     its value binned into the steps of the ramp `colors` and keyed in the legend row; `gradient` blends each cell's
-    colour along the ramp instead. `percent` reads `z` as shares. In the HTML export a row highlights as one series
-    and each cell names its x, y and value."""
+    colour along the ramp instead. `percent` reads `z` as shares. `margins="mean"` puts each column's mean of `z` in a
+    bar above it and each row's in a bar to its right, the largest of each written at its end; `margins="sum"` their
+    sums, for counts. In the HTML export a row highlights as one series (its bar with it) and each cell and bar
+    names its x, y and value."""
     titles = {"x": x_title or humanise(x), "y": y_title or humanise(y), "z": z_title or humanise(z)}
-    spec = heatmap_spec(data, x, y, z, titles=titles, colors=colors, percent=percent, gradient=gradient)
+    spec = heatmap_spec(data, x, y, z, titles=titles, colors=colors, percent=percent, gradient=gradient,
+                        margins=margins)
     result = figure(title or titles["z"], subtitle=subtitle, caption=caption, size=size)
     result.description = spec["description"]
     result.draw(0, lambda box, measure, style: heatmap_shapes(heatmap_scene(spec, measure, style), box))

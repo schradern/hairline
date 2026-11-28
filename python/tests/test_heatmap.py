@@ -39,14 +39,16 @@ def grid():
     return pd.DataFrame(rows, columns=["hour", "week", "share"])
 
 
-@pytest.mark.parametrize("case", FIXTURE["cases"], ids=lambda case: f"{case['percent']}-{case['gradient']}")
+@pytest.mark.parametrize("case", FIXTURE["cases"],
+                         ids=lambda case: f"{case['percent']}-{case['gradient']}-{case['margins']}")
 def test_heatmap_spec_and_shapes_match_the_shared_fixture(case):
     hl.use(brand=False)
     spec = heatmap_spec(frame_of(case), "hour", "week", "load", titles=case["titles"], percent=case["percent"],
-                        gradient=case["gradient"])
+                        gradient=case["gradient"], margins=case["margins"])
     assert spec["fills"] == case["spec"]["fills"] and spec["tips"] == case["spec"]["tips"]
     assert spec["ticks"] == case["spec"]["ticks"] and spec["key"] == case["spec"]["key"]
     assert spec["description"] == case["spec"]["description"]
+    assert spec.get("margins") == case["spec"].get("margins")
     shapes, cells = heatmap_layout(heatmap_scene(spec, fake_measure, FIXTURE["style"]), Box(*case["box"]),
                                    case["height"])
     assert flat(shapes) == pytest.approx(flat(case["shapes"]), abs=1e-6)
@@ -116,3 +118,43 @@ def test_surface_with_a_heatmap_sends_the_script_both_boxes_and_the_cells(tmp_pa
 def test_heatmap_refuses_a_grid_without_values():
     with pytest.raises(ValueError, match="'share' is missing in every row"):
         hl.heatmap(grid().assign(share=np.nan), "hour", "week", "share")
+
+
+def test_marginal_bars_name_their_mean_and_light_up_with_their_row():
+    hl.use(brand=False)
+    figure = hl.heatmap(grid(), "hour", "week", "share", percent=True, margins="mean")
+    bars = [shape for shape in figure.shapes if shape.get("part") == "margin" and shape["kind"] == "polygon"]
+    assert len(bars) == 17 + 8
+    rows = {series["name"]: series for series in figure_targets(figure)["series"]}
+    week = rows["Week 1"]
+    assert any(tip["text"].startswith("Week 1: Mean ") for tip in week["tips"])
+    assert len(week["marks"]) == 17 + 1
+    assert "Hour 12" in rows and rows["Hour 12"]["tips"][0]["text"].startswith("Hour 12: Mean ")
+    assert hl.check_layout(figure) == []
+
+
+def test_marginal_bars_grow_the_figure_rather_than_the_cells_shrink():
+    hl.use(brand=False)
+    plain = hl.heatmap(grid(), "hour", "week", "share", percent=True)
+    barred = hl.heatmap(grid(), "hour", "week", "share", percent=True, margins="sum")
+    assert barred.figure.get_size_inches()[1] > plain.figure.get_size_inches()[1]
+    labels = [shape["text"] for shape in barred.shapes if shape.get("part") == "margin" and shape["kind"] == "text"]
+    assert len(labels) == 2
+
+
+def test_marginal_bars_speak_german():
+    hl.use(brand=False, locale="de")
+    try:
+        figure = hl.heatmap(grid(), "hour", "week", "share", margins="sum")
+        tips = [tip["text"] for series in figure_targets(figure)["series"] for tip in series["tips"]]
+        assert any(": Summe " in text for text in tips)
+    finally:
+        hl.use(brand=False)
+
+
+def test_marginal_bars_refuse_an_unknown_kind_and_negative_values():
+    with pytest.raises(ValueError, match="must be 'mean', 'sum' or None"):
+        hl.heatmap(grid(), "hour", "week", "share", margins="median")
+    below = grid().assign(share=lambda frame: frame["share"] - 1)
+    with pytest.raises(ValueError, match="bars from zero"):
+        hl.heatmap(below, "hour", "week", "share", margins="mean")

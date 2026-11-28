@@ -17,7 +17,8 @@ hl_heatmap(
   z_title = NULL,
   colors = NULL,
   percent = FALSE,
-  gradient = FALSE
+  gradient = FALSE,
+  margins = NULL
 )
 }
 \arguments{
@@ -39,6 +40,10 @@ ramp, else \code{"blues"}, by default.}
 
 \item{gradient}{Blend each cell's colour along the ramp instead of
 binning it into bands; the key then shows the ramp at each tick.}
+
+\item{margins}{\code{"mean"} puts each column's mean of \code{z} in a bar above it
+and each row's in a bar to its right, the largest of each written at its
+end; \code{"sum"} their sums, for counts. The bars add to the figure's height.}
 }
 \value{
 A ggplot with the hairline frame.
@@ -47,8 +52,8 @@ A ggplot with the hairline frame.
 \code{z} over a grid of \code{x} and \code{y} (one row per pair; a pair without a row
 is left blank) as one cell per pair, its value binned into the steps of
 the ramp \code{colors} (or blended along it with \code{gradient = TRUE}) and keyed
-in the legend row. In the HTML export a row highlights as one series and
-each cell names its x, y and value. \code{\link[=hl_surface]{hl_surface()}} with
+in the legend row. In the HTML export a row highlights as one series (its
+marginal bar with it) and each cell and bar names its x, y and value. \code{\link[=hl_surface]{hl_surface()}} with
 \code{heatmap = TRUE} draws it beside a 3D surface of the same values.
 }
 \examples{

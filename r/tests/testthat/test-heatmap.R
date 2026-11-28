@@ -22,8 +22,17 @@ test_that("heatmap spec and shapes match the shared fixture", {
   for (case in fixture$cases) {
     hl_use(brand = FALSE)
     spec <- heatmap_spec(heatmap_fixture_frame(case), "hour", "week", "load", case$titles, percent = case$percent,
-                         gradient = case$gradient)
+                         gradient = case$gradient, margins = case$margins)
     expect_equal(fills(spec$fills), fills(case$spec$fills))
+    if (!is.null(case$margins)) {
+      expected <- case$spec$margins
+      known <- function(values) vapply(values, function(value) value %||% NA_real_, 0)
+      expect_equal(spec$margins$columns, known(expected$columns), tolerance = 1e-9)
+      expect_equal(spec$margins$rows, known(expected$rows), tolerance = 1e-9)
+      expect_equal(spec$margins$texts$columns, unlist(expected$texts$columns))
+      expect_equal(spec$margins$texts$rows, unlist(expected$texts$rows))
+      expect_equal(spec$margins$word, expected$word)
+    }
     expect_equal(unlist(spec$key$colors), unlist(case$spec$key$colors))
     expect_equal(spec$description, case$spec$description)
     layout <- heatmap_layout(heatmap_scene(spec, measure, fixture$style), as.numeric(unlist(case$box)),
@@ -59,4 +68,28 @@ test_that("the heatmap tags a series per row, lays out cleanly and pairs with th
   expect_length(scene$flat$cells, 17 * 8)
   expect_error(hl_heatmap(transform(heatmap_grid_data(), share = NA_real_), "hour", "week", "share"),
                "'share' is missing in every row", fixed = TRUE)
+})
+
+test_that("marginal bars name their mean and light up with their row", {
+  hl_use(brand = FALSE)
+  plot <- hl_heatmap(heatmap_grid_data(), "hour", "week", "share", percent = TRUE, margins = "mean")
+  expect_length(hl_check_layout(plot), 0)
+  series <- interactive_targets(plot)$series
+  names(series) <- vapply(series, `[[`, "", "name")
+  expect_true(any(startsWith(vapply(series[["Week 1"]]$tips, `[[`, "", "text"), "Week 1: Mean ")))
+  expect_true(startsWith(series[["Hour 12"]]$tips[[1]]$text, "Hour 12: Mean "))
+})
+
+test_that("marginal bars speak German and refuse what they cannot draw", {
+  hl_use(brand = FALSE, locale = "de")
+  on.exit(hl_use(brand = FALSE))
+  spec <- heatmap_spec(heatmap_grid_data(), "hour", "week", "share", list(x = "Stunde", y = "Woche", z = "Anteil"),
+                       margins = "sum")
+  expect_equal(spec$margins$word, "Summe")
+  expect_error(heatmap_spec(heatmap_grid_data(), "hour", "week", "share", list(x = "", y = "", z = ""),
+                            margins = "median"), "must be 'mean', 'sum' or NULL")
+  below <- heatmap_grid_data()
+  below$share <- below$share - 1
+  expect_error(heatmap_spec(below, "hour", "week", "share", list(x = "", y = "", z = ""), margins = "mean"),
+               "bars from zero")
 })
