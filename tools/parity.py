@@ -19,7 +19,7 @@ GALLERY = REPO / "gallery"
 FIGURES = ["theme_scatter", "occupancy_rows", "grid_panels", "brand_example", "donut_discharge", "donut_nested",
            "partition_discharge", "waffle_discharge", "km_trial", "forest_meta", "raincloud_stay",
            "sankey_budget",
-           "bars_admissions", "dotplot_rates", "scatter_fit",
+           "bars_admissions", "dotplot_rates", "scatter_fit", "scatter_density",
            "correlation_patients", "funnel_trials",
            "risk_of_bias_trials", "prisma_review",
            "arcs_pathways", "ridgeline_ages", "bars_stacked", "bars_percent", "chord_transfers",

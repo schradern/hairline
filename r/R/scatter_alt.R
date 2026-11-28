@@ -1,5 +1,6 @@
 # The description of a scatter plot for its alt text: each panel's linear fit with the n, r and slope its header
-# writes, or with no fit, how many points it draws. Mirrors the Python package's charts/scatter_alt.py.
+# writes, or with no fit, how many points it draws; with hexagons, the most points one holds. Mirrors the Python
+# package's charts/scatter_alt.py.
 
 # "n = 120, r = 0.62, slope 0.31" from a panel header's numbers (n, r and slope, as written). As Python's fit_text().
 scatter_fit_text <- function(stats) word("fit_stats", n = stats[[1]], r = stats[[2]], slope = stats[[3]])
@@ -18,9 +19,16 @@ scatter_fits_text <- function(fits) {
 }
 
 # "Scatter plot. Linear fit: n = 120, r = 0.62, slope 0.31." with a fit (per panel when faceted, the panel's name
-# first), else "Scatter plot. 120 points.". As Python's scatter_description().
-scatter_description <- function(fits, points) {
-  if (length(fits)) return(alt_described("kind_scatter", scatter_fits_text(fits)))
-  counted <- if (points == 1) word("points_one") else word("points_many", n = hl_format_number(points, 0))
-  alt_described("kind_scatter", counted)
+# first), else "Scatter plot. 120 points."; with hexagons (`peak`, the most points in one), their kind and "Most
+# points in one hexagon: 24." after. As Python's scatter_description().
+scatter_description <- function(fits, points, peak = NULL) {
+  found <- if (length(fits)) {
+    scatter_fits_text(fits)
+  } else if (points == 1) {
+    word("points_one")
+  } else {
+    word("points_many", n = hl_format_number(points, 0))
+  }
+  if (is.null(peak)) return(alt_described("kind_scatter", found))
+  alt_described("kind_scatter_density", paste(found, word("density_peak", n = hl_format_number(peak, 0))))
 }

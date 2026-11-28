@@ -416,6 +416,18 @@ def hour_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+def vital_rows(rng: np.random.Generator) -> list[dict]:
+    """Blood pressure at ICU admission: most patients around 130/75, and a smaller group in shock, low on both."""
+    rows = []
+    for index in range(2400):
+        shock = rng.random() < 0.16
+        systolic = rng.normal(86, 11) if shock else rng.normal(132, 19)
+        diastolic = 0.52 * systolic + rng.normal(8 if shock else 6, 7)
+        rows.append({"id": index + 1, "systolic": int(round(float(np.clip(systolic, 55, 220)))),
+                     "diastolic": int(round(float(np.clip(diastolic, 25, 130))))})
+    return rows
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -459,6 +471,7 @@ def main() -> None:
     # The surgical cohort has its own generator too, so every file above stays as it was.
     write("surgery.csv", surgery_rows(np.random.default_rng(SEED + 2)))
     write("hours.csv", hour_rows(np.random.default_rng(SEED + 3)))
+    write("vitals.csv", vital_rows(np.random.default_rng(SEED + 4)))
 
 
 if __name__ == "__main__":

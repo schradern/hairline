@@ -95,6 +95,8 @@ hl_scope("pattern", hl_bars(patterns, "pattern"))                               
   the label or in the numbers column; colours and `order` keep keying on the bare group.
 - **`min_n =`** on `hl_spread()`, `hl_ridgeline()` and `hl_raincloud()`; **`clip =`** (a quantile, or
   `c(low, high)`) on those and `hl_scatter()`. The statistics use every value unless `clip_stats = TRUE`.
+- **`density = TRUE`** on `hl_scatter()`: the points counted in hexagons, coloured by count and keyed in the
+  legend row, for clouds too dense to read point by point; a number sets the hexagons across.
 - **`color_by =`** on every chart with groups, **`dimension =`** or `hl_scope()` across figures.
 - **`stats = c("levels", …)`** and **`discrete = TRUE`** on `hl_spread()`: the most frequent values with their
   shares, and quantiles on the data's own levels. `hl_spread()` and `hl_describe()` warn when a median falls

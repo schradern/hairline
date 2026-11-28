@@ -1,5 +1,6 @@
 """The description of a scatter plot for its alt text: each panel's linear fit with the n, r and slope its header
-writes, or with no fit, how many points it draws. Mirrored in R's scatter_alt.R."""
+writes, or with no fit, how many points it draws; with hexagons, the most points one holds. Mirrored in R's
+scatter_alt.R."""
 
 from __future__ import annotations
 
@@ -30,11 +31,16 @@ def fits_text(fits: Sequence[tuple[str | None, Sequence[tuple[str, str]]]], loca
 
 
 def scatter_description(fits: Sequence[tuple[str | None, Sequence[tuple[str, str]]]], points: int,
-                        locale: str) -> str:
+                        locale: str, peak: int | None = None) -> str:
     """'Scatter plot. Linear fit: n = 120, r = 0.62, slope 0.31.' with a fit (per panel when faceted, the panel's
-    name first), else 'Scatter plot. 120 points.'."""
+    name first), else 'Scatter plot. 120 points.'; with hexagons (`peak`, the most points in one), their kind and
+    'Most points in one hexagon: 24.' after."""
     if fits:
-        return described("kind_scatter", fits_text(fits, locale), locale)
-    counted = word("points_one", locale) if points == 1 else \
-        word("points_many", locale, n=format_number(points, 0, locale))
-    return described("kind_scatter", counted, locale)
+        found = fits_text(fits, locale)
+    else:
+        found = word("points_one", locale) if points == 1 else \
+            word("points_many", locale, n=format_number(points, 0, locale))
+    if peak is None:
+        return described("kind_scatter", found, locale)
+    peaked = word("density_peak", locale, n=format_number(peak, 0, locale))
+    return described("kind_scatter_density", f"{found} {peaked}", locale)

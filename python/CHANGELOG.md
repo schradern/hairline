@@ -7,6 +7,15 @@
 * Values beside horizontal bars side by side (`bars(by=..., horizontal=True)`) no longer run into each other: the
   plot grows until each bar is as tall as its value, as the category labels already keep their rows apart.
 
+### Scatter in hexagons
+
+* `scatter(density=True)` counts the points in hexagons instead of drawing them, each coloured by its count in the
+  bins of the ramp `colors` and keyed in the legend row ("Points per hexagon"), with the linear fit and its numbers
+  on top: for clouds too dense to read point by point. A number (`density=30`) sets the hexagons across the x
+  range; facets share one lattice and one colour scale. In the HTML export each hexagon names its count. Its alt
+  text adds the most points one hexagon holds ("Scatter plot with hexagonal bins. Linear fit: n = 2,400, r = 0.86,
+  slope 0.49. Most points in one hexagon: 117."). New gallery figure `scatter_density`.
+
 ### Waffle chart
 
 * `waffle` shows shares of a whole as 100 cells, one per percent, filled row by row from the top left, with each

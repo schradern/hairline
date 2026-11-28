@@ -28,7 +28,8 @@ hl_scatter(
   key_title = NULL,
   facet = NULL,
   columns = NULL,
-  reference_legend = FALSE
+  reference_legend = FALSE,
+  density = FALSE
 )
 }
 \arguments{
@@ -76,6 +77,12 @@ lines, e.g. \code{c(Target = 0.9)}.}
 
 \item{reference_legend}{Name the labelled reference in the legend row, as a dashed entry, instead of at its
 line; one labelled reference at most.}
+
+\item{density}{\code{TRUE} (or a number of hexagons across) counts the points in
+hexagons instead of drawing them, each coloured by its count in the bins of
+the ramp \code{colors} and keyed in the legend row, the fit on top; for clouds
+too dense to read point by point. It counts every point together, so it
+takes no \code{by}.}
 }
 \value{
 A ggplot with the hairline frame.

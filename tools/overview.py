@@ -18,7 +18,8 @@ import hairline as hl
 REPO = Path(__file__).resolve().parents[1]
 CHARTS = [("bars_admissions", "Bar chart"), ("bars_stacked", "Stacked bars"), ("bars_percent", "100 % stacked bars"),
           ("dotplot_rates", "Dot plot with intervals"),
-          ("scatter_fit", "Scatter with fit"), ("correlation_patients", "Correlation heatmap"),
+          ("scatter_fit", "Scatter with fit"), ("scatter_density", "Scatter in hexagons"),
+          ("correlation_patients", "Correlation heatmap"),
           ("raincloud_stay", "Raincloud"), ("spread_occupancy", "Spread rows"),
           ("ridgeline_ages", "Ridgeline"), ("km_trial", "Kaplan–Meier"),
           ("forest_meta", "Forest plot"),

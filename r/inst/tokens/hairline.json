@@ -487,7 +487,12 @@
         "kind_waffle": "Waffle chart",
         "columns_one": "1 column",
         "columns_many": "{n} columns",
-        "table_size": "{rows} and {columns}: {names}."
+        "table_size": "{rows} and {columns}: {names}.",
+        "kind_scatter_density": "Scatter plot with hexagonal bins",
+        "density_key": "Points per hexagon",
+        "hexagon_one": "1 point",
+        "hexagon_many": "{n} points",
+        "density_peak": "Most points in one hexagon: {n}."
       }
     },
     "de": {
@@ -663,7 +668,12 @@
         "kind_waffle": "Waffeldiagramm",
         "columns_one": "1 Spalte",
         "columns_many": "{n} Spalten",
-        "table_size": "{rows} und {columns}: {names}."
+        "table_size": "{rows} und {columns}: {names}.",
+        "kind_scatter_density": "Streudiagramm mit Sechseckraster",
+        "density_key": "Punkte je Sechseck",
+        "hexagon_one": "1 Punkt",
+        "hexagon_many": "{n} Punkte",
+        "density_peak": "Meiste Punkte in einem Sechseck: {n}."
       }
     }
   },
@@ -882,6 +892,13 @@
   "fit": {
     "band_opacity": 0.12,
     "points": 64
+  },
+  "density": {
+    "bins": 24,
+    "aspect": 0.33,
+    "min_bins": 2,
+    "max_bins": 5,
+    "edge_pt": 0.3
   },
   "correlation": {
     "max_cell": 4.0,

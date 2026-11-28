@@ -1,5 +1,5 @@
-# Scatter with fit, mirroring the Python scatter(): points per group, a linear fit with its
-# 95 % band in ink, and n, r and slope as key numbers.
+# Scatter with fit, mirroring the Python scatter(): points per group (or, with `density`, their counts in hexagons),
+# a linear fit with its 95 % band in ink, and n, r and slope as key numbers.
 
 scatter_stats <- function(x, y) {
   c(n = hl_format_number(length(x), 0), r = hl_format_number(pearson_test(x, y)[1], 2),
@@ -54,6 +54,11 @@ scatter_check_fit <- function(x) {
 #' @param color_by Colour the groups of `by` by a coarser column, which the legend lists.
 #' @param dimension What the groups are, so their colours keep off the slots another dimension holds.
 #' @param columns Panels per row with `facet` (two by default).
+#' @param density `TRUE` (or a number of hexagons across) counts the points in
+#'   hexagons instead of drawing them, each coloured by its count in the bins of
+#'   the ramp `colors` and keyed in the legend row, the fit on top; for clouds
+#'   too dense to read point by point. It counts every point together, so it
+#'   takes no `by`.
 #' @inheritParams chart_option_params
 #' @return A ggplot with the hairline frame.
 #' @examples
@@ -63,8 +68,10 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
                        order = NULL, colors = NULL, clip = NULL, clip_stats = FALSE, color_by = NULL,
                        dimension = NULL, min_n = NULL, percent = FALSE, x_title = NULL, y_title = NULL,
                        reference = NULL, highlight = NULL, key_title = NULL, facet = NULL, columns = NULL,
-                       reference_legend = FALSE) {
+                       reference_legend = FALSE, density = FALSE) {
   check_columns(data, c(x, y, by, color_by, facet))
+  bins <- density_bins(density, "scatter")
+  if (!is.null(bins)) density_check(by, colors, highlight)
   if (!is.null(color_by) && is.null(by)) {
     stop("hairline: scatter: color_by needs by =, the groups it colours", call. = FALSE)
   }
@@ -86,7 +93,11 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
     series_colours(groups, rows, by, color_by, colors, dimension, "scatter", highlight)
   panels <- if (is.null(facet)) "" else chart_groups(rows, facet, NULL, "scatter")
   plot <- ggplot2::ggplot()
-  for (name in groups) {
+  across <- if (is.null(facet)) 1 else columns %||% min(length(panels), 2)
+  hexagons <- if (!is.null(bins)) scatter_hexagons(rows, x, y, facet, panels, limits, bins, colors, across)
+  if (!is.null(hexagons)) plot <- plot + hexagons$layers
+  # Hexagons stand in for the points.
+  for (name in if (is.null(hexagons)) groups else character()) {
     subset <- if (is.null(by)) rows else rows[as.character(rows[[by]]) == name, , drop = FALSE]
     subset <- subset[subset[[y]] >= limits[1] & subset[[y]] <= limits[2], , drop = FALSE]
     points <- data.frame(x = subset[[x]], y = subset[[y]], group = factor(rep(name, nrow(subset)), levels = groups))
@@ -122,8 +133,30 @@ hl_scatter <- function(data, x, y, by = NULL, title = NULL, subtitle = NULL, cap
                   caption = with_caption(caption, note, kept$note), x = humanise(x), y = humanise(y)) +
     theme_hairline()
   if (percent) plot <- plot + scale_y_hairline(percent = TRUE)
-  plot@meta$hairline_description <- scatter_description(fits, drawn)
+  if (!is.null(hexagons)) {
+    key <- hexagons$cells$scale$key
+    plot <- plot + hl_legend(list()) + hl_legend_ramp(key$colors, key$steps, word("density_key"), format = "number",
+                                                      limits = key$limits)
+    plot@meta$hairline_targets <- hexagons$targets
+  }
+  plot@meta$hairline_description <- scatter_description(fits, drawn, hexagons$cells$peak)
   chart_options(plot, "scatter", groups, x_title = x_title, y_title = y_title, reference = reference,
                 reference_legend = reference_legend,
                 key_title = key_title)
+}
+
+# Every panel's hexagon layer and tooltip targets on one shared lattice, from the points within the clip limits.
+scatter_hexagons <- function(rows, x, y, facet, panels, limits, bins, colors, columns) {
+  shown <- rows[rows[[y]] >= limits[1] & rows[[y]] <= limits[2], , drop = FALSE]
+  parts <- lapply(panels, function(panel) {
+    if (is.null(facet)) shown else shown[as.character(shown[[facet]]) == panel, , drop = FALSE]
+  })
+  cells <- density_cells(parts, x, y, bins, colors, columns)
+  drawn <- lapply(seq_along(panels), function(index) density_layers(cells, index))
+  layers <- lapply(seq_along(panels), function(index) {
+    layer <- drawn[[index]]$layer
+    if (is.null(facet)) list(layer) else in_facet(list(layer), panels[index], panels)
+  })
+  list(cells = cells, layers = unlist(layers, recursive = FALSE),
+       targets = unlist(lapply(drawn, `[[`, "targets"), recursive = FALSE))
 }

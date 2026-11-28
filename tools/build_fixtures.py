@@ -44,6 +44,7 @@ from hairline.charts.risk_of_bias import risk_of_bias_spec
 from hairline.charts.risk_of_bias_geometry import risk_of_bias_drawing
 from hairline.charts.sankey import sankey_spec
 from hairline.charts.sankey_geometry import sankey_drawing
+from hairline.charts.scatter_density import count_steps, hex_corners, hex_counts, hex_grid
 from hairline.charts.surface import surface_spec
 from hairline.charts.surface_geometry import pair_layout, scene_shapes, surface_scene
 from hairline.charts.swatches_geometry import swatches_drawing
@@ -303,6 +304,30 @@ def waffle_cases() -> dict:
                                                for shares in WAFFLE_SHARES], "cases": cases}
 
 
+def hexagon_cases() -> dict:
+    """Hexagon lattices and counts: a random cloud, points on a regular grid (some as near to an even as to an odd
+    row's centre), a faceted shape; and the colour bins for a range of peak counts."""
+    generator = np.random.default_rng(11)
+    cloud = generator.normal(0, 1, (300, 2)) * [12, 3] + [60, 20]
+    even = np.array([[x, y] for x in np.arange(0, 6, 0.5) for y in np.arange(0, 4, 0.25)])
+    corners = np.array([[0.0, 0.0], [10.0, 10.0]])
+    spacing = hex_grid(corners[:, 0], corners[:, 1], 5, "scatter")
+    # Halfway between a centre on an even row and one on the odd row next to it: the even row takes it.
+    ties = np.array([[(column + 0.25) * spacing["width"], up * spacing["height"]]
+                     for column in range(4) for up in (0.5, 1.5)])
+    inputs = [(cloud, 24, [1, 1]), (cloud, 7, [2, 1]), (even, 5, [1, 1]), (even, 3, [2, 3]),
+              (np.vstack([corners, ties]), 5, [1, 1])]
+    cases = []
+    for points, bins, shape in inputs:
+        grid = hex_grid(points[:, 0], points[:, 1], bins, "scatter", tuple(shape))
+        cells = hex_counts(points[:, 0], points[:, 1], grid)
+        cases.append({"x": points[:, 0].tolist(), "y": points[:, 1].tolist(), "bins": bins,
+                      "shape": shape, "grid": grid, "cells": cells,
+                      "corners": hex_corners(cells[0], grid)})
+    return {"cases": cases, "steps": [{"top": top, "steps": count_steps(top)}
+                                      for top in (1, 2, 3, 5, 7, 11, 24, 57, 117, 130, 1000)]}
+
+
 def survival_cases() -> list[dict]:
     generator = np.random.default_rng(7)
     times = np.round(generator.exponential(14, 60), 1)
@@ -512,7 +537,8 @@ ALT_DOT_OPTIONS = [("rates", {**ALT_DOT_RATES, "low": "low", "high": "high"}),
 ALT_POINTS = {"x": list(range(1, 16)), "y": [round(2 + 0.5 * x + ((x * 7) % 5) / 2, 2) for x in range(1, 16)],
               "site": [f"Site {chr(65 + index // 3)}" for index in range(15)],
               "group": ["North" if index % 3 else "South" for index in range(15)]}
-ALT_POINT_OPTIONS = [{}, {"fit": None}, {"by": "group"}, {"facet": "site"}, {"facet": "site", "fit": None}]
+ALT_POINT_OPTIONS = [{}, {"fit": None}, {"by": "group"}, {"facet": "site"}, {"facet": "site", "fit": None},
+                     {"density": True}, {"density": 4, "fit": None}, {"facet": "site", "density": 3}]
 
 ALT_SLICES = {
     "routes": {"route": ["Home", "Rehabilitation", "Ward", "Died"], "patients": [412, 168, 97, 23]},
@@ -978,6 +1004,7 @@ def main() -> int:
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     write("waffle.json", waffle_cases())
+    write("hexagons.json", hexagon_cases())
     write("study.json", study_cases())
     write("spread.json", spread_cases(DRAWING_STYLE, fake_measure))
     write("swatches.json", swatch_cases())
