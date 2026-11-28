@@ -15,9 +15,9 @@ language: one frame for titles, legends, panels and captions, one type scale, co
 and files ready for a journal, a report or a slide. You choose the data and the chart; hairline makes the
 hundred small layout decisions, the same way every time.
 
-- **One call per chart.** Twenty-seven chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
-  and PRISMA diagrams, lanes and staffing levels over the day, heatmaps, 3D surfaces and tables for documents, each from a data frame
-  and its column names.
+- **One call per chart.** Twenty-eight chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
+  and PRISMA diagrams, lanes and staffing levels over the day, processes in swimlanes, heatmaps, 3D surfaces and
+  tables for documents, each from a data frame and its column names.
 - **Report-ready by default.** Facets with their own scale, incomplete periods drawn lighter, n per group,
   minimum n, clipped outliers and coarser colour groups are one argument each, and the caption says in the
   figure's locale what was left out or drawn differently.
@@ -239,7 +239,7 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 <tr><td width="50%" valign="top"><a href="gallery/python/swimlanes_day.py"><img src="docs/images/gallery/swimlanes_day.png" alt="Swimlanes for one day"></a><br><sub>Swimlanes for one day</sub></td><td width="50%" valign="top"><a href="gallery/python/brand_example.py"><img src="docs/images/gallery/brand_example.png" alt="Brand file"></a><br><sub>Brand file</sub></td></tr>
 <tr><td width="50%" valign="top"><a href="gallery/python/study_profile.py"><img src="docs/images/gallery/study_profile.png" alt="Study: the cohort at a glance"></a><br><sub>Study: the cohort at a glance</sub></td><td width="50%" valign="top"><a href="gallery/python/study_profile_sex.py"><img src="docs/images/gallery/study_profile_sex.png" alt="Study: the cohort by sex"></a><br><sub>Study: the cohort by sex</sub></td></tr>
 <tr><td width="50%" valign="top"><a href="gallery/python/surface_hours.py"><img src="docs/images/gallery/surface_hours.png" alt="3D surface beside its heatmap"></a><br><sub>3D surface beside its heatmap</sub></td><td width="50%" valign="top"><a href="gallery/python/heatmap_hours.py"><img src="docs/images/gallery/heatmap_hours.png" alt="Heatmap"></a><br><sub>Heatmap</sub></td></tr>
-<tr><td width="50%" valign="top"><a href="gallery/python/heatmap_margins.py"><img src="docs/images/gallery/heatmap_margins.png" alt="Heatmap with marginal bars"></a><br><sub>Heatmap with marginal bars</sub></td></tr>
+<tr><td width="50%" valign="top"><a href="gallery/python/heatmap_margins.py"><img src="docs/images/gallery/heatmap_margins.png" alt="Heatmap with marginal bars"></a><br><sub>Heatmap with marginal bars</sub></td><td width="50%" valign="top"><a href="gallery/python/process.py"><img src="docs/images/gallery/process.png" alt="Process in swimlanes"></a><br><sub>Process in swimlanes</sub></td></tr>
 </table>
 
 ## The same figure in Python and R

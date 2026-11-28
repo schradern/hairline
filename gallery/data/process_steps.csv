@@ -1,0 +1,15 @@
+version,role,step,stage,status,note
+Before: by phone and on paper,Physician,Order test,1,,
+Before: by phone and on paper,Ward nurse,Draw and label sample,2,,
+Before: by phone and on paper,Laboratory,Analyse sample,3,,
+Before: by phone and on paper,Laboratory,Phone the ward,4,,
+Before: by phone and on paper,Results system,File the result,4,tentative,The result reaches the record hours later.
+Before: by phone and on paper,Ward nurse,"Note value, page physician",4,,Values pass by phone and are written down by hand; the page says only that one is waiting.
+Before: by phone and on paper,Physician,Call back for the value,5,,The physician calls the ward back to hear the value.
+"After: one record, seen by all",Physician,Order test,1,,
+"After: one record, seen by all",Ward nurse,"Draw sample, scan barcode",2,highlight,A barcode ties each sample to its order.
+"After: one record, seen by all",Laboratory,Analyse sample,3,,
+"After: one record, seen by all",Results system,Flag critical value,4,highlight,Fixed thresholds flag a critical value at once.
+"After: one record, seen by all",Laboratory,Confirm by phone,4,,"Open: no read receipt, so the laboratory still phones."
+"After: one record, seen by all",Ward nurse,See value on ward screen,5,highlight,
+"After: one record, seen by all",Physician,Read value on phone,5,highlight,The ward screen and the phone show the same record.

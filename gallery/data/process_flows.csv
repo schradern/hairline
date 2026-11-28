@@ -1,0 +1,13 @@
+version,source,target,how,status
+Before: by phone and on paper,Order test,Draw and label sample,Paper,
+Before: by phone and on paper,Draw and label sample,Analyse sample,Courier,
+Before: by phone and on paper,Analyse sample,Phone the ward,,
+Before: by phone and on paper,Analyse sample,File the result,,tentative
+Before: by phone and on paper,Phone the ward,"Note value, page physician",Phone,
+Before: by phone and on paper,"Note value, page physician",Call back for the value,Pager,
+"After: one record, seen by all",Order test,"Draw sample, scan barcode",Order system,highlight
+"After: one record, seen by all","Draw sample, scan barcode",Analyse sample,Courier,
+"After: one record, seen by all",Analyse sample,Flag critical value,,highlight
+"After: one record, seen by all",Analyse sample,Confirm by phone,,
+"After: one record, seen by all",Flag critical value,See value on ward screen,,highlight
+"After: one record, seen by all",Flag critical value,Read value on phone,,highlight

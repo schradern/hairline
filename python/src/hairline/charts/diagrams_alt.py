@@ -64,3 +64,18 @@ def venn_description(spec: dict, locale: str) -> str:
     overlap = word("venn_both" if len(spec["sets"]) == 2 else "venn_all", locale,
                    value=spec["regions"][-1]["value_text"])
     return described("kind_venn", f"{word('venn_sets', locale, sets=sets)} {overlap}", locale)
+
+
+def process_description(spec: dict, locale: str) -> str:
+    """'Process diagram. Lanes: Ward, Laboratory. Before: 5 steps, 4 flows. After: 6 steps, 6 flows. Highlighted:
+    Portal.'; without sections the counts stand alone."""
+    findings = [word("process_lanes", locale, lanes=named(spec["lanes"], locale))]
+    for section in spec["sections"]:
+        counts = {"steps": len(section["steps"]), "flows": len(section["flows"])}
+        findings.append(word("process_section", locale, name=section["name"], **counts) if section["name"] is not None
+                        else word("process_counts", locale, **counts))
+    highlighted = list(dict.fromkeys(step["name"] for section in spec["sections"] for step in section["steps"]
+                                     if step["status"] == "highlight"))
+    if highlighted:
+        findings.append(word("process_highlighted", locale, steps=named(highlighted, locale)))
+    return described("kind_process", " ".join(findings), locale)

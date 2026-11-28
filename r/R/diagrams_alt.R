@@ -61,3 +61,20 @@ venn_description <- function(spec) {
                   value = spec$regions[[length(spec$regions)]]$value_text)
   alt_described("kind_venn", paste(word("venn_sets", sets = sets), overlap))
 }
+
+# "Process diagram. Lanes: Ward, Laboratory. Before: 5 steps, 4 flows. After: 6 steps, 6 flows. Highlighted: Portal.";
+# without sections the counts stand alone. As Python's process_description().
+process_description <- function(spec) {
+  findings <- word("process_lanes", lanes = alt_named(spec$lanes))
+  for (section in spec$sections) {
+    counts <- list(steps = length(section$steps), flows = length(section$flows))
+    findings <- c(findings, if (is.null(section$name)) do.call(word, c("process_counts", counts))
+                  else do.call(word, c("process_section", list(name = section$name), counts)))
+  }
+  statuses <- unlist(lapply(spec$sections, function(section) {
+    vapply(section$steps, function(step) if (identical(step$status, "highlight")) step$name else NA_character_, "")
+  }))
+  highlighted <- unique(statuses[!is.na(statuses)])
+  if (length(highlighted)) findings <- c(findings, word("process_highlighted", steps = alt_named(highlighted)))
+  alt_described("kind_process", paste(findings, collapse = " "))
+}

@@ -57,7 +57,7 @@ measurements are not counted as separate patients.
 Each chart is one call with the data and its column names, and returns a figure in the hairline frame:
 `bars`, `scatter`, `timeseries`, `spread`, `raincloud`, `ridgeline`, `kaplan_meier`, `forest`, `dotplot`,
 `funnel`, `correlation`, `donut`, `partition`, `waffle`, `sankey`, `chord`, `arcs`, `venn`, `prisma`,
-`risk_of_bias`, `lanes`, `levels`, `swimlanes`, `likert`, `heatmap`, `surface` and `table`.
+`risk_of_bias`, `lanes`, `levels`, `swimlanes`, `process`, `likert`, `heatmap`, `surface` and `table`.
 
 ```python
 admissions = pd.DataFrame({"diagnosis": ["Sepsis", "Sepsis", "Trauma", "Cardiac", "Cardiac"],
@@ -130,6 +130,10 @@ hl.save(figure, "unit_day")
   the count that is enough on 9 of 10 days, on the data's levels (R's quantile type 1).
 - **`swimlanes()`**: one real day, a bar per interval with its label inside where it fits, an inner interval as a
   darker band, and `assign="first_free"` to turn tasks into rows of people.
+- **`process()`**: a procedure in swimlanes, one lane per role, steps left to right in stages and flows handing on
+  from step to step, labelled where they leave. `status=` highlights what changed and dashes what is absent or
+  open, `note=` numbers a step and lists its text below the lanes, `section=` stacks versions (before, after) on
+  the same lanes.
 - **`figure(heights=, sharex=, sharey=)`** sizes panel rows by content on one x axis; `time_axis()` labels the
   hours ("06", "08") cropped to the data, with named `spans`.
 

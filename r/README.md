@@ -52,7 +52,7 @@ Each chart is one call with the data and its column names, and returns a ggplot 
 `hl_bars()`, `hl_scatter()`, `hl_timeseries()`, `hl_spread()`, `hl_raincloud()`, `hl_ridgeline()`,
 `hl_kaplan_meier()`, `hl_forest()`, `hl_dotplot()`, `hl_funnel()`, `hl_correlation()`, `hl_donut()`,
 `hl_partition()`, `hl_waffle()`, `hl_sankey()`, `hl_chord()`, `hl_arcs()`, `hl_venn()`, `hl_prisma()`,
-`hl_risk_of_bias()`, `hl_lanes()`, `hl_levels()`, `hl_swimlanes()`, `hl_likert()`, `hl_heatmap()`,
+`hl_risk_of_bias()`, `hl_lanes()`, `hl_levels()`, `hl_swimlanes()`, `hl_process()`, `hl_likert()`, `hl_heatmap()`,
 `hl_surface()` and `hl_table()`.
 
 ```r
@@ -126,6 +126,10 @@ hl_save(figure, "unit_day", size = "double")
   the count that is enough on 9 of 10 days, on the data's levels (quantile type 1).
 - **`hl_swimlanes()`**: one real day, a bar per interval with its label inside where it fits, an inner interval as
   a darker band, and `assign = "first_free"` to turn tasks into rows of people.
+- **`hl_process()`**: a procedure in swimlanes, one lane per role, steps left to right in stages and flows handing
+  on from step to step, labelled where they leave. `status =` highlights what changed and dashes what is absent or
+  open, `note =` numbers a step and lists its text below the lanes, `section =` stacks versions (before, after) on
+  the same lanes.
 - **`hl_rows()`** stacks plots as panel rows sized by `heights` on one time axis, labelled once at the bottom, with
   one legend row and caption: the R counterpart of the Python `figure(heights=, sharex=)` with `into=`.
 

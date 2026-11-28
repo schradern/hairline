@@ -127,7 +127,7 @@ test_that("every chart has a gallery figure, so the census reaches it", {
   skip_if(!length(gallery_scripts()), "the census runs the gallery scripts of the repository")
   charts <- c("arcs", "bars", "chord", "correlation", "donut", "dotplot", "forest", "funnel", "kaplan_meier",
               "lanes", "levels", "likert", "partition", "prisma", "raincloud", "ridgeline", "risk_of_bias", "sankey",
-              "scatter", "spread", "swatches", "swimlanes", "table", "timeseries", "venn", "waffle")
+              "scatter", "spread", "swatches", "swimlanes", "process", "table", "timeseries", "venn", "waffle")
   exported <- sub("^hl_", "", grep("^hl_", getNamespaceExports("hairline"), value = TRUE))
   expect_true(all(charts %in% exported))
   scripts <- paste(vapply(list.files(file.path(gallery_r(), "r"), full.names = TRUE), function(path) {

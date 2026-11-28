@@ -428,6 +428,49 @@ def vital_rows(rng: np.random.Generator) -> list[dict]:
     return rows
 
 
+BEFORE, AFTER = "Before: by phone and on paper", "After: one record, seen by all"
+
+
+def process_step_rows() -> list[dict]:
+    """How a critical laboratory value reaches the physician, before and after a results system."""
+    steps = [
+        (BEFORE, "Physician", "Order test", 1, "", ""),
+        (BEFORE, "Ward nurse", "Draw and label sample", 2, "", ""),
+        (BEFORE, "Laboratory", "Analyse sample", 3, "", ""),
+        (BEFORE, "Laboratory", "Phone the ward", 4, "", ""),
+        (BEFORE, "Results system", "File the result", 4, "tentative", "The result reaches the record hours later."),
+        (BEFORE, "Ward nurse", "Note value, page physician", 4, "",
+         "Values pass by phone and are written down by hand; the page says only that one is waiting."),
+        (BEFORE, "Physician", "Call back for the value", 5, "", "The physician calls the ward back to hear the value."),
+        (AFTER, "Physician", "Order test", 1, "", ""),
+        (AFTER, "Ward nurse", "Draw sample, scan barcode", 2, "highlight", "A barcode ties each sample to its order."),
+        (AFTER, "Laboratory", "Analyse sample", 3, "", ""),
+        (AFTER, "Results system", "Flag critical value", 4, "highlight", "Fixed thresholds flag a critical value at once."),
+        (AFTER, "Laboratory", "Confirm by phone", 4, "", "Open: no read receipt, so the laboratory still phones."),
+        (AFTER, "Ward nurse", "See value on ward screen", 5, "highlight", ""),
+        (AFTER, "Physician", "Read value on phone", 5, "highlight", "The ward screen and the phone show the same record."),
+    ]
+    return [dict(zip(("version", "role", "step", "stage", "status", "note"), row, strict=True)) for row in steps]
+
+
+def process_flow_rows() -> list[dict]:
+    flows = [
+        (BEFORE, "Order test", "Draw and label sample", "Paper", ""),
+        (BEFORE, "Draw and label sample", "Analyse sample", "Courier", ""),
+        (BEFORE, "Analyse sample", "Phone the ward", "", ""),
+        (BEFORE, "Analyse sample", "File the result", "", "tentative"),
+        (BEFORE, "Phone the ward", "Note value, page physician", "Phone", ""),
+        (BEFORE, "Note value, page physician", "Call back for the value", "Pager", ""),
+        (AFTER, "Order test", "Draw sample, scan barcode", "Order system", "highlight"),
+        (AFTER, "Draw sample, scan barcode", "Analyse sample", "Courier", ""),
+        (AFTER, "Analyse sample", "Flag critical value", "", "highlight"),
+        (AFTER, "Analyse sample", "Confirm by phone", "", ""),
+        (AFTER, "Flag critical value", "See value on ward screen", "", "highlight"),
+        (AFTER, "Flag critical value", "Read value on phone", "", "highlight"),
+    ]
+    return [dict(zip(("version", "source", "target", "how", "status"), row, strict=True)) for row in flows]
+
+
 def write(name: str, rows: list[dict]) -> None:
     with (FOLDER / name).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
@@ -472,6 +515,8 @@ def main() -> None:
     write("surgery.csv", surgery_rows(np.random.default_rng(SEED + 2)))
     write("hours.csv", hour_rows(np.random.default_rng(SEED + 3)))
     write("vitals.csv", vital_rows(np.random.default_rng(SEED + 4)))
+    write("process_steps.csv", process_step_rows())
+    write("process_flows.csv", process_flow_rows())
 
 
 if __name__ == "__main__":

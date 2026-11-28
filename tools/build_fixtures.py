@@ -977,6 +977,34 @@ def weight_cases() -> list[dict]:
             for available in families for requested in (100, 300, 400, 450, 500, 600, 700, 900)]
 
 
+def process_place(name: str, lane: int, stage: int) -> dict:
+    """A step's box on a plain grid: stages 60 pt apart, lanes 50 pt apart, boxes 40 by 20 pt."""
+    left, top = 10.0 + 60.0 * stage, 10.0 + 50.0 * lane
+    return {"name": name, "lane": lane, "stage": stage, "left": left, "right": left + 40.0, "top": top,
+            "bottom": top + 20.0, "cx": left + 20.0, "cy": top + 10.0}
+
+
+def process_cases() -> dict:
+    """Flow routes between steps on a grid (down and up within a stage, straight along a lane, turning before the
+    target, turning after the source when a step blocks the source's lane) with their rounded corners and heads; and
+    the stages derived from flows."""
+    from hairline.charts.process import derived_stages
+    from hairline.charts.process_routes import head, path, rounded
+
+    places = [process_place("A", 0, 0), process_place("B", 2, 0), process_place("C", 0, 2), process_place("D", 1, 2),
+              process_place("E", 0, 1), process_place("F", 1, 0)]
+    cells = [[place["lane"], place["stage"]] for place in places]
+    turns = [58.0, 118.0]
+    routes = []
+    for source, target in ((5, 1), (1, 5), (4, 2), (0, 4), (5, 3), (5, 2), (0, 3)):
+        corners = path(places[source], places[target], {tuple(cell) for cell in cells}, turns, "")
+        line, tip = head(rounded(corners, 4.5, 6), 3.15)
+        routes.append({"source": source, "target": target, "line": line, "tip": tip})
+    flows = [{"source": source, "target": target} for source, target in ((0, 1), (1, 2), (0, 3), (3, 2), (2, 4))]
+    return {"places": places, "cells": cells, "turns": turns, "radius": 4.5, "steps": 6, "head": 3.15,
+            "routes": routes, "flows": flows, "stages": derived_stages(6, flows, "")}
+
+
 def write(name: str, content: object) -> None:
     FIXTURES.mkdir(parents=True, exist_ok=True)
     (FIXTURES / name).write_text(json.dumps(content, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -1009,6 +1037,7 @@ def main() -> int:
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
     write("waffle.json", waffle_cases())
     write("hexagons.json", hexagon_cases())
+    write("process.json", process_cases())
     write("study.json", study_cases())
     write("spread.json", spread_cases(DRAWING_STYLE, fake_measure))
     write("swatches.json", swatch_cases())

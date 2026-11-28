@@ -42,6 +42,7 @@ CHARTS = [("bars_admissions", "Bar chart"), ("bars_stacked", "Stacked bars"), ("
           ("surface_hours", "3D surface beside its heatmap"),
           ("heatmap_hours", "Heatmap"),
           ("heatmap_margins", "Heatmap with marginal bars"),
+          ("process", "Process in swimlanes"),
           ("occupancy_rows", "Time series, two levels of detail"), ("grid_panels", "Small multiples"),
           ("theme_scatter", "Scatter with the theme"), ("brand_example", "Brand file"),
           ("colour_sets", "Colour sets")]

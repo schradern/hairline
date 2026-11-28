@@ -6,6 +6,16 @@
   other: the plot grows until each bar is as tall as its value, as the category labels already keep their rows
   apart.
 
+## Process in swimlanes
+
+* `hl_process()` draws a procedure in swimlanes: one lane per role, steps left to right in stages (`stage =`, or one
+  stage after the latest step handing on), flows from step to step with rounded corners, labelled where they leave
+  (`label =`). `status =` outlines a step or flow in the accent when it is new ("highlight") and dashes it when
+  it is absent or open ("tentative"); `note =` numbers a step on its corner and lists the note below the lanes;
+  `section =` stacks versions of the process (before, after) on the same lanes and stages. A flow never crosses
+  another step: one that would is an error naming both steps. In the HTML export each step names its lane and
+  note. New gallery figure `process`.
+
 ## Heatmap with marginal bars
 
 * `hl_heatmap(margins = "mean")` puts each column's mean of `z` in a grey bar above the grid and each row's in a bar

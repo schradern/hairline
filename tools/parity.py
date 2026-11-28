@@ -28,7 +28,7 @@ FIGURES = ["theme_scatter", "occupancy_rows", "grid_panels", "brand_example", "d
            "likert_visits", "spread_importance", "bars_sources", "bars_answers", "scatter_sites",
            "spread_years", "ridgeline_sites", "raincloud_means", "dotplot_means",
            "spread_compare", "study_profile", "study_profile_sex", "spread_columns", "surface_hours", "heatmap_hours",
-           "heatmap_margins"]
+           "heatmap_margins", "process"]
 TOLERANCE_PT = 1.0
 
 
