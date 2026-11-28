@@ -215,14 +215,14 @@ def key_right(rows: list[tuple[int, dict]], x: float, right: float, measure: Mea
 
 
 def key_lines(rows: list[tuple[int, dict]], x: float, right: float, measure: Measure, style: dict,
-              rules: dict) -> list[list[str]]:
+              rules: dict, chart: str = "donut") -> list[list[str]]:
     """Each key name's lines: one while names and shares fit the panel, wrapped before the share column
     otherwise."""
     base = style["base"]
     shares = max(measure(segment["share_text"], "label") for _, segment in rows)
     text_left = (style["swatch"] + style["swatch_text"]) * base
     return [fit_lines(segment["name"], right - shares - rules["key_gap"] * base - x - depth * rules["key_indent"]
-                      * base - text_left, measure, "donut", "the key name") for depth, segment in rows]
+                      * base - text_left, measure, chart, "the key name") for depth, segment in rows]
 
 
 def square(x: float, y: float, side: float, fill: str) -> dict:
@@ -230,12 +230,12 @@ def square(x: float, y: float, side: float, fill: str) -> dict:
 
 
 def hierarchical_key(rings: list[list[dict]], x: float, box: Box, cy: float, measure: Measure, style: dict,
-                     rules: dict) -> list[dict]:
+                     rules: dict, chart: str = "donut") -> list[dict]:
     """Rows centred beside the donut; a name wraps before the share column, which stays on its first line. Rows
     taller than the panel start at its top and run on below it (the figure grows to hold them)."""
     base, neutral, rows = style["base"], style["neutral"], key_rows(rings)
     right = key_right(rows, x, box.x + box.width, measure, style, rules)
-    lines = key_lines(rows, x, right, measure, style, rules)
+    lines = key_lines(rows, x, right, measure, style, rules, chart)
     line, side = line_height(style, "label"), style["swatch"] * base
     pitches = [len(name) * line + rules["key_row_gap"] * base for name in lines]
     top, primitives = max(box.y, cy - sum(pitches) / 2), []

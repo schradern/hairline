@@ -7,6 +7,14 @@
 * Values beside horizontal bars side by side (`bars(by=..., horizontal=True)`) no longer run into each other: the
   plot grows until each bar is as tall as its value, as the category labels already keep their rows apart.
 
+### Waffle chart
+
+* `waffle` shows shares of a whole as 100 cells, one per percent, filled row by row from the top left, with each
+  slice's name and share in a key beside the grid. It takes the data of a one-ring `donut` (`label`, `value`,
+  `colors`, `order`; more than seven slices fold into "Other"). Cells round by the largest remainder, so they add
+  up to 100; in a narrow figure the grid gives way to the key. Its alt text names the largest and smallest slice
+  ("Waffle chart. Largest: Home (55%); smallest: Died (3%)."). New gallery figure `waffle_discharge`.
+
 ### Figures that describe their data
 
 * A chart writes what its data shows into its alt text, in the figure's locale: the kind of chart and what stands

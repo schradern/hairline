@@ -861,7 +861,8 @@ long_label_charts <- function() {
          hl_forest(trials, "study", "est", "low", "high", favours = c("Favours the experimental treatment arm strongly",
                                                                     "Favours the control arm of the randomised trial"))
        },
-       sankey = function() hl_sankey(flows, c("a", "b"), "v"))
+       sankey = function() hl_sankey(flows, c("a", "b"), "v"),
+       waffle = function() hl_waffle(single, "name", "n"))
 }
 
 test_that("long labels wrap inside the figure", {

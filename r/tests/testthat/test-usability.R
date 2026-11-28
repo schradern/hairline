@@ -27,6 +27,7 @@ test_that("titles come from the columns", {
   expect_equal(hl_raincloud(stays(), "unit", "length_of_stay")@labels$title, "Length of stay by unit")
   expect_equal(hl_donut(discharges(), "route")@labels$title, "Count by route")
   expect_equal(hl_partition(discharges(), c("route", "detail"))@labels$title, "Count by route and detail")
+  expect_equal(hl_waffle(discharges(), "route")@labels$title, "Count by route")
   expect_equal(hl_kaplan_meier(trial(), "months", "died", by = "arm")@labels$title, "Survival by arm")
 })
 

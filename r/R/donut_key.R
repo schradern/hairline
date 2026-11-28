@@ -34,13 +34,13 @@ key_right <- function(rows, x, right, measure, style, rules) {
 }
 
 # Each key name's lines: one while names and shares fit the panel, wrapped before the share column otherwise.
-key_lines <- function(rows, x, right, measure, style, rules) {
+key_lines <- function(rows, x, right, measure, style, rules, chart = "donut") {
   base <- style$base
   shares <- max(vapply(rows, function(row) measure(row$segment$share_text, "label"), numeric(1)))
   text_left <- (style$swatch + style$swatch_text) * base
   lapply(rows, function(row) {
     fit_lines(row$segment$name, right - shares - rules$key_gap * base - x - row$depth * rules$key_indent * base -
-                text_left, measure, "donut", "the key name")
+                text_left, measure, chart, "the key name")
   })
 }
 
@@ -50,11 +50,11 @@ key_square <- function(x, y, side, fill) {
 
 # Rows centred beside the donut; a name wraps before the share column, which stays on its first line. Rows taller
 # than the panel start at its top and run on below it (the figure grows to hold them).
-hierarchical_key <- function(rings, x, box, cy, measure, style, rules) {
+hierarchical_key <- function(rings, x, box, cy, measure, style, rules, chart = "donut") {
   base <- style$base
   rows <- key_rows(rings)
   right <- key_right(rows, x, box[1] + box[3], measure, style, rules)
-  lines <- key_lines(rows, x, right, measure, style, rules)
+  lines <- key_lines(rows, x, right, measure, style, rules, chart)
   line <- line_height(style, "label")
   side <- style$swatch * base
   pitches <- vapply(lines, length, integer(1)) * line + rules$key_row_gap * base

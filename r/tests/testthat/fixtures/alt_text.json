@@ -22850,5 +22850,181 @@
    },
    "alt": "Bed over the day. Alle Tage, 2 Tage. Belegungsdiagramm. 3 Zeilen; am höchsten bei Bed 1, 08:00–08:30 (100 %)."
   }
+ ],
+ "waffle": [
+  {
+   "locale": "en",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "label": "route",
+    "value": "patients"
+   },
+   "alt": "Patients by route. Waffle chart. Largest: Home (77%); smallest: Died (4%)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "label": "route"
+   },
+   "alt": "Count by route. Waffle chart. Largest: Home (50%); smallest: Ward, Died (25%)."
+  },
+  {
+   "locale": "en",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "label": "support",
+    "value": "patients",
+    "order": [
+     "Died",
+     "Ward"
+    ]
+   },
+   "alt": "Patients by support. Waffle chart. Largest: Alone (56%); smallest: Died (4%)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "label": "route",
+    "value": "patients"
+   },
+   "alt": "Patients by route. Waffeldiagramm. Am größten: Home (77 %); am kleinsten: Died (4 %)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "label": "route"
+   },
+   "alt": "Count by route. Waffeldiagramm. Am größten: Home (50 %); am kleinsten: Ward, Died (25 %)."
+  },
+  {
+   "locale": "de",
+   "data": {
+    "route": [
+     "Home",
+     "Home",
+     "Ward",
+     "Died"
+    ],
+    "support": [
+     "Alone",
+     "Family",
+     "Ward",
+     "Died"
+    ],
+    "patients": [
+     300,
+     112,
+     97,
+     23
+    ]
+   },
+   "options": {
+    "label": "support",
+    "value": "patients",
+    "order": [
+     "Died",
+     "Ward"
+    ]
+   },
+   "alt": "Patients by support. Waffeldiagramm. Am größten: Alone (56 %); am kleinsten: Died (4 %)."
+  }
  ]
 }

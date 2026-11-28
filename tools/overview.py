@@ -24,6 +24,7 @@ CHARTS = [("bars_admissions", "Bar chart"), ("bars_stacked", "Stacked bars"), ("
           ("forest_meta", "Forest plot"),
           ("funnel_trials", "Funnel plot"), ("risk_of_bias_trials", "Risk of bias"), ("prisma_review", "PRISMA flow"),
           ("donut_discharge", "Donut"), ("donut_nested", "Nested donut"), ("partition_discharge", "Partition bars"),
+          ("waffle_discharge", "Waffle chart"),
           ("sankey_budget", "Sankey"), ("arcs_pathways", "Arc diagram"),
           ("chord_transfers", "Chord diagram"), ("venn_comorbidities", "Venn diagram"),
           ("study_describe", "Study: cohort overview"), ("study_profile", "Study: the cohort at a glance"),

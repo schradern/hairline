@@ -996,6 +996,7 @@ def long_label_charts() -> dict:
                                     favours=["Favours the experimental treatment arm strongly",
                                              "Favours the control arm of the randomised trial"]),
         "sankey": lambda: hl.sankey(flows, ["a", "b"], "v"),
+        "waffle": lambda: hl.waffle(single, "name", "n"),
     }
 
 

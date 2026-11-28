@@ -15,7 +15,7 @@ language: one frame for titles, legends, panels and captions, one type scale, co
 and files ready for a journal, a report or a slide. You choose the data and the chart; hairline makes the
 hundred small layout decisions, the same way every time.
 
-- **One call per chart.** Twenty-six chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
+- **One call per chart.** Twenty-seven chart types, from bar charts to Kaplan–Meier curves, forest plots, Sankey
   and PRISMA diagrams, lanes and staffing levels over the day, heatmaps, 3D surfaces and tables for documents, each from a data frame
   and its column names.
 - **Report-ready by default.** Facets with their own scale, incomplete periods drawn lighter, n per group,
@@ -227,7 +227,7 @@ Python script, and find the R script of the same name in [`gallery/r`](gallery/r
 <tr><td width="50%" valign="top"><a href="gallery/python/donut_discharge.py"><img src="docs/images/gallery/donut_discharge.png" alt="Donut"></a><br><sub>Donut</sub></td><td width="50%" valign="top"><a href="gallery/python/donut_nested.py"><img src="docs/images/gallery/donut_nested.png" alt="Nested donut"></a><br><sub>Nested donut</sub></td></tr>
 <tr><td width="50%" valign="top"><a href="gallery/python/partition_discharge.py"><img src="docs/images/gallery/partition_discharge.png" alt="Partition bars"></a><br><sub>Partition bars</sub></td><td width="50%" valign="top"><a href="gallery/python/sankey_budget.py"><img src="docs/images/gallery/sankey_budget.png" alt="Sankey"></a><br><sub>Sankey</sub></td></tr>
 <tr><td width="50%" valign="top"><a href="gallery/python/arcs_pathways.py"><img src="docs/images/gallery/arcs_pathways.png" alt="Arc diagram"></a><br><sub>Arc diagram</sub></td><td width="50%" valign="top"><a href="gallery/python/chord_transfers.py"><img src="docs/images/gallery/chord_transfers.png" alt="Chord diagram"></a><br><sub>Chord diagram</sub></td></tr>
-<tr><td width="50%" valign="top"><a href="gallery/python/venn_comorbidities.py"><img src="docs/images/gallery/venn_comorbidities.png" alt="Venn diagram"></a><br><sub>Venn diagram</sub></td></tr>
+<tr><td width="50%" valign="top"><a href="gallery/python/venn_comorbidities.py"><img src="docs/images/gallery/venn_comorbidities.png" alt="Venn diagram"></a><br><sub>Venn diagram</sub></td><td width="50%" valign="top"><a href="gallery/python/waffle_discharge.py"><img src="docs/images/gallery/waffle_discharge.png" alt="Waffle chart"></a><br><sub>Waffle chart</sub></td></tr>
 </table>
 
 ### Time, panels and studies

@@ -49,6 +49,7 @@ from hairline.charts.surface_geometry import pair_layout, scene_shapes, surface_
 from hairline.charts.swatches_geometry import swatches_drawing
 from hairline.charts.venn import venn_spec
 from hairline.charts.venn_geometry import venn_drawing
+from hairline.charts.waffle import cell_counts, waffle_drawing
 from hairline.charts.wrapping import spread_blocks
 from hairline.color.adapt import adapt_readable
 from hairline.color.check import check_palette
@@ -281,6 +282,25 @@ def partition_cases() -> list[dict]:
         cases.append({"spec": spec, "box": [box.x, box.y, box.width, box.height],
                       "shapes": partition_drawing(spec, box, fake_measure, DRAWING_STYLE)})
     return cases
+
+
+WAFFLE_SHARES = [[1 / 3, 1 / 3, 1 / 3], [0.555, 0.445], [0.004, 0.996], [0.7, 0.2, 0.1], [0.125] * 8,
+                 [0.333, 0.333, 0.334], [0.0049, 0.0051, 0.99]]
+
+
+def waffle_cases() -> dict:
+    """Cells per slice for shares with ties, slices under half a cell and exact tenths, and the drawing of one
+    ring."""
+    use(brand=False)
+    data = pd.DataFrame({"route": ["Home", "Rehabilitation", "Other ward", "Care home", "Died"],
+                         "n": [412, 168, 97, 54, 23]})
+    cases = []
+    for box in (Box(20, 60, 440, 200), Box(0, 0, 260, 90)):
+        spec = {"ring": donut_rings(data, "route", "n", None)[0]}
+        cases.append({"spec": spec, "box": [box.x, box.y, box.width, box.height],
+                      "shapes": waffle_drawing(spec, box, fake_measure, DRAWING_STYLE)})
+    return {"style": DRAWING_STYLE, "counts": [{"shares": shares, "cells": cell_counts(shares, 100)}
+                                               for shares in WAFFLE_SHARES], "cases": cases}
 
 
 def survival_cases() -> list[dict]:
@@ -600,6 +620,8 @@ ALT_PARTS = {"routes": {"route": ["Home", "Home", "Ward", "Died"], "support": ["
                         "patients": [300, 112, 97, 23]}}
 ALT_PART_OPTIONS = [{"levels": ["route", "support"], "value": "patients"}, {"levels": "route", "value": "patients"},
                     {"levels": ["route", "support"]}]
+ALT_WAFFLE_OPTIONS = [{"label": "route", "value": "patients"}, {"label": "route"},
+                      {"label": "support", "value": "patients", "order": ["Died", "Ward"]}]
 ALT_TABLES = {"summary": {"Group": ["ICU", "Ward", "ER"], "n": [12, 30, 7], "Median": [4.5, 3.0, None],
                           "IQR": ["3–6", "2–4", "–"]},
               "one": {"Unit": ["ICU"]}}
@@ -674,6 +696,8 @@ def alt_text_cases() -> dict:
               for locale in ("en", "de") for name, options in ALT_SHIFT_OPTIONS]
     parts = [case(locale, ALT_PARTS["routes"], options, lambda frame, options: hl.partition(frame, **options))
              for locale in ("en", "de") for options in ALT_PART_OPTIONS]
+    waffles = [case(locale, ALT_PARTS["routes"], options, lambda frame, options: hl.waffle(frame, **options))
+               for locale in ("en", "de") for options in ALT_WAFFLE_OPTIONS]
     tables = [case(locale, ALT_TABLES[name], options, lambda frame, options: hl.table(frame, **options))
               for locale in ("en", "de") for name, options in ALT_TABLE_OPTIONS]
     stays = [case(locale, ALT_STAYS["beds"], options,
@@ -691,7 +715,7 @@ def alt_text_cases() -> dict:
             "forest": effects, "dotplot": dots, "scatter": points, "donut": slices, "likert": ratings,
             "sankey": flows, "chord": exchanges, "venn": sets, "correlation": measures, "funnel": studies,
             "prisma": reviews, "risk_of_bias": judgements, "arcs": links, "swimlanes": shifts,
-            "partition": parts, "table": tables, "lanes": stays}
+            "partition": parts, "table": tables, "lanes": stays, "waffle": waffles}
 
 
 def heatmap_cases() -> dict:
@@ -953,6 +977,7 @@ def main() -> int:
     write("sankey.json", {"style": DRAWING_STYLE, "cases": sankey_cases()})
     write("forest.json", {"style": DRAWING_STYLE, **forest_cases()})
     write("partition.json", {"style": DRAWING_STYLE, "cases": partition_cases()})
+    write("waffle.json", waffle_cases())
     write("study.json", study_cases())
     write("spread.json", spread_cases(DRAWING_STYLE, fake_measure))
     write("swatches.json", swatch_cases())

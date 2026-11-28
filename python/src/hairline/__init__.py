@@ -23,7 +23,7 @@ LAZY_NAMES = {
     **{name: f"hairline.charts.{name}" for name in (
         "arcs", "bars", "chord", "correlation", "donut", "dotplot", "forest", "funnel", "heatmap", "kaplan_meier",
         "lanes", "levels", "likert", "partition", "prisma", "raincloud", "ridgeline", "risk_of_bias", "sankey",
-        "scatter", "spread", "surface", "swatches", "swimlanes", "table", "timeseries", "venn")},
+        "scatter", "spread", "surface", "swatches", "swimlanes", "table", "timeseries", "venn", "waffle")},
     "Result": "hairline.study", "Study": "hairline.study", "study": "hairline.study",
     "Report": "hairline.report", "report": "hairline.report", "scope": "hairline.entities",
 }
@@ -56,6 +56,7 @@ if TYPE_CHECKING:
     from hairline.charts.table import table
     from hairline.charts.timeseries import timeseries
     from hairline.charts.venn import venn
+    from hairline.charts.waffle import waffle
     from hairline.entities import scope
     from hairline.report import Report, report
     from hairline.study import Result, Study, study
@@ -91,6 +92,7 @@ __all__ = [
     "frame", "funnel", "heatmap", "kaplan_meier", "lanes", "levels", "likert", "load_brand", "load_tokens", "palette",
     "palettes", "partition", "prisma", "raincloud", "ramp", "report", "ridgeline", "risk_of_bias", "sankey", "save",
     "scatter", "scope", "spread", "study", "surface", "swatches", "swimlanes", "table", "timeseries", "use", "venn",
+    "waffle",
 ]
 __version__ = "0.3.0"
 

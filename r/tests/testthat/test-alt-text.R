@@ -117,6 +117,11 @@ test_that("partition alt text matches the shared fixture, in English and German"
                     function(data, options) do.call(hl_partition, c(list(data), options)))
 })
 
+test_that("waffle alt text matches the shared fixture, in English and German", {
+  alt_fixture_check(read_fixture("alt_text.json")$waffle,
+                    function(data, options) do.call(hl_waffle, c(list(data), options)))
+})
+
 test_that("table alt text matches the shared fixture, in English and German", {
   alt_fixture_check(read_fixture("alt_text.json")$table,
                     function(data, options) do.call(hl_table, c(list(data), options)))

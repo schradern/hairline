@@ -27,6 +27,7 @@ def test_titles_come_from_the_columns():
     assert hl.raincloud(stays(), "unit", "length_of_stay").title == "Length of stay by unit"
     assert hl.donut(discharges(), "route").title == "Count by route"
     assert hl.partition(discharges(), ["route", "detail"]).title == "Count by route and detail"
+    assert hl.waffle(discharges(), "route").title == "Count by route"
     assert hl.kaplan_meier(trial(), "months", "died", by="arm").title == "Survival by arm"
 
 
